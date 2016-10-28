@@ -59,7 +59,7 @@ public class Model
 		if (resourceMap.get(key) == null)
 		{
 			resourceMap.put(key, n);	
-			resourceListView.getItems().add(n);
+			if (resourceListView != null) resourceListView.getItems().add(n);
 			refresh();
 		}
 	}
@@ -175,6 +175,8 @@ public class Model
 		buff.append(String.format("<Graphics BoardWidth=\"%d\" BoardHeight=\"%d\" />\n", 
 				width, height));
 		traverse(buff, root, 0);
+		for (Edge e : edgeTable)
+			buff.append(e.toString());
 		buff.append("</Pathway>\n");
 		return buff;
 	}

@@ -5,7 +5,6 @@ import java.util.List;
 
 import animation.NodeVisAnimator;
 import diagrams.draw.Action.ActionType;
-import diagrams.draw.App.Tool;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -68,8 +67,8 @@ public class Pasteboard
 	private Controller controller;
 	public Controller getController()		{ return controller; }
 	private NodeFactory factory;
-	private EdgeFactory edgeFactory;
 	public NodeFactory getNodeFactory()		{ return factory; }
+	private EdgeFactory edgeFactory;
 	public EdgeFactory getEdgeFactory()		{ return edgeFactory; }
 	private ShapeFactory shapeFactory;
 	public ShapeFactory getShapeFactory()	{ return shapeFactory; }
@@ -80,6 +79,7 @@ public class Pasteboard
 	private Rectangle marquee;
 	public Rectangle getMarquee()			{ return marquee;	}
 	private Label infoLabel;
+	public Label getInfoLabel()				{ return infoLabel;	}
 
 	SimpleDoubleProperty widthProperty = new SimpleDoubleProperty();
 	SimpleDoubleProperty heightProperty = new SimpleDoubleProperty();
@@ -306,9 +306,7 @@ public class Pasteboard
 //		dragLine.setEndX(x);
 //		dragLine.setEndY(y);
 //	}
-
-
-
+//-----------------------------------------------------------------------------------------------------------
 	private final class MousePressedHandler implements EventHandler<MouseEvent> 
 	{
 		@Override public void handle(final MouseEvent event) 
@@ -696,10 +694,10 @@ public class Pasteboard
 	Paint defaultStroke = Color.BLACK;			// TODO  pref
 	Paint defaultFill = Color.WHITESMOKE;
 	
-	public Paint getDefaultFill()		{		return 	defaultFill;	}
-	public Paint getDefaultStroke()		{		return defaultStroke;	}
-	public void setDefaultFill(Paint p)	{		defaultFill = p;	}
-	public void setDefaultStroke(Paint p){		defaultStroke = p;	}
+	public Paint getDefaultFill()			{		return 	defaultFill;	}
+	public Paint getDefaultStroke()			{		return defaultStroke;	}
+	public void setDefaultFill(Paint p)		{		defaultFill = p;	}
+	public void setDefaultStroke(Paint p)	{		defaultStroke = p;	}
 	
 }
 

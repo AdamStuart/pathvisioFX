@@ -10,7 +10,7 @@ public class UndoStack
 {
 	private Controller controller;
 	private ObservableList<Action> actions;
-	private ListView<Action> undostackView;
+	private ListView<Action> undostackView;			// may be null
 
 	int curStackPtr = 0; //  or number of actions available to redo
 	int verbose = 0;
@@ -27,7 +27,8 @@ public class UndoStack
 			@Override public void onChanged(Change<? extends Action> c)	{	refresh();	}
 		});
 		undostackView = undoview;
-		undostackView.setItems(actions);
+		if (undostackView != null)
+			undostackView.setItems(actions);
 	}
 
 	// -------------------------------------------------------
@@ -93,14 +94,15 @@ public class UndoStack
 	}
 
 	// -------------------------------------------------------
-	private void refresh()				{		undostackView.setItems(actions);	}
+	private void refresh()				{	if (undostackView != null)	undostackView.setItems(actions);	}
 	private Action currentAction()		{		return actions.get(curStackPtr);	}
 
 	public void clear()
 	{
 		actions.clear();
 		curStackPtr = 0;
-		undostackView.getItems().clear();
+		if (undostackView != null)	
+			undostackView.getItems().clear();
 //		push(ActionType.New);
 	}
 }

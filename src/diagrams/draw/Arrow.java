@@ -5,130 +5,90 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.CubicCurve;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Shape;
 import javafx.scene.transform.Rotate;
 import util.LineUtil;
 
 public class Arrow extends Polygon {
 
-    public double rotate;
-    public float t;			// 0-1 parameter along the curve
-    CubicCurve curve;
-    Line line;
-    Rotate rz;
+	private float t;			// 0-1 parameter along the curve
+    private CubicCurve curve;
+    private Line line;
+    private Rotate rotZ;
 
-    public Arrow( CubicCurve curve, float t) {
-        super();
-        this.curve = curve;
-        this.t = t;
-        init();
-    }
-
-    public Arrow(Line line, float t) {
-        super();
-        this.line = line;
-        this.t = t;
-        init();
-    }
-
-    public Arrow(Edge edge, float t) {
-        super();
-        this.line = line;
-        this.t = t;
-        init();
-    }
-
-    public Arrow( CubicCurve curve, float t, double... arg0) {
+    public Arrow( CubicCurve acurve, float d, double... arg0) {
         super(arg0);
-        this.curve = curve;
-        this.t = t;
+        curve = acurve;
+        t = d;
         init();
     }
-    public Arrow(  Line line, float t, double... arg0) {
-        super(arg0);
-        this.line = line;
-        this.t = t;
+    public Arrow(  Line aline, float d, Color c, Shape sh) {
+        super();
+        line = aline;
+        t = d;
+        sh.setFill(c);
+        sh.setStroke(c);
         init();
+        setPosition(line.getEndX(), line.getEndY());
     }
 
+    public Arrow(  Line aline, float d, Color c, double... arg0) {
+        super(arg0);
+        line = aline;
+        t = d;
+        setFill(c);
+        setStroke(c);
+        init();
+        setPosition(line.getEndX(), line.getEndY());
+    }
+
+    public void setPosition(double x, double y)
+    {
+        setTranslateX(x);
+        setTranslateY(y);
+    }
 //--------------------------------------------------------------------
     private void init() {
-
-        setFill(Color.web("#ff0900"));
-
-        rz = new Rotate();
-        rz.setAxis(Rotate.Z_AXIS);
-        getTransforms().addAll(rz);
-
-        if (curve == null) updateLine();
-        else updateCurve();
+//        setFill(Color.web("#4f0970"));
+        rotZ = new Rotate();
+        rotZ.setAxis(Rotate.Z_AXIS);
+        getTransforms().addAll(rotZ);
+        updateLine();
+        updateCurve();
     }
- 
   //--------------------------------------------------------------------
+    boolean useElbowConnection = false;
     public void updateLine() {
-    	double ang2 = LineUtil.getEndAngle(line);
-    	Point2D pt = LineUtil.midPoint(line, 1.0);
-        setTranslateX(pt.getX());
-        setTranslateY(pt.getY());
-
+        if (line == null) return;
+    	double ang2 = (useElbowConnection) ? 90 : LineUtil.getEndAngle(line);
+//    	System.out.println(String.format("updateLine: (%.2f, %.2f) %.2f", line.getEndX(), line.getEndY(), Math.toDegrees(ang2)));
+    	Point2D midpt = LineUtil.midPoint(line, 0.90);
+        setTranslateX(midpt.getX());
+        setTranslateY(midpt.getY());	
            // arrow origin is top => apply offset
-        double offset = -90;
-        if( t > 0.5)
-            offset = +90;
-
-        rz.setAngle(ang2 + offset);
+//        translateXProperty().bind(line.endXProperty());
+//        translateYProperty().bind(line.endYProperty());
+        double offset = ( t > 0.5) ? 90 : -90;
+        rotZ.setAngle(Math.toDegrees(-ang2) + offset);
    }
     
 	//--------------------------------------------------------------------
    public void updateCurve() {
-        double size = Math.max(curve.getBoundsInLocal().getWidth(), curve.getBoundsInLocal().getHeight());
-        double scale = size / 4d;
-
-        Point2D ori = eval(curve, t);
-        Point2D tan = evalDt(curve, t).normalize().multiply(scale);
-
-        setTranslateX(ori.getX());
-        setTranslateY(ori.getY());
-
-        double angle = Math.atan2( tan.getY(), tan.getX());
-
-        angle = Math.toDegrees(angle);
-
-        // arrow origin is top => apply offset
-        double offset = -90;
-        if( t > 0.5)
-            offset = +90;
-
-        rz.setAngle(angle + offset);
-
+	   if (curve == null) return;
+      	double size = Math.max(curve.getBoundsInLocal().getWidth(), curve.getBoundsInLocal().getHeight());
+		double scale = size / 4d;
+		
+		Point2D ori = LineUtil.eval(curve, t);
+		Point2D tan = LineUtil.evalDt(curve, t).normalize().multiply(scale);
+		
+		setTranslateX(ori.getX());
+		setTranslateY(ori.getY());
+		
+		double angle = Math.atan2( tan.getY(), tan.getX());
+		angle = Math.toDegrees(angle);
+		double offset = ( t > 0.5) ? 90 : -90;		// arrow origin is top => apply offset
+		rotZ.setAngle(angle + offset);
     }
-
-      /**
-       * Evaluate the cubic curve at a parameter 0<=t<=1, returns a Point2D
-       * @param c the CubicCurve 
-       * @param t param between 0 and 1
-       * @return a Point2D 
-       */
-      private Point2D eval(CubicCurve c, float t){
-    	  double x = Math.pow(1-t,3)*c.getStartX()+ 3*t*Math.pow(1-t,2)*c.getControlX1()+
-                  3*(1-t)*t*t*c.getControlX2()+ Math.pow(t, 3)*c.getEndX();
-    	  double y = Math.pow(1-t,3)*c.getStartY()+ 3*t*Math.pow(1-t, 2)*c.getControlY1()+
-                  3*(1-t)*t*t*c.getControlY2()+ Math.pow(t, 3)*c.getEndY();
-          Point2D p=new Point2D(x,y);
-          return p;
-      }
-
-      /**
-       * Evaluate the tangent of the cubic curve at a parameter 0<=t<=1, returns a Point2D
-       * @param c the CubicCurve 
-       * @param t param between 0 and 1
-       * @return a Point2D 
-       */
-      private Point2D evalDt(CubicCurve c, float t){
-          Point2D p=new Point2D(
-        		  -3*Math.pow(1-t,2)*c.getStartX()+3*(Math.pow(1-t, 2)-2*t*(1-t))*c.getControlX1()+
-           3*((1-t)*2*t-t*t)*c.getControlX2()+3*Math.pow(t, 2)*c.getEndX(),
-                  -3*Math.pow(1-t,2)*c.getStartY()+3*(Math.pow(1-t, 2)-2*t*(1-t))*c.getControlY1()+
-            3*((1-t)*2*t-t*t)*c.getControlY2()+3*Math.pow(t, 2)*c.getEndY());
-          return p;
-      }
 }
+
+

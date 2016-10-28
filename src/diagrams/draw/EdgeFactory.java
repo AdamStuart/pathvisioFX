@@ -32,7 +32,6 @@ public class EdgeFactory {
 		List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 		NodeList elems = edgeML.getChildNodes();
 		String startId="", endId="";
-		double startx=0, starty=0, endx=0, endy=0;
 		for (int i=0; i<elems.getLength(); i++)
 		{
 			org.w3c.dom.Node n = elems.item(i);
@@ -56,16 +55,12 @@ public class EdgeFactory {
 		{
 			startId = points.get(0).getGraphRef();
 			Node startNode = getModel().getResource(startId);
-			if (startNode != null)
-			{
-				endId = points.get(z-1).getGraphRef();
-				Node endNode = getModel().getResource(endId);
-				if (endNode != null) 
-					return new Edge(startNode, endNode, attrMap, points);
-			}
-			
+			GPMLPoint lastPt = points.get(z-1);
+			endId = lastPt.getGraphRef();
+			Node endNode = getModel().getResource(endId);
+			if (endNode != null) 
+				return new Edge(startNode, endNode, attrMap, points);			
 		}
-//		Edge edge = new Edge(startx, starty, endx, endy);
 		Edge edge = new Edge(attrMap, points);
 
 		return edge;

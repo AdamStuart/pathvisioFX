@@ -2,6 +2,7 @@ package diagrams.draw;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,13 +11,14 @@ import java.util.Scanner;
 
 import animation.BorderPaneAnimator;
 import diagrams.draw.Action.ActionType;
-import diagrams.draw.App.Tool;
+import diagrams.draw.gpml.BiopaxRef;
 import diagrams.draw.gpml.GPML;
 //import dialogs.AboutDialog;
 import gui.BorderPaneRulers;
 import gui.Borders;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
+import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -65,6 +67,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.stage.Stage;
@@ -93,12 +96,12 @@ public class Controller implements Initializable
 	
 	@FXML private Pane drawPane;
 	@FXML private ScrollPane scrollPane;
-	@FXML private ListView<Action> undoview;
-	@FXML private ListView<Node> resourceListView;
+	@FXML private ListView<Action> undoview = null;
+	@FXML private ListView<Node> resourceListView = null;
 	@FXML private TableView<AttributeValue> attributeTable;
 	@FXML private TableColumn<AttributeValue, String> attributeCol;
 	@FXML private TableColumn<AttributeValue, String> valueCol;
-	@FXML private AnchorPane zoomAnchor;
+//	@FXML private AnchorPane zoomAnchor;
 	@FXML private BorderPane container;			// root of fxml
 	@FXML private BorderPane drawContainer;			// rulers and content
 	public ListView<Node> getResourceListView()		{		return resourceListView;	}
@@ -152,7 +155,7 @@ public class Controller implements Initializable
 	@FXML private MenuItem ungroup;
 	@FXML private MenuItem delete;
 	@FXML private VBox inspector;
-	@FXML private HBox bottomDash;
+	@FXML private HBox bottomPadding;
 	
 	@FXML private void undo()			{ 	undoStack.undo();	}
 	@FXML private void redo()			{ 	undoStack.redo();		}
@@ -222,7 +225,7 @@ public class Controller implements Initializable
 		assert attributeCol != null : missing("attributeCol");
 		assert valueCol != null : missing("valueCol");
 		assert attributeTable != null : missing("attributeTable");
-		undoStack = new UndoStack(this, undoview);
+		undoStack = new UndoStack(this, null);
 		pasteboard = new Pasteboard(drawPane, this);
 		doc = new Document(this);
 		paletteGroup = new ToggleGroup();
@@ -245,9 +248,11 @@ public class Controller implements Initializable
 //	        drawContainer.setScaleY(drawContainer.getScaleY() * scaleFactor);
 		});
 //		bottomDash.setBorder(Borders.dashedBorder );
-		bottomDash.setPadding(new Insets(3,3,4,4));
+		if (bottomPadding!= null)
+			bottomPadding.setPadding(new Insets(3,3,4,4));
 
-		inspector.setBorder(Borders.lineBorder);
+		if (inspector != null)
+			inspector.setBorder(Borders.lineBorder);
 		setupPalette();
 		setupListviews();
 		setupZoomView();
@@ -278,13 +283,21 @@ public class Controller implements Initializable
 	
 	 @FXML private void test1()
 	{
+		 
+		 
+		double[] vals = { 50, 50, 50, 100, 150, 100};
+		Polygon p = new Polygon(vals);
+		add(p);
+		
+		if (true) return;
+		
 		undoStack.push(ActionType.Test);	
 		ShapeFactory f = getNodeFactory().getShapeFactory();
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putFillStroke(Color.PINK, Color.INDIGO);
 		attrMap.putCircle(new Circle(120, 230, 40));
 		Shape n1 = f.makeNewShape(Tool.Circle, attrMap);
-		final Label text = f.createLabel("root");
+		final Label text = f.createLabel("root", Color.PINK);
     	NodeCenter ctr = new NodeCenter(n1);
     	text.layoutXProperty().bind(ctr.centerXProperty().subtract(text.widthProperty().divide(2.)));	// width / 2
     	text.layoutYProperty().bind(ctr.centerYProperty().subtract(text.heightProperty().divide(2.)));
@@ -370,12 +383,14 @@ public class Controller implements Initializable
 	
 	private void setupZoomView()
 	{
-		zoomView = new ZoomView(zoomAnchor, drawPane, this);
-		Border myBorder = new Border(new BorderStroke(Color.GRAY, 
-				BorderStrokeStyle.SOLID, 
-				CornerRadii.EMPTY, new BorderWidths(5))	);
+//		zoomView = new ZoomView(zoomAnchor, drawPane, this);
+//		Border myBorder = new Border(new BorderStroke(Color.GRAY, 
+//				BorderStrokeStyle.SOLID, 
+//				CornerRadii.EMPTY, new BorderWidths(5))	);
+//		
+//		zoomAnchor.setBorder(myBorder);
+
 		
-		zoomAnchor.setBorder(myBorder);
 //		Borders.wrap(zoomAnchor).lineBorder().buildAll();
 //		viewport.xProperty().bind(drawPane.translateXProperty().multiply(-0.25));  
 //		viewport.yProperty().bind(drawPane.translateYProperty().multiply(-0.25));  
@@ -393,53 +408,50 @@ public class Controller implements Initializable
             	double scale = Math.pow(2, (double) val);
     			drawPane.setScaleX(scale); 	
     			drawPane.setScaleY(scale); 	
-    			zoomView.zoomChanged();
+    			if (zoomView != null) zoomView.zoomChanged();
 	        });	
 		translateX.valueProperty().addListener((ov, old, val) ->  {
 				drawPane.setTranslateX((double) val);  
-    			zoomView.zoomChanged();
+				if (zoomView != null) zoomView.zoomChanged();
     			status2.setText(translateX.toString());
         });	
 		
 		translateY.valueProperty().addListener((ov, old, val) ->   {
 				drawPane.setTranslateY((double) val);  
-    			zoomView.zoomChanged();
+				if (zoomView != null) zoomView.zoomChanged();
     			status3.setText(translateY.toString());
        });	
 
 	}
 	// **-------------------------------------------------------------------------------
+	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
+	{
+		b.setGraphic(GlyphsDude.createIcon(i, GlyphIcon.DEFAULT_ICON_SIZE));
+		b.setId(t.name());
+	}
+	
+	private void setGraphic(Button b, GlyphIcons i)
+	{
+		b.setGraphic(GlyphsDude.createIcon(i, GlyphIcon.DEFAULT_ICON_SIZE));
+		b.setText("");
+	}
+	
 	private void setupPalette()
 	{
-		arrow.setGraphic(		GlyphsDude.createIcon(FontAwesomeIcons.LOCATION_ARROW, GlyphIcon.DEFAULT_ICON_SIZE));
-		rectangle.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.SQUARE, GlyphIcon.DEFAULT_ICON_SIZE));
-		circle.setGraphic(		GlyphsDude.createIcon(FontAwesomeIcons.CIRCLE, GlyphIcon.DEFAULT_ICON_SIZE));
-		polygon.setGraphic(		GlyphsDude.createIcon(FontAwesomeIcons.STAR, GlyphIcon.DEFAULT_ICON_SIZE));
-		polyline.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.PENCIL, GlyphIcon.DEFAULT_ICON_SIZE));
-		line.setGraphic(		GlyphsDude.createIcon(FontAwesomeIcons.LONG_ARROW_RIGHT, GlyphIcon.DEFAULT_ICON_SIZE));
-		shape1.setGraphic(		GlyphsDude.createIcon(FontAwesomeIcons.FILTER, GlyphIcon.DEFAULT_ICON_SIZE));
-		shape2.setGraphic(		GlyphsDude.createIcon(FontAwesomeIcons.HEART, GlyphIcon.DEFAULT_ICON_SIZE));
+		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
+		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
+		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
+		setGraphic(polygon, Tool.Polygon, FontAwesomeIcons.STAR);
+		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
+		setGraphic(line, Tool.Line, FontAwesomeIcons.LONG_ARROW_RIGHT);
+		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.FILTER);
+		setGraphic(shape2, Tool.Shape2, FontAwesomeIcons.HEART);
 
-		arrow.setId(Tool.Arrow.name());
-		rectangle.setId(Tool.Rectangle.name());
-		circle.setId(Tool.Circle.name());
-		polygon.setId(Tool.Polygon.name());
-		polyline.setId(Tool.Polyline.name());
-		line.setId(Tool.Line.name());
-		shape1.setId(Tool.Shape1.name());
-		shape2.setId(Tool.Shape2.name());
-
-		leftSideBarButton.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT, GlyphIcon.DEFAULT_ICON_SIZE));
-		rightSideBarButton.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.ARROW_CIRCLE_O_LEFT, GlyphIcon.DEFAULT_ICON_SIZE));
-		bottomSideBarButton.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.ARROW_CIRCLE_DOWN, GlyphIcon.DEFAULT_ICON_SIZE));
-		leftSideBarButton.setText("");
-		rightSideBarButton.setText("");
-		bottomSideBarButton.setText("");
-
-		toggleRulerButton.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.BARS, GlyphIcon.DEFAULT_ICON_SIZE));
-		toggleRulerButton.setText("");
-		toggleGridButton.setGraphic(	GlyphsDude.createIcon(FontAwesomeIcons.TH, GlyphIcon.DEFAULT_ICON_SIZE));
-		toggleGridButton.setText("");
+		setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
+		setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
+		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
+		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
+		setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
 	// **-------------------------------------------------------------------------------
 	public void setState(String s)
@@ -452,10 +464,28 @@ public class Controller implements Initializable
 	public void addState(org.w3c.dom.Document doc)
 	{
 		new GPML(this).read(doc);
+
 	}
+	public void addComment(String key, String val) {
+		comments.add(key + ": " + val);
+		
+	}
+	public void clearComments() {		comments.clear();			}
+	public String getComments() {
+		StringBuilder b = new StringBuilder();
+		for (String c : comments)
+			b.append(c).append("\n");
+		return b.toString();
+	}
+	
+	List<String> comments = new ArrayList<String>();
+	List<BiopaxRef> references = new ArrayList<BiopaxRef>();
+
+	public void addRef(BiopaxRef ref) {		references.add(ref);	}
+	public void clearRefs() {		references.clear();	}
 	//-----------------------------------------------------------------------------
 	@Deprecated
-	public void addState(String s)
+	public void addState(String s)			// used in undo restore
 	{
 		Scanner scan = new Scanner(s);
 		while (scan.hasNextLine())
@@ -481,12 +511,18 @@ public class Controller implements Initializable
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
 	{
-		undoview.setCellFactory(list -> {  return new DrawActionCell();  });	
-		undoview.setStyle(CSS_Gray2);
+		if (undoview != null)
+		{
+			undoview.setCellFactory(list -> {  return new DrawActionCell();  });	
+			undoview.setStyle(CSS_Gray2);
+		}
 		
+		if (resourceListView != null)
+		{
 		resourceListView.setCellFactory(list ->  { return new DrawNodeCell();   });
 		resourceListView.setStyle(CSS_Gray2);
-
+		}
+		
 		attributeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); //  multiple selection
 		attributeTable.setItems(RandomAttributeValueData.getRandomAttributeValueData()); // set Dummy Data for the TableView
 		attributeTable.getSelectionModel().setCellSelectionEnabled(false);
@@ -674,8 +710,8 @@ public class Controller implements Initializable
 	public void add(int idx, Edge e)							
 	{		
 		if (e == null) return;
-		drawPane.getChildren().add(idx, e.getPolyline() );	
-		drawPane.getChildren().add(idx, e.getLine() );	
+		drawPane.getChildren().add(idx, e);	
+//		drawPane.getChildren().add(idx, e.getLine() );	
 		model.addEdge(e);
 	}
 	public void add(int idx, Node n)							
@@ -702,7 +738,7 @@ public class Controller implements Initializable
 	// **-------------------------------------------------------------------------------
 	public String getState()			{ 	return model.traverseSceneGraph(drawPane).toString();  }
 	
-	public void refreshZoomPane()		{	zoomView.zoomChanged();}
+	public void refreshZoomPane()		{	if (zoomView != null) zoomView.zoomChanged();}
 
 	// **-------------------------------------------------------------------------------
 	public void reportStatus(String string)	
@@ -756,4 +792,5 @@ public class Controller implements Initializable
 
 	public void timeseries(TableView content)	{
 	}
+	
 }

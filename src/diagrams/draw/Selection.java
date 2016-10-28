@@ -175,10 +175,10 @@ public class Selection
 	{
 		double amount = 3;
 		double dx = 0, dy = 0;
-		if (key == KeyCode.LEFT)	dx = -amount;
-		else if (key == KeyCode.RIGHT)	dx = amount;
-		else if (key == KeyCode.UP)	dy = - amount;
-		else if (key == KeyCode.DOWN)	dy = amount;
+		if (key == KeyCode.LEFT)	dx = amount;
+		else if (key == KeyCode.RIGHT)	dx = -amount;
+		else if (key == KeyCode.UP)	dy = amount;
+		else if (key == KeyCode.DOWN)	dy = -amount;
 		translate(dx, dy);
 	}	
 	

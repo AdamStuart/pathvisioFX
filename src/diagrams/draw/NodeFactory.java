@@ -8,7 +8,6 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import diagrams.draw.Action.ActionType;
-import diagrams.draw.App.Tool;
 import diagrams.draw.gpml.GPML;
 import gui.Borders;
 import javafx.beans.binding.Bindings;
@@ -93,14 +92,14 @@ public class NodeFactory
 	 */
 	public Node parseGPML(org.w3c.dom.Node datanode) {
 		AttributeMap attrMap = new AttributeMap();
-		NodeList elems = datanode.getChildNodes();
 		attrMap.add(datanode.getAttributes());
+		NodeList elems = datanode.getChildNodes();
 		for (int i=0; i<elems.getLength(); i++)
 		{
 			org.w3c.dom.Node child = elems.item(i);
 			String name = child.getNodeName();
 			if (name.equals("#text")) continue;
-			attrMap.add(child.getAttributes());
+			attrMap.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
 		}
 		String type = attrMap.get("Type");
@@ -110,6 +109,7 @@ public class NodeFactory
 		if (tool == null) return null;
 		if (tool.isShape())
 			return shapeFactory.makeNewShape(tool, attrMap);
+		
 		if (Tool.isSVG(type))
 			return makeNewSVGPane(attrMap);
 		return makeNewNode(tool, attrMap);
