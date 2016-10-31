@@ -87,8 +87,6 @@ public class ShapeFactory {
 	// **-------------------------------------------------------------------------------
 	public Shape makeNewShape(Tool type, AttributeMap attrMap) {
 		Shape sh = makeNewShape(type.toString(), attrMap, true);
-		if ("None".equals(attrMap.get("ShapeType")))
-			sh.setStroke(Color.TRANSPARENT);
 		sh.setId(attrMap.get("GraphId"));
 		if (sh instanceof  Circle)
 		{
@@ -97,8 +95,6 @@ public class ShapeFactory {
 				rad = attrMap.getDouble("Width") / 2;
 				((Circle) sh).setRadius(rad);
 		}
-		if ("org.pathvisio.DoubleLineProperty".equals(attrMap.get("Key")))		//HACK
-			sh.setStrokeWidth(5);
 		return sh;
 	}
 
@@ -121,14 +117,15 @@ public class ShapeFactory {
 		newShape.setId(id);
 		newShape.setFill(drawLayer.getDefaultFill());
 		newShape.setStroke(Color.BLUE);
+
 		newShape.setStrokeWidth(1f);
 		newShape.setManaged(false);
 		setAttributes(newShape, attrMap);
 		newShape.getProperties().putAll(attrMap);
 		if ("Line".equals(s))
 		{
-			Arrow a = new Arrow((Line) newShape, 1.0f, attrMap.getColor("Color"));
-//			a.setFill(Color.BEIGE);
+			Arrow a = new Arrow((Line) newShape, 0.7f);
+			a.setFill(Color.BEIGE);
 		}
 		return newShape;
 	}
@@ -154,7 +151,7 @@ public class ShapeFactory {
 	public StackPane makeLabeledShapePane(Tool tool, AttributeMap attrMap, String s) {
 		Shape newShape = makeNewShape(tool, attrMap);
 		StackPane stack = new StackPane();
-		final Label text = createLabel(s, attrMap.getColor("Color"));
+		final Label text = createLabel(s);
 		text.setTranslateX(attrMap.getDouble("centerX"));
 		text.setTranslateY(attrMap.getDouble("centerY"));
 		StackPane.setAlignment(newShape, Pos.CENTER);
@@ -167,7 +164,7 @@ public class ShapeFactory {
 	public Group makeLabeledShapeGroup(Tool tool, AttributeMap attrMap, String s) {
 		Shape newShape = makeNewShape(tool, attrMap);
 		Group group = new Group();
-		final Label text = createLabel(s, attrMap.getColor("Color"));
+		final Label text = createLabel(s);
 		text.setTranslateX(attrMap.getDouble("centerX"));
 		text.setTranslateY(attrMap.getDouble("centerY"));
 		StackPane.setAlignment(newShape, Pos.CENTER);
@@ -176,12 +173,15 @@ public class ShapeFactory {
 		makeNodeMouseHandler(group);
 		return group;
 	}
- 
-	
 	public Label createLabel(String s, Color c) {
+		Label label = createLabel(s);
+		label.setTextFill(c);
+		return label;
+	}
+	
+	public Label createLabel(String s) {
 		final Label text = new Label(s);
 		text.setFont(new Font(12));
-		text.setTextFill(c);
 //		text.setBoundsType(TextBoundsType.VISUAL);
 		text.setMouseTransparent(true);
 		return text;
@@ -194,7 +194,6 @@ public class ShapeFactory {
 		return makeNewShape(attrMap.get("type"), attrMap, false);
 	}
 
-	// -----------------------------------------------------------------------
 	private void setAttributes(Shape shape, AttributeMap map) {
 		// if (verbose>0) System.out.println(map.toString());
 		for (String k : map.keySet()) 
@@ -202,7 +201,7 @@ public class ShapeFactory {
 			String val = map.get(k);
 			k = k.toLowerCase();
 			if (k.equals("textlabel"))   
-				createLabel(val, map.getColor("Color"));
+				createLabel(val);
 			if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
 			if (k.equals("fontweight"))			;// TODO	k = "-fx-font-size"??;
 			if (k.equals("valign"))				;// TODO	
@@ -267,8 +266,9 @@ public class ShapeFactory {
 			}
 		}
 	}
-	//-----------------------------------------------------------------
+
 	private void parsePolygonPoints(Polygon poly, String string) {	parsePoints(poly.getPoints(), string);	}
+
 	private void parsePolylinePoints(Polyline poly, String string) {parsePoints(poly.getPoints(), string);	}
 
 	private void parsePoints(ObservableList<Double> points, String string) {
@@ -318,7 +318,7 @@ public class ShapeFactory {
 	private void handleDrop(Shape s, DragEvent e) {
 		Dragboard db = e.getDragboard();
 		Set<DataFormat> formats = db.getContentTypes();
-//		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
+		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
 		Shape shape = (Shape) e.getTarget();
 		if (db.hasString()) {
 			String q = db.getString();
@@ -329,7 +329,7 @@ public class ShapeFactory {
 				if (sel.isSelected(shape))
 					sel.setAttributes(attrMap);
 			}
-//			System.out.println(q);
+			System.out.println(q);
 		}
 
 		if (db.hasFiles()) {
@@ -339,13 +339,13 @@ public class ShapeFactory {
 //				int offset = 0;
 				for (File f : files) {
 //					offset += 20;
-//					System.out.println("File: " + f.getAbsolutePath());
+					System.out.println("File: " + f.getAbsolutePath());
 					if (FileUtil.isCSS(f)) {
 						StringBuilder buff = new StringBuilder();
 						FileUtil.readFileIntoBuffer(f, buff);
 						String styl = buff.toString();
 						shape.getStyleClass().add(styl);
-//						System.out.println("S: " + styl);
+						System.out.println("S: " + styl);
 
 					}
 				}
@@ -380,7 +380,7 @@ public class ShapeFactory {
 				dragging = false;
 				startPoint = RectangleUtil.oppositeCorner(event);
 				undoStack.push(ActionType.Resize);
-//				System.out.println("Pressed: " + currentPoint + " is opposite " + startPoint.toString());
+				System.out.println("Pressed: " + currentPoint + " is opposite " + startPoint.toString());
 			}
 		}
 
@@ -766,7 +766,7 @@ public class ShapeFactory {
 		private Pane getPane() 				{	return drawLayer.getPane();		}
 		private Controller getController() 	{	return drawLayer.getController();		}
 
-		protected int verbose = 0;
+		protected int verbose = 3;
 		protected boolean dragging = false;
 		protected boolean resizing = false;
 		protected EventTarget target;

@@ -41,6 +41,10 @@ public class Arrow extends Polygon {
         init();
         setPosition(line.getEndX(), line.getEndY());
     }
+   
+    public Arrow(  Line aline, float d) {
+        this(aline, d, Color.BLACK);
+    }
 
     public void setPosition(double x, double y)
     {
@@ -90,5 +94,3 @@ public class Arrow extends Polygon {
 		rotZ.setAngle(angle + offset);
     }
 }
-
-

@@ -10,7 +10,6 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 
 import animation.BorderPaneAnimator;
-import database.forms.EntrezForm;
 import database.forms.EntrezQuery;
 import diagrams.draw.Action.ActionType;
 import diagrams.draw.gpml.BiopaxRef;
@@ -275,9 +274,9 @@ public class Controller implements Initializable
 		setupPalette();
 		setupListviews();
 		setupZoomView();
-		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 80);
+		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
 		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
-		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 100);
+		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 300);
 		new BorderPaneRulers(drawContainer, toggleRulerButton);
 		pasteboard.makeGrid(toggleGridButton, scrollPane);
 
@@ -971,4 +970,5 @@ public class Controller implements Initializable
 				refTable.getSelectionModel().select(biopax);
 	}
 	
+
 }

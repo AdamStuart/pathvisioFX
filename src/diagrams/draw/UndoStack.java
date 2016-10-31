@@ -106,4 +106,3 @@ public class UndoStack
 //		push(ActionType.New);
 	}
 }
-

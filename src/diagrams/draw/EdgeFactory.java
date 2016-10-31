@@ -61,6 +61,7 @@ public class EdgeFactory {
 			if (endNode != null) 
 				return new Edge(startNode, endNode, attrMap, points);			
 		}
+
 		Edge edge = new Edge(attrMap, points);
 
 		return edge;

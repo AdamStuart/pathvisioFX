@@ -64,8 +64,7 @@ public class Selection
 			selectedProperty = new SimpleBooleanProperty(Boolean.TRUE);
 			properties.put("selected", selectedProperty );
 		}
-		else selectedProperty.set(Boolean.TRUE);	
-		
+		else selectedProperty.set(Boolean.TRUE);			
 		Object ref =  properties.get("BiopaxRef");
 		if (ref != null)
 			getController().hiliteByReference("" + ref);
@@ -184,6 +183,7 @@ public class Selection
 		else if (key == KeyCode.RIGHT)	dx = -amount;
 		else if (key == KeyCode.UP)	dy = amount;
 		else if (key == KeyCode.DOWN)	dy = -amount;
+
 		translate(dx, dy);
 	}	
 	

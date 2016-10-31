@@ -337,3 +337,4 @@ public class Edge extends Group {
 		return builder.toString();
 	}
 }
+

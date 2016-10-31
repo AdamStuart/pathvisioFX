@@ -65,5 +65,4 @@ import javafx.stage.Stage;
 	 * 
 	 * Actual instances are created in ShapeFactory and NodeFactory
 	 */
-
 }

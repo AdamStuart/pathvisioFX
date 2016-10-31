@@ -1,5 +1,4 @@
 package diagrams.draw.gpml;
-
 import org.w3c.dom.NamedNodeMap;
 
 import javafx.beans.property.SimpleStringProperty;

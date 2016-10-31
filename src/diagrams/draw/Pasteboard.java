@@ -698,6 +698,7 @@ public class Pasteboard
 	public Paint getDefaultStroke()			{		return defaultStroke;	}
 	public void setDefaultFill(Paint p)		{		defaultFill = p;	}
 	public void setDefaultStroke(Paint p)	{		defaultStroke = p;	}
+
 	
 }
 

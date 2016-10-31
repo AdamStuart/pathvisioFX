@@ -281,6 +281,7 @@
       </BorderPane>
    </center>
    <bottom>
+<<<<<<< HEAD
        <TableView fx:id="refTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <columns>
           <TableColumn fx:id="refCol" prefWidth="50" text="#" />
@@ -338,3 +339,46 @@
          </padding>
       </HBox>
  -->
+=======
+      <HBox fx:id="bottomDash" maxHeight="100.0" minHeight="50.0" prefHeight="100" spacing="25.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox>
+               <children>
+                  <Label text="Translate" />
+                  <Slider fx:id="translateX" blockIncrement="250.0" majorTickUnit="250.0" max="500.0" min="-500.0" showTickLabels="true" showTickMarks="true" />
+                  <Slider fx:id="translateY" blockIncrement="100.0" layoutX="10.0" layoutY="26.0" majorTickUnit="250.0" max="500.0" min="-500.0" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </VBox>
+            <VBox layoutX="20.0" layoutY="10.0">
+               <children>
+                  <Label text="Scale" />
+                  <Slider fx:id="scale" blockIncrement="1.0" majorTickUnit="1.0" max="2.0" min="-2.0" minorTickCount="1" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </VBox>
+            <VBox>
+               <children>
+                  <Label text="Animation Frame" />
+                  <Slider majorTickUnit="5.0" max="20.0" maxHeight="32.0" minHeight="32.0" minorTickCount="5" prefHeight="32.0" prefWidth="195.0" showTickLabels="true" showTickMarks="true" snapToTicks="true" />
+               </children>
+            </VBox>
+            <VBox prefHeight="86.0" prefWidth="244.0" spacing="10.0">
+               <children>
+                  <Label fx:id="status1" text="Label" />
+                  <Label fx:id="status2" text="Label" />
+                  <Label fx:id="status3" text="Label" />
+               </children>
+               <padding>
+                  <Insets left="5.0" />
+               </padding>
+               <HBox.margin>
+                  <Insets left="10.0" top="6.0" />
+               </HBox.margin>
+            </VBox>
+         </children>
+         <padding>
+            <Insets left="10.0" />
+         </padding>
+      </HBox>
+   </bottom>
+</BorderPane>
+>>>>>>> branch 'master' of git@github.com:AdamStuart/pathvisioFX.git

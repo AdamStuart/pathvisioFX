@@ -184,6 +184,8 @@ public class GPML {
 
 	public static String dataNodeToGPML(Node node)
 	{
+		if (node instanceof Edge) 
+			return edgeToGPML((Edge) node);
 		ObservableMap<Object, Object> pro = node.getProperties();
 		Object o = pro.get("TextLabel");
 		String textLabel = o == null ? "" : o.toString();
@@ -193,7 +195,9 @@ public class GPML {
 		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, node.getId(), type));
 		String basic = node.toString();
 		basic = StringUtil.chopLast(basic);		// chop off "]"
-		String shape = basic.substring(0, basic.indexOf("["));
+		int idx = basic.indexOf("[");
+
+		String shape = basic.substring(0, idx);
 		basic = basic.replaceAll(",", "");		// strip commas
 		double w = node.getLayoutBounds().getWidth();
 		double h = node.getLayoutBounds().getHeight();
@@ -298,4 +302,5 @@ public class GPML {
 		l = new Edge(e, d).getPolyline();
 		return new Node[] { a,b,c,d,e,f,g,h,i,j,k,l };
 	}
+
 }
