@@ -380,16 +380,9 @@ public class Controller implements Initializable
 
 		
 	}
-	private void getInfo(int idx) {
-		stage = new Stage();
-		try 
-		{
-		   String rowName = "" + idx;
-		   if (idx >=0 && references.size() > idx)
-			   	rowName = references.get(idx).getId();
-		  
-		   
-		   String text = EntrezQuery.getPubMedId(rowName);			// TODO move to libFX
+	private void getInfo(String pmid)
+	{
+		   String text = EntrezQuery.getPubMedId(pmid);			// TODO move to libFX
 		   if (StringUtil.hasText(text))
 		   {  
 //			   StringBuilder builder = new StringBuilder();
@@ -401,20 +394,34 @@ public class Controller implements Initializable
 			   a.showAndWait();
 		   }
 		   
-		   
-		   stage.setTitle("Information: " + rowName );
-			FXMLLoader fxmlLoader = new FXMLLoader();
-			String fullname = "webview.fxml";
-		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
-		    if (url == null)
-		    {
-		    	System.err.println("Bad path to the FXML file");
-		    	return;
-		    }
-		    fxmlLoader.setLocation(url);
-		    VBox appPane =  fxmlLoader.load();
-		    stage.setScene(new Scene(appPane, 600, 400));
-		    stage.show();
+		
+	}
+	
+	
+	private void getInfo(int idx) {
+		try 
+		{
+		   String rowName = "" + idx;
+		   if (idx >=0 && references.size() > idx)
+			   	rowName = references.get(idx).getId();
+		   getInfo(rowName);
+		   return;
+//		   
+//			   
+//			stage = new Stage();
+//		   stage.setTitle("Information: " + rowName );
+//			FXMLLoader fxmlLoader = new FXMLLoader();
+//			String fullname = "webview.fxml";
+//		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
+//		    if (url == null)
+//		    {
+//		    	System.err.println("Bad path to the FXML file");
+//		    	return;
+//		    }
+//		    fxmlLoader.setLocation(url);
+//		    VBox appPane =  fxmlLoader.load();
+//		    stage.setScene(new Scene(appPane, 600, 400));
+//		    stage.show();
 		}
 		catch (Exception e) { e.printStackTrace();}
 
@@ -968,6 +975,15 @@ public class Controller implements Initializable
 		for (BiopaxRef biopax : references)
 			if (ref.equals(biopax.getXrefid()))
 				refTable.getSelectionModel().select(biopax);
+	}
+	public void openByReference(String ref) {
+		for (BiopaxRef biopax : references)
+			if (ref.equals(biopax.getXrefid()))
+			{
+				String pmid = biopax.getId();
+				if (StringUtil.hasText(pmid))
+					getInfo(pmid);
+			}
 	}
 	
 

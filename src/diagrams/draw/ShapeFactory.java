@@ -355,6 +355,20 @@ public class ShapeFactory {
 	}
 
 	// **-------------------------------------------------------------------------------
+
+	private void doDoubleClick(final MouseEvent event) {
+		
+		EventTarget target = event.getTarget();
+		if (target instanceof Rectangle)
+		{
+			Rectangle rect = (Rectangle) target;
+			Object obj = rect.getProperties().get("BiopaxRef");
+			if (obj instanceof String)
+			{
+				drawLayer.getController().openByReference("" + obj);
+			}
+		}
+	}
 	// **-------------------------------------------------------------------------------
 	// SHAPE MOUSE HANDLERS
 
@@ -373,6 +387,10 @@ public class ShapeFactory {
 			if (((Node) event.getTarget()).getParent() instanceof Group)
 				return;
 			super.handleMousePressed(event);
+			if (event.getClickCount() > 1) {
+				doDoubleClick(event);
+				return;
+			}
 			startPoint = currentPoint;
 
 			if (RectangleUtil.inCorner(event)) {

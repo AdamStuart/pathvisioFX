@@ -92,14 +92,20 @@ public class NodeFactory
 	 */
 	public Node parseGPML(org.w3c.dom.Node datanode) {
 		AttributeMap attrMap = new AttributeMap();
-		NodeList elems = datanode.getChildNodes();
 		attrMap.add(datanode.getAttributes());
+		NodeList elems = datanode.getChildNodes();
 		for (int i=0; i<elems.getLength(); i++)
 		{
 			org.w3c.dom.Node child = elems.item(i);
 			String name = child.getNodeName();
-			if (name.equals("#text")) continue;
-			attrMap.add(child.getAttributes());
+			if ("#text".equals(name)) continue;
+			if ("BiopaxRef".equals(name))
+			{
+				String ref = child.getTextContent();
+				if (!StringUtil.isEmpty(ref))
+					attrMap.put("BiopaxRef", ref);
+			}
+			attrMap.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
 		}
 		String type = attrMap.get("Type");
@@ -109,6 +115,7 @@ public class NodeFactory
 		if (tool == null) return null;
 		if (tool.isShape())
 			return shapeFactory.makeNewShape(tool, attrMap);
+		
 		if (Tool.isSVG(type))
 			return makeNewSVGPane(attrMap);
 		return makeNewNode(tool, attrMap);
@@ -362,6 +369,7 @@ public class NodeFactory
 		if (FileUtil.isGPML(f))			new GPML(getController()).addFile(f);
 		return null;
 	}
+	// **-------------------------------------------------------------------------------
 	private StackPane makeSVGPath(AttributeMap attrs) {
 		String path = attrs.get("file");
 		if (path != null)
@@ -817,7 +825,8 @@ public class NodeFactory
 			if ("Marquee".equals(n.getId()))	continue;
 			String text = Model.describe(n);
 			int idx = text.indexOf("GraphId=");
-			if (idx < 0) continue;			// FIXME: nodes read in from file don't have id
+			if (idx < 0) continue;							// FIXME: nodes read in from file don't have id
+
 			int idStart = idx+ "GraphId=\"".length();		// inject a new id into the string
 			int idEnd = text.indexOf("\"", idStart );
 			String oldId = text.substring(idStart, idEnd);
