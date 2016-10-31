@@ -77,6 +77,7 @@ import javafx.util.Callback;
 import model.AttributeMap;
 import model.AttributeValue;
 import model.RandomAttributeValueData;
+import util.FileUtil;
 import util.StringUtil;
 
 
@@ -107,7 +108,7 @@ public class Controller implements Initializable
 	@FXML private TableColumn<AttributeValue, String> valueCol;
 //	@FXML private AnchorPane zoomAnchor;
 	@FXML private BorderPane container;			// root of fxml
-	@FXML private BorderPane drawContainer;			// rulers and content
+//	@FXML private BorderPane drawContainer;			// rulers and content
 	public ListView<Node> getResourceListView()		{		return resourceListView;	}
 	
 	
@@ -122,10 +123,10 @@ public class Controller implements Initializable
 	@FXML private Button tableOptions;
 
 	
-	@FXML private Button bottomSideBarButton;
+//	@FXML private Button bottomSideBarButton;
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
-	@FXML private Button toggleRulerButton;
+//	@FXML private Button toggleRulerButton;
 	@FXML private Button toggleGridButton;
 	
 	@FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
@@ -184,9 +185,9 @@ public class Controller implements Initializable
 	@FXML private void close()			
 	{ 
 		doc.close();	
-		if (drawContainer != null)
+		if (drawPane != null)
 		{
-			Window w = drawContainer.getScene().getWindow();
+			Window w = drawPane.getScene().getWindow();
 			if (w instanceof Stage)
 				((Stage) w).close();
 		}
@@ -253,7 +254,7 @@ public class Controller implements Initializable
 		drawPane.getStylesheets().add(cssURL);
 		stage = App.getInstance().getStage();
 //		drawContainer.setBorder(Borders.etchedBorder);
-		drawContainer.setOnScroll(ev -> {
+		scrollPane.setOnScroll(ev -> {
 			ev.consume();
 	        if (ev.getDeltaY() == 0)   return;	
 //	        double scaleFactor = (ev.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
@@ -276,8 +277,8 @@ public class Controller implements Initializable
 		setupZoomView();
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
 		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
-		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 300);
-		new BorderPaneRulers(drawContainer, toggleRulerButton);
+//		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 300);
+//		new BorderPaneRulers(drawContainer, toggleRulerButton);
 		pasteboard.makeGrid(toggleGridButton, scrollPane);
 
 		boolean startWithShapes = false;
@@ -623,8 +624,8 @@ public class Controller implements Initializable
 
 		setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
-		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
-		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
+//		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
+//		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
 		setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
 	// **-------------------------------------------------------------------------------
@@ -984,6 +985,42 @@ public class Controller implements Initializable
 				if (StringUtil.hasText(pmid))
 					getInfo(pmid);
 			}
+	}
+	public void assignDataFile(File f) {
+			System.out.println("assignDataFile");		
+			List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
+			for (String s : lines)
+			{
+				String[] parts = s.split("\t");
+				if (parts.length == 2)
+				{
+					Node node = model.getResourceByKey(parts[0]);
+					if (node != null)
+						node.getProperties().put("value", parts[1]);
+				}
+			}
+			setColorByValue();
+	}
+	private void setColorByValue() {
+//		clearColors();
+		for (Node node : model.getResourceMap().values())
+		{
+			Object val = node.getProperties().get("value");
+			if (val != null)
+			{
+				double d = StringUtil.toDouble("" + val);
+				if (!Double.isNaN(d) && 0 <= d && 1 >= d)
+				{
+					Color gray = new Color(d,d,d, 1);
+					if (node instanceof Shape)
+						((Shape) node).setFill(gray);
+				}
+			}
+		}
+	}	
+		private void clearColors() {
+			for (Node node : model.getResourceMap().values())
+				node.getProperties().remove("value");
 	}
 	
 

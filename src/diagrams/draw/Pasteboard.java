@@ -169,8 +169,10 @@ public class Pasteboard
 				int offset = 0;
 				for (File f : files)
 				{
-					if (FileUtil.isCSS(f))		// css files are added to the Scene
+					if (FileUtil.isCSS(f))					// css files are added to the Scene
 						controller.addStylesheet(f);
+					else if (FileUtil.isDataFile(f))		// data files are applied to the nodes
+							controller.assignDataFile(f);
 					else
 					{
 						offset += 20;

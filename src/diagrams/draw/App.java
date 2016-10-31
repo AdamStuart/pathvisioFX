@@ -6,7 +6,7 @@ import java.net.URL;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.SplitPane;
 import javafx.stage.Stage;
 
 //---------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ import javafx.stage.Stage;
 		    	return;
 		    }
 		    fxmlLoader.setLocation(url);
-		    BorderPane appPane =  fxmlLoader.load();
+		    SplitPane appPane =  fxmlLoader.load();
 		    stage.setScene(new Scene(appPane, 1000, 800));
 		    stage.show();
 		}

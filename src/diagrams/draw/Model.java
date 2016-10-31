@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import diagrams.draw.Action.ActionType;
 import diagrams.draw.gpml.GPML;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -38,6 +39,7 @@ public class Model
 	private List<Edge> edgeTable;
 	private ListView<Edge> edgeListView;
 	
+	public Map<String, Node> getResourceMap() {		return resourceMap;	}
 	public Controller getController() { return controller; } 
 	private Scene getScene()		{ 	return getController().getPasteboard().getPane().getScene();  }
 	public Node find(String id)		{	return getScene().lookup(id);	}
@@ -134,6 +136,19 @@ public class Model
 			refresh();
 		}
 	}
+	public Node getResourceByKey(String key)				
+	{
+		 if (key == null) return null;
+		 for (Node n : resourceMap.values())
+		 {
+			 String name = "" +n.getProperties().get("TextLabel");
+			if (name.equals(key)) return n;
+		 }
+		 Node n = resourceMap.get(key);	
+		 return n;
+	}
+
+	
 	public Node getResource(String key)				
 	{
 		 if (key == null) return null;
