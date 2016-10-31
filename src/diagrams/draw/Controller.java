@@ -390,7 +390,7 @@ public class Controller implements Initializable
 			   	rowName = references.get(idx).getId();
 		  
 		   
-		   String text = EntrezQuery.getPubMedId(rowName);
+		   String text = EntrezQuery.getPubMedId(rowName);			// TODO move to libFX
 		   if (StringUtil.hasText(text))
 		   {  
 //			   StringBuilder builder = new StringBuilder();
