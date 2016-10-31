@@ -98,7 +98,13 @@ public class NodeFactory
 		{
 			org.w3c.dom.Node child = elems.item(i);
 			String name = child.getNodeName();
-			if (name.equals("#text")) continue;
+			if ("#text".equals(name)) continue;
+			if ("BiopaxRef".equals(name))
+			{
+				String ref = child.getTextContent();
+				if (!StringUtil.isEmpty(ref))
+					attrMap.put("BiopaxRef", ref);
+			}
 			attrMap.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
 		}
@@ -363,6 +369,7 @@ public class NodeFactory
 		if (FileUtil.isGPML(f))			new GPML(getController()).addFile(f);
 		return null;
 	}
+	// **-------------------------------------------------------------------------------
 	private StackPane makeSVGPath(AttributeMap attrs) {
 		String path = attrs.get("file");
 		if (path != null)
@@ -818,7 +825,7 @@ public class NodeFactory
 			if ("Marquee".equals(n.getId()))	continue;
 			String text = Model.describe(n);
 			int idx = text.indexOf("GraphId=");
-			if (idx < 0) continue;			// FIXME: nodes read in from file don't have id
+			if (idx < 0) continue;							// FIXME: nodes read in from file don't have id
 			int idStart = idx+ "GraphId=\"".length();		// inject a new id into the string
 			int idEnd = text.indexOf("\"", idStart );
 			String oldId = text.substring(idStart, idEnd);

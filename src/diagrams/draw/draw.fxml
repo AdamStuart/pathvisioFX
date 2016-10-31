@@ -281,7 +281,24 @@
       </BorderPane>
    </center>
    <bottom>
-      <HBox fx:id="bottomDash" maxHeight="100.0" minHeight="50.0" prefHeight="100" spacing="25.0" BorderPane.alignment="CENTER">
+       <TableView fx:id="refTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn fx:id="refCol" prefWidth="50" text="#" />
+             <TableColumn fx:id="yearCol" prefWidth="55" text="Year" />
+          <TableColumn fx:id="authorCol" prefWidth="200.0" text="Authors" />
+            <TableColumn fx:id="titleCol" prefWidth="400" text="Title" />
+            <TableColumn fx:id="sourceCol" prefWidth="150" text="Source" />
+            <TableColumn fx:id="idCol" prefWidth="100" text="ID" />
+            <TableColumn fx:id="dbCol" prefWidth="45.0" text="Database" />
+        </columns>
+      </TableView>
+    </bottom>
+</BorderPane>
+
+<!-- 
+
+
+     <HBox fx:id="bottomDash" maxHeight="100.0" minHeight="50.0" prefHeight="100" spacing="25.0" BorderPane.alignment="CENTER">
          <children>
             <VBox>
                <children>
@@ -320,5 +337,4 @@
             <Insets left="10.0" />
          </padding>
       </HBox>
-   </bottom>
-</BorderPane>
+ -->

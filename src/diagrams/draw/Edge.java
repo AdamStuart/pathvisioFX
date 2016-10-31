@@ -192,6 +192,7 @@ public class Edge extends Group {
 //----------------------------------------------------------------------
 	private void elbowConnect() {
 		polyline.getPoints().clear();
+		line.setVisible(false);
 		int sz  = points.size();
 		for (int i = 0; i < sz - 1; i++) {
 			GPMLPoint current = points.get(i);

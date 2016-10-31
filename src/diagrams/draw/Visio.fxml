@@ -23,8 +23,7 @@
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 
-
-<BorderPane fx:id="container" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.draw.Controller">
+<BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.draw.Controller">
    <top>
       <HBox BorderPane.alignment="CENTER">
          <children>
@@ -292,10 +291,9 @@
             </HBox>
             <Label layoutX="10.0" layoutY="360.0" text="Weight" />
             <Slider fx:id="weight" blockIncrement="2.0" majorTickUnit="5.0" max="30.0" minorTickCount="1" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" value="1.0" />
-            <Label text="Opacity" />
-            <Slider fx:id="opacity" layoutX="10.0" layoutY="329.0" majorTickUnit="20.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" />
             <Label layoutX="10.0" layoutY="363.0" text="Rotate" />
             <Slider fx:id="rotation" layoutX="10.0" layoutY="389.0" majorTickUnit="20.0" max="180.0" min="-180.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" />
+            <Button fx:id="tableOptions" mnemonicParsing="false" text="Button" />
          </children>
          <padding>
             <Insets left="4.0" top="4.0" />
@@ -317,4 +315,17 @@
          </center>
       </BorderPane>
    </center>
+   <bottom>
+       <TableView fx:id="refTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn fx:id="refCol" prefWidth="50" text="#" />
+             <TableColumn fx:id="yearCol" prefWidth="55" text="Year" />
+          <TableColumn fx:id="authorCol" prefWidth="200.0" text="Authors" />
+            <TableColumn fx:id="titleCol" prefWidth="400" text="Title" />
+            <TableColumn fx:id="sourceCol" prefWidth="150" text="Source" />
+            <TableColumn fx:id="idCol" prefWidth="100" text="ID" />
+            <TableColumn fx:id="dbCol" prefWidth="45.0" text="Database" />
+        </columns>
+      </TableView>
+    </bottom>
 </BorderPane>

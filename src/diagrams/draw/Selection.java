@@ -65,6 +65,11 @@ public class Selection
 			properties.put("selected", selectedProperty );
 		}
 		else selectedProperty.set(Boolean.TRUE);	
+		
+		Object ref =  properties.get("BiopaxRef");
+		if (ref != null)
+			getController().hiliteByReference("" + ref);
+			
 	}
 	
 	public void select(Node s, boolean b)	{  if (b) select(s); else deselect(s);	}

@@ -10,6 +10,8 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 
 import animation.BorderPaneAnimator;
+import database.forms.EntrezForm;
+import database.forms.EntrezQuery;
 import diagrams.draw.Action.ActionType;
 import diagrams.draw.gpml.BiopaxRef;
 import diagrams.draw.gpml.GPML;
@@ -22,19 +24,25 @@ import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ColorPicker;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -53,13 +61,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.BorderStroke;
-import javafx.scene.layout.BorderStrokeStyle;
-import javafx.scene.layout.BorderWidths;
-import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -76,10 +78,13 @@ import javafx.util.Callback;
 import model.AttributeMap;
 import model.AttributeValue;
 import model.RandomAttributeValueData;
+import util.StringUtil;
 
 
 public class Controller implements Initializable
 {
+    private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
+
 	//@formatter:off
 	private Model model;
 	public Model getDrawModel()   		{ 		return model;  }
@@ -105,6 +110,18 @@ public class Controller implements Initializable
 	@FXML private BorderPane container;			// root of fxml
 	@FXML private BorderPane drawContainer;			// rulers and content
 	public ListView<Node> getResourceListView()		{		return resourceListView;	}
+	
+	
+	@FXML private TableView<BiopaxRef> refTable;
+	@FXML private TableColumn<BiopaxRef, String> refCol;
+	@FXML private TableColumn<BiopaxRef, String> idCol;
+	@FXML private TableColumn<BiopaxRef, String> dbCol;
+	@FXML private TableColumn<BiopaxRef, String> authorCol;
+	@FXML private TableColumn<BiopaxRef, String> titleCol;
+	@FXML private TableColumn<BiopaxRef, String> sourceCol;
+	@FXML private TableColumn<BiopaxRef, String> yearCol;
+	@FXML private Button tableOptions;
+
 	
 	@FXML private Button bottomSideBarButton;
 	@FXML private Button leftSideBarButton;
@@ -133,17 +150,17 @@ public class Controller implements Initializable
 	@FXML private ColorPicker fillColor;
 	@FXML private ColorPicker lineColor;
 	@FXML private Slider weight;
-	@FXML private Slider opacity;
+//	@FXML private Slider opacity;
 	@FXML private Slider rotation;
-	@FXML private Label status1;
-	@FXML private Label status2;
-	@FXML private Label status3;
+//	@FXML private Label status1;
+//	@FXML private Label status2;
+//	@FXML private Label status3;
 	@FXML private Label strokeLabel;
 	@FXML private Label fillLabel;
 	
-	@FXML private Slider translateX;			// debug fns for zoom view
-	@FXML private Slider translateY;			// debug fns for zoom view
-	@FXML private Slider scale;
+//	@FXML private Slider translateX;			// debug fns for zoom view
+//	@FXML private Slider translateY;			// debug fns for zoom view
+//	@FXML private Slider scale;
 	//-------------------------------------------------------------
 	@FXML private MenuItem undo;
 	@FXML private MenuItem redo;
@@ -215,6 +232,7 @@ public class Controller implements Initializable
 	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
 	public Selection getSelectionManager() 		{ 	return pasteboard.getSelectionMgr();  }
 	public ObservableList<Node> getSelection() 	{ 	return getSelectionManager().getAll();  }
+	Stage stage;
 
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
@@ -231,19 +249,20 @@ public class Controller implements Initializable
 		paletteGroup = new ToggleGroup();
 		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
 		bindInspector();
+		setupBiopaxTable();
 		String cssURL = this.getClass().getResource("draw.css").toExternalForm();
 		drawPane.getStylesheets().add(cssURL);
-		
+		stage = App.getInstance().getStage();
 //		drawContainer.setBorder(Borders.etchedBorder);
 		drawContainer.setOnScroll(ev -> {
 			ev.consume();
 	        if (ev.getDeltaY() == 0)   return;	
-	        double scaleFactor = (ev.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
-	        if (scale.valueProperty().get() == 1)
-	        {
-	        	scale.valueProperty().set(0.9);
-	        }
-	        scale.valueProperty().set(scale.valueProperty().get() * scaleFactor);
+//	        double scaleFactor = (ev.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
+//	        if (scale.valueProperty().get() == 1)
+//	        {
+//	        	scale.valueProperty().set(0.9);
+//	        }
+//	        scale.valueProperty().set(scale.valueProperty().get() * scaleFactor);
 //	        drawContainer.setScaleX(drawContainer.getScaleX() * scaleFactor);
 //	        drawContainer.setScaleY(drawContainer.getScaleY() * scaleFactor);
 		});
@@ -268,6 +287,155 @@ public class Controller implements Initializable
 		
         new Thread(() ->
            Platform.runLater(() -> { refreshZoomPane(); })).start();    
+	}
+	static TableRow<BiopaxRef> thisRow = null;
+	private void setupBiopaxTable() {
+		
+		TableColumn[] allCols = { refCol, idCol, dbCol, authorCol, titleCol, sourceCol, yearCol };
+
+		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("xrefid"));
+		idCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("id"));
+		dbCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("db"));
+		authorCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("authors"));
+		titleCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("title"));
+		sourceCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("source"));
+		yearCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("year"));
+
+		refTable.setRowFactory(tv -> {
+	        TableRow<BiopaxRef> row = new TableRow<>();
+
+	        row.setOnDragDetected(event -> {
+	            if (! row.isEmpty()) {
+	                Integer index = row.getIndex();
+	                Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
+	                db.setDragView(row.snapshot(null, null));
+	                ClipboardContent cc = new ClipboardContent();
+	                cc.put(SERIALIZED_MIME_TYPE, index);
+	                db.setContent(cc);
+	                event.consume();
+	                thisRow = row;
+	            }
+	        });
+
+	        row.setOnDragEntered(event -> {
+	            Dragboard db = event.getDragboard();
+	            if (db.hasContent(SERIALIZED_MIME_TYPE)) {
+	                if (row.getIndex() != ((Integer)db.getContent(SERIALIZED_MIME_TYPE)).intValue()) {
+	                    event.acceptTransferModes(TransferMode.MOVE);
+	                    event.consume();
+	                    thisRow = row;
+//	                  if (thisRow != null) 
+//	                 	   thisRow.setOpacity(0.3);
+	                }
+	            }
+	        });
+
+	        row.setOnDragExited(event -> {
+	            if (event.getGestureSource() != thisRow &&
+	                    event.getDragboard().hasString()) {
+//	               if (thisRow != null) 
+//	            	   thisRow.setOpacity(1);
+	               thisRow = null;
+	            }
+	        });
+
+	        row.setOnDragOver(event -> {
+	            Dragboard db = event.getDragboard();
+	            if (db.hasContent(SERIALIZED_MIME_TYPE)) {
+	                if (row.getIndex() != ((Integer)db.getContent(SERIALIZED_MIME_TYPE)).intValue()) {
+	                    event.acceptTransferModes(TransferMode.MOVE);
+	                    event.consume();
+	                }
+	            }
+	        });
+
+	        row.setOnMouseClicked(event -> {
+	        	if (event.getClickCount() == 2)
+	            {
+	                int idx = row.getIndex();
+	        		getInfo(idx);
+	              event.consume();
+	            }
+	        });
+
+	        row.setOnDragDropped(event -> {
+	            Dragboard db = event.getDragboard();
+	            if (db.hasContent(SERIALIZED_MIME_TYPE)) {
+	                int draggedIndex = (Integer) db.getContent(SERIALIZED_MIME_TYPE);
+	                BiopaxRef draggedNode = refTable.getItems().remove(draggedIndex);
+
+	                int  dropIndex = (row.isEmpty()) ? refTable.getItems().size() : row.getIndex();
+	                refTable.getItems().add(dropIndex, draggedNode);
+
+	                event.setDropCompleted(true);
+	                refTable.getSelectionModel().select(dropIndex);
+	                event.consume();
+//	                if (thisRow != null) 
+//	             	   thisRow.setOpacity(1);
+	                thisRow = null;
+	            }
+	        });
+
+	        return row ;
+	    });
+
+		
+	}
+	private void getInfo(int idx) {
+		stage = new Stage();
+		try 
+		{
+		   String rowName = "" + idx;
+		   if (idx >=0 && references.size() > idx)
+			   	rowName = references.get(idx).getId();
+		  
+		   
+		   String text = EntrezQuery.getPubMedId(rowName);
+		   if (StringUtil.hasText(text))
+		   {  
+//			   StringBuilder builder = new StringBuilder();
+//		   		EntrezForm.xmlToSummary( text, builder, null);  builder.toString()
+			   Alert a = new Alert(AlertType.INFORMATION, text);
+			   a.setHeaderText("PubMed Abstract");
+			   a.getDialogPane().setMinWidth(600);
+			   a.setResizable(true);
+			   a.showAndWait();
+		   }
+		   
+		   
+		   stage.setTitle("Information: " + rowName );
+			FXMLLoader fxmlLoader = new FXMLLoader();
+			String fullname = "webview.fxml";
+		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
+		    if (url == null)
+		    {
+		    	System.err.println("Bad path to the FXML file");
+		    	return;
+		    }
+		    fxmlLoader.setLocation(url);
+		    VBox appPane =  fxmlLoader.load();
+		    stage.setScene(new Scene(appPane, 600, 400));
+		    stage.show();
+		}
+		catch (Exception e) { e.printStackTrace();}
+
+		
+	}
+
+	final ContextMenu tableColumnOptions = new ContextMenu();
+
+	private void populateTableOptions() {
+		String[] colnames = new String[] { "Id", "Reference", "Database", "Authors", "Title", "Source", "Year" };
+		for (String c : colnames)
+			tableColumnOptions.getItems().add(new CheckMenuItem(c));
+	}
+	// ------------------------------------------------------
+
+	private void doTableOptionsPopup()
+	{
+		tableColumnOptions.setX(tableOptions.getLayoutX() + stage.getX() - 60); 
+		tableColumnOptions.setY(tableOptions.getLayoutY() + stage.getY()+ 40);
+		tableColumnOptions.show(stage);
 	}
 	//-----------------------------------------------------------------------
 	@FXML private void doAbout()
@@ -404,7 +572,7 @@ public class Controller implements Initializable
 //		
 		// binding sliders to drawPane's scale and offset
 		
-		scale.valueProperty().addListener((ov, old, val) ->  {
+/*		scale.valueProperty().addListener((ov, old, val) ->  {
             	double scale = Math.pow(2, (double) val);
     			drawPane.setScaleX(scale); 	
     			drawPane.setScaleY(scale); 	
@@ -413,15 +581,15 @@ public class Controller implements Initializable
 		translateX.valueProperty().addListener((ov, old, val) ->  {
 				drawPane.setTranslateX((double) val);  
 				if (zoomView != null) zoomView.zoomChanged();
-    			status2.setText(translateX.toString());
+//    			status2.setText(translateX.toString());
         });	
 		
 		translateY.valueProperty().addListener((ov, old, val) ->   {
 				drawPane.setTranslateY((double) val);  
 				if (zoomView != null) zoomView.zoomChanged();
-    			status3.setText(translateY.toString());
+//    			status3.setText(translateY.toString());
        });	
-
+*/
 	}
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
@@ -466,6 +634,11 @@ public class Controller implements Initializable
 		new GPML(this).read(doc);
 
 	}
+	public void updateTable() {
+		
+		refTable.setItems(references);
+	}
+
 	public void addComment(String key, String val) {
 		comments.add(key + ": " + val);
 		
@@ -479,10 +652,10 @@ public class Controller implements Initializable
 	}
 	
 	List<String> comments = new ArrayList<String>();
-	List<BiopaxRef> references = new ArrayList<BiopaxRef>();
+	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
 
-	public void addRef(BiopaxRef ref) {		references.add(ref);	}
-	public void clearRefs() {		references.clear();	}
+	public void addRef(BiopaxRef ref) 	{		references.add(ref);	}
+	public void clearRefs() 			{		references.clear();	}
 	//-----------------------------------------------------------------------------
 	@Deprecated
 	public void addState(String s)			// used in undo restore
@@ -519,8 +692,8 @@ public class Controller implements Initializable
 		
 		if (resourceListView != null)
 		{
-		resourceListView.setCellFactory(list ->  { return new DrawNodeCell();   });
-		resourceListView.setStyle(CSS_Gray2);
+			resourceListView.setCellFactory(list ->  { return new DrawNodeCell();   });
+			resourceListView.setStyle(CSS_Gray2);
 		}
 		
 		attributeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); //  multiple selection
@@ -588,13 +761,13 @@ public class Controller implements Initializable
 		fillColor.setOnAction(evt -> apply(true, fillColor));
 		lineColor.addEventHandler(ActionEvent.ACTION, evt -> apply(true, lineColor));
 
-		opacity.valueProperty().addListener((ov, old, val) ->   {  	apply(false, opacity);        });	
+//		opacity.valueProperty().addListener((ov, old, val) ->   {  	apply(false, opacity);        });	
 		weight.valueProperty().addListener((ov, old, val) ->    {   apply(false, weight);   });	
 		rotation.valueProperty().addListener((ov, old, val) ->  {   apply(false, rotation);  });	
 		
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
 		EventHandler<Event> evH = event -> {	undoStack.push(ActionType.Property);  };
-		opacity.setOnMousePressed(evH); 
+//		opacity.setOnMousePressed(evH); 
 		weight.setOnMousePressed(evH);
 		rotation.setOnMousePressed(evH);
 	}
@@ -609,7 +782,7 @@ public class Controller implements Initializable
 		String fillHex = "-fx-fill: #" + fill.toString().substring(2, 8) + ";\n";
 		String strokeHex = "-fx-stroke: #" + stroke.toString().substring(2, 8) + ";\n";
 		String wtStr = String.format("-fx-stroke-width: %.1f;\n", weight.getValue());
-		String opacStr = String.format("-fx-opacity: %.2f;\n", opacity.getValue());
+		String opacStr = ""; // String.format("-fx-opacity: %.2f;\n", opacity.getValue());
 		String rotStr = String.format("-fx-rotate: %.1f;\n", rotation.getValue());
 
 //		if (src == fillColor)		return fillHex;
@@ -660,7 +833,7 @@ public class Controller implements Initializable
 				fillColor.setValue((Color) fill);
 				lineColor.setValue((Color) stroke);
 				weight.setValue(wt);
-				opacity.setValue(100 * opac);
+//				opacity.setValue(100 * opac);
 				rotation.setValue(rot);
 			}
 			if (firstNode instanceof StackPane)
@@ -684,7 +857,7 @@ public class Controller implements Initializable
 				lineColor.setValue(stroke);
 				weight.setValue(wt);
 				rotation.setValue(rot);
-				opacity.setValue(100 * opac);
+//				opacity.setValue(100 * opac);
 			}
 			
 		}
@@ -698,7 +871,7 @@ public class Controller implements Initializable
 	// **-------------------------------------------------------------------------------
 	public void selectAll(ObservableList<Node> n)	{		getSelectionManager().selectAll(n);	}
 
-	public void setStatus(String s)					{ 		status1.setText(s);	}
+//	public void setStatus(String s)					{ 		status1.setText(s);	}
 	// **-------------------------------------------------------------------------------
 	public void add(Node n)							
 	{		
@@ -743,11 +916,11 @@ public class Controller implements Initializable
 	// **-------------------------------------------------------------------------------
 	public void reportStatus(String string)	
 	{		
-		status1.setText(string);	
+//		status1.setText(string);	
 		refreshZoomPane();
 	}
-	public void setStatus2(String status)	{	status2.setText(status);	}
-	public void setStatus3(String status)	{	status3.setText(status);	}
+//	public void setStatus2(String status)	{	status2.setText(status);	}
+//	public void setStatus3(String status)	{	status3.setText(status);	}
 	// **-------------------------------------------------------------------------------
 	public void addStylesheet(File f)
 	{
@@ -791,6 +964,11 @@ public class Controller implements Initializable
 	}
 
 	public void timeseries(TableView content)	{
+	}
+	public void hiliteByReference(String ref) {
+		for (BiopaxRef biopax : references)
+			if (ref.equals(biopax.getXrefid()))
+				refTable.getSelectionModel().select(biopax);
 	}
 	
 }

@@ -97,6 +97,7 @@ public class GPML {
 			}
 		}
 		handleBiopax(doc.getElementsByTagName("Biopax"));
+		controller.updateTable();
 		handleGroups(doc.getElementsByTagName("Groups"));
 		handleLabels(doc.getElementsByTagName("Label"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
@@ -107,6 +108,11 @@ public class GPML {
 			org.w3c.dom.Node child = edges.item(i);
 //			String name = child.getNodeName();
 //			System.out.println(name);
+			
+			if ("BiopaxRef".equals(child.getNodeName()))
+			{
+				
+			}
 			Edge edge = controller.getEdgeFactory().parseGPML(child);
 			if (edge != null)
 			{
@@ -135,8 +141,19 @@ public class GPML {
 			org.w3c.dom.Node child = elements.item(i);
 			String name = child.getNodeName();
 			System.out.println(name);
-			BiopaxRef ref = new BiopaxRef(child);
-			controller.addRef(ref);
+			
+			
+			for (int j=0; j<child.getChildNodes().getLength(); j++)
+			{
+				org.w3c.dom.Node gchild = child.getChildNodes().item(j);
+				String jname = gchild.getNodeName();
+//				System.out.println(name);
+				if ("bp:PublicationXref".equals(jname))
+				{
+					BiopaxRef ref = new BiopaxRef(gchild);
+					controller.addRef(ref);
+				}
+			}
 //			System.out.println(ref);					//TODO
 		}
 	}

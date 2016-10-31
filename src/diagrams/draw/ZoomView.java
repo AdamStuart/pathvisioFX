@@ -195,8 +195,8 @@ public class ZoomView
 		String status = String.format("%4.1f,\t %4.1f", x, y);
 		String dxdy = String.format("%4.1f,\t %4.1f", dx, dy);
 		controller.reportStatus(dxdy);
-		controller.setStatus2(status);
-		controller.setStatus3(rstatus);
+//		controller.setStatus2(status);
+//		controller.setStatus3(rstatus);
 //		double oldXscale = drawPane.getScaleX();
 //		double oldYscale = drawPane.getScaleY();
 //		drawPane.setScaleX(scaleX * oldXscale); 
