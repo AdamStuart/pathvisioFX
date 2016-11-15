@@ -35,7 +35,11 @@ public class GPML {
 	public void addFile(File f)
 	{
 		Document doc = FileUtil.openXML(f);
-		if (doc != null) read(doc);
+		if (doc != null) 
+		{
+			read(doc);
+			controller.finishRead();
+		}
 	}
 
 	//----------------------------------------------------------------------------
@@ -93,7 +97,7 @@ public class GPML {
 					add(node);
 					add(text);
 				}
-				else	controller.add(node);
+				else	add(node);
 			}
 		}
 		handleBiopax(doc.getElementsByTagName("Biopax"));
@@ -169,7 +173,10 @@ public class GPML {
 				add(label);
 		}
 	}
-	private void add(Node n)	{ controller.add(n);	}
+	private void add(Node n)	
+	{ 
+		controller.add(n);	
+	}
 	private NodeFactory getNodeFactory() {		return controller.getNodeFactory();	}
 	private void handleGroups(NodeList elements) {			//TODO
 		for (int i=0; i<elements.getLength(); i++)
@@ -184,8 +191,8 @@ public class GPML {
 
 	public static String dataNodeToGPML(Node node)
 	{
-		if (node instanceof Edge) 
-			return edgeToGPML((Edge) node);
+//		if (node instanceof Edge) 
+//			return edgeToGPML((Edge) node);
 		ObservableMap<Object, Object> pro = node.getProperties();
 		Object o = pro.get("TextLabel");
 		String textLabel = o == null ? "" : o.toString();
@@ -209,9 +216,7 @@ public class GPML {
 			cx = sh.getX() + w / 2;
 			cy = sh.getY() + h / 2;
 			if (sh.getArcWidth() > 0)
-			{
 				shape = "RoundedRectangle";
-			}
 		}
 		String graphics1 = String.format("  <Graphics CenterX=\"%.2f\" CenterY=\"%.2f\" Width=\"%.2f\" Height=\"%.2f\" ZOrder=\"32768\" ", cx, cy, w, h);
 		String graphics2 = String.format("FontWeight=\"%s\" FontSize=\"%d\" Valign=\"%s\" ShapeType=\"%s\"", "Bold", 12, "Middle", shape);
@@ -238,69 +243,69 @@ public class GPML {
 	//----------------------------------------------------------------------------
 	
 	// UNUSED ??
-	
-	public Shape shapeFromGPML(String gpmlStr,  AttributeMap attrMap, boolean addHandlers) {
-		String txt = gpmlStr.trim();
-		if (txt.startsWith("<DataNode "))
-		{
-			String attrs = txt.substring(10, txt.indexOf(">"));
-			attrMap.addGPML(attrs);
-			String graphics =  txt.substring(10 + txt.indexOf("<Graphics "), txt.indexOf("</Graphics>"));
-			String xref = txt.substring(10 + txt.indexOf(6 + "<Xref "), txt.indexOf("</Xref>"));
-			attrMap.addGPML(graphics);
-			attrMap.addGPML(xref);
-		}
-		String shapeType = attrMap.get("ShapeType");
-		Shape newShape = controller.getNodeFactory().getShapeFactory().makeNewShape(shapeType, attrMap, addHandlers); 
-		return newShape;
-	}
+//	
+//	public Shape shapeFromGPML(String gpmlStr,  AttributeMap attrMap, boolean addHandlers) {
+//		String txt = gpmlStr.trim();
+//		if (txt.startsWith("<DataNode "))
+//		{
+//			String attrs = txt.substring(10, txt.indexOf(">"));
+//			attrMap.addGPML(attrs);
+//			String graphics =  txt.substring(10 + txt.indexOf("<Graphics "), txt.indexOf("</Graphics>"));
+//			String xref = txt.substring(10 + txt.indexOf(6 + "<Xref "), txt.indexOf("</Xref>"));
+//			attrMap.addGPML(graphics);
+//			attrMap.addGPML(xref);
+//		}
+//		String shapeType = attrMap.get("ShapeType");
+//		Shape newShape = controller.getNodeFactory().getShapeFactory().makeNewShape(shapeType, attrMap, addHandlers); 
+//		return newShape;
+//	}
 
-	public static Edge createEdge(String txt, AttributeMap attrMap, Model model) 
-	{
-		String graphics =  txt.substring(10 + txt.indexOf("<Graphics "), txt.indexOf("</Graphics>"));
-		String xref = txt.substring(10 + txt.indexOf(6 + "<Xref "), txt.indexOf("</Xref>"));
-		attrMap.addGPMLEdgeInfo(graphics);
-		attrMap.addGPML(xref);
-		return new Edge(attrMap, model);
-	}
+//	public static Edge createEdge(String txt, AttributeMap attrMap, Model model) 
+//	{
+//		String graphics =  txt.substring(10 + txt.indexOf("<Graphics "), txt.indexOf("</Graphics>"));
+//		String xref = txt.substring(10 + txt.indexOf(6 + "<Xref "), txt.indexOf("</Xref>"));
+//		attrMap.addGPMLEdgeInfo(graphics);
+//		attrMap.addGPML(xref);
+//		return new Edge(attrMap, model);
+//	}
 
 	//----------------------------------------------------------------------------
-	public Node[] makeTestItems() {
-		Node a,b,c,d,e,f,g,h,i,j,k, l;
-		ShapeFactory factory = controller.getNodeFactory().getShapeFactory();
-		AttributeMap attrMap = new AttributeMap();
-		
-		attrMap.putCircle(new Circle(150, 150, 60, Color.AQUA));
-		attrMap.put("TextLabel", "Primary");
-		Label label = factory.createLabel("Primary", Color.AQUA);
-		a = label;
-		Circle cir = (Circle) factory.makeNewShape(Tool.Circle, attrMap);
-		b = cir;
-		label.layoutXProperty().bind(cir.centerXProperty().subtract(label.widthProperty().divide(2.)));
-		label.layoutYProperty().bind(cir.centerYProperty().subtract(label.heightProperty().divide(2.)));
-		
-		attrMap = new AttributeMap();
-		attrMap.putCircle(new Circle(180, 450, 60, Color.AQUA));
-		attrMap.put("TextLabel", "Secondary");
-		c = factory.makeNewShape(Tool.Circle, attrMap);
-		attrMap = new AttributeMap();
-		attrMap.putCircle(new Circle(150, 300, 20, Color.BEIGE));
-		attrMap.put("TextLabel", "Tertiary");
-		d = factory.makeNewShape(Tool.Circle, attrMap);
-		attrMap = new AttributeMap();
-		attrMap.putRect(new Rectangle(250, 50, 30, 30));
-		e = factory.makeNewShape(Tool.Rectangle, attrMap);
-		attrMap = new AttributeMap();
-		attrMap.putRect(new Rectangle(250, 450, 30, 50));
-		f = factory.makeNewShape(Tool.Rectangle, attrMap);
-		
-		g = new Edge(b, c).getPolyline();
-		h = new Edge(d, b).getPolyline();
-		i = new Edge(f, b).getPolyline();
-		j = new Edge(f, c).getPolyline();
-		k = new Edge(e, f).getPolyline();
-		l = new Edge(e, d).getPolyline();
-		return new Node[] { a,b,c,d,e,f,g,h,i,j,k,l };
-	}
+//	public Node[] makeTestItems() {
+//		Node a,b,c,d,e,f,g,h,i,j,k, l;
+//		ShapeFactory factory = controller.getNodeFactory().getShapeFactory();
+//		AttributeMap attrMap = new AttributeMap();
+//		
+//		attrMap.putCircle(new Circle(150, 150, 60, Color.AQUA));
+//		attrMap.put("TextLabel", "Primary");
+//		Label label = factory.createLabel("Primary", Color.AQUA);
+//		a = label;
+//		Circle cir = (Circle) factory.makeNewShape(Tool.Circle, attrMap);
+//		b = cir;
+//		label.layoutXProperty().bind(cir.centerXProperty().subtract(label.widthProperty().divide(2.)));
+//		label.layoutYProperty().bind(cir.centerYProperty().subtract(label.heightProperty().divide(2.)));
+//		
+//		attrMap = new AttributeMap();
+//		attrMap.putCircle(new Circle(180, 450, 60, Color.AQUA));
+//		attrMap.put("TextLabel", "Secondary");
+//		c = factory.makeNewShape(Tool.Circle, attrMap);
+//		attrMap = new AttributeMap();
+//		attrMap.putCircle(new Circle(150, 300, 20, Color.BEIGE));
+//		attrMap.put("TextLabel", "Tertiary");
+//		d = factory.makeNewShape(Tool.Circle, attrMap);
+//		attrMap = new AttributeMap();
+//		attrMap.putRect(new Rectangle(250, 50, 30, 30));
+//		e = factory.makeNewShape(Tool.Rectangle, attrMap);
+//		attrMap = new AttributeMap();
+//		attrMap.putRect(new Rectangle(250, 450, 30, 50));
+//		f = factory.makeNewShape(Tool.Rectangle, attrMap);
+//		
+//		new Edge(b, c);
+//		new Edge(d, b);
+//		new Edge(f, b);
+//		new Edge(f, c);
+//		new Edge(e, f);
+//		new Edge(e, d);
+//		return new Node[] { a,b,c,d,e,f };
+//	}
 
 }

@@ -14,8 +14,6 @@ import database.forms.EntrezQuery;
 import diagrams.draw.Action.ActionType;
 import diagrams.draw.gpml.BiopaxRef;
 import diagrams.draw.gpml.GPML;
-//import dialogs.AboutDialog;
-import gui.BorderPaneRulers;
 import gui.Borders;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
@@ -29,7 +27,6 @@ import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -102,14 +99,17 @@ public class Controller implements Initializable
 	@FXML private Pane drawPane;
 	@FXML private ScrollPane scrollPane;
 	@FXML private ListView<Action> undoview = null;
-	@FXML private ListView<Node> resourceListView = null;
+	@FXML private TableView<Gene> geneListTable = null;
+	@FXML private TableColumn<Gene, String> nameCol;
+	@FXML private TableColumn<Gene, String> ensemblCol;
+	
 	@FXML private TableView<AttributeValue> attributeTable;
 	@FXML private TableColumn<AttributeValue, String> attributeCol;
 	@FXML private TableColumn<AttributeValue, String> valueCol;
 //	@FXML private AnchorPane zoomAnchor;
 	@FXML private BorderPane container;			// root of fxml
 //	@FXML private BorderPane drawContainer;			// rulers and content
-	public ListView<Node> getResourceListView()		{		return resourceListView;	}
+//	public ListView<Gene> getResourceListView()		{		return resourceListView;	}
 	
 	
 	@FXML private TableView<BiopaxRef> refTable;
@@ -166,6 +166,7 @@ public class Controller implements Initializable
 	@FXML private MenuItem redo;
 	@FXML private MenuItem clearundo;
 	
+	@FXML private MenuItem clearColors;
 	@FXML private MenuItem tofront;
 	@FXML private MenuItem toback;
 	@FXML private MenuItem group;
@@ -222,7 +223,7 @@ public class Controller implements Initializable
 		}
 	}
 	
-	static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: gray;";
+	static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
 	static String CSS_cellBackground(boolean undone) 	{		return "-fx-background-color: " + (undone ? "GREY; " : "BEIGE; ");	}
 	static String ctrlStr = "fx:id=\"%s\" was not injected: check your FXML file '%s'.";
 	static String missing(String s)	{		return String.format(ctrlStr, s, "AttributeValueFXML.fxml");	}
@@ -237,7 +238,7 @@ public class Controller implements Initializable
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
-		final double SCALE_DELTA = 1.1;
+//		final double SCALE_DELTA = 1.1;
 		model = new Model(this);
 		assert(drawPane != null);
 		assert attributeCol != null : missing("attributeCol");
@@ -250,6 +251,7 @@ public class Controller implements Initializable
 		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
 		bindInspector();
 		setupBiopaxTable();
+		
 		String cssURL = this.getClass().getResource("draw.css").toExternalForm();
 		drawPane.getStylesheets().add(cssURL);
 		stage = App.getInstance().getStage();
@@ -383,19 +385,15 @@ public class Controller implements Initializable
 	}
 	private void getInfo(String pmid)
 	{
-		   String text = EntrezQuery.getPubMedId(pmid);			// TODO move to libFX
-		   if (StringUtil.hasText(text))
-		   {  
-//			   StringBuilder builder = new StringBuilder();
-//		   		EntrezForm.xmlToSummary( text, builder, null);  builder.toString()
-			   Alert a = new Alert(AlertType.INFORMATION, text);
-			   a.setHeaderText("PubMed Abstract");
-			   a.getDialogPane().setMinWidth(600);
-			   a.setResizable(true);
-			   a.showAndWait();
-		   }
-		   
-		
+	   String text = EntrezQuery.getPubMedAbstract(pmid);			// TODO move to libFX
+	   if (StringUtil.hasText(text))
+	   {  
+		   Alert a = new Alert(AlertType.INFORMATION, text);
+		   a.setHeaderText("PubMed Abstract");
+		   a.getDialogPane().setMinWidth(600);
+		   a.setResizable(true);
+		   a.showAndWait();
+	   }
 	}
 	
 	
@@ -429,17 +427,19 @@ public class Controller implements Initializable
 		
 	}
 
-	final ContextMenu tableColumnOptions = new ContextMenu();
-
-	private void populateTableOptions() {
-		String[] colnames = new String[] { "Id", "Reference", "Database", "Authors", "Title", "Source", "Year" };
-		for (String c : colnames)
-			tableColumnOptions.getItems().add(new CheckMenuItem(c));
-	}
 	// ------------------------------------------------------
+	final ContextMenu tableColumnOptions = new ContextMenu();
+	String[] colnames = new String[] { "Id", "Reference", "Database", "Authors", "Title", "Source", "Year" };
 
-	private void doTableOptionsPopup()
+	@FXML private void doTableOptionsPopup()
 	{
+		ObservableList<MenuItem> items = tableColumnOptions.getItems();
+		if (items.size() == 0)
+		{
+			for (String c : colnames)
+				items.add(new CheckMenuItem(c));
+		}
+			
 		tableColumnOptions.setX(tableOptions.getLayoutX() + stage.getX() - 60); 
 		tableColumnOptions.setY(tableOptions.getLayoutY() + stage.getY()+ 40);
 		tableColumnOptions.show(stage);
@@ -453,18 +453,16 @@ public class Controller implements Initializable
 	Map<Object, Object> dependents = new HashMap<Object, Object>();
 	public Map<Object, Object> getDependents() {		return dependents;	}
 	//-----------------------------------------------------------------------
-	private final ChangeListener<Object> changeListener = 
-		    (obs, oldValue, newValue) ->  System.out.println("The binding is now invalid.");
+//	private final ChangeListener<Object> changeListener = 
+//		    (obs, oldValue, newValue) ->  System.out.println("The binding is now invalid.");
 	
 	 @FXML private void test1()
 	{
-		 
-		 
 		double[] vals = { 50, 50, 50, 100, 150, 100};
 		Polygon p = new Polygon(vals);
 		add(p);
 		
-		if (true) return;
+		if (-1 > vals.length) return;
 		
 		undoStack.push(ActionType.Test);	
 		ShapeFactory f = getNodeFactory().getShapeFactory();
@@ -517,12 +515,12 @@ public class Controller implements Initializable
 		add(n4);
 			
 		Edge line3 = model.addEdge(n4, circ);
-		line3.getPolyline().setStrokeWidth(2);
-		add(0, line3);
+//		line3.getPolyline().setStrokeWidth(2);
+//		add(0, line3);
 	
 		Edge line4 = model.addEdge(n1, n3);
-		line4.getPolyline().setStrokeWidth(4);
-		add(0, line4);
+//		line4.getPolyline().setStrokeWidth(4);
+//		add(0, line4);
 	}
 
 // **-------------------------------------------------------------------------------
@@ -549,7 +547,7 @@ public class Controller implements Initializable
 	
 	@FXML private void test3()
 	{
-		addAll(new GPML(this).makeTestItems());
+//		addAll(new GPML(this).makeTestItems());
 	}
 	//--------------------------------------------------------------------
 	
@@ -659,8 +657,11 @@ public class Controller implements Initializable
 	}
 	
 	List<String> comments = new ArrayList<String>();
-	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
+	ObservableList<Gene> genes = FXCollections.observableArrayList();
+	public void addGene(Gene g) 		{		genes.add(g);	}
+	public void clearGenes() 			{		genes.clear();	}
 
+	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
 	public void addRef(BiopaxRef ref) 	{		references.add(ref);	}
 	public void clearRefs() 			{		references.clear();	}
 	//-----------------------------------------------------------------------------
@@ -697,10 +698,14 @@ public class Controller implements Initializable
 			undoview.setStyle(CSS_Gray2);
 		}
 		
-		if (resourceListView != null)
+		//setupGeneList() 
+		if (geneListTable != null)
 		{
-			resourceListView.setCellFactory(list ->  { return new DrawNodeCell();   });
-			resourceListView.setStyle(CSS_Gray2);
+			geneListTable.setItems(genes);
+//			geneListTable.setCellFactory(list ->  { return new GeneCell();   });
+			geneListTable.setStyle(CSS_Gray2);
+			nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+			ensemblCol.setCellValueFactory(new PropertyValueFactory<>("ensembl"));
 		}
 		
 		attributeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); //  multiple selection
@@ -713,22 +718,23 @@ public class Controller implements Initializable
 		attributeCol.setCellValueFactory(new PropertyValueFactory<>("attribute"));
 		valueCol.setCellValueFactory(new PropertyValueFactory<>("value"));
 		
+		
 	}
 	//---------------------------------------------------------------------------------
-	  static class DrawNodeCell extends ListCell<Node> {
-		    @Override
-		    public void updateItem(Node item, boolean empty) {
-		      super.updateItem(item, empty);
-		      if (item != null) 
-		      {
-//		    	  String style = CSS_cellBackground(item.isUndone());
-//		    	  setStyle(style);
-		    	  setText(item.toString());
-		      }
-		      else     {   setStyle("");  	  setText("");   }		// the cell is reused, so clear it
-		    }
-		  }
-	  
+//	  static class GeneCell extends ListCell<Gene> {
+//		    @Override
+//		    public void updateItem(Gene item, boolean empty) {
+//		      super.updateItem(item, empty);
+//		      if (item != null) 
+//		      {
+////		    	  String style = CSS_cellBackground(item.isUndone());
+////		    	  setStyle(style);
+//		    	  setText(item.toString());
+//		      }
+//		      else     {   setStyle("");  	  setText("");   }		// the cell is reused, so clear it
+//		    }
+//		  }
+//	  
 	  
 	  static class DrawActionCell extends ListCell<Action> {
 		    @Override
@@ -886,11 +892,21 @@ public class Controller implements Initializable
 		drawPane.getChildren().add(n);	
 		if ("Marquee".equals(n.getId())) 	return;
 		model.addResource(n.getId(), n);
+		Object prop  = n.getProperties().get("TextLabel");
+		if (prop != null && findGene(""+prop) == null)
+			addGene(new Gene(""+prop));
+	}
+	private Gene findGene(String string) {
+		if (StringUtil.isEmpty(string)) return null;
+		for (Gene g : genes)
+			if (string.equals(g.getName()))
+				return g;
+		return null;
 	}
 	public void add(int idx, Edge e)							
 	{		
 		if (e == null) return;
-		drawPane.getChildren().add(idx, e);	
+		drawPane.getChildren().add(idx, e.getEdgeLine());	
 //		drawPane.getChildren().add(idx, e.getLine() );	
 		model.addEdge(e);
 	}
@@ -1018,10 +1034,23 @@ public class Controller implements Initializable
 			}
 		}
 	}	
-		private void clearColors() {
+@FXML	private void clearColors() {
 			for (Node node : model.getResourceMap().values())
+			{
 				node.getProperties().remove("value");
+				if (node instanceof Shape)
+					((Shape) node).setFill(Color.WHITE);
+			}
 	}
+public void finishRead() {
+	
+	StringBuilder builder = new StringBuilder();
+	for (Gene g : genes)
+		builder.append(g.getName()).append('\n');
+		String genelist = builder.toString();
+		System.out.println(genelist);		
+
+}
 	
 
 }

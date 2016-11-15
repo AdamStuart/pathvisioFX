@@ -4,7 +4,6 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
@@ -153,6 +152,11 @@
                            <items>
                               <MenuItem mnemonicParsing="false" text="Set up..." />
                               <MenuItem mnemonicParsing="false" text="Play" />
+                              <MenuItem fx:id="clearColors" mnemonicParsing="false" onAction="#clearColors" text="Clear Data Coloring">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
                               <MenuItem mnemonicParsing="false" text="Export" />
                               <MenuItem mnemonicParsing="false" text="Share" />
                               <MenuItem fx:id="test1" mnemonicParsing="false" onAction="#test1" text="Test set 1">
@@ -199,9 +203,14 @@
                               </TableView>
                            </content>
                         </TitledPane>
-                        <TitledPane text="Resource Map">
+                        <TitledPane text="Gene Map">
                            <content>
-                              <ListView fx:id="resourceListView" />
+                              <TableView fx:id="geneListTable" prefHeight="200.0" prefWidth="200.0">
+                                <columns>
+                                  <TableColumn fx:id="nameCol" prefWidth="119.0" text="Gene" />
+                                  <TableColumn fx:id="ensemblCol" prefWidth="131.0" text="Ensembl" />
+                                </columns>
+                              </TableView>
                            </content>
                         </TitledPane>
                      </items>
@@ -254,7 +263,7 @@
                   <Slider fx:id="weight" blockIncrement="2.0" majorTickUnit="5.0" max="30.0" minorTickCount="1" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" value="1.0" />
                   <Label layoutX="10.0" layoutY="363.0" text="Rotate" />
                   <Slider fx:id="rotation" layoutX="10.0" layoutY="389.0" majorTickUnit="20.0" max="180.0" min="-180.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" />
-                  <Button fx:id="tableOptions" mnemonicParsing="false" text="Button" />
+                  <Button fx:id="tableOptions" mnemonicParsing="false" onAction="#doTableOptionsPopup" text="Button" />
                </children>
                <padding>
                   <Insets left="4.0" top="4.0" />

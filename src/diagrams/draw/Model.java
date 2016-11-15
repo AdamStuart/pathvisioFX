@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import diagrams.draw.Action.ActionType;
 import diagrams.draw.gpml.GPML;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -15,9 +14,9 @@ import javafx.scene.control.ListView;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
-import util.StringUtil;
 
 public class Model
 {
@@ -31,9 +30,9 @@ public class Model
 	private Controller controller;
 	private Map<String, Node> resourceMap;
 	private int nodeCounter;
-	private ListView<Node> resourceListView;
-	public ListView<Node> getResourceListView()		{		return resourceListView;	}
-	private void refresh() {	resourceListView.setItems(resourceListView.getItems()); }		// HACK to update list
+//	private ListView<Gene> resourceListView;
+//	public ListView<Gene> getResourceListView()		{		return resourceListView;	}
+//	private void refresh() {	resourceListView.setItems(resourceListView.getItems()); }		// HACK to update list
 	
 
 	private List<Edge> edgeTable;
@@ -51,7 +50,7 @@ public class Model
 		edgeTable = FXCollections.observableArrayList();
 		resourceMap = FXCollections.observableHashMap();
 		nodeCounter = 0;
-		resourceListView = controller.getResourceListView();
+//		resourceListView = controller.getResourceListView();
 	}
 	
 //	public void addResource(Node rgn)				{  resourceMap.put(rgn.getId(), rgn);		}
@@ -60,11 +59,21 @@ public class Model
 	{  
 		if (resourceMap.get(key) == null)
 		{
-			resourceMap.put(key, n);	
-			if (resourceListView != null) resourceListView.getItems().add(n);
-			refresh();
+			resourceMap.put(key, n);
+//			resourceListView.getItems().add("" + n.getProperties().get(""));
+//			if (resourceListView != null) resourceListView.getItems().add(n);
+//			refresh();
 		}
 	}
+//	public void addResource(int idx, String key, Node n)		
+//	{  
+//		if (resourceMap.get(key) == null)
+//		{
+//			resourceMap.put(key, n);	
+////			resourceListView.getItems().add(idx, n);
+////			refresh();
+//		}
+//	}	
 	public Edge addEdge(Node start, Node end)		
 	{  
 		Edge edge = new Edge(start, end, null, null);
@@ -98,6 +107,7 @@ public class Model
 	{  
 		edgeTable.remove(edge);
 	}
+	
 	public void removeEdges(Node node)		
 	{  
 		for (int z = edgeTable.size()-1; z >= 0; z--)
@@ -105,7 +115,8 @@ public class Model
 			Edge e = edgeTable.get(z);
 			if (e.isStart(node) || e.isEnd(node))
 			{
-				e.getPolyline().setVisible(false);
+				Polyline line = e.getEdgeLine().getPolyline();
+				line.setVisible(false);
 				edgeTable.remove(e);
 			}
 		}
@@ -127,15 +138,7 @@ public class Model
 		if (node != null && ! "Marquee".equals(node.getId()))
 			removeEdges(node);
 	}
-	public void addResource(int idx, String key, Node n)		
-	{  
-		if (resourceMap.get(key) == null)
-		{
-			resourceMap.put(key, n);	
-			resourceListView.getItems().add(idx, n);
-			refresh();
-		}
-	}
+
 	public Node getResourceByKey(String key)				
 	{
 		 if (key == null) return null;
@@ -179,16 +182,16 @@ public class Model
 	
 	
 // **-------------------------------------------------------------------------------
-	
+	static String XMLHEAD = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	static String GraphicsHEAD = "<Graphics BoardWidth=\"%d\" BoardHeight=\"%d\" />\n";
 	public StringBuilder traverseSceneGraph(Pane root)
 	{
-		StringBuilder buff = new StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+		StringBuilder buff = new StringBuilder(XMLHEAD);
 		buff.append("<Pathway>\n");
 		Pasteboard board  = controller.getPasteboard();
 		int width = (int) board.getWidth();
 		int height = (int) board.getHeight();
-		buff.append(String.format("<Graphics BoardWidth=\"%d\" BoardHeight=\"%d\" />\n", 
-				width, height));
+		buff.append(String.format("", GraphicsHEAD,	width, height));
 		traverse(buff, root, 0);
 		for (Edge e : edgeTable)
 			buff.append(e.toString());

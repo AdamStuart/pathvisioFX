@@ -49,22 +49,24 @@ public class EdgeFactory {
 			}
 			if ("Xref".equals(name))	
 				attrMap.add(n.getAttributes());
+			if ("BiopaxRef".equals(name))	
+				attrMap.put("BiopaxRef", n.getTextContent());
 		}
 		int z = points.size();
 		if (z > 1)
 		{
 			startId = points.get(0).getGraphRef();
 			Node startNode = getModel().getResource(startId);
+			attrMap.put("start", startId);
 			GPMLPoint lastPt = points.get(z-1);
 			endId = lastPt.getGraphRef();
+			attrMap.put("end", endId);
 			Node endNode = getModel().getResource(endId);
 			if (endNode != null) 
 				return new Edge(startNode, endNode, attrMap, points);			
 		}
 
-		Edge edge = new Edge(attrMap, points);
-
-		return edge;
+		return new Edge(attrMap, getModel());
 	}
 	//--------------------------------------------
 	private String getStr(NamedNodeMap map, String key) {

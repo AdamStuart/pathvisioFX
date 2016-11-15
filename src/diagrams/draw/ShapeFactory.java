@@ -130,13 +130,13 @@ public class ShapeFactory {
 		return newShape;
 	}
 
-
-	public Edge edgeFromGPML(String gpmlStr, AttributeMap attrMap,  boolean addHandlers) {
-		String txt = gpmlStr.trim();
-		if (txt.startsWith("<Interaction>"))
-			return GPML.createEdge(gpmlStr, attrMap, model);
-		return null;
-	}
+//
+//	public Edge edgeFromGPML(String gpmlStr, AttributeMap attrMap,  boolean addHandlers) {
+//		String txt = gpmlStr.trim();
+//		if (txt.startsWith("<Interaction>"))
+//			return GPML.createEdge(gpmlStr, attrMap, model);
+//		return null;
+//	}
 // **-------------------------------------------------------------------------------
 // this doesn't work because it can't pass the text back to be added to the drawLayer
 	//	public Shape makeLabeledShape(Tool tool, AttributeMap attrMap, String s) {

@@ -1,5 +1,6 @@
 package diagrams.draw.gpml;
 
+import javafx.geometry.Point2D;
 import util.StringUtil;
 
 public class GPMLPoint {
@@ -16,6 +17,8 @@ public class GPMLPoint {
 
 	public double getY()				{ return y;	}
 	public void setY(double s)			{ y = s;	}
+
+	public Point2D getPoint()			{ return new Point2D(x,y);	}
 
 	public String getGraphRef()			{ return graphRef;	}
 	public void setGraphRef(String s)	{ graphRef = s;	}
