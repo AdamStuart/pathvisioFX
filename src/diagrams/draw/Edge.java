@@ -19,22 +19,27 @@ public class Edge  {
 
 	//----------------------------------------------------------------------
 	private AttributeMap attributes = new AttributeMap();
+	public AttributeMap getAttributes() {		return attributes;	}
+	
 	private EdgeLine edgeLine;
+	public EdgeLine getEdgeLine() 	{	return edgeLine;	}
+	
 	private Node startNode=null, endNode=null;
-	private String graphId;
-	public String getGraphId()		{ return graphId;	}
+	public Node getStartNode()		{ 	return startNode;	}
+	public Node getEndNode()		{ 	return endNode;	}
+
 	private int zOrder;
+	public int getz() 				{	return zOrder;	}
+	public void setz(int i) 		{	zOrder = i;	}
+
 	private Color color = Color.BLACK;
 	public Color getColor() 		{	return color;	}
 	public void setColor(Color c) 	{	color = c;	}
-	public int getz() 				{	return zOrder;	}
-	public void setz(int i) 		{	zOrder = i;	}
-	public EdgeLine getEdgeLine() 	{	return edgeLine;	}
-	public Node getStartNode()		{ return startNode;	}
-	public Node getEndNode()		{ return endNode;	}
-	public String getDatabase() 	{ return attributes.get("Database");	}
-	public String getDbId() 		{ return attributes.get("ID");	}
-	public AttributeMap getAttributes() {		return attributes;	}
+
+	private String graphId;
+	public String getGraphId()		{ return graphId;	}
+	public String getDatabase() 	{ 	return attributes.get("Database");	}
+	public String getDbId() 		{ 	return attributes.get("ID");	}
 	//----------------------------------------------------------------------
 	public Edge(Node start, Node end) 
     {

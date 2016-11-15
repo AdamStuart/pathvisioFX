@@ -198,7 +198,7 @@ public class EdgeLine extends Group {
         double aveLength = (line1Length + line2Length) / 2 ;
 
         // extend line1 in direction of line1 for aveLength:
-        Point2D control1 = line1End.add(line1End.subtract(line1Start).normalize().multiply(10));
+        Point2D control1 = line1End.add(line1End.subtract(line1Start).normalize().multiply(2));
         
         // extend line2 in (reverse) direction of line2 for aveLength:
         Point2D control2 = line2Start.add(line2Start.subtract(line2End).normalize().multiply(100));
