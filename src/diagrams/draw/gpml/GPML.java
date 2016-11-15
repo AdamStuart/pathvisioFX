@@ -226,7 +226,7 @@ public class GPML {
 		return buffer.toString();
 	}
 	
-	public static String edgeToGPML(Edge edge)
+	public static String edgeToGPML(Edge edge)			// TODO -- Color, line style, etc. are missing
 	{
 		StringBuilder buffer = new StringBuilder("<Interaction>\n");
 		buffer.append("<Graphics ConnectorType=\"Segmented\" ZOrder=\"12288\" LineThickness=\"1.0\">\n");
