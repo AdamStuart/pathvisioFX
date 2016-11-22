@@ -1,11 +1,17 @@
-package diagrams.draw;
+package diagrams.draw.view;
 
 import java.io.File;
 import java.util.List;
 
 import animation.NodeVisAnimator;
-import diagrams.draw.Action.ActionType;
-import javafx.beans.property.SimpleDoubleProperty;
+import diagrams.draw.app.Action.ActionType;
+import diagrams.draw.app.Controller;
+import diagrams.draw.app.Selection;
+import diagrams.draw.app.Tool;
+import diagrams.draw.model.EdgeFactory;
+import diagrams.draw.model.MNode;
+import diagrams.draw.model.Model;
+import diagrams.draw.model.NodeFactory;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -24,6 +30,7 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.effect.InnerShadow;
+import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
@@ -50,6 +57,7 @@ import util.RectangleUtil;
 
 // Pasteboard 
 /*
+ *  The root Panel of the content.
  *  The primary role of the Pasteboard is to handle mouse events that don't hit any node,
  *  and drop events that will create new nodes depending on the files / data that 
  *  are in the drop.  Key events are also caught.
@@ -57,7 +65,7 @@ import util.RectangleUtil;
  *  The Pasteboard also remembers the state of which tool is active and what default
  *  attributes will be assigned to new nodes.
  */
-public class Pasteboard
+public class Pasteboard extends Pane
 {
 	//@formatter:off
 	private static final String INFO_LABEL_ID = "infoLabel";
@@ -74,25 +82,26 @@ public class Pasteboard
 	public ShapeFactory getShapeFactory()	{ return shapeFactory; }
 	private Selection selectionMgr;
 	public Selection getSelectionMgr()		{ return selectionMgr; }
-	private Pane drawPane;
-	public Pane getPane()					{ return drawPane;	}
+//	private Pane drawPane;
+//	public Pane getPane()					{ return drawPane;	}
 	private Rectangle marquee;
 	public Rectangle getMarquee()			{ return marquee;	}
 	private Label infoLabel;
 	public Label getInfoLabel()				{ return infoLabel;	}
 
-	SimpleDoubleProperty widthProperty = new SimpleDoubleProperty();
-	SimpleDoubleProperty heightProperty = new SimpleDoubleProperty();
-	public double getWidth()	{ return widthProperty.get();	}
-	public double getHeight()	{ return heightProperty.get();	}
-	public  void setWidth(double d)	{  widthProperty.set(d);	}
-	public void setHeight(double d)	{  heightProperty.set(d);	}
-	public SimpleDoubleProperty widthProperty()	{  return widthProperty;	}
-	public SimpleDoubleProperty heightProperty()	{  return heightProperty;	}
+//	SimpleDoubleProperty widthProperty = new SimpleDoubleProperty();
+//	SimpleDoubleProperty heightProperty = new SimpleDoubleProperty();
+//	public double getWidth()	{ return widthProperty.get();	}
+//	public double getHeight()	{ return heightProperty.get();	}
+//	public  void setWidth(double d)	{  widthProperty.set(d);	}
+//	public void setHeight(double d)	{  heightProperty.set(d);	}
+//	public SimpleDoubleProperty widthProperty()	{  return widthProperty;	}
+//	public SimpleDoubleProperty heightProperty()	{  return heightProperty;	}
 
-	private Shape activeShape;
-	public Shape getActiveShape()		{ return activeShape;	}
-	public void setActiveShape(Shape s)	{ activeShape = s;	}
+	private VNode activeStack;
+	public VNode getActiveStack()		{ return activeStack;	}
+	public Shape getActiveShape()		{ return activeStack == null ? null : activeStack.getShapeLayer();	}
+	public void setActiveStack(VNode s)	{ activeStack = s;	}
 	//@formatter:on
 	/**-------------------------------------------------------------------------------
 	/**Canvas (Pane pane, Controller ctrl
@@ -100,11 +109,13 @@ public class Pasteboard
 	 * @param pane
 	 *            the pane on which the selection rectangle will be drawn.
 	 */
-	public Pasteboard(Pane pane, Controller ctrl) 
+	public Pasteboard(Controller ctrl) 
 	{
-		drawPane = pane;
+//		drawPane = pane;
+		super();
 		setWidth(2000);
 		setHeight(2000);
+		setId("root");
 		controller = ctrl;
 		factory = new NodeFactory(this);
 		edgeFactory = new EdgeFactory(this);
@@ -112,11 +123,11 @@ public class Pasteboard
 		marquee = shapeFactory.makeMarquee();
 		selectionMgr = new Selection(this);
 //		pane.getChildren().add(marquee);
-		setupMouseKeyHandlers(drawPane);
-		setupPasteboardDrops(drawPane);
+		setupMouseKeyHandlers();
+		setupPasteboardDrops();
 		infoLabel = new Label("");
 		infoLabel.setId(INFO_LABEL_ID);
-		drawPane.getChildren().add(infoLabel);
+		getChildren().add(infoLabel);
 		StackPane.setAlignment(infoLabel, Pos.TOP_RIGHT);
 		infoLabel.setVisible(false);
 //		turnOnClipping();
@@ -125,20 +136,20 @@ public class Pasteboard
 	private Rectangle clipRect = new Rectangle();
 	private void turnOnClipping()
 	{
-		drawPane.setClip(clipRect);
-		drawPane.heightProperty().addListener((o, oldVal, newVal) -> { clipRect.heightProperty().set((double) newVal);    });
-		drawPane.widthProperty().addListener((o, oldVal, newVal) -> { clipRect.widthProperty().set((double) newVal);    });
+		setClip(clipRect);
+		heightProperty().addListener((o, oldVal, newVal) -> { clipRect.heightProperty().set((double) newVal);    });
+		widthProperty().addListener((o, oldVal, newVal) -> { clipRect.widthProperty().set((double) newVal);    });
 	}
 	/*
 	 * // Handle highlighting the canvas as mouse enters, and resetting as it leaves
 	 */
 	
-	private void setupPasteboardDrops(Pane drawPane)
+	private void setupPasteboardDrops()
 	{
-		drawPane.setOnDragEntered(e -> 	{  	highlightPasteboard(true);					e.consume();	});
-		drawPane.setOnDragExited(e -> 	{	highlightPasteboard(false);					e.consume();	});
-		drawPane.setOnDragOver(e -> 	{	e.acceptTransferModes(TransferMode.ANY);	e.consume();  	});
-		drawPane.setOnDragDropped(e ->	{ 	handlePasteboardDrop(e);					e.consume();  	});
+		setOnDragEntered(e -> 	{  	highlightPasteboard(true);					e.consume();	});
+		setOnDragExited(e -> 	{	highlightPasteboard(false);					e.consume();	});
+		setOnDragOver(e -> 		{	e.acceptTransferModes(TransferMode.ANY);	e.consume();  	});
+		setOnDragDropped(e ->	{ 	handlePasteboardDrop(e);					e.consume();  	});
 	}	
 
 	private void highlightPasteboard(boolean isHighlighted)
@@ -151,7 +162,7 @@ public class Pasteboard
 			shadow.setColor(Color.web("#9F46AF"));
 			shadow.setOffsetY(2.0);
 		}
-		drawPane.setEffect(shadow);
+		setEffect(shadow);
 	}
 	
 	private void handlePasteboardDrop(DragEvent e)
@@ -176,16 +187,44 @@ public class Pasteboard
 					else
 					{
 						offset += 20;
-						StackPane border = controller.getNodeFactory().handleFileDrop(f, e.getX()+offset, e.getY()+offset);
-						if (border != null)
-							controller.add(border);
+						StackPane stack = handleFileDrop(f, e.getX()+offset, e.getY()+offset);
+						if (stack != null)
+							controller.add(stack);
 					}
 				}
 			}
 		}
+		else
+		{
+			String text = db.getContent(DataFormat.PLAIN_TEXT).toString();
+			if (text != null)
+			{
+				System.out.println(text);
+				AttributeMap attrMap = new AttributeMap();
+				attrMap.put("centerX", "" + e.getX());
+				attrMap.put("centerY", "" + e.getY());
+				attrMap.put("width", "80");
+				attrMap.put("height", "30");
+				attrMap.put("ShapeType", "ER");
+				MNode node = new MNode(attrMap, getModel(), this);
+//				getController().getNodeFactory().getShapeFactory().makeLabeledShapeGroup(Tool.Brace, attrMap, text);
+				getChildren().add(node.getStack());
+			}
+		}
+			
 		e.consume();
 	}
+	// **-------------------------------------------------------------------------------
+	public VNode handleFileDrop(File f, double x, double y)
+	{
+		AttributeMap attrs = new AttributeMap(f, x, y);
+		Tool tool = Tool.appropriateTool(f);
+		attrs.setTool(tool.toString());
+		MNode model = new MNode(attrs, getModel(), this);
+		return model.getStack();
+	}
 	
+	private Model getModel() {		return controller.getDrawModel();	}
 	//-------------------------------------------------------------------------------
 	public String getState()		
 	{
@@ -217,7 +256,7 @@ public class Pasteboard
 		grid = new Group();
 		grid.setId("grid");
 		double res = Screen.getPrimary().getDpi();			// assumes inches
-		Parent p  = getPane().getParent();
+		Parent p  = getParent();
 		if (scrlPane != null)
 		{
 //			Pane drawPane = (Pane) scrlPane.getContent();
@@ -268,13 +307,13 @@ public class Pasteboard
  *		based on the current tool, and draw the marquee if the selection arrow is active
  *		
  */
-	private void setupMouseKeyHandlers(Pane drawPane2) {
-		drawPane.addEventHandler(MouseEvent.MOUSE_PRESSED, new MousePressedHandler());
-		drawPane.addEventHandler(MouseEvent.MOUSE_CLICKED, new MouseClickHandler());
-		drawPane.addEventHandler(MouseEvent.MOUSE_MOVED, new MouseMovedHandler());
-		drawPane.addEventHandler(MouseEvent.MOUSE_DRAGGED, new MouseDraggedHandler());
-		drawPane.addEventHandler(MouseEvent.MOUSE_RELEASED, new MouseReleasedHandler());
-		drawPane.addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
+	private void setupMouseKeyHandlers() {
+		addEventHandler(MouseEvent.MOUSE_PRESSED, new MousePressedHandler());
+		addEventHandler(MouseEvent.MOUSE_CLICKED, new MouseClickHandler());
+		addEventHandler(MouseEvent.MOUSE_MOVED, new MouseMovedHandler());
+		addEventHandler(MouseEvent.MOUSE_DRAGGED, new MouseDraggedHandler());
+		addEventHandler(MouseEvent.MOUSE_RELEASED, new MouseReleasedHandler());
+		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
 		
 	}
 
@@ -283,14 +322,14 @@ public class Pasteboard
 	private Point2D curPoint = null;		// mouse location in current event
 	private Line dragLine = null;			// a polyline edge
 
-	static boolean verbose = false;
+	static boolean verbose = true;
 
 //
 	public void startDragLine(double x, double y) {
 		if (dragLine == null)
 		{
 			dragLine = new Line();
-			drawPane.getChildren().add(dragLine);	
+			getChildren().add(dragLine);	
 		}
 		dragLine.setStartX(x);
 		dragLine.setStartY(y);
@@ -300,7 +339,7 @@ public class Pasteboard
 	public void removeDragLine() {
 		if (dragLine != null)
 		{
-			drawPane.getChildren().remove(dragLine);	
+			getChildren().remove(dragLine);	
 			dragLine = null;
 		}
 	}
@@ -314,7 +353,7 @@ public class Pasteboard
 		@Override public void handle(final MouseEvent event) 
 		{
 			if (verbose)
-				System.out.println("MousePressedHandler, activeShape: " + activeShape);
+				System.out.println("MousePressedHandler, activeShape: " + activeStack);
 			// do nothing for a right-click
 			if (event.isSecondaryButtonDown()) 
 			{ 
@@ -325,21 +364,23 @@ public class Pasteboard
 			if (curTool == Tool.Polyline)
 			{
 				if (verbose) System.out.println("MousePressedHandler, Polyline: " );
-				if (activeShape == null)
+				if (activeStack == null)
 				{
-					activeShape = shapeFactory.makeNewNode(new AttributeMap("ShapeType:" + curTool.name()));
- 					drawPane.getChildren().add(activeShape);
+					AttributeMap at = new AttributeMap("ShapeType:" + curTool.name());
+					MNode mNode = new MNode(at, controller.getDrawModel(), Pasteboard.this);
+					activeStack = mNode.getStack();
+					getChildren().add(activeStack);
 
 				}
-				Polyline p = (Polyline) activeShape;
+				Polyline p = getPolyline();
 				if (event.getClickCount() > 1)
 				{
-					activeShape = null;
+					activeStack = null;
 					removeDragLine();
 				}
 				else if (LineUtil.onVertex(startPoint, p) == 0)
 				{
-					activeShape = null;
+					activeStack = null;
 					removeDragLine();
 				}
 				else p.getPoints().addAll(event.getX(), event.getY());
@@ -348,14 +389,14 @@ public class Pasteboard
 				event.consume();
 				return;
 			}
-			
+			Shape activeShape = activeStack == null ? null : activeStack.getShapeLayer();
 			startPoint = new Point2D(event.getX(), event.getY());
-			if (activeShape instanceof Polygon)
+			if (activeShape instanceof Polyline)
 			{
 				if (verbose) System.out.println("MousePressedHandler, Polygon: " );
-				Polygon p = (Polygon) activeShape;
-				if (event.getClickCount() > 1)							activeShape = null;
-				else if (LineUtil.onVertex(startPoint, p) >= 0)		activeShape = null;
+				Polyline p = getPolyline();
+				if (event.getClickCount() > 1)							activeStack = null;
+				else if (LineUtil.onVertex(startPoint, p) >= 0)			activeStack = null;
 				else p.getPoints().addAll(event.getX(), event.getY());
 				event.consume();
 				return;
@@ -363,15 +404,22 @@ public class Pasteboard
 			if (activeShape instanceof Line)
 			{
 				if (verbose) System.out.println("MousePressedHandler, Line: " );
-				Line line = (Line) activeShape;
-				line.setVisible(false);
+				activeShape.setVisible(false);
 				event.consume();
 				return;
 			}
 //			controller.getUndoStack().push(ActionType.Select);
 			getSelectionMgr().clear();  
 	
-			activeShape = shapeFactory.makeNewNode(new AttributeMap("ShapeType:" + curTool.name()));
+			if (!curTool.isArrow())
+			{
+				AttributeMap map = new AttributeMap("ShapeType", curTool.name());
+				map.addPoint(event.getX(), event.getY());
+				MNode mNode = new MNode(map, getController());
+				activeStack = mNode.getStack();	
+			}
+			
+			activeShape = activeStack == null ? null : activeStack.getShapeLayer();
 			if (activeShape instanceof Polygon)
 			{
 				Polygon p = (Polygon) activeShape;
@@ -390,9 +438,9 @@ public class Pasteboard
 				p.setEndX(event.getX());
 				p.setEndY(event.getY());
 			}
-			if (activeShape instanceof Shape1)
-			{
-			}
+//			if (activeShape instanceof Shape)
+//			{
+//			}
 //			if (activeShape instanceof Shape2)
 //			{
 //				Shape2 shape = (Shape2) activeShape;
@@ -445,12 +493,19 @@ public class Pasteboard
 			else
 			{
 				controller.getUndoStack().push(ActionType.New, " " + curTool.name());
-				drawPane.getChildren().add(activeShape);
-				getSelectionMgr().select(activeShape);
+				getChildren().add(activeStack);
+				getSelectionMgr().select(activeStack);
 			}
 			
 //			factory.setStartPoint(new Point2D(event.getX(), event.getY()));
 			event.consume();
+		}
+
+		private Polyline tempPolyline;
+		private Polyline getPolyline() {
+			if (tempPolyline == null)
+				tempPolyline = new Polyline();
+			return tempPolyline;
 		}
 	}
 
@@ -462,7 +517,7 @@ public class Pasteboard
 
 			if (event.isSecondaryButtonDown())  return;		// do nothing for a right-click drag
 			if (verbose)	
-				System.out.println("MouseDraggedHandler, activeShape: " + activeShape);
+				System.out.println("MouseDraggedHandler, activeShape: " + activeStack);
 
 			// store current cursor position
 			curPoint = new Point2D(event.getX(), event.getY());
@@ -471,6 +526,8 @@ public class Pasteboard
 			if (curTool == Tool.Arrow)	
 			{
 				Rectangle r = RectangleUtil.union(startPoint, curPoint);
+				System.out.println(r.toString());
+
 				getSelectionMgr().clear();
 				getSelectionMgr().select(r);
 //				marquee.setVisible(true);
@@ -483,12 +540,15 @@ public class Pasteboard
 		//---------------------------------------------------------------------------
 		private void setActiveShapeBounds()
 		{
+			if (activeStack == null) return;
 			double left = Math.min(curPoint.getX(),  startPoint.getX());
 			double top = Math.min(curPoint.getY(),  startPoint.getY());
 			double w = Math.abs(curPoint.getX() - startPoint.getX());
 			double h = Math.abs(curPoint.getY() - startPoint.getY());
 			if (verbose)
-				System.out.println("setActiveShapeBounds, activeShape: " + activeShape);
+				System.out.println("setActiveShapeBounds, activeShape: " + activeStack);
+			Shape activeShape = activeStack.getShapeLayer();
+			
 			if (activeShape instanceof Rectangle)
 			{
 				Rectangle r = (Rectangle) activeShape;
@@ -562,7 +622,7 @@ public class Pasteboard
 //				
 //			}
 			startPoint = curPoint = null;
-			drawPane.requestFocus();		// needed for the key event handler to receive events
+			requestFocus();		// needed for the key event handler to receive events
 			if (!isPoly(getTool()))
 				resetTool();
 			event.consume();
@@ -579,7 +639,7 @@ public class Pasteboard
 		{			
 			controller.remove(marquee);
 			startPoint = curPoint = null;
-			drawPane.requestFocus();		// needed for the key event handler to receive events
+			requestFocus();		// needed for the key event handler to receive events
 			resetTool();
 			event.consume();
 		}
@@ -644,7 +704,7 @@ public class Pasteboard
 		}
 		private void terminatePoly(ObservableList<Double> pts) {
 			pts.addAll(pts.get(0),pts.get(1));
-			setActiveShape(null);
+			setActiveStack(null);
 			resetPoly();
 		}
 	}	
@@ -675,7 +735,7 @@ public class Pasteboard
 		if (curTool == inTool) sticky = true;
 		if (curTool == Tool.Arrow) sticky = false;
 		curTool = inTool;
-		activeShape = null;
+		activeStack = null;
 		ToggleGroup group = controller.getToolGroup();
 		for (Toggle t : group.getToggles())
 		{

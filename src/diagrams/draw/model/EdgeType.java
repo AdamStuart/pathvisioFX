@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.model;
 
 public enum EdgeType {
 

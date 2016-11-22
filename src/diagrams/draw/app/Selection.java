@@ -1,6 +1,15 @@
-package diagrams.draw;
+package diagrams.draw.app;
 
-import diagrams.draw.Action.ActionType;
+import java.util.List;
+
+import diagrams.draw.app.Action.ActionType;
+import diagrams.draw.model.MNode;
+import diagrams.draw.model.Model;
+import diagrams.draw.model.NodeFactory;
+import diagrams.draw.view.GroupMouseHandler;
+import diagrams.draw.view.Pasteboard;
+import diagrams.draw.view.Shape1;
+import diagrams.draw.view.VNode;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -15,6 +24,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Circle;
@@ -39,9 +49,9 @@ public class Selection
 	private Controller getController() { return root.getController();	}
 	private NodeFactory getNodeFactory() { return getController().getNodeFactory();	}
 	private Pasteboard root;
-	private ObservableList<Node> items;
+	private ObservableList<VNode> items;
 	//--------------------------------------------------------------------------
-	public ObservableList<Node> getAll()				{ return items;	}
+	public ObservableList<VNode> getAll()				{ return items;	}
 
 	public Node first()				{ return count() == 0 ? null : items.get(0);	}
 	public void clear()				{ for (int i= items.size()-1; i>= 0; i--)
@@ -50,8 +60,8 @@ public class Selection
 	public int count()				{ return items.size();	}
 
 	//--------------------------------------------------------------------------
-	public void selectX(Node s)		{ clear(); select(s);	}
-	public void select(Node s)		
+	public void selectX(VNode s)		{ clear(); select(s);	}
+	public void select(VNode s)		
 	{
 		if ("Marquee".equals(s.getId())) return;
 		items.add(s);	
@@ -71,8 +81,8 @@ public class Selection
 			
 	}
 	
-	public void select(Node s, boolean b)	{  if (b) select(s); else deselect(s);	}
-	public void deselect(Node s)	
+	public void select(VNode s, boolean b)	{  if (b) select(s); else deselect(s);	}
+	public void deselect(VNode s)	
 	{ 
 		items.remove(s);	
 		s.setEffect(null);	
@@ -91,13 +101,14 @@ public class Selection
 	public void selectAll()		{		selectAll(null); 	}
 	public void selectAll(ObservableList<Node> kids)	
 	{	
-		if (kids == null) kids = root.getPane().getChildrenUnmodifiable();
+		if (kids == null) kids = root.getChildrenUnmodifiable();
 		for (Node n : kids) 
 		{	
 			if ("grid".equals(n.getId())) continue;
-			if (n instanceof Polyline) continue;
+			if (!(n instanceof VNode)) continue;
+			if (((VNode)n).getShape() instanceof Polyline) continue;
 			if (items.contains(n)) continue;
-			select(n); 
+			select((VNode)n); 
 		}
 	}
 
@@ -118,10 +129,31 @@ public class Selection
 		selectAll();
 		deleteSelection();
 	}
+	// **-------------------------------------------------------------------------------
+	public void cloneSelection()
+	{
+		List<VNode> sel = getAll();
+		Controller controller = getController();
+		for (VNode n : sel)
+		{
+			if ("Marquee".equals(n.getId()))	continue;
+			if (!(n instanceof VNode))		continue;
+			VNode node = (VNode) n;
+
+			AttributeMap newAttrs = new AttributeMap(node.getModel().getAttributeMap());
+			String oldId = newAttrs.get("GraphId");
+			newAttrs.put("GraphId", controller.getModel().cloneResourceId(oldId));
+			Object ob = controller.getModel().getResource(oldId);
+			MNode clone = new MNode(newAttrs, controller);
+			controller.add(clone.getStack());
+		}
+	}
 	//--------------------------------------------------------------------------
 	public void doGroup()
 	{
-		Group group = getNodeFactory().makeGroup(items);
+		Group group = new Group();
+		group.addEventHandler(MouseEvent.ANY, new GroupMouseHandler(root));
+		group.getChildren().addAll(items);
 		deleteSelection();
 		getController().add(group);
 		group.setTranslateX(10);
@@ -208,12 +240,12 @@ public class Selection
 				r.setTranslateX(r.getTranslateX() - dx);
 				r.setTranslateY(r.getTranslateY() - dy);
 			}			
-			if (n instanceof Shape2)
-			{
-				Shape2 r = (Shape2) n;
-				r.setTranslateX(r.getTranslateX() - dx);
-				r.setTranslateY(r.getTranslateY() - dy);
-			}
+//			if (n instanceof Shape2)
+//			{
+//				Shape2 r = (Shape2) n;
+//				r.setTranslateX(r.getTranslateX() - dx);
+//				r.setTranslateY(r.getTranslateY() - dy);
+//			}
 			if (n instanceof Circle)
 			{
 				Circle c = (Circle) n;
@@ -283,12 +315,13 @@ public class Selection
 	{	
 		if (r == null || r.getWidth() <= 0 || r.getHeight() <= 0)			return;
 	
-		for (Node n : root.getPane().getChildrenUnmodifiable()) 
+		for (Node n : root.getChildrenUnmodifiable()) 
 		{
 			if (n.isMouseTransparent())	 continue;
+			if (!(n instanceof VNode))	 continue;
 			Bounds bounds = n.boundsInParentProperty().get();
 			if (bounds.intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()))
-				select(n); 
+				select((VNode)n); 
 		}
 	}
 	
@@ -320,8 +353,11 @@ public class Selection
 			group.getChildren().addAll(n);
 		
 		deleteSelection();
-		getController().add(group);
-		select(group);
+		AttributeMap attr = new AttributeMap("ShapeType:Group");
+		MNode model = new MNode(attr, getController().getDrawModel(), 
+				getController().getPasteboard());
+		getController().add(model.getStack());
+		select(model.getStack());
 	}	
 	
 	public void ungroup()
@@ -336,14 +372,16 @@ public class Selection
 				getController().selectAll(kids);
 			}
 	}
-
+	boolean NO_UNDO = false;
 	//--------------------------------------------------------------------------
 	public String getState()
 	{
+		if (NO_UNDO) return "";
 		StringBuilder b = new StringBuilder();
 		for (Node n : items)
 			if (n != null && !n.getId().equals("Marquee"))
-				b.append(Model.describe(n));
+				if (n instanceof VNode)
+					b.append(Model.describe(((VNode)n).getModel()));
 		return b.toString();
 	}
 

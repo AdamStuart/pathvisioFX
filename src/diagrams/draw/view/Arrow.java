@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.view;
 
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;

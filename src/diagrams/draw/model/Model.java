@@ -1,11 +1,15 @@
-package diagrams.draw;
+package diagrams.draw.model;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import diagrams.draw.app.Controller;
 import diagrams.draw.gpml.GPML;
+import diagrams.draw.view.Pasteboard;
+import diagrams.draw.view.ShapeFactory;
+import diagrams.draw.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -28,7 +32,7 @@ public class Model
  *  It is very much application-specific.
  */
 	private Controller controller;
-	private Map<String, Node> resourceMap;
+	private Map<String, MNode> resourceMap;
 	private int nodeCounter;
 //	private ListView<Gene> resourceListView;
 //	public ListView<Gene> getResourceListView()		{		return resourceListView;	}
@@ -38,9 +42,9 @@ public class Model
 	private List<Edge> edgeTable;
 	private ListView<Edge> edgeListView;
 	
-	public Map<String, Node> getResourceMap() {		return resourceMap;	}
+	public Map<String, MNode> getResourceMap() {		return resourceMap;	}
 	public Controller getController() { return controller; } 
-	private Scene getScene()		{ 	return getController().getPasteboard().getPane().getScene();  }
+	private Scene getScene()		{ 	return getController().getPasteboard().getScene();  }
 	public Node find(String id)		{	return getScene().lookup(id);	}
 
 	
@@ -53,30 +57,20 @@ public class Model
 //		resourceListView = controller.getResourceListView();
 	}
 	
-//	public void addResource(Node rgn)				{  resourceMap.put(rgn.getId(), rgn);		}
 	// **-------------------------------------------------------------------------------
-	public void addResource(String key, Node n)		
+	public void addResource(MNode n)		
+	{  
+		if (n != null) addResource(n.getId(), n);
+	}
+	public void addResource(String key, MNode n)		
 	{  
 		if (resourceMap.get(key) == null)
-		{
 			resourceMap.put(key, n);
-//			resourceListView.getItems().add("" + n.getProperties().get(""));
-//			if (resourceListView != null) resourceListView.getItems().add(n);
-//			refresh();
-		}
 	}
-//	public void addResource(int idx, String key, Node n)		
-//	{  
-//		if (resourceMap.get(key) == null)
-//		{
-//			resourceMap.put(key, n);	
-////			resourceListView.getItems().add(idx, n);
-////			refresh();
-//		}
-//	}	
-	public Edge addEdge(Node start, Node end)		
+
+	public Edge addEdge(MNode start, MNode end)		
 	{  
-		Edge edge = new Edge(start, end, null, null);
+		Edge edge = new Edge(start.getStack(), end.getStack(), null, null);
 		return addEdge(edge);
 	}
 	
@@ -89,16 +83,16 @@ public class Model
 	public List<Edge> connectSelectedNodes()		
 	{  
 		List<Edge> edges = new ArrayList<Edge>();
-		List<Node> selection = controller.getSelection();
+		List<VNode> selection = controller.getSelection();
 		for (int i=0; i<selection.size()-1; i++)
 		{
-			Node start = selection.get(i);
-			if (start instanceof Line) continue;
+			VNode start = selection.get(i);
+			if (start.getShape() instanceof Line) continue;
 			for (int j=i+1; j < selection.size(); j++)
 			{
-				Node end = selection.get(j);
-				if (end instanceof Line) continue;
-				edges.add(addEdge( start, end));
+				VNode end = selection.get(j);
+				if (end.getShape() instanceof Line) continue;
+				edges.add(addEdge( start.getModel(), end.getModel()));
 			}
 		}
 		return edges;
@@ -139,20 +133,20 @@ public class Model
 			removeEdges(node);
 	}
 
-	public Node getResourceByKey(String key)				
+	public MNode getResourceByKey(String key)				
 	{
 		 if (key == null) return null;
-		 for (Node n : resourceMap.values())
+		 for (MNode n : resourceMap.values())
 		 {
-			 String name = "" +n.getProperties().get("TextLabel");
+			 String name = "" +n.getAttributeMap().get("TextLabel");
 			if (name.equals(key)) return n;
 		 }
-		 Node n = resourceMap.get(key);	
+		 MNode n = resourceMap.get(key);	
 		 return n;
 	}
 
 	
-	public Node getResource(String key)				
+	public MNode getResource(String key)				
 	{
 		 if (key == null) return null;
 		 if (key.startsWith("\""))  
@@ -160,7 +154,7 @@ public class Model
 			 int len = key.length();
 			 key = key.substring(1,len-1);
 		 }
-		 Node n = resourceMap.get(key);	
+		 MNode n = resourceMap.get(key);	
 		 return n;
 	}
 	
@@ -191,22 +185,23 @@ public class Model
 		Pasteboard board  = controller.getPasteboard();
 		int width = (int) board.getWidth();
 		int height = (int) board.getHeight();
-		buff.append(String.format("", GraphicsHEAD,	width, height));
-		traverse(buff, root, 0);
+		buff.append(String.format(GraphicsHEAD,	width, height));
+//		traverse(buff, board, 0);
 		for (Edge e : edgeTable)
 			buff.append(e.toString());
 		buff.append("</Pathway>\n");
 		return buff;
 	}
 	
-	static private void traverse(StringBuilder buff,Node node, int indent)
+	static private void traverse(StringBuilder buff, MNode node, int indent)
 	{
-		if (ShapeFactory.isMarquee(node)) return;
+		VNode stack = node.getStack();
+		if (ShapeFactory.isMarquee(node.getStack())) return;
 //		if (node instanceof Edge)			buff.append(describe(node));	
-		if (node instanceof Shape)			buff.append(describe(node));	
-		if (node instanceof StackPane)		buff.append(describe(node));
-		if (node instanceof Parent)
-			for (Node n : ((Parent)node).getChildrenUnmodifiable())
+		if (stack.getShape() instanceof Shape)		buff.append(describe(node));	
+		if (stack instanceof StackPane)		buff.append(describe(node));
+		if (stack instanceof Parent)
+			for (Node n : node.getStack().getChildren())
 			{
 				String id = n.getId();
 				if (id == null)					continue;			// only propagate thru nodes with ids
@@ -217,11 +212,11 @@ public class Model
 					String txt = ((Text) n).getText();
 					if (txt.length() < 1) 	continue;				//System.out.println("Don't stream empty text");
 				}
-				traverse(buff,n, indent+1);
+//				traverse(buff, n.getModel(), indent+1);
 			}
 	}
 	// **-------------------------------------------------------------------------------
-	static public String describe(Node node)	{	return GPML.dataNodeToGPML(node);	}
+	static public String describe(MNode node)	{	return GPML.dataNodeToGPML(node.getStack());	}
 	static String getBoundsString(double x, double y, double w, double h)	{
 	 return String.format("x=%.1f, y=%.1f, width=%.1f, height=%.1f", x, y, w, h);
 	}

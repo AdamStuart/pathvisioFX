@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import diagrams.draw.gpml.GPMLAnchor;
 import diagrams.draw.gpml.GPMLPoint;
 import diagrams.draw.gpml.GPMLPoint.ArrowType;
+import diagrams.draw.view.Arrow;
 import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -87,7 +88,8 @@ public class EdgeLine extends Group {
     	polyline = null;
     	line = null;
     	head =  tail = null;
-		points = pts;
+		if (pts != null) 
+			points.addAll(pts);
 		edge = container;
 		setMouseTransparent(true);
 
@@ -114,14 +116,22 @@ public class EdgeLine extends Group {
 		}
 	}
 	public void setStartPoint(Point2D center) {
-		if (points.size() < 1) return;
+		if (points.size() < 1)
+		{
+			points.add(new GPMLPoint(center));
+			return;
+		}
 		points.get(0).setX(center.getX());
 		points.get(0).setY(center.getY());
 	}
 	
 	public void setEndPoint(Point2D center) {
 		int size = points.size();
-		if (size < 2) return;
+		if (size < 2)
+		{
+			points.add(new GPMLPoint(center));
+			return;
+		}
 		points.get(size-1).setX(center.getX());
 		points.get(size-1).setY(center.getY());
 		
@@ -171,8 +181,11 @@ public class EdgeLine extends Group {
 		boolean shorten = endNode != null;			// TODO -- and arrowhead??
 		if (endNode != null && shorten) {
 			Point2D prev = forelastPoint();
-			Line line = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
-			lastPt= LineUtil.getIntersection(line, endNode);
+			if (prev != null)
+			{
+				Line line = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
+				lastPt= LineUtil.getIntersection(line, endNode);
+			}
 		} 
 		setArrowPt(lastPt);
 		LineUtil.set(getLine(), firstPoint(), lastPt);

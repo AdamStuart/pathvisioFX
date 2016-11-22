@@ -1,6 +1,6 @@
-package diagrams.draw;
+package diagrams.draw.app;
 
-import diagrams.draw.Action.ActionType;
+import diagrams.draw.app.Action.ActionType;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -40,7 +40,7 @@ public class UndoStack
 		{
 			a.undo();
 			String savedState = a.getState();
-			controller.setState(savedState);
+//			controller.setState(savedState);
 			actions.set(curStackPtr, a);
 			curStackPtr++;
 			refresh();
@@ -57,7 +57,7 @@ public class UndoStack
 			{
 				a.doIt();
 				actions.set(curStackPtr, a);
-				controller.setState(a.getState());
+//				controller.setState(a.getState());
 				refresh();
 			}
 		}

@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.app;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -78,7 +78,7 @@ public class Document
 	{
 		PrinterJob job = PrinterJob.createPrinterJob();
 		if (job == null) return;
-		boolean success = job.printPage(drawController.getPasteboard().getPane());
+		boolean success = job.printPage(drawController.getPasteboard());
 		if (success)
 			job.endJob();
 	}

@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.gpml;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;

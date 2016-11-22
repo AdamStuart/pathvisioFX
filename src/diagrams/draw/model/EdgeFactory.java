@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,11 @@ import java.util.List;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
+import diagrams.draw.app.Controller;
+import diagrams.draw.app.UndoStack;
 import diagrams.draw.gpml.GPMLPoint;
+import diagrams.draw.view.Pasteboard;
+import diagrams.draw.view.ShapeFactory;
 import javafx.scene.Node;
 import model.AttributeMap;
 import util.StringUtil;
@@ -56,14 +60,14 @@ public class EdgeFactory {
 		if (z > 1)
 		{
 			startId = points.get(0).getGraphRef();
-			Node startNode = getModel().getResource(startId);
+			MNode startNode = getModel().getResource(startId);
 			attrMap.put("start", startId);
 			GPMLPoint lastPt = points.get(z-1);
 			endId = lastPt.getGraphRef();
 			attrMap.put("end", endId);
-			Node endNode = getModel().getResource(endId);
+			MNode endNode = getModel().getResource(endId);
 			if (endNode != null) 
-				return new Edge(startNode, endNode, attrMap, points);			
+				return new Edge(startNode.getStack(), endNode.getStack(), attrMap, points);			
 		}
 
 		return new Edge(attrMap, getModel());

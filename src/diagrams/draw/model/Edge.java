@@ -1,9 +1,10 @@
-package diagrams.draw;
+package diagrams.draw.model;
 
 import java.util.List;
 
 import diagrams.draw.gpml.GPMLAnchor;
 import diagrams.draw.gpml.GPMLPoint;
+import diagrams.draw.view.VNode;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Polyline;
@@ -24,9 +25,9 @@ public class Edge  {
 	private EdgeLine edgeLine;
 	public EdgeLine getEdgeLine() 	{	return edgeLine;	}
 	
-	private Node startNode=null, endNode=null;
-	public Node getStartNode()		{ 	return startNode;	}
-	public Node getEndNode()		{ 	return endNode;	}
+	private VNode startNode=null, endNode=null;
+	public VNode getStartNode()		{ 	return startNode;	}
+	public VNode getEndNode()		{ 	return endNode;	}
 
 	private int zOrder;
 	public int getz() 				{	return zOrder;	}
@@ -41,12 +42,12 @@ public class Edge  {
 	public String getDatabase() 	{ 	return attributes.get("Database");	}
 	public String getDbId() 		{ 	return attributes.get("ID");	}
 	//----------------------------------------------------------------------
-	public Edge(Node start, Node end) 
+	public Edge(VNode start, VNode end) 
     {
 		this(start, end, null, null);
     }
 	
-	public Edge(Node start, Node end, AttributeMap attr, List<GPMLPoint> pts) 
+	public Edge(VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts) 
 	{
     	startNode = start;
     	endNode = end;
@@ -57,8 +58,15 @@ public class Edge  {
     	
     public Edge(AttributeMap attr, Model model) 
     {
-    	this(model.getResource(attr.get("start")), 
-    			model.getResource(attr.get("end")), attr, null);
+    	MNode start = model.getResource(attr.get("start"));
+    	if (start != null) 
+    		startNode = start.getStack();
+    	MNode target = model.getResource(attr.get("end"));
+    	if (target != null) 
+    		endNode = target.getStack();
+		edgeLine = new EdgeLine(this, null);
+		attributes = attr;
+		init();
       }
  
 	//------------------------------------------------------------------------------------------
@@ -83,16 +91,16 @@ public class Edge  {
 			startNode.layoutBoundsProperty().addListener((obs, oldX, newX) -> connect(false));
 			endNode.layoutBoundsProperty().addListener((obs, oldX, newX) -> connect(true));
 		}
-		connect(false);
-//	   rebind();
+		edgeLine.setStartPoint(startNode.center());
+		edgeLine.setEndPoint(endNode.center());
     }
    private void connect(boolean atEnd)
    {
 	   if (startNode != null && endNode != null && edgeLine != null)
    		if (atEnd)
-   			edgeLine.setEndPoint(NodeCenter.centerOf(endNode));
+   			edgeLine.setEndPoint(endNode.center());
    		else
-   			edgeLine.setStartPoint(NodeCenter.centerOf(startNode));
+   			edgeLine.setStartPoint(startNode.center());
 	
    		edgeLine.connect();
 //   		System.out.println("connect");

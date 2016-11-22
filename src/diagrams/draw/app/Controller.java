@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.app;
 
 import java.io.File;
 import java.net.URL;
@@ -7,25 +7,33 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 
 import animation.BorderPaneAnimator;
 import database.forms.EntrezQuery;
-import diagrams.draw.Action.ActionType;
+import diagrams.draw.app.Action.ActionType;
 import diagrams.draw.gpml.BiopaxRef;
 import diagrams.draw.gpml.GPML;
+import diagrams.draw.gpml.Gene;
+import diagrams.draw.model.Edge;
+import diagrams.draw.model.EdgeFactory;
+import diagrams.draw.model.MNode;
+import diagrams.draw.model.Model;
+import diagrams.draw.model.NodeFactory;
+import diagrams.draw.view.Pasteboard;
+import diagrams.draw.view.ShapeFactory;
+import diagrams.draw.view.VNode;
 import gui.Borders;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
+import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
@@ -53,9 +61,11 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -65,9 +75,9 @@ import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
@@ -75,6 +85,7 @@ import model.AttributeMap;
 import model.AttributeValue;
 import model.RandomAttributeValueData;
 import util.FileUtil;
+import util.NodeCenter;
 import util.StringUtil;
 
 
@@ -122,8 +133,9 @@ public class Controller implements Initializable
 	@FXML private TableColumn<BiopaxRef, String> yearCol;
 	@FXML private Button tableOptions;
 
-	
-//	@FXML private Button bottomSideBarButton;
+	@FXML private Button gene;
+
+	@FXML private Button bottomSideBarButton;
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
 //	@FXML private Button toggleRulerButton;
@@ -136,7 +148,8 @@ public class Controller implements Initializable
 	@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
 	@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
 	@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
-	@FXML private void setShape2()		{ pasteboard.setTool(Tool.Shape2);	}
+	
+	@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
 
 	@FXML private ToggleButton arrow;
 	@FXML private ToggleButton rectangle;
@@ -145,7 +158,7 @@ public class Controller implements Initializable
 	@FXML private ToggleButton polyline;
 	@FXML private ToggleButton line;
 	@FXML private ToggleButton shape1;
-	@FXML private ToggleButton shape2;
+//	@FXML private ToggleButton shape2;
 	
 	@FXML private ColorPicker fillColor;
 	@FXML private ColorPicker lineColor;
@@ -174,6 +187,34 @@ public class Controller implements Initializable
 	@FXML private MenuItem delete;
 	@FXML private VBox inspector;
 	@FXML private HBox bottomPadding;
+
+	//------------------------------------------
+	static Image dragImage;
+	@FXML private void dragControl(MouseEvent e)
+	{
+		EventTarget targ  = e.getTarget();
+		Button b = null;
+		if (targ instanceof Text)
+		{
+			Text text = (Text) targ;
+			Node parent = text.getParent();
+			if (parent instanceof Button)
+				b = (Button) parent;
+		}
+		else if (targ instanceof Button)
+			b = (Button) targ;
+			
+		if (b != null)
+		{
+			System.out.println("drag " + b.getText());
+	        Dragboard db = b.startDragAndDrop(TransferMode.COPY);
+	        db.setDragView(b.snapshot(null, null), e.getX(), e.getY());
+	        ClipboardContent cc = new ClipboardContent();
+	        cc.putString(b.getText());
+	        db.setContent(cc);
+		}
+	}
+
 	
 	@FXML private void undo()			{ 	undoStack.undo();	}
 	@FXML private void redo()			{ 	undoStack.redo();		}
@@ -186,15 +227,16 @@ public class Controller implements Initializable
 	@FXML private void close()			
 	{ 
 		doc.close();	
-		if (drawPane != null)
+		if (pasteboard != null)
 		{
-			Window w = drawPane.getScene().getWindow();
+			Window w = pasteboard.getScene().getWindow();
 			if (w instanceof Stage)
 				((Stage) w).close();
 		}
 	}
 	@FXML private void print()			{ 	doc.print();			}
 	@FXML private void quit()			{ 	Platform.exit();			}
+	@FXML private void clickDrawPane()			{ 	System.out.println("clicked");			}
 	// **-------------------------------------------------------------------------------
 	@FXML private  void cut()			{ 	undoStack.push(ActionType.Cut);		getSelectionManager().cut();	}
 	@FXML private  void copy()			{ 	getSelectionManager().copy();		}	// not undoable
@@ -202,7 +244,7 @@ public class Controller implements Initializable
 	@FXML private  void clearUndo()		{	undoStack.clear(); 	}
 	@FXML private void selectAll()		{ 	undoStack.push(ActionType.Select); getSelectionManager().selectAll(); 		}
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
-	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getNodeFactory().cloneSelection(); 	}
+	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(); 	}
 	@FXML public void clear()			{ undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
 	// **-------------------------------------------------------------------------------
 	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup();  }
@@ -232,28 +274,30 @@ public class Controller implements Initializable
 	private ToggleGroup paletteGroup;
 	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
 	public Selection getSelectionManager() 		{ 	return pasteboard.getSelectionMgr();  }
-	public ObservableList<Node> getSelection() 	{ 	return getSelectionManager().getAll();  }
+	public ObservableList<VNode> getSelection() { 	return getSelectionManager().getAll();  }
 	Stage stage;
 
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 //		final double SCALE_DELTA = 1.1;
-		model = new Model(this);
+		undoStack = new UndoStack(this, null);
 		assert(drawPane != null);
+		model = new Model(this);
+		pasteboard = new Pasteboard(this);
+		drawPane.getChildren().add(pasteboard);
+		
 		assert attributeCol != null : missing("attributeCol");
 		assert valueCol != null : missing("valueCol");
 		assert attributeTable != null : missing("attributeTable");
-		undoStack = new UndoStack(this, null);
-		pasteboard = new Pasteboard(drawPane, this);
 		doc = new Document(this);
 		paletteGroup = new ToggleGroup();
 		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
 		bindInspector();
 		setupBiopaxTable();
 		
-		String cssURL = this.getClass().getResource("draw.css").toExternalForm();
-		drawPane.getStylesheets().add(cssURL);
+		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
+		pasteboard.getStylesheets().add(cssURL);
 		stage = App.getInstance().getStage();
 //		drawContainer.setBorder(Borders.etchedBorder);
 		scrollPane.setOnScroll(ev -> {
@@ -276,7 +320,6 @@ public class Controller implements Initializable
 			inspector.setBorder(Borders.lineBorder);
 		setupPalette();
 		setupListviews();
-		setupZoomView();
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
 		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
 //		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 300);
@@ -285,10 +328,6 @@ public class Controller implements Initializable
 
 		boolean startWithShapes = false;
 		if (startWithShapes) test1();
-			
-		
-        new Thread(() ->
-           Platform.runLater(() -> { refreshZoomPane(); })).start();    
 	}
 	static TableRow<BiopaxRef> thisRow = null;
 	private void setupBiopaxTable() {
@@ -450,8 +489,8 @@ public class Controller implements Initializable
 //		AboutDialog dlog = new AboutDialog();
 //		dlog.showAndWait();
 	}
-	Map<Object, Object> dependents = new HashMap<Object, Object>();
-	public Map<Object, Object> getDependents() {		return dependents;	}
+//	Map<Object, Object> dependents = new HashMap<Object, Object>();
+//	public Map<Object, Object> getDependents() {		return dependents;	}
 	//-----------------------------------------------------------------------
 //	private final ChangeListener<Object> changeListener = 
 //		    (obs, oldValue, newValue) ->  System.out.println("The binding is now invalid.");
@@ -459,8 +498,8 @@ public class Controller implements Initializable
 	 @FXML private void test1()
 	{
 		double[] vals = { 50, 50, 50, 100, 150, 100};
-		Polygon p = new Polygon(vals);
-		add(p);
+//		Polygon p = new Polygon(vals);
+//		add(p);
 		
 		if (-1 > vals.length) return;
 		
@@ -469,35 +508,20 @@ public class Controller implements Initializable
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putFillStroke(Color.PINK, Color.INDIGO);
 		attrMap.putCircle(new Circle(120, 230, 40));
-		Shape n1 = f.makeNewShape(Tool.Circle, attrMap);
-		final Label text = f.createLabel("root", Color.PINK);
-    	NodeCenter ctr = new NodeCenter(n1);
-    	text.layoutXProperty().bind(ctr.centerXProperty().subtract(text.widthProperty().divide(2.)));	// width / 2
-    	text.layoutYProperty().bind(ctr.centerYProperty().subtract(text.heightProperty().divide(2.)));
-//    	n1.addEventHandler(EventType.CHANGE, e -> {});
-//        n1.boundsInLocalProperty().addListener(changeListener);
-//  	n1.visibleProperty().addListener(changeListener);
-//    	n1.visibleProperty().addListener((obs, old, val) ->
-//    	{  
-//    		System.out.println("val: " + val.toString());
-//    		if (val == null) {}
-//    		});
-////		n1.addListenerToDelete(text)
-		add(n1);
-		add(text);
-		dependents.put(n1, text);
-	
+		attrMap.put("TextLabel", "root");
+		MNode n1 = new MNode(attrMap, getModel(), getPasteboard());
+		add(n1.getStack());
 	
 		attrMap.putFillStroke(Color.CORNSILK, Color.BLUE);
 		attrMap.putCircle(new Circle(220, 130, 60));
-		Shape circ = f.makeNewShape(Tool.Circle, attrMap);		//, "Eli"
-//		f.makeNodeMouseHandler(stk);
-		add(circ);
+		attrMap.setTool(Tool.Circle.toString()); 
+		MNode circ = new MNode(attrMap, getModel(), pasteboard);		//, "Eli"
+		add(circ.getStack());
 	
 		attrMap.putFillStroke(Color.LIGHTSKYBLUE, Color.DARKOLIVEGREEN);
 		attrMap.putCircle(new Circle(220, 330, 60));
-		Shape n3 = f.makeNewShape(Tool.Circle, attrMap);	//, "Fristcut"
-		add(n3);
+		MNode n3 = new MNode(attrMap, getModel(), pasteboard);	//, "Fristcut"
+		add(n3.getStack());
 		
 		Edge line1 = model.addEdge(circ, n3);
 		Edge line2 = model.addEdge(circ, n1);
@@ -509,10 +533,11 @@ public class Controller implements Initializable
 		add(0, line2);
 		
 		Rectangle r1 = new Rectangle(290, 230, 60, 60);
+		attrMap.setTool(Tool.Rectangle.toString());
 		attrMap.putRect(r1);
 		attrMap.putFillStroke(Color.CORNSILK, Color.DARKOLIVEGREEN);
-		Rectangle n4 = (Rectangle) f.makeNewNode(attrMap);
-		add(n4);
+		MNode n4 = new MNode(attrMap, getModel(), pasteboard);
+		add(n4.getStack());
 			
 		Edge line3 = model.addEdge(n4, circ);
 //		line3.getPolyline().setStrokeWidth(2);
@@ -541,60 +566,13 @@ public class Controller implements Initializable
 				attrMap.putCircle(c1);
 				attrMap.put("ShapeType","Circle");
 				attrMap.put("GraphId", i + ", " + j);
-				add(f.makeNewNode(attrMap));
+				add(new MNode(attrMap, getModel(), pasteboard).getStack());
 			}
 	}
 	
 	@FXML private void test3()
 	{
 //		addAll(new GPML(this).makeTestItems());
-	}
-	//--------------------------------------------------------------------
-	
-	
-	private ZoomView zoomView;
-	
-	private void setupZoomView()
-	{
-//		zoomView = new ZoomView(zoomAnchor, drawPane, this);
-//		Border myBorder = new Border(new BorderStroke(Color.GRAY, 
-//				BorderStrokeStyle.SOLID, 
-//				CornerRadii.EMPTY, new BorderWidths(5))	);
-//		
-//		zoomAnchor.setBorder(myBorder);
-
-		
-//		Borders.wrap(zoomAnchor).lineBorder().buildAll();
-//		viewport.xProperty().bind(drawPane.translateXProperty().multiply(-0.25));  
-//		viewport.yProperty().bind(drawPane.translateYProperty().multiply(-0.25));  
-//		viewport.widthProperty().bind(drawPane.scaleXProperty());  
-//		viewport.heightProperty().bind(drawPane.scaleYProperty());  
-
-//		scale.valueProperty().bindBidirectional(drawPane.scaleXProperty());  
-//		scale.valueProperty().bindBidirectional(drawPane.scaleYProperty());  
-//		translate.valueProperty().bindBidirectional(drawPane.translateYProperty());  
-//		translate.valueProperty().bindBidirectional(drawPane.translateXProperty());  
-//		
-		// binding sliders to drawPane's scale and offset
-		
-/*		scale.valueProperty().addListener((ov, old, val) ->  {
-            	double scale = Math.pow(2, (double) val);
-    			drawPane.setScaleX(scale); 	
-    			drawPane.setScaleY(scale); 	
-    			if (zoomView != null) zoomView.zoomChanged();
-	        });	
-		translateX.valueProperty().addListener((ov, old, val) ->  {
-				drawPane.setTranslateX((double) val);  
-				if (zoomView != null) zoomView.zoomChanged();
-//    			status2.setText(translateX.toString());
-        });	
-		
-		translateY.valueProperty().addListener((ov, old, val) ->   {
-				drawPane.setTranslateY((double) val);  
-				if (zoomView != null) zoomView.zoomChanged();
-//    			status3.setText(translateY.toString());
-       });	
-*/
 	}
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
@@ -617,8 +595,8 @@ public class Controller implements Initializable
 		setGraphic(polygon, Tool.Polygon, FontAwesomeIcons.STAR);
 		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
 		setGraphic(line, Tool.Line, FontAwesomeIcons.LONG_ARROW_RIGHT);
-		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.FILTER);
-		setGraphic(shape2, Tool.Shape2, FontAwesomeIcons.HEART);
+		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.HEART);
+//		setGraphic(shape2, Tool.Brace, FontAwesomeIcons.BARCODE);
 
 		setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
@@ -629,9 +607,9 @@ public class Controller implements Initializable
 	// **-------------------------------------------------------------------------------
 	public void setState(String s)
 	{
-		drawPane.getChildren().clear();
-		drawPane.getChildren().add(pasteboard.getGrid());
-		addState(s);
+		pasteboard.getChildren().clear();
+		pasteboard.getChildren().add(pasteboard.getGrid());
+//		addState(s);
 	}
 	//-----------------------------------------------------------------------------
 	public void addState(org.w3c.dom.Document doc)
@@ -662,27 +640,33 @@ public class Controller implements Initializable
 	public void clearGenes() 			{		genes.clear();	}
 
 	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
-	public void addRef(BiopaxRef ref) 	{		references.add(ref);	}
+	public void addRef(BiopaxRef ref) 	{	if (!refExists(ref))			references.add(ref);		}
+	private boolean refExists(BiopaxRef ref) {
+		String id = ref.getId();
+		if (id == null) return false;
+		for (BiopaxRef r : references)
+			if (id.equals(r.getId())) return true;
+		return false;
+	}
 	public void clearRefs() 			{		references.clear();	}
 	//-----------------------------------------------------------------------------
-	@Deprecated
-	public void addState(String s)			// used in undo restore
-	{
-		Scanner scan = new Scanner(s);
-		while (scan.hasNextLine())
-		{
-			String line = scan.nextLine();
-			Node node = getNodeFactory().parseNode(line, true);
-			if (node != null)
-			{
-				if (verbose > 0) System.out.print(", adding " + node.getId());
-				add(node);
-			}
-			if (verbose > 0) System.out.println();
-		} 
-		scan.close();
-		refreshZoomPane();
-	}
+//	public void addState(String s)			// used in undo restore
+//	{
+//		Scanner scan = new Scanner(s);
+//		while (scan.hasNextLine())
+//		{
+//			String line = scan.nextLine();
+//			Node node = getNodeFactory().parseNode(line, true);
+//			if (node != null)
+//			{
+//				if (verbose > 0) System.out.print(", adding " + node.getId());
+//				add(node);
+//			}
+//			if (verbose > 0) System.out.println();
+//		} 
+//		scan.close();
+//		refreshZoomPane();
+//	}
 	//-----------------------------------------------------------------------------
 	public void doPaste()
 	{
@@ -833,10 +817,10 @@ public class Controller implements Initializable
 	{
 		if(getSelectionManager().count() == 1)
 		{
-			Node firstNode = getSelection().get(0);
-			if (firstNode instanceof Shape)
+			VNode firstNode = getSelection().get(0);
+			if (firstNode.getShape() != null)
 			{
-				Shape n = (Shape) getSelection().get(0);
+				Shape n = firstNode.getShape();
 				Paint fill = n.getFill();
 				Paint stroke = n.getStroke();
 				double wt = n.getStrokeWidth();
@@ -889,9 +873,9 @@ public class Controller implements Initializable
 	public void add(Node n)							
 	{		
 		if (n == null) return;
-		drawPane.getChildren().add(n);	
+		pasteboard.getChildren().add(n);	
 		if ("Marquee".equals(n.getId())) 	return;
-		model.addResource(n.getId(), n);
+//		model.addResource(n.getId(), n.getModel());
 		Object prop  = n.getProperties().get("TextLabel");
 		if (prop != null && findGene(""+prop) == null)
 			addGene(new Gene(""+prop));
@@ -906,48 +890,45 @@ public class Controller implements Initializable
 	public void add(int idx, Edge e)							
 	{		
 		if (e == null) return;
-		drawPane.getChildren().add(idx, e.getEdgeLine());	
+		pasteboard.getChildren().add(idx, e.getEdgeLine());	
 //		drawPane.getChildren().add(idx, e.getLine() );	
 		model.addEdge(e);
 	}
-	public void add(int idx, Node n)							
+	public void add(int idx, VNode n)							
 	{		
-		drawPane.getChildren().add(idx, n);	
+		pasteboard.getChildren().add(idx, n);	
 		if ("Marquee".equals(n.getId())) 	return;
-		model.addResource(n.getId(), n);
+		model.addResource(n.getId(), n.getModel());
 	}
-	public void addAll(ObservableList<Node> n)		{		drawPane.getChildren().addAll(n);	}
-	public void addAll(Node... n)				{		drawPane.getChildren().addAll(n);	}
+	public void addAll(ObservableList<Node> n)	{		pasteboard.getChildren().addAll(n);	}
+	public void addAll(Node... n)				{		pasteboard.getChildren().addAll(n);	}
 
 	public void remove(Node n)						
 	{		
 		getDrawModel().removeNode(n);
-		Object dependent = dependents.get(n);
-		if (dependent != null)
-		{
-			drawPane.getChildren().remove(dependent);	
-			dependents.remove(n);
-		}
-		drawPane.getChildren().remove(n);	
+//		Object dependent = dependents.get(n);
+//		if (dependent != null)
+//		{
+//			pasteboard.getChildren().remove(dependent);	
+//			dependents.remove(n);
+//		}
+		pasteboard.getChildren().remove(n);	
 	}
 
 	// **-------------------------------------------------------------------------------
-	public String getState()			{ 	return model.traverseSceneGraph(drawPane).toString();  }
-	
-	public void refreshZoomPane()		{	if (zoomView != null) zoomView.zoomChanged();}
+	public String getState()			{ 	return model.traverseSceneGraph(pasteboard).toString();  }
 
 	// **-------------------------------------------------------------------------------
 	public void reportStatus(String string)	
 	{		
 //		status1.setText(string);	
-		refreshZoomPane();
 	}
 //	public void setStatus2(String status)	{	status2.setText(status);	}
 //	public void setStatus3(String status)	{	status3.setText(status);	}
 	// **-------------------------------------------------------------------------------
 	public void addStylesheet(File f)
 	{
-		Scene scene = drawPane.getScene();
+		Scene scene = pasteboard.getScene();
 		ObservableList<String> sheets = scene.getStylesheets();
 		sheets.add(f.getName());
 //		attributeTable.setItems(sheets);
@@ -1010,36 +991,39 @@ public class Controller implements Initializable
 				String[] parts = s.split("\t");
 				if (parts.length == 2)
 				{
-					Node node = model.getResourceByKey(parts[0]);
+					MNode node = model.getResourceByKey(parts[0]);
 					if (node != null)
-						node.getProperties().put("value", parts[1]);
+						node.getAttributeMap().put("value", parts[1]);
 				}
 			}
 			setColorByValue();
 	}
+	
+	
 	private void setColorByValue() {
 //		clearColors();
-		for (Node node : model.getResourceMap().values())
+		for (MNode node : model.getResourceMap().values())
 		{
-			Object val = node.getProperties().get("value");
+			Object val = node.getAttributeMap().get("value");
 			if (val != null)
 			{
 				double d = StringUtil.toDouble("" + val);
 				if (!Double.isNaN(d) && 0 <= d && 1 >= d)
 				{
 					Color gray = new Color(d,d,d, 1);
-					if (node instanceof Shape)
-						((Shape) node).setFill(gray);
+					if (node.getStack().getShape() != null)
+						(node.getStack().getShape()).setFill(gray);			// TODO set the attribute
 				}
 			}
 		}
 	}	
-@FXML	private void clearColors() {
-			for (Node node : model.getResourceMap().values())
+@FXML	private void clearColors(ActionEvent ev) {
+			for (MNode node : model.getResourceMap().values())
 			{
-				node.getProperties().remove("value");
-				if (node instanceof Shape)
-					((Shape) node).setFill(Color.WHITE);
+				node.getAttributeMap().remove("value");
+				Shape shape = node.getStack().getShape();
+				if (shape != null)
+					shape.setFill(Color.WHITE);
 			}
 	}
 public void finishRead() {

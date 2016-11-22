@@ -32,6 +32,11 @@ public class GPMLPoint {
 	public void setRelY(double s)		{ relY = s;	}
 	//-----------------------------------------------------------------------
 	
+	public GPMLPoint(Point2D pt) {
+		x = pt.getX();
+		y = pt.getY();
+	}
+	
 	public GPMLPoint(double X, double Y) {
 		x = X;
 		y = Y;

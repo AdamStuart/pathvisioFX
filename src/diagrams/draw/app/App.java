@@ -1,4 +1,4 @@
-package diagrams.draw;
+package diagrams.draw.app;
 
 import java.net.URL;
 

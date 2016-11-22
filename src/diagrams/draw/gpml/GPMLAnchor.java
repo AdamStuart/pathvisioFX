@@ -7,7 +7,7 @@ public class GPMLAnchor {
 	private double position;
 	private String shape = "None";
 	
-	public double getPosition()	{ return position;	}
+	public double getPosition()			{ return position;	}
 	public void setPosition(double p)	{  position = p;	}
 
 	public String getShape()		{ return shape;	}
@@ -25,7 +25,7 @@ public class GPMLAnchor {
 	}
 	public String toString()
 	{
-		return String.format("<Anchor Position=\"%.2f\" Shape=\"%s\" />", position, shape);
+		return String.format("<Anchor Position=\"%.4f\" Shape=\"%s\" />", position, shape);
 	}
 
 }

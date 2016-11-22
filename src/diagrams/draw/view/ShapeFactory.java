@@ -1,19 +1,26 @@
-package diagrams.draw;
+package diagrams.draw.view;
 
 import java.io.File;
 import java.util.List;
 import java.util.Set;
 
-import diagrams.draw.Action.ActionType;
-import diagrams.draw.gpml.GPML;
+import diagrams.draw.app.Action.ActionType;
+import diagrams.draw.app.Controller;
+import diagrams.draw.app.Selection;
+import diagrams.draw.app.Tool;
+import diagrams.draw.app.UndoStack;
+import diagrams.draw.gpml.CellShapeFactory;
+import diagrams.draw.model.MNode;
+import diagrams.draw.model.Model;
+import edu.stanford.nlp.util.ArrayUtils;
 import gui.Effects;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.event.EventType;
+import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -62,9 +69,13 @@ public class ShapeFactory {
 
 	// -----------------------------------------------------------------------
 	public Rectangle makeMarquee() {
-		AttributeMap attrMap = new AttributeMap();
-		attrMap.putAll("GraphId", "Marquee", "-fx-stroke", "Green", "-fx-fill", "TRANSPARENT", "-fx-stroke-width", "1");
-		Rectangle marquee = (Rectangle) makeNewShape("Rectangle", attrMap, false);
+//		AttributeMap attrMap = new AttributeMap();
+//		attrMap.putAll("GraphId", "Marquee", "-fx-stroke", "Green", "-fx-fill", "TRANSPARENT", "-fx-stroke-width", "1");
+		Rectangle marquee = new Rectangle();
+		marquee.setId("Marquee");
+		marquee.setStroke(Color.GREEN);
+		marquee.setFill(Color.TRANSPARENT);
+		marquee.setStrokeWidth(1);
 		marquee.getStrokeDashArray().addAll(3.0, 7.0, 3.0, 7.0);
 		// marquee.getStyleClass().addAll(STYLE_CLASS_SELECTION_BOX);
 		// marquee.setOpacity(0.5);
@@ -76,58 +87,94 @@ public class ShapeFactory {
 	}
 
 	// -----------------------------------------------------------------------
+////
+//	public MNode makeNewMNode(AttributeMap attrMap, Model m, Pasteboard pasteboard) {
+//		String type = attrMap.get("ShapeType");
+//		Tool tool = Tool.lookup(type);
+//		if (tool  != null)
+//			return makeNewMNode(tool, attrMap, m, pasteboard);
+//		return null;
+//	}
 
-	public Shape makeNewNode(AttributeMap attrMap) {
-		String type = attrMap.get("ShapeType");
-		if (Tool.lookup(type) != null)
-			return makeNewShape(type.toString(), attrMap, true);
-		return null;
-	}
-
-	// **-------------------------------------------------------------------------------
-	public Shape makeNewShape(Tool type, AttributeMap attrMap) {
-		Shape sh = makeNewShape(type.toString(), attrMap, true);
-		sh.setId(attrMap.get("GraphId"));
-		if (sh instanceof  Circle)
+//	// **-------------------------------------------------------------------------------
+//	public MNode makeNewMNode(Tool type, AttributeMap attrMap, Model m, Pasteboard pasteboard) {
+//		MNode modelNode = new MNode(attrMap, m, pasteboard);
+//		VNode view = new VNode(modelNode, pasteboard);
+////		makeNewShape(attrMap.getToolName(), modelNode, view);
+//		view.setId("V" + attrMap.get("GraphId"));
+//		if (view.getShapeLayer() instanceof  Circle)
+//		{
+//			double rad = attrMap.getDouble("Radius");
+//			if (Double.isNaN(rad))
+//				rad = attrMap.getDouble("Width") / 2;
+//			((Circle) view.getShapeLayer()).setRadius(rad);
+//		}
+//		return modelNode;
+//	}
+//	
+//	public VNode makeVNode(MNode modelNode) {
+//		String s = modelNode.getShapeType();
+//		VNode stack = new VNode(modelNode);
+//		 makeNewShape(s, modelNode, stack);
+//		 return stack;
+//	}
+	
+//	public VNode makeNewShape(String s, MNode modelNode) {
+//		VNode stack = new VNode(modelNode);
+//		 makeNewShape(s, modelNode, stack);
+//		 return stack;
+//	}
+	
+	/*
+	 * makeNewShape returns the shape but also adds it to stack's children
+	 */
+	public Shape makeNewShape(String s, MNode modelNode, VNode stack) {
+		Tool tool = Tool.lookup(s);
+		if (tool == null || !tool.isShape())
+			tool = Tool.Rectangle;
+		Shape newShape= null;
+		AttributeMap attrMap = modelNode.getAttributeMap();
+		attrMap.put("stroke-width", "3");  	
+		switch (tool)
 		{
-			double rad = attrMap.getDouble("Radius");
-			if (Double.isNaN(rad))
-				rad = attrMap.getDouble("Width") / 2;
-				((Circle) sh).setRadius(rad);
+			case Circle:			newShape = new Circle();	break;
+			case Rectangle:			newShape = new Rectangle();	break;
+			case RoundedRectangle:	newShape = new Rectangle();	break;
+			case Polygon:			newShape = new Polygon();	break;
+			case Polyline:			newShape = new Polyline();	break;
+			case Line:				newShape = new Line();		break;
+			case Shape1:			newShape = Shape1.getHeartPath();	break;
+			default:	 
+				if (ArrayUtils.contains(Tool.customShapes,s))
+					newShape = CellShapeFactory.makeCustomShape(s); 
 		}
-		return sh;
-	}
-
-	public Shape makeNewShape(String s, AttributeMap attrMap, boolean addHandlers) {
-		Shape newShape;
-		if ("Circle".equals(s))					newShape = new Circle();
-		else if ("Rectangle".equals(s))			newShape = new Rectangle();
-		else if ("Shape1".equals(s))			newShape = new Shape1();
-		else if ("RoundedRectangle".equals(s))	newShape = new Rectangle();
-		else if ("Polygon".equals(s))			newShape = new Polygon();
-		else if ("Polyline".equals(s))			newShape = new Polyline();
-		else if ("Line".equals(s))	{ newShape = new Line(); 
-									attrMap.put("stroke-width", "3");  }		// a hack to make it easier to select
-		else	return null;
+		if (newShape == null) 					return null;
 
 		makeHandlers(newShape);
 		String id = attrMap.get("GraphId");
 		if (id == null)
-			id = model.gensym("" + s.charAt(0));
-		newShape.setId(id);
-		newShape.setFill(drawLayer.getDefaultFill());
-		newShape.setStroke(Color.BLUE);
-
-		newShape.setStrokeWidth(1f);
-		newShape.setManaged(false);
+		{
+			id = modelNode.getModel().gensym("" + s.charAt(0));
+			attrMap.put("GraphId", id);
+		}
+		setDefaultAttributes(newShape);
 		setAttributes(newShape, attrMap);
 		newShape.getProperties().putAll(attrMap);
+		newShape.setManaged(false);
+		StackPane.setMargin(newShape, new Insets(1));
 		if ("Line".equals(s))
 		{
 			Arrow a = new Arrow((Line) newShape, 0.7f);
 			a.setFill(Color.BEIGE);
 		}
+		stack.getChildren().add(0, newShape);
 		return newShape;
+	}
+	
+	private void setDefaultAttributes(Shape newShape) {
+		newShape.setFill(drawLayer.getDefaultFill());
+		newShape.setStroke(Color.BLUE);
+		newShape.setStrokeWidth(1f);
 	}
 
 //
@@ -147,79 +194,79 @@ public class ShapeFactory {
 //    	text.layoutYProperty().bind(ctr.centerYProperty().subtract(text.heightProperty().divide(2.)));
 //		return newShape;
 //}
-
-	public StackPane makeLabeledShapePane(Tool tool, AttributeMap attrMap, String s) {
-		Shape newShape = makeNewShape(tool, attrMap);
-		StackPane stack = new StackPane();
-		final Label text = createLabel(s);
-		text.setTranslateX(attrMap.getDouble("centerX"));
-		text.setTranslateY(attrMap.getDouble("centerY"));
-		StackPane.setAlignment(newShape, Pos.CENTER);
-		StackPane.setAlignment(text, Pos.CENTER);
-		stack.getChildren().addAll(newShape, text);
-		makeNodeMouseHandler(stack);
-		return stack;
-	}
+//
+//	public StackPane makeLabeledShapePane(Tool tool, AttributeMap attrMap, String s) {
+//		Shape newShape = makeNewShape(tool, attrMap);
+//		StackPane stack = new StackPane();
+//		final Label text = createLabel(s);
+//		text.setTranslateX(attrMap.getDouble("centerX"));
+//		text.setTranslateY(attrMap.getDouble("centerY"));
+//		StackPane.setAlignment(newShape, Pos.CENTER);
+//		StackPane.setAlignment(text, Pos.CENTER);
+//		stack.getChildren().addAll(newShape, text);
+//		makeNodeMouseHandler(stack);
+//		return stack;
+//	}
 	
-	public Group makeLabeledShapeGroup(Tool tool, AttributeMap attrMap, String s) {
-		Shape newShape = makeNewShape(tool, attrMap);
-		Group group = new Group();
-		final Label text = createLabel(s);
-		text.setTranslateX(attrMap.getDouble("centerX"));
-		text.setTranslateY(attrMap.getDouble("centerY"));
-		StackPane.setAlignment(newShape, Pos.CENTER);
-		StackPane.setAlignment(text, Pos.CENTER);
-		group.getChildren().addAll(newShape, text);
-		makeNodeMouseHandler(group);
-		return group;
-	}
-	public Label createLabel(String s, Color c) {
-		Label label = createLabel(s);
-		label.setTextFill(c);
-		return label;
-	}
-	
-	public Label createLabel(String s) {
-		final Label text = new Label(s);
-		text.setFont(new Font(12));
-//		text.setBoundsType(TextBoundsType.VISUAL);
-		text.setMouseTransparent(true);
-		return text;
-	}
+//	public Group makeLabeledShapeGroup(Tool tool, AttributeMap attrMap, String s) {
+//		Shape newShape = makeNewShape(tool, attrMap);
+//		Group group = new Group();
+//		final Label text = createLabel(s);
+//		text.setTranslateX(attrMap.getDouble("centerX"));
+//		text.setTranslateY(attrMap.getDouble("centerY"));
+//		StackPane.setAlignment(newShape, Pos.CENTER);
+//		StackPane.setAlignment(text, Pos.CENTER);
+//		group.getChildren().addAll(newShape, text);
+//		makeNodeMouseHandler(group);
+//		return group;
+//	}
+//	public Label createLabel(String s, Color c) {
+//		Label label = createLabel(s);
+//		label.setTextFill(c);
+//		return label;
+//	}
+//	
+//	public static Label createLabel(String s) {
+//		final Label text = new Label(s);
+//		text.setFont(new Font(12));
+////		text.setBoundsType(TextBoundsType.VISUAL);
+//		text.setMouseTransparent(true);
+//		return text;
+//	}
 	// -----------------------------------------------------------------------
-	boolean UseGPML = true;
-	public Shape parseShape(AttributeMap attrMap) {
-		if (UseGPML) 	
-			return makeNewShape(attrMap.get("ShapeType"), attrMap, false);
-		return makeNewShape(attrMap.get("type"), attrMap, false);
-	}
-
-	private void setAttributes(Shape shape, AttributeMap map) {
+//	public MNode parseShape(AttributeMap attrMap, Model m) {
+//		return makeNewMNode( attrMap, m);
+//	}
+//
+	public static void setAttributes(Shape shape, AttributeMap map) {
 		// if (verbose>0) System.out.println(map.toString());
+		if (shape == null)	return;
 		for (String k : map.keySet()) 
 		{
 			String val = map.get(k);
 			k = k.toLowerCase();
-			if (k.equals("textlabel"))   
-				createLabel(val);
+			if (k.equals("graphid"))   			shape.setId(val);
+
+//			if (k.equals("textlabel"))   
+//				setText(val);
 			if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
 			if (k.equals("fontweight"))			;// TODO	k = "-fx-font-size"??;
 			if (k.equals("valign"))				;// TODO	
 			if (k.equals("zorder"))				;// TODO	
 			if (k.equals("stroke"))				k = "-fx-stroke";
 			if (k.equals("strokeWidth"))		k = "-fx-stroke-weight";
-			if (k.equals("graphid"))					shape.setId(val);
+			if (k.equals("graphid"))			shape.setId(val);
 			double d = StringUtil.toDouble(val); // exception safe: comes back
 													// NaN if val is not a
 													// number
 			if (shape instanceof Rectangle) {
 				Rectangle r = (Rectangle) shape;
-				if (k.equals("centerx"))		r.setX(d);		// TODO -- assumes width is set before centerX!
-				else if (k.equals("centery"))	r.setY(d);
-				else if (k.equals("x"))			r.setX(d);
-				else if (k.equals("y"))			r.setY(d);
-				else if (k.equals("width"))		r.setWidth(d);
-				else if (k.equals("height"))	r.setHeight(d);
+//				if (k.equals("centerx"))		r.setX(d);	
+//				else if (k.equals("centery"))	r.setY(d);
+//				else if (k.equals("x"))			r.setX(d);
+//				else if (k.equals("y"))			r.setY(d); else
+//				 if (k.equals("width"))		r.setWidth(d);
+//				else if (k.equals("height"))	r.setHeight(d);
 			}
 			if (shape instanceof Circle) {
 				Circle circ = (Circle) shape;
@@ -255,23 +302,23 @@ public class ShapeFactory {
 			} 
 			catch (Exception e) {		System.err.println("Parse errors: " + k);	}
 		}
-		if (shape instanceof Rectangle) 
-		{
-			String lookforCenter = map.get("CenterX");
-			if (lookforCenter != null)
-			{
-				Rectangle r = (Rectangle) shape;
-				r.setX(r.getX() - r.getWidth() / 2.);
-				r.setY(r.getY() - r.getHeight() / 2.);
-			}
-		}
+//		if (shape instanceof Rectangle) 
+//		{
+//			String lookforCenter = map.get("CenterX");
+//			if (lookforCenter != null)
+//			{
+//				Rectangle r = (Rectangle) shape;
+//				r.setX(r.getX() - r.getWidth() / 2.);
+//				r.setY(r.getY() - r.getHeight() / 2.);
+//			}
+//		}
 	}
 
-	private void parsePolygonPoints(Polygon poly, String string) {	parsePoints(poly.getPoints(), string);	}
+	private static void parsePolygonPoints(Polygon poly, String string) {	parsePoints(poly.getPoints(), string);	}
 
-	private void parsePolylinePoints(Polyline poly, String string) {parsePoints(poly.getPoints(), string);	}
+	private static void parsePolylinePoints(Polyline poly, String string) {parsePoints(poly.getPoints(), string);	}
 
-	private void parsePoints(ObservableList<Double> points, String string) {
+	private static void parsePoints(ObservableList<Double> points, String string) {
 		String s = string.trim();
 		s = s.substring(1, s.length());
 		String[] doubles = s.split(",");
@@ -279,7 +326,7 @@ public class ShapeFactory {
 			points.add(Double.parseDouble(d));
 	}
 
-	private void parseLinePoints(Line line, String string) {
+	private static void parseLinePoints(Line line, String string) {
 		String s = string.trim();
 		s = s.substring(1, s.length());
 		String[] doubles = s.split(",");
@@ -293,14 +340,13 @@ public class ShapeFactory {
 	// **-------------------------------------------------------------------------------
 	// MouseEvents and DragEvents
 	public void makeHandlers(Shape s) {
-		if (s == null)
-			return;
-		if (s instanceof Circle)		new CircleMouseHandler((Circle) s, drawLayer);
-		if (s instanceof Rectangle)		new RectMouseHandler((Rectangle) s, drawLayer);
-		if (s instanceof Polygon)		new PolygonMouseHandler((Polygon) s, drawLayer);
-		if (s instanceof Polyline)		new PolylineMouseHandler((Polyline) s, drawLayer);
-		if (s instanceof Line)			new LineMouseHandler((Line) s, drawLayer);
-		if (s instanceof Shape1)		new ShapeMouseHandler((Shape1) s, drawLayer);
+		if (s == null)		return;
+		if (s instanceof Circle)			new CircleMouseHandler((Circle) s, drawLayer);
+		else if (s instanceof Rectangle)	new RectMouseHandler((Rectangle) s, drawLayer);
+		else if (s instanceof Polygon)		new PolygonMouseHandler((Polygon) s, drawLayer);
+		else if (s instanceof Polyline)		new PolylineMouseHandler((Polyline) s, drawLayer);
+		else if (s instanceof Line)			new LineMouseHandler((Line) s, drawLayer);
+		else if (s instanceof Shape)		new ShapeMouseHandler((Shape) s, drawLayer);
 //		if (s instanceof Shape2)		new ShapeMouseHandler((Shape2) s, drawLayer);
 
 		s.setOnDragEntered(e -> {	s.setEffect(Effects.sepia);			e.consume();		});
@@ -351,11 +397,8 @@ public class ShapeFactory {
 				}
 			}
 		}
-
 	}
-
 	// **-------------------------------------------------------------------------------
-
 	private void doDoubleClick(final MouseEvent event) {
 		
 		EventTarget target = event.getTarget();
@@ -560,17 +603,14 @@ public class ShapeFactory {
 	protected class PolygonMouseHandler extends NodeMouseHandler {
 		public PolygonMouseHandler(Polygon p, Pasteboard d) {
 			super(d);
-			p.addEventHandler(MouseEvent.MOUSE_PRESSED, this);
-			p.addEventHandler(MouseEvent.MOUSE_DRAGGED, this);
-			p.addEventHandler(MouseEvent.MOUSE_MOVED, this);
-			p.addEventHandler(MouseEvent.MOUSE_RELEASED, this);
+			assignMouseHandlers( p, this);
 		}
 
 		@Override
 		protected void handleMousePressed(final MouseEvent event) {
 			super.handleMousePressed(event);
-			if (event.getTarget() == drawLayer.getActiveShape()) {
-				drawLayer.setActiveShape(null);
+			if (event.getTarget() == drawLayer.getActiveStack()) {
+				drawLayer.setActiveStack(null);
 				event.consume();
 				return;
 			}
@@ -614,10 +654,7 @@ public class ShapeFactory {
 	protected class PolylineMouseHandler extends NodeMouseHandler {
 		public PolylineMouseHandler(Polyline p, Pasteboard d) {
 			super(d);
-			p.addEventHandler(MouseEvent.MOUSE_PRESSED, this);
-			p.addEventHandler(MouseEvent.MOUSE_DRAGGED, this);
-			p.addEventHandler(MouseEvent.MOUSE_MOVED, this);
-			p.addEventHandler(MouseEvent.MOUSE_RELEASED, this);
+			assignMouseHandlers( p, this);
 		}
 //		SimpleDoubleProperty mouseX, mouseY;
 		
@@ -627,8 +664,8 @@ public class ShapeFactory {
 			super.handleMousePressed(event);
 			Polyline p = (Polyline) target;
 			int idx = LineUtil.onVertex(currentPoint, p);
-			if (event.getTarget() == drawLayer.getActiveShape() && idx == 0) {
-				drawLayer.setActiveShape(null);
+			if (event.getTarget() == drawLayer.getActiveStack() && idx == 0) {
+				drawLayer.setActiveStack(null);
 				activeIndex = p.getPoints().size();
 				p.getPoints().addAll(currentPoint.getX(), currentPoint.getY());
 				event.consume();
@@ -691,10 +728,7 @@ public class ShapeFactory {
 	protected class LineMouseHandler extends NodeMouseHandler {
 		public LineMouseHandler(Line p, Pasteboard d) {
 			super(d);
-			p.addEventHandler(MouseEvent.MOUSE_PRESSED, this);
-			p.addEventHandler(MouseEvent.MOUSE_DRAGGED, this);
-			p.addEventHandler(MouseEvent.MOUSE_MOVED, this);
-			p.addEventHandler(MouseEvent.MOUSE_RELEASED, this);
+			assignMouseHandlers( p, this);
 		}
 //		SimpleDoubleProperty mouseX, mouseY;
 		
@@ -702,8 +736,8 @@ public class ShapeFactory {
 		@Override
 		protected void handleMousePressed(final MouseEvent event) {
 			super.handleMousePressed(event);
-			if (event.getTarget() == drawLayer.getActiveShape()) {
-				drawLayer.setActiveShape(null);
+			if (event.getTarget() == drawLayer.getActiveStack()) {
+				drawLayer.setActiveStack(null);
 				event.consume();
 				return;
 			}
@@ -751,15 +785,21 @@ public class ShapeFactory {
 	// -----------------------------------------------------------------------------------
 	public void makeNodeMouseHandler(Node n) {
 		NodeMouseHandler h = new NodeMouseHandler(drawLayer);
+		assignMouseHandlers(n, h);
+	}
+	
+	private void assignMouseHandlers(Node n, NodeMouseHandler h)
+	{
 		n.addEventHandler(MouseEvent.MOUSE_PRESSED, h);
 		n.addEventHandler(MouseEvent.MOUSE_DRAGGED, h);
 		n.addEventHandler(MouseEvent.MOUSE_MOVED, h);
 		n.addEventHandler(MouseEvent.MOUSE_RELEASED, h);
+
 	}
 	// -----------------------------------------------------------------------------------
-		private class NodeMouseHandler implements EventHandler<MouseEvent> {
+		private class NodeMouseHandler extends BasicMouseHandler {
 			public NodeMouseHandler(Pasteboard d) {
-				drawLayer = d;
+				super(d);
 			}
 
 		@Override
@@ -780,9 +820,6 @@ public class ShapeFactory {
 
 		// **-------------------------------------------------------------------------------
 		protected Point2D startPoint, currentPoint, prevPoint, offset;
-		private Pasteboard drawLayer;
-		private Pane getPane() 				{	return drawLayer.getPane();		}
-		private Controller getController() 	{	return drawLayer.getController();		}
 
 		protected int verbose = 3;
 		protected boolean dragging = false;
@@ -797,7 +834,7 @@ public class ShapeFactory {
 		}
 
 		protected void handleMousePressed(MouseEvent event) {
-			if (verbose > 3)
+			if (verbose >= 3)
 				System.out.println("NodeMousePressedHandler, Target: " + event.getTarget());
 			if (drawLayer.getTool() == Tool.Arrow)
 			{
@@ -807,7 +844,7 @@ public class ShapeFactory {
 				// boolean leftClick = event.isPrimaryButtonDown();
 				boolean rightClick = event.isSecondaryButtonDown();
 				if (altDown)
-					getController().getNodeFactory().cloneSelection();
+					pasteboard.getController().getSelectionManager().cloneSelection();
 				// do nothing for a right-click
 				// if (event.isSecondaryButtonDown()) return;// TODO -- popup up
 				// Node menu
@@ -815,19 +852,21 @@ public class ShapeFactory {
 					if (menu == null)
 						menu = buildContextMenu();
 					if (menu != null)
-						menu.show(getPane(), event.getScreenX(), event.getScreenY());
+						menu.show(pasteboard, event.getScreenX(), event.getScreenY());
 					return;
 				}
 				Selection sel = drawLayer.getSelectionMgr();
-				Node node = (Node) target;
-				boolean wasSelected = sel.isSelected(node);
-				if (event.isControlDown())			sel.select(node, !wasSelected);
-				else if ((event.isShiftDown()))		sel.select(node);
-				else if (!wasSelected)				sel.selectX(node);
-	
+				if (target instanceof VNode)
+				{
+					VNode node = (VNode) target;
+					boolean wasSelected = sel.isSelected(node);
+					if (event.isControlDown())			sel.select(node, !wasSelected);
+					else if ((event.isShiftDown()))		sel.select(node);
+					else if (!wasSelected)				sel.selectX(node);
+				}
 				if (sel.count() > 0) {
 					dragging = true;
-					drawLayer.getController().getUndoStack().push(ActionType.Move);
+					pasteboard.getController().getUndoStack().push(ActionType.Move);
 					startPoint = currentPoint;
 				}
 				event.consume();
@@ -836,7 +875,7 @@ public class ShapeFactory {
 		//--------------------------------------------------------------------------------------------
 		private ContextMenu buildContextMenu() {
 			menu = new ContextMenu();
-			Controller c = getController();
+			Controller c = pasteboard.getController();
 			MenuItem dup = 		makeItem("Duplicate", a -> 		{	c.duplicateSelection();	});
 			MenuItem del = 		makeItem("Delete", a -> 		{	c.deleteSelection();	});
 			MenuItem toFront = 	makeItem("Bring To Front", a -> {	c.toFront();	});
@@ -880,10 +919,9 @@ public class ShapeFactory {
 			startPoint = null;
 //			dragLine = null;
 			resizing = dragging = false;
-			drawLayer.getPane().requestFocus(); // needed for the key event
-												// handler to receive events
+			drawLayer.requestFocus(); 
 			event.consume();
-			drawLayer.getController().refreshZoomPane();
+//			drawLayer.getController().refreshZoomPane();
 		}
 	}
 

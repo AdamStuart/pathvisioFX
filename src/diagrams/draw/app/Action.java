@@ -1,7 +1,8 @@
-package diagrams.draw;
+package diagrams.draw.app;
 
 import java.awt.Dimension;
 
+import diagrams.draw.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -61,7 +62,7 @@ public class Action
 	
 	
 	protected ObservableList<Node> theSelection;
-	public void setSelection( ObservableList<Node> s) 	{	theSelection = FXCollections.observableArrayList(s);	} 
+	public void setSelection( ObservableList<VNode> s) 	{	theSelection = FXCollections.observableArrayList(s);	} 
 	public ObservableList<Node> getSelection() 			{		return theSelection;	} 
 
 	public enum ActionState {
