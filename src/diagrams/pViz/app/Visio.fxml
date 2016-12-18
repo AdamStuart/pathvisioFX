@@ -13,13 +13,12 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
-<?import javafx.scene.control.TitledPane?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.input.KeyCodeCombination?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
@@ -127,7 +126,17 @@
                         </Menu>
                         <Menu mnemonicParsing="false" text="Arrange">
                            <items>
-                              <MenuItem fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
+                              <MenuItem fx:id="browseGenes" mnemonicParsing="false" onAction="#doNewGeneList" text="New Gene List">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                           <MenuItem fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
@@ -147,13 +156,15 @@
                                     <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
+                              <MenuItem fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
+                              <MenuItem fx:id="hideAnchors" mnemonicParsing="false" onAction="#hideAnchors" text="Hide Anchors" />
                            </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="Animate">
                            <items>
                               <MenuItem mnemonicParsing="false" text="Set up..." />
                               <MenuItem mnemonicParsing="false" text="Play" />
-                              <MenuItem fx:id="clearColors" mnemonicParsing="false" onAction="#clearColors" text="Clear Data Coloring">
+                              <MenuItem fx:id="clearColors" mnemonicParsing="false" onAction="#test1" text="Clear Data Coloring">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
@@ -180,6 +191,10 @@
                         <Menu mnemonicParsing="false" text="Help">
                            <items>
                               <MenuItem fx:id="doAbout" mnemonicParsing="false" text="About" />
+                              <MenuItem fx:id="dumpNodeTable" mnemonicParsing="false" onAction="#dumpNodeTable" text="Dump Node Table" />
+                              <MenuItem fx:id="dumpEdges" mnemonicParsing="false" onAction="#dumpEdgeTable" text="Dump Edge Table" />
+                              <MenuItem fx:id="dumpViewHierarchy" mnemonicParsing="false" onAction="#dumpViewHierarchy" text="Dump View Hierarchy" />
+                              <MenuItem fx:id="resetEdgeTable" mnemonicParsing="false" onAction="#resetEdgeTable" text="Reset Edge Table" />
                            </items>
                         </Menu>
                      </menus>
@@ -191,39 +206,16 @@
             </HBox>
          </top>
          <right>
-            <VBox style="-fx-border-width: 1;" BorderPane.alignment="CENTER">
-               <children>
-                  <SplitPane dividerPositions="0.24077046548956663" orientation="VERTICAL">
-                     <items>
-                        <TitledPane text="Attribute Map">
-                           <content>
-                              <TableView fx:id="attributeTable" prefHeight="400.0" prefWidth="254.0">
-                                 <columns>
-                                    <TableColumn fx:id="attributeCol" prefWidth="138.0" text="Attribute" />
-                                    <TableColumn fx:id="valueCol" minWidth="0.0" prefWidth="135.0" text="Value" />
-                                 </columns>
-                              </TableView>
-                           </content>
-                        </TitledPane>
-                        <TitledPane text="Gene Map">
-                           <content>
-                              <TableView fx:id="geneListTable" prefHeight="200.0" prefWidth="200.0">
-                                <columns>
-                                  <TableColumn fx:id="nameCol" prefWidth="119.0" text="Gene" />
-                                  <TableColumn fx:id="ensemblCol" prefWidth="131.0" text="Ensembl" />
-                                </columns>
-                              </TableView>
-                           </content>
-                        </TitledPane>
-                     </items>
-                  </SplitPane>
-               </children>
+            <VBox fx:id="east" style="-fx-border-width: 1;" BorderPane.alignment="TOP_LEFT">
+               <BorderPane.margin>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </BorderPane.margin>
             </VBox>
          </right>
          <bottom>
            </bottom>
          <left>
-            <VBox fx:id="inspector" prefHeight="727.0" prefWidth="70.0" spacing="2.0" BorderPane.alignment="CENTER">
+            <VBox fx:id="west" prefHeight="727.0" prefWidth="70.0" spacing="2.0" BorderPane.alignment="CENTER">
                <children>
                   <Button fx:id="gene" mnemonicParsing="false" onDragDetected="#dragControl" text="Gene">
                      <font>
@@ -276,12 +268,12 @@
                         </VBox>
                      </items>
                   </ToolBar>
-                  <Button fx:id="cell" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
+                  <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
                      <font>
                         <Font size="9.0" />
                      </font>
                   </Button>
-                  <Button fx:id="nucleus" layoutX="14.0" layoutY="33.0" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
+                  <Button fx:id="sr" layoutX="14.0" layoutY="33.0" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
                      <font>
                         <Font size="9.0" />
                      </font>
@@ -296,12 +288,7 @@
                         <Font size="9.0" />
                      </font>
                   </Button>
-                  <Button fx:id="organelle" layoutX="14.0" layoutY="547.0" mnemonicParsing="false" onDragDetected="#dragControl" text="Organelle">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="extracellular" layoutX="14.0" layoutY="566.0" mnemonicParsing="false" onDragDetected="#dragControl" text="Extracelluar">
+                  <Button fx:id="brace" layoutX="14.0" layoutY="311.0" mnemonicParsing="false" onDragDetected="#dragControl" text="Brace">
                      <font>
                         <Font size="9.0" />
                      </font>
@@ -312,19 +299,8 @@
                </padding>
             </VBox>
          </left>
-         <center>
-            <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true" hbarPolicy="ALWAYS" minViewportHeight="200.0" minViewportWidth="200.0" pannable="true" prefViewportHeight="1000.0" prefViewportWidth="1000.0" vbarPolicy="ALWAYS" BorderPane.alignment="CENTER">
-               <content>
-                  <Pane fx:id="drawPane" onMousePressed="#clickDrawPane">
-                     <padding>
-                        <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
-                     </padding>
-                  </Pane>
-               </content>
-            </ScrollPane>
-         </center>
          <bottom>
-            <VBox BorderPane.alignment="CENTER">
+            <VBox fx:id="south" BorderPane.alignment="CENTER">
                <children>
                   <HBox spacing="20.0">
                      <children>
@@ -356,11 +332,24 @@
                               </HBox>
                            </children>
                         </VBox>
+                        <HBox layoutX="10.0" layoutY="10.0">
+                           <children>
+                              <Label text="Scale" />
+                              <Slider fx:id="scale" blockIncrement="0.25" majorTickUnit="20.0" max="2.0" min="-2.0" minorTickCount="5" orientation="VERTICAL" prefHeight="86.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" />
+                           </children>
+                        </HBox>
                      </children>
                   </HBox>
                </children>
             </VBox>
          </bottom>
+         <center>
+            <ScrollPane fx:id="scrollPane" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+              <content>
+                <AnchorPane fx:id="drawPane" />
+              </content>
+            </ScrollPane>
+         </center>
       </BorderPane>
        <TableView fx:id="refTable" prefHeight="200.0" prefWidth="200.0">
         <columns>

@@ -12,7 +12,6 @@ import diagrams.pViz.app.UndoStack;
 import diagrams.pViz.gpml.CellShapeFactory;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
-import edu.stanford.nlp.util.ArrayUtils;
 import gui.Effects;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -25,14 +24,12 @@ import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -41,7 +38,6 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
-import javafx.scene.text.Font;
 import model.AttributeMap;
 import util.FileUtil;
 import util.LineUtil;
@@ -49,12 +45,12 @@ import util.RectangleUtil;
 import util.StringUtil;
 
 public class ShapeFactory {
-	private Model model;
+	public static final double MARGIN = 8;
+	public static final double MARGIN2 = 16;
 	private Pasteboard drawLayer;
-	private UndoStack undoStack;
 
 	/*
-	 * The ShapeFactory is responsible for create new nodes that are shapes.
+	 * The ShapeFactory is responsible for creating new nodes that are shapes.
 	 * Largely this is about defining the mouse event and drop handlers for the
 	 * shapes.
 	 * 
@@ -63,60 +59,20 @@ public class ShapeFactory {
 	 */
 	public ShapeFactory(Pasteboard l, UndoStack u) {
 		drawLayer = l;
-		undoStack = u;
-		model = drawLayer.getController().getDrawModel();
+//		undoStack = u;
+//		model = drawLayer.getController().getDrawModel();
 	}
 
-	// -----------------------------------------------------------------------
-	// -----------------------------------------------------------------------
-////
-//	public MNode makeNewMNode(AttributeMap attrMap, Model m, Pasteboard pasteboard) {
-//		String type = attrMap.get("ShapeType");
-//		Tool tool = Tool.lookup(type);
-//		if (tool  != null)
-//			return makeNewMNode(tool, attrMap, m, pasteboard);
-//		return null;
-//	}
-
-//	// **-------------------------------------------------------------------------------
-//	public MNode makeNewMNode(Tool type, AttributeMap attrMap, Model m, Pasteboard pasteboard) {
-//		MNode modelNode = new MNode(attrMap, m, pasteboard);
-//		VNode view = new VNode(modelNode, pasteboard);
-////		makeNewShape(attrMap.getToolName(), modelNode, view);
-//		view.setId("V" + attrMap.get("GraphId"));
-//		if (view.getShapeLayer() instanceof  Circle)
-//		{
-//			double rad = attrMap.getDouble("Radius");
-//			if (Double.isNaN(rad))
-//				rad = attrMap.getDouble("Width") / 2;
-//			((Circle) view.getShapeLayer()).setRadius(rad);
-//		}
-//		return modelNode;
-//	}
-//	
-//	public VNode makeVNode(MNode modelNode) {
-//		String s = modelNode.getShapeType();
-//		VNode stack = new VNode(modelNode);
-//		 makeNewShape(s, modelNode, stack);
-//		 return stack;
-//	}
-	
-//	public VNode makeNewShape(String s, MNode modelNode) {
-//		VNode stack = new VNode(modelNode);
-//		 makeNewShape(s, modelNode, stack);
-//		 return stack;
-//	}
-	
 	/*
 	 * makeNewShape returns the shape but also adds it to stack's children
 	 */
-	public Shape makeNewShape(String s, MNode modelNode, VNode stack) {
+	static public Shape makeNewShape(String s, MNode modelNode, VNode stack) {
 		Tool tool = Tool.lookup(s);
-		if (tool == null || !tool.isShape())
-			tool = Tool.Rectangle;
+//		if (tool == null || !tool.isShape())
+//			tool = Tool.Rectangle;
 		Shape newShape= null;
 		AttributeMap attrMap = modelNode.getAttributeMap();
-		attrMap.put("stroke-width", "3");  	
+//		attrMap.put("stroke-width", "3");  	
 		switch (tool)
 		{
 			case Circle:			newShape = new Circle();	break;
@@ -127,7 +83,7 @@ public class ShapeFactory {
 			case Line:				newShape = new Line();		break;
 			case Shape1:			newShape = Shape1.getHeartPath();	break;
 			default:	 
-				if (ArrayUtils.contains(Tool.customShapes,s))
+				if (Tool.contains(Tool.customShapes,s))
 					newShape = CellShapeFactory.makeCustomShape(s); 
 		}
 		if (newShape == null) 					return null;
@@ -141,85 +97,24 @@ public class ShapeFactory {
 		}
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, attrMap);
-		newShape.getProperties().putAll(attrMap);
 //		newShape.setManaged(false);
-		StackPane.setMargin(newShape, new Insets(1));
+//		StackPane.setMargin(newShape, new Insets(1));
 		if ("Line".equals(s))
 		{
 			Arrow a = new Arrow((Line) newShape, 0.7f);
 			a.setFill(Color.BEIGE);
 		}
+		stack.setId(id);
+		stack.getProperties().putAll(attrMap);
 		stack.getChildren().add(0, newShape);
 		return newShape;
 	}
 	
-	private void setDefaultAttributes(Shape newShape) {
-		newShape.setFill(drawLayer.getDefaultFill());
+	static private void setDefaultAttributes(Shape newShape) {
+		newShape.setFill(Color.WHITESMOKE);
 		newShape.setStroke(Color.BLUE);
-		newShape.setStrokeWidth(1f);
+		newShape.setStrokeWidth(2f);
 	}
-
-//
-//	public Edge edgeFromGPML(String gpmlStr, AttributeMap attrMap,  boolean addHandlers) {
-//		String txt = gpmlStr.trim();
-//		if (txt.startsWith("<Interaction>"))
-//			return GPML.createEdge(gpmlStr, attrMap, model);
-//		return null;
-//	}
-// **-------------------------------------------------------------------------------
-// this doesn't work because it can't pass the text back to be added to the drawLayer
-	//	public Shape makeLabeledShape(Tool tool, AttributeMap attrMap, String s) {
-//		Shape newShape = makeNewShape(tool, attrMap);
-//		final Label text = createLabel(s);
-//    	NodeCenter ctr = new NodeCenter(newShape);
-//    	text.layoutXProperty().bind(ctr.centerXProperty().subtract(text.widthProperty().divide(2.)));	// width / 2
-//    	text.layoutYProperty().bind(ctr.centerYProperty().subtract(text.heightProperty().divide(2.)));
-//		return newShape;
-//}
-//
-//	public StackPane makeLabeledShapePane(Tool tool, AttributeMap attrMap, String s) {
-//		Shape newShape = makeNewShape(tool, attrMap);
-//		StackPane stack = new StackPane();
-//		final Label text = createLabel(s);
-//		text.setTranslateX(attrMap.getDouble("centerX"));
-//		text.setTranslateY(attrMap.getDouble("centerY"));
-//		StackPane.setAlignment(newShape, Pos.CENTER);
-//		StackPane.setAlignment(text, Pos.CENTER);
-//		stack.getChildren().addAll(newShape, text);
-//		makeNodeMouseHandler(stack);
-//		return stack;
-//	}
-	
-//	public Group makeLabeledShapeGroup(Tool tool, AttributeMap attrMap, String s) {
-//		Shape newShape = makeNewShape(tool, attrMap);
-//		Group group = new Group();
-//		final Label text = createLabel(s);
-//		text.setTranslateX(attrMap.getDouble("centerX"));
-//		text.setTranslateY(attrMap.getDouble("centerY"));
-//		StackPane.setAlignment(newShape, Pos.CENTER);
-//		StackPane.setAlignment(text, Pos.CENTER);
-//		group.getChildren().addAll(newShape, text);
-//		makeNodeMouseHandler(group);
-//		return group;
-//	}
-//	public Label createLabel(String s, Color c) {
-//		Label label = createLabel(s);
-//		label.setTextFill(c);
-//		return label;
-//	}
-//	
-//	public static Label createLabel(String s) {
-//		final Label text = new Label(s);
-//		text.setFont(new Font(12));
-////		text.setBoundsType(TextBoundsType.VISUAL);
-//		text.setMouseTransparent(true);
-//		return text;
-//	}
-	// -----------------------------------------------------------------------
-//	public MNode parseShape(AttributeMap attrMap, Model m) {
-//		return makeNewMNode( attrMap, m);
-//	}
-//
 	public static void setAttributes(Shape shape, AttributeMap map) {
 		// if (verbose>0) System.out.println(map.toString());
 		if (shape == null)	return;
@@ -243,12 +138,13 @@ public class ShapeFactory {
 													// number
 			if (shape instanceof Rectangle) {
 				Rectangle r = (Rectangle) shape;
-//				if (k.equals("centerx"))		r.setX(d);	
-//				else if (k.equals("centery"))	r.setY(d);
-//				else if (k.equals("x"))			r.setX(d);
-//				else if (k.equals("y"))			r.setY(d); else
-//				 if (k.equals("width"))		r.setWidth(d);
-//				else if (k.equals("height"))	r.setHeight(d);
+//				if (Double.isNaN(d)) break;
+				if (k.equals("centerx"))		r.setX(d+MARGIN);	
+				else if (k.equals("centery"))	r.setY(d+MARGIN);
+				else if (k.equals("x"))			r.setX(d+MARGIN);
+				else if (k.equals("y"))			r.setY(d+MARGIN); 
+				else if (k.equals("width"))		r.setWidth(d+MARGIN2);
+				else if (k.equals("height"))	r.setHeight(d+MARGIN2);
 			}
 			if (shape instanceof Circle) {
 				Circle circ = (Circle) shape;
@@ -334,12 +230,7 @@ public class ShapeFactory {
 		s.setOnDragEntered(e -> {	s.setEffect(Effects.sepia);			e.consume();		});
 		s.setOnDragExited(e -> 	{	s.setEffect(null);					e.consume();		});
 		s.setOnDragOver(e -> 	{	e.acceptTransferModes(TransferMode.ANY); 	e.consume();	});
-		s.setOnDragDropped(e -> {
-			e.acceptTransferModes(TransferMode.ANY);
-			handleDrop(s, e);
-			e.consume();
-		});
-
+		s.setOnDragDropped(e -> { 	e.acceptTransferModes(TransferMode.ANY); 	handleDrop(s, e);	e.consume();	});
 	}
 
 	// **-------------------------------------------------------------------------------
@@ -826,7 +717,7 @@ public class ShapeFactory {
 				// boolean leftClick = event.isPrimaryButtonDown();
 				boolean rightClick = event.isSecondaryButtonDown();
 				if (altDown)
-					pasteboard.getController().getSelectionManager().cloneSelection();
+					pasteboard.getController().getSelectionManager().cloneSelection(5);
 				// do nothing for a right-click
 				// if (event.isSecondaryButtonDown()) return;// TODO -- popup up
 				// Node menu
@@ -858,13 +749,15 @@ public class ShapeFactory {
 		private ContextMenu buildContextMenu() {
 			menu = new ContextMenu();
 			Controller c = pasteboard.getController();
+//			MenuItem cut = 		makeItem("Cut", a -> 			{	c.cutSelection();	});
+//			MenuItem copy = 		makeItem("Copy", a -> 			{	c.copySelection();	});
 			MenuItem dup = 		makeItem("Duplicate", a -> 		{	c.duplicateSelection();	});
 			MenuItem del = 		makeItem("Delete", a -> 		{	c.deleteSelection();	});
 			MenuItem toFront = 	makeItem("Bring To Front", a -> {	c.toFront();	});
 			MenuItem toBack = 	makeItem("Send To Back", a -> 	{	c.toBack();	});
 			MenuItem group = 	makeItem("Group", a -> 			{	c.group();	});
 			MenuItem ungroup = 	makeItem("Ungroup", a -> 		{	c.ungroup();	});
-			menu.getItems().addAll(toFront, toBack, group, ungroup, dup, del);
+			menu.getItems().addAll(toFront, toBack, group, ungroup, dup, del);   //cut, copy
 			return menu;
 		}
 		
@@ -908,3 +801,86 @@ public class ShapeFactory {
 	}
 
 }
+
+// -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
+////
+//public MNode makeNewMNode(AttributeMap attrMap, Model m, Pasteboard pasteboard) {
+//	String type = attrMap.get("ShapeType");
+//	Tool tool = Tool.lookup(type);
+//	if (tool  != null)
+//		return makeNewMNode(tool, attrMap, m, pasteboard);
+//	return null;
+//}
+
+//// **-------------------------------------------------------------------------------
+//public MNode makeNewMNode(Tool type, AttributeMap attrMap, Model m, Pasteboard pasteboard) {
+//	MNode modelNode = new MNode(attrMap, m, pasteboard);
+//	VNode view = new VNode(modelNode, pasteboard);
+////	makeNewShape(attrMap.getToolName(), modelNode, view);
+//	view.setId("V" + attrMap.get("GraphId"));
+//	if (view.getShapeLayer() instanceof  Circle)
+//	{
+//		double rad = attrMap.getDouble("Radius");
+//		if (Double.isNaN(rad))
+//			rad = attrMap.getDouble("Width") / 2;
+//		((Circle) view.getShapeLayer()).setRadius(rad);
+//	}
+//	return modelNode;
+//}
+//
+//public VNode makeVNode(MNode modelNode) {
+//	String s = modelNode.getShapeType();
+//	VNode stack = new VNode(modelNode);
+//	 makeNewShape(s, modelNode, stack);
+//	 return stack;
+//}
+
+//public VNode makeNewShape(String s, MNode modelNode) {
+//	VNode stack = new VNode(modelNode);
+//	 makeNewShape(s, modelNode, stack);
+//	 return stack;
+//}
+//public StackPane makeLabeledShapePane(Tool tool, AttributeMap attrMap, String s) {
+//Shape newShape = makeNewShape(tool, attrMap);
+//StackPane stack = new StackPane();
+//final Label text = createLabel(s);
+//text.setTranslateX(attrMap.getDouble("centerX"));
+//text.setTranslateY(attrMap.getDouble("centerY"));
+//StackPane.setAlignment(newShape, Pos.CENTER);
+//StackPane.setAlignment(text, Pos.CENTER);
+//stack.getChildren().addAll(newShape, text);
+//makeNodeMouseHandler(stack);
+//return stack;
+//}
+
+//public Group makeLabeledShapeGroup(Tool tool, AttributeMap attrMap, String s) {
+//Shape newShape = makeNewShape(tool, attrMap);
+//Group group = new Group();
+//final Label text = createLabel(s);
+//text.setTranslateX(attrMap.getDouble("centerX"));
+//text.setTranslateY(attrMap.getDouble("centerY"));
+//StackPane.setAlignment(newShape, Pos.CENTER);
+//StackPane.setAlignment(text, Pos.CENTER);
+//group.getChildren().addAll(newShape, text);
+//makeNodeMouseHandler(group);
+//return group;
+//}
+//public Label createLabel(String s, Color c) {
+//Label label = createLabel(s);
+//label.setTextFill(c);
+//return label;
+//}
+//
+//public static Label createLabel(String s) {
+//final Label text = new Label(s);
+//text.setFont(new Font(12));
+////text.setBoundsType(TextBoundsType.VISUAL);
+//text.setMouseTransparent(true);
+//return text;
+//}
+// -----------------------------------------------------------------------
+//public MNode parseShape(AttributeMap attrMap, Model m) {
+//return makeNewMNode( attrMap, m);
+//}
+//

@@ -2,25 +2,23 @@ package diagrams.pViz.app;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Base64;
+import java.util.Base64.Decoder;
 import java.util.List;
-import java.util.Map;
 import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
 import database.forms.EntrezQuery;
 import diagrams.pViz.app.Action.ActionType;
-import diagrams.pViz.gpml.BiopaxRef;
+import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
-import diagrams.pViz.gpml.Gene;
 import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.EdgeFactory;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
-import diagrams.pViz.model.NodeFactory;
+import diagrams.pViz.tables.DraggableTableRow;
+import diagrams.pViz.tables.GeneListTable;
+import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.view.Pasteboard;
-import diagrams.pViz.view.ShapeFactory;
 import diagrams.pViz.view.VNode;
 import gui.Borders;
 import icon.FontAwesomeIcons;
@@ -28,13 +26,13 @@ import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -53,8 +51,8 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -80,18 +78,19 @@ import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import javafx.util.Callback;
 import model.AttributeMap;
-import model.AttributeValue;
-import model.RandomAttributeValueData;
+import model.bio.BiopaxRef;
+import model.bio.Gene;
+import model.bio.GeneList;
+import model.bio.PathwayRecord;
+import model.bio.Species;
 import util.FileUtil;
-import util.NodeCenter;
 import util.StringUtil;
 
 
 public class Controller implements Initializable
 {
-    private static final DataFormat SERIALIZED_MIME_TYPE = new DataFormat("application/x-java-serialized-object");
+    private static final DataFormat BIOPAX_MIME_TYPE = new DataFormat("application/x-java-biopax");
 
 	//@formatter:off
 	private Model model;
@@ -99,30 +98,20 @@ public class Controller implements Initializable
 	public Model getModel() 			{		return model;	}	
 	private Pasteboard pasteboard;
 	public Pasteboard getPasteboard()   { 		return pasteboard;  }
-	public NodeFactory getNodeFactory()	{		return pasteboard.getNodeFactory();	}
-	public EdgeFactory getEdgeFactory()	{		return pasteboard.getEdgeFactory();	}
 	private UndoStack undoStack;
 	public UndoStack getUndoStack()		{		return undoStack;	}
 	private Document doc;
 
 	int verbose = 0;
 	
+	@FXML private VBox east;
+	@FXML private VBox south;
 	@FXML private Pane drawPane;
 	@FXML private ScrollPane scrollPane;
 	@FXML private ListView<Action> undoview = null;
-	@FXML private TableView<Gene> geneListTable = null;
-	@FXML private TableColumn<Gene, String> nameCol;
-	@FXML private TableColumn<Gene, String> ensemblCol;
-	
-	@FXML private TableView<AttributeValue> attributeTable;
-	@FXML private TableColumn<AttributeValue, String> attributeCol;
-	@FXML private TableColumn<AttributeValue, String> valueCol;
-//	@FXML private AnchorPane zoomAnchor;
-	@FXML private BorderPane container;			// root of fxml
-//	@FXML private BorderPane drawContainer;			// rulers and content
-//	public ListView<Gene> getResourceListView()		{		return resourceListView;	}
-	
-	
+	private GeneListTable geneListTable = null;
+	@FXML private BorderPane container;			// root of fxml	
+
 	@FXML private TableView<BiopaxRef> refTable;
 	@FXML private TableColumn<BiopaxRef, String> refCol;
 	@FXML private TableColumn<BiopaxRef, String> idCol;
@@ -133,12 +122,11 @@ public class Controller implements Initializable
 	@FXML private TableColumn<BiopaxRef, String> yearCol;
 	@FXML private Button tableOptions;
 
-	@FXML private Button gene;
+	@FXML private Button gene;		// something to drag in the Genelist window
 
 	@FXML private Button bottomSideBarButton;
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
-//	@FXML private Button toggleRulerButton;
 	@FXML private Button toggleGridButton;
 	
 	@FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
@@ -148,7 +136,6 @@ public class Controller implements Initializable
 	@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
 	@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
 	@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
-	
 	@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
 
 	@FXML private ToggleButton arrow;
@@ -163,29 +150,26 @@ public class Controller implements Initializable
 	@FXML private ColorPicker fillColor;
 	@FXML private ColorPicker lineColor;
 	@FXML private Slider weight;
-//	@FXML private Slider opacity;
+	@FXML private Slider scale;
 	@FXML private Slider rotation;
 //	@FXML private Label status1;
 //	@FXML private Label status2;
 //	@FXML private Label status3;
 	@FXML private Label strokeLabel;
 	@FXML private Label fillLabel;
-	
-//	@FXML private Slider translateX;			// debug fns for zoom view
-//	@FXML private Slider translateY;			// debug fns for zoom view
-//	@FXML private Slider scale;
 	//-------------------------------------------------------------
 	@FXML private MenuItem undo;
 	@FXML private MenuItem redo;
 	@FXML private MenuItem clearundo;
 	
 	@FXML private MenuItem clearColors;
+	@FXML private MenuItem browsePathways;
 	@FXML private MenuItem tofront;
 	@FXML private MenuItem toback;
 	@FXML private MenuItem group;
 	@FXML private MenuItem ungroup;
 	@FXML private MenuItem delete;
-	@FXML private VBox inspector;
+	@FXML private VBox west;
 	@FXML private HBox bottomPadding;
 
 	//------------------------------------------
@@ -215,13 +199,13 @@ public class Controller implements Initializable
 		}
 	}
 
-	
 	@FXML private void undo()			{ 	undoStack.undo();	}
-	@FXML private void redo()			{ 	undoStack.redo();		}
-	
+	@FXML private void redo()			{ 	undoStack.redo();		}	
 	// **-------------------------------------------------------------------------------
-	@FXML private void doNew()			{ 	App.getInstance().doNew(null);			}
+	@FXML private void doNew()			{ 	App.getInstance().doNew();			}
 	@FXML private void open()			{ 	doc.open();	}			//doc.open();
+	public void open(File f)			{ 	doc.open(f);	}			//doc.open();
+	public void open(String s)			{ 	doc.open(s);	}			//doc.open();
 	@FXML private void save()			{ 	doc.save();	}
 	@FXML private void saveas()			{	doc.saveas();		}
 	@FXML private void close()			
@@ -236,7 +220,7 @@ public class Controller implements Initializable
 	}
 	@FXML private void print()			{ 	doc.print();			}
 	@FXML private void quit()			{ 	Platform.exit();			}
-	@FXML private void clickDrawPane()			{ 	System.out.println("clicked");			}
+//	@FXML private void clickDrawPane()	{ 	System.out.println("clicked");			}
 	// **-------------------------------------------------------------------------------
 	@FXML private  void cut()			{ 	undoStack.push(ActionType.Cut);		getSelectionManager().cut();	}
 	@FXML private  void copy()			{ 	getSelectionManager().copy();		}	// not undoable
@@ -244,7 +228,7 @@ public class Controller implements Initializable
 	@FXML private  void clearUndo()		{	undoStack.clear(); 	}
 	@FXML private void selectAll()		{ 	undoStack.push(ActionType.Select); getSelectionManager().selectAll(); 		}
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
-	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(); 	}
+	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(7); 	}
 	@FXML public void clear()			{ undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
 	// **-------------------------------------------------------------------------------
 	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup();  }
@@ -252,6 +236,60 @@ public class Controller implements Initializable
 	@FXML public  void toFront()		{	undoStack.push(ActionType.Reorder);	getSelectionManager().toFront(); 	}
 	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.getGrid().toBack();  	}
 
+	@FXML private void hideAnchors()	{ 	model.setAnchorVisibility(false);	}
+	@FXML private void showAnchors()	{ 	model.setAnchorVisibility(true);	}
+
+	// **-------------------------------------------------------------------------------
+	@FXML public  void browsePathways()		
+	{
+		Stage browserStage = new Stage();
+		try 
+		{
+			browserStage.setTitle("Pathway Browser");
+			FXMLLoader fxmlLoader = new FXMLLoader();
+			String fullname = "../tables/PathwayList.fxml";
+		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
+		    if (url == null)
+		    {
+		    	System.err.println("Bad path to the FXML file: " + fullname);
+		    	return;
+		    }
+		    fxmlLoader.setLocation(url);
+		    Pane appPane =  fxmlLoader.load();
+		    PathwayController c = (PathwayController) fxmlLoader.getController();
+		    c.setController(this);
+		    browserStage.setScene(new Scene(appPane, 800, 800));
+		    browserStage.show();
+		    c.doSearch();
+		}
+		catch (Exception e) { e.printStackTrace();}
+	}	
+	// **-------------------------------------------------------------------------------
+	public  FXMLLoader buildStage(String title, String fxml)		
+	{
+		Stage browserStage = new Stage();
+		try 
+		{
+			browserStage.setTitle(title);
+			FXMLLoader fxmlLoader = new FXMLLoader();
+		    URL url = getClass().getResource(fxml);		// this gets the fxml file from the same directory as this class
+		    if (url == null)
+		    {
+		    	System.err.println("Bad path to the FXML file: " + fxml);
+		    	return null;
+		    }
+		    fxmlLoader.setLocation(url);
+		    SplitPane appPane =  fxmlLoader.load();
+		    browserStage.setScene(new Scene(appPane, 1200, 800));
+		    browserStage.show();
+		    return fxmlLoader;
+		}
+		catch (Exception e) { e.printStackTrace();}
+		return null;
+	}
+
+	Species getSpecies()	{ return model.getSpecies();	}
+	
 	//@formatter:on
 	// **-------------------------------------------------------------------------------
 	@FXML private MenuItem connect;			// TODO bind enableProperty to selection size > 2
@@ -280,16 +318,12 @@ public class Controller implements Initializable
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
-//		final double SCALE_DELTA = 1.1;
 		undoStack = new UndoStack(this, null);
 		assert(drawPane != null);
 		model = new Model(this);
 		pasteboard = new Pasteboard(this);
 		drawPane.getChildren().add(pasteboard);
 		
-		assert attributeCol != null : missing("attributeCol");
-		assert valueCol != null : missing("valueCol");
-		assert attributeTable != null : missing("attributeTable");
 		doc = new Document(this);
 		paletteGroup = new ToggleGroup();
 		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
@@ -303,28 +337,25 @@ public class Controller implements Initializable
 		scrollPane.setOnScroll(ev -> {
 			ev.consume();
 	        if (ev.getDeltaY() == 0)   return;	
-//	        double scaleFactor = (ev.getDeltaY() > 0) ? SCALE_DELTA : 1 / SCALE_DELTA;
-//	        if (scale.valueProperty().get() == 1)
-//	        {
-//	        	scale.valueProperty().set(0.9);
-//	        }
-//	        scale.valueProperty().set(scale.valueProperty().get() * scaleFactor);
-//	        drawContainer.setScaleX(drawContainer.getScaleX() * scaleFactor);
-//	        drawContainer.setScaleY(drawContainer.getScaleY() * scaleFactor);
 		});
 //		bottomDash.setBorder(Borders.dashedBorder );
 		if (bottomPadding!= null)
 			bottomPadding.setPadding(new Insets(3,3,4,4));
 
-		if (inspector != null)
-			inspector.setBorder(Borders.lineBorder);
+		if (west != null)
+			west.setBorder(Borders.lineBorder);
+		if (east != null)
+		{
+			geneListTable = new GeneListTable(this);
+			east.getChildren().add(geneListTable);
+		}
 		setupPalette();
 		setupListviews();
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
 		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
-//		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 300);
-//		new BorderPaneRulers(drawContainer, toggleRulerButton);
+		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 100);
 		pasteboard.makeGrid(toggleGridButton, scrollPane);
+
 
 		boolean startWithShapes = false;
 		if (startWithShapes) test1();
@@ -332,7 +363,7 @@ public class Controller implements Initializable
 	static TableRow<BiopaxRef> thisRow = null;
 	private void setupBiopaxTable() {
 		
-		TableColumn[] allCols = { refCol, idCol, dbCol, authorCol, titleCol, sourceCol, yearCol };
+//		TableColumn[] allCols = { refCol, idCol, dbCol, authorCol, titleCol, sourceCol, yearCol };
 
 		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("xrefid"));
 		idCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("id"));
@@ -342,87 +373,10 @@ public class Controller implements Initializable
 		sourceCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("source"));
 		yearCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("year"));
 
-		refTable.setRowFactory(tv -> {
-	        TableRow<BiopaxRef> row = new TableRow<>();
-
-	        row.setOnDragDetected(event -> {
-	            if (! row.isEmpty()) {
-	                Integer index = row.getIndex();
-	                Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
-	                db.setDragView(row.snapshot(null, null));
-	                ClipboardContent cc = new ClipboardContent();
-	                cc.put(SERIALIZED_MIME_TYPE, index);
-	                db.setContent(cc);
-	                event.consume();
-	                thisRow = row;
-	            }
-	        });
-
-	        row.setOnDragEntered(event -> {
-	            Dragboard db = event.getDragboard();
-	            if (db.hasContent(SERIALIZED_MIME_TYPE)) {
-	                if (row.getIndex() != ((Integer)db.getContent(SERIALIZED_MIME_TYPE)).intValue()) {
-	                    event.acceptTransferModes(TransferMode.MOVE);
-	                    event.consume();
-	                    thisRow = row;
-//	                  if (thisRow != null) 
-//	                 	   thisRow.setOpacity(0.3);
-	                }
-	            }
-	        });
-
-	        row.setOnDragExited(event -> {
-	            if (event.getGestureSource() != thisRow &&
-	                    event.getDragboard().hasString()) {
-//	               if (thisRow != null) 
-//	            	   thisRow.setOpacity(1);
-	               thisRow = null;
-	            }
-	        });
-
-	        row.setOnDragOver(event -> {
-	            Dragboard db = event.getDragboard();
-	            if (db.hasContent(SERIALIZED_MIME_TYPE)) {
-	                if (row.getIndex() != ((Integer)db.getContent(SERIALIZED_MIME_TYPE)).intValue()) {
-	                    event.acceptTransferModes(TransferMode.MOVE);
-	                    event.consume();
-	                }
-	            }
-	        });
-
-	        row.setOnMouseClicked(event -> {
-	        	if (event.getClickCount() == 2)
-	            {
-	                int idx = row.getIndex();
-	        		getInfo(idx);
-	              event.consume();
-	            }
-	        });
-
-	        row.setOnDragDropped(event -> {
-	            Dragboard db = event.getDragboard();
-	            if (db.hasContent(SERIALIZED_MIME_TYPE)) {
-	                int draggedIndex = (Integer) db.getContent(SERIALIZED_MIME_TYPE);
-	                BiopaxRef draggedNode = refTable.getItems().remove(draggedIndex);
-
-	                int  dropIndex = (row.isEmpty()) ? refTable.getItems().size() : row.getIndex();
-	                refTable.getItems().add(dropIndex, draggedNode);
-
-	                event.setDropCompleted(true);
-	                refTable.getSelectionModel().select(dropIndex);
-	                event.consume();
-//	                if (thisRow != null) 
-//	             	   thisRow.setOpacity(1);
-	                thisRow = null;
-	            }
-	        });
-
-	        return row ;
-	    });
-
+		refTable.setRowFactory((a) -> {  return new DraggableTableRow<BiopaxRef>(refTable, BIOPAX_MIME_TYPE, this);   });
 		
 	}
-	private void getInfo(String pmid)
+	private void showPMIDInfo(String pmid)
 	{
 	   String text = EntrezQuery.getPubMedAbstract(pmid);			// TODO move to libFX
 	   if (StringUtil.hasText(text))
@@ -436,15 +390,28 @@ public class Controller implements Initializable
 	}
 	
 	
-	private void getInfo(int idx) {
+	public void getInfo(DataFormat mimeType, int idx) {
 		try 
 		{
-		   String rowName = "" + idx;
-		   if (idx >=0 && references.size() > idx)
-			   	rowName = references.get(idx).getId();
-		   getInfo(rowName);
-		   return;
-//		   
+			if (mimeType == BIOPAX_MIME_TYPE)
+			 {
+			   String rowName = "" + idx;
+			   if (idx >=0 && model.getNReferences() > idx)
+				   	rowName = model.getReference(idx).getId();
+			   showPMIDInfo(rowName);
+			   return;
+		  }
+		  if (mimeType == PathwayController.PATHWAY_MIME_TYPE)
+		   {
+				PathwayRecord rec = pathwayTable.getItems().get(idx);
+				String url = rec.getUrl();
+				System.out.println("getInfo: " + rec.getId() + " Fetching: " + url);					//TODO
+//				String result = StringUtil.callURL(url, false);
+//				browseGenes(result);
+				
+			}
+
+		   //		   
 //			   
 //			stage = new Stage();
 //		   stage.setTitle("Information: " + rowName );
@@ -489,63 +456,37 @@ public class Controller implements Initializable
 //		AboutDialog dlog = new AboutDialog();
 //		dlog.showAndWait();
 	}
-//	Map<Object, Object> dependents = new HashMap<Object, Object>();
-//	public Map<Object, Object> getDependents() {		return dependents;	}
-	//-----------------------------------------------------------------------
-//	private final ChangeListener<Object> changeListener = 
-//		    (obs, oldValue, newValue) ->  System.out.println("The binding is now invalid.");
-	
+
 	 @FXML private void test1()
 	{
-		double[] vals = { 50, 50, 50, 100, 150, 100};
-//		Polygon p = new Polygon(vals);
-//		add(p);
-		
-		if (-1 > vals.length) return;
-		
 		undoStack.push(ActionType.Test);	
-		ShapeFactory f = getNodeFactory().getShapeFactory();
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putFillStroke(Color.PINK, Color.INDIGO);
 		attrMap.putCircle(new Circle(120, 230, 40));
 		attrMap.put("TextLabel", "root");
-		MNode n1 = new MNode(attrMap, getModel(), getPasteboard());
+		MNode n1 = new MNode(attrMap, model);
 		add(n1.getStack());
 	
 		attrMap.putFillStroke(Color.CORNSILK, Color.BLUE);
 		attrMap.putCircle(new Circle(220, 130, 60));
 		attrMap.setTool(Tool.Circle.toString()); 
-		MNode circ = new MNode(attrMap, getModel(), pasteboard);		//, "Eli"
+		MNode circ = new MNode(attrMap, model);		//, "Eli"
 		add(circ.getStack());
 	
 		attrMap.putFillStroke(Color.LIGHTSKYBLUE, Color.DARKOLIVEGREEN);
 		attrMap.putCircle(new Circle(220, 330, 60));
-		MNode n3 = new MNode(attrMap, getModel(), pasteboard);	//, "Fristcut"
+		MNode n3 = new MNode(attrMap, model);	//, "Fristcut"
 		add(n3.getStack());
 		
-		Edge line1 = model.addEdge(circ, n3);
-		Edge line2 = model.addEdge(circ, n1);
-		
-		add(0, line1);
-//		Arrow a = new Arrow(line1, 0.0f);
-//		add(1, a);
-//		
-		add(0, line2);
+		Edge line1 = model.addEdge(circ, n3);		add(0, line1);
+		Edge line2 = model.addEdge(circ, n1);		add(0, line2);
 		
 		Rectangle r1 = new Rectangle(290, 230, 60, 60);
 		attrMap.setTool(Tool.Rectangle.toString());
 		attrMap.putRect(r1);
 		attrMap.putFillStroke(Color.CORNSILK, Color.DARKOLIVEGREEN);
-		MNode n4 = new MNode(attrMap, getModel(), pasteboard);
+		MNode n4 = new MNode(attrMap, model);
 		add(n4.getStack());
-			
-		Edge line3 = model.addEdge(n4, circ);
-//		line3.getPolyline().setStrokeWidth(2);
-//		add(0, line3);
-	
-		Edge line4 = model.addEdge(n1, n3);
-//		line4.getPolyline().setStrokeWidth(4);
-//		add(0, line4);
 	}
 
 // **-------------------------------------------------------------------------------
@@ -556,7 +497,7 @@ public class Controller implements Initializable
 		double HEIGHT = 20;
 		double RADIUS = 10;
 		double spacer = 5 * RADIUS;
-		ShapeFactory f = getNodeFactory().getShapeFactory();
+//		ShapeFactory f = getNodeFactory().getShapeFactory();
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putFillStroke(Color.PINK, Color.INDIGO, 1.0);
 		for (int i=0; i<WIDTH; i++)
@@ -566,7 +507,7 @@ public class Controller implements Initializable
 				attrMap.putCircle(c1);
 				attrMap.put("ShapeType","Circle");
 				attrMap.put("GraphId", i + ", " + j);
-				add(new MNode(attrMap, getModel(), pasteboard).getStack());
+				add(new MNode(attrMap, model).getStack());
 			}
 	}
 	
@@ -600,57 +541,73 @@ public class Controller implements Initializable
 
 		setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
-//		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
+		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
 //		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
 		setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
 	// **-------------------------------------------------------------------------------
 	public void setState(String s)
 	{
-		pasteboard.getChildren().clear();
+		pasteboard.clear();
 		pasteboard.getChildren().add(pasteboard.getGrid());
 //		addState(s);
 	}
 	//-----------------------------------------------------------------------------
 	public void addState(org.w3c.dom.Document doc)
 	{
-		new GPML(this).read(doc);
+		new GPML(model).read(doc);
+		updateTables();
+		Window window = refTable.getScene().getWindow();
+        if (window instanceof Stage) 
+        	((Stage) window).setTitle(model.getTitle());	
+        new Thread(() ->
+        Platform.runLater(() -> {  getModel().resetEdgeTable();	} )  ).start();  
+        hideAnchors();
+
+//		addModelToPasteboard();
 
 	}
-	public void updateTable() {
+	private void addModelToPasteboard() {
+//		for (String key : model.getResourceMap().keySet())
+//		{
+//			MNode node = model.getResourceMap().get(key);
+//			if (node != null)
+//				pasteboard.getChildren().add(node.getStack());
+//		}
+	}	
+			
+	public void updateTables() {
 		
-		refTable.setItems(references);
+		refTable.getItems().addAll(model.getReferences());
+		geneListTable.populateTable(model.getGeneList());
 	}
 
-	public void addComment(String key, String val) {
-		comments.add(key + ": " + val);
-		
-	}
-	public void clearComments() {		comments.clear();			}
-	public String getComments() {
-		StringBuilder b = new StringBuilder();
-		for (String c : comments)
-			b.append(c).append("\n");
-		return b.toString();
-	}
-	
-	List<String> comments = new ArrayList<String>();
-	ObservableList<Gene> genes = FXCollections.observableArrayList();
-	public void addGene(Gene g) 		{		genes.add(g);	}
-	public void clearGenes() 			{		genes.clear();	}
-
-	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
-	public void addRef(BiopaxRef ref) 	{	if (!refExists(ref))			references.add(ref);		}
-	private boolean refExists(BiopaxRef ref) {
-		String id = ref.getId();
-		if (id == null) return false;
-		for (BiopaxRef r : references)
-			if (id.equals(r.getId())) return true;
-		return false;
-	}
-	public void clearRefs() 			{		references.clear();	}
 	//-----------------------------------------------------------------------------
-//	public void addState(String s)			// used in undo restore
+	static final String RESOURCE = "bridgeDBmap.fxml";
+    static final String STYLE = "idmapping.css";
+	public void doNewGeneList() 
+	{
+		try
+		{
+			Stage stage = new Stage();
+			URL resource = BridgeDbController.class.getResource(RESOURCE);
+	        FXMLLoader loader = new FXMLLoader(resource);
+	        Scene scene = new Scene(loader.load());
+	        BridgeDbController controller = (BridgeDbController) loader.getController();
+			scene.getStylesheets().add(BridgeDbController.class.getResource(STYLE).toExternalForm());
+	        stage.setTitle("Gene List Window");
+	        stage.setX(20);
+			stage.setWidth(800);
+			stage.setHeight(650);
+			controller.setParentController(this);
+			controller.start();
+			stage.setScene(scene);
+			stage.show();
+		}
+		catch (Exception e) { e.printStackTrace();
+			
+		}
+	}//	public void addState(String s)			// used in undo restore
 //	{
 //		Scanner scan = new Scanner(s);
 //		while (scan.hasNextLine())
@@ -673,6 +630,13 @@ public class Controller implements Initializable
 		// TODO Auto-generated method stub
 		
 	}
+	void addGenes(GeneList inList)
+	{
+		List<Gene> genes = geneListTable.getItems();
+		for (Gene g: inList)
+			if (null == GeneList.findInList(geneListTable.getItems(), g.getName()))
+				genes.add(g);
+	}
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
 	{
@@ -685,40 +649,37 @@ public class Controller implements Initializable
 		//setupGeneList() 
 		if (geneListTable != null)
 		{
-			geneListTable.setItems(genes);
+			geneListTable.getItems().addAll(model.getGenes());
 //			geneListTable.setCellFactory(list ->  { return new GeneCell();   });
 			geneListTable.setStyle(CSS_Gray2);
-			nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-			ensemblCol.setCellValueFactory(new PropertyValueFactory<>("ensembl"));
 		}
 		
-		attributeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); //  multiple selection
-		attributeTable.setItems(RandomAttributeValueData.getRandomAttributeValueData()); // set Dummy Data for the TableView
-		attributeTable.getSelectionModel().setCellSelectionEnabled(false);
+//		attributeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); //  multiple selection
+//		attributeTable.setItems(RandomAttributeValueData.getRandomAttributeValueData()); // set Dummy Data for the TableView
+//		attributeTable.getSelectionModel().setCellSelectionEnabled(false);
 
-		setRowFactory();				// set the Row Factory of the table
+//		setRowFactory();				// set the Row Factory of attributeValue table
 		
-		attributeTable.setStyle(CSS_Gray2);
-		attributeCol.setCellValueFactory(new PropertyValueFactory<>("attribute"));
-		valueCol.setCellValueFactory(new PropertyValueFactory<>("value"));
+//		attributeTable.setStyle(CSS_Gray2);
+//		attributeCol.setCellValueFactory(new PropertyValueFactory<>("attribute"));
+//		valueCol.setCellValueFactory(new PropertyValueFactory<>("value"));
 		
+		if (pathwayTable != null)
+			setupPathwayTable();
+	}
+	
+	TableView<PathwayRecord> pathwayTable = null;
+	private void setupPathwayTable()
+	{
+//		pathwayTable.setItems(genes);
+//		pathwayTable.setCellFactory(list ->  { return new GeneCell();   });
+//		pathwayTable.setStyle(CSS_Gray2);
+//		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
+//		ensemblCol.setCellValueFactory(new PropertyValueFactory<>("ensembl"));
 		
 	}
+	
 	//---------------------------------------------------------------------------------
-//	  static class GeneCell extends ListCell<Gene> {
-//		    @Override
-//		    public void updateItem(Gene item, boolean empty) {
-//		      super.updateItem(item, empty);
-//		      if (item != null) 
-//		      {
-////		    	  String style = CSS_cellBackground(item.isUndone());
-////		    	  setStyle(style);
-//		    	  setText(item.toString());
-//		      }
-//		      else     {   setStyle("");  	  setText("");   }		// the cell is reused, so clear it
-//		    }
-//		  }
-//	  
 	  
 	  static class DrawActionCell extends ListCell<Action> {
 		    @Override
@@ -735,15 +696,10 @@ public class Controller implements Initializable
 		  }
 	  
 	  static class StyleSheetCell extends ListCell<String> {
-		    @Override
-		    public void updateItem(String item, boolean empty) {
+		    @Override public void updateItem(String item, boolean empty) {
 		      super.updateItem(item, empty);
 		      if (item != null) 
-		      {
-//		    	  String style = CSS_cellBackground(item.isUndone());
-//		    	  setStyle(style);
 		    	  setText(item.toString());
-		      }
 		      else    {     setStyle("");   	  setText("");      }
 		    }
 		  }
@@ -758,7 +714,7 @@ public class Controller implements Initializable
 		fillColor.setOnAction(evt -> apply(true, fillColor));
 		lineColor.addEventHandler(ActionEvent.ACTION, evt -> apply(true, lineColor));
 
-//		opacity.valueProperty().addListener((ov, old, val) ->   {  	apply(false, opacity);        });	
+		scale.valueProperty().addListener((ov, old, val) ->   {  	pasteboard.setZoom(scale.getValue());        });	
 		weight.valueProperty().addListener((ov, old, val) ->    {   apply(false, weight);   });	
 		rotation.valueProperty().addListener((ov, old, val) ->  {   apply(false, rotation);  });	
 		
@@ -781,12 +737,6 @@ public class Controller implements Initializable
 		String wtStr = String.format("-fx-stroke-width: %.1f;\n", weight.getValue());
 		String opacStr = ""; // String.format("-fx-opacity: %.2f;\n", opacity.getValue());
 		String rotStr = String.format("-fx-rotate: %.1f;\n", rotation.getValue());
-
-//		if (src == fillColor)		return fillHex;
-//		if (src == lineColor)		return strokeHex;
-//		if (src == weight)			return wtStr;
-//		if (src == opacity)			return opacStr;
-//		if (src == rotation)		return rotStr;
 
 		StringBuilder buff = new StringBuilder();
 		buff.append(fillHex).append(strokeHex).append(wtStr).append(opacStr).append(rotStr);
@@ -861,12 +811,13 @@ public class Controller implements Initializable
 	}
 	// **-------------------------------------------------------------------------------
 	private void apply(boolean undoable, Control src)							
-	{ 	 			getSelectionManager().applyStyle(getStyleSettings(src));	
+	{ 	 			
 		if (undoable) 
 			undoStack.push(ActionType.Property); 
+		getSelectionManager().applyStyle(getStyleSettings(src));	
 	}
 	// **-------------------------------------------------------------------------------
-	public void selectAll(ObservableList<Node> n)	{		getSelectionManager().selectAll(n);	}
+	public void selectAll(List<Node> n)	{		getSelectionManager().selectAll(n);	}
 
 //	public void setStatus(String s)					{ 		status1.setText(s);	}
 	// **-------------------------------------------------------------------------------
@@ -876,34 +827,58 @@ public class Controller implements Initializable
 		pasteboard.getChildren().add(n);	
 		if ("Marquee".equals(n.getId())) 	return;
 //		model.addResource(n.getId(), n.getModel());
-		Object prop  = n.getProperties().get("TextLabel");
-		if (prop != null && findGene(""+prop) == null)
-			addGene(new Gene(""+prop));
+		if (n instanceof VNode)
+		{
+			MNode modelNode = ((VNode) n).getModel();
+			if (((VNode) n).isAnchor()) return;
+			if (((VNode) n).isLabel()) return;
+			Object prop  = modelNode.getAttributeMap().get("TextLabel");
+			if (prop != null && findGene(""+prop) == null)
+				model.addGene(new Gene(""+prop));
+		}
 	}
+	
 	private Gene findGene(String string) {
 		if (StringUtil.isEmpty(string)) return null;
-		for (Gene g : genes)
+		for (Gene g : model.getGenes())
 			if (string.equals(g.getName()))
 				return g;
 		return null;
 	}
+	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
+	@FXML private void dumpEdgeTable()	{		model.dumpEdgeTable();	}
+	@FXML private void dumpViewHierarchy()	{	model.dumpViewHierarchy();	}
+	
+	@FXML private void dumpNodeTable()	{		model.dumpNodeTable();	}
 	public void add(int idx, Edge e)							
 	{		
 		if (e == null) return;
-		pasteboard.getChildren().add(idx, e.getEdgeLine());	
-//		drawPane.getChildren().add(idx, e.getLine() );	
 		model.addEdge(e);
+		pasteboard.add(idx, e.getEdgeLine());
+		for (Anchor anchor : e.getEdgeLine().getAnchors())
+		{
+			VNode stack = anchor.getStack();
+			Shape shap = stack.getShapeLayer();
+			if (shap instanceof Circle)
+				System.out.println(String.format("(%.2f, %.2f)", ((Circle)shap).getCenterX(), ((Circle)shap).getCenterY()));
+			pasteboard.add(stack);
+		}
 	}
 	public void add(int idx, VNode n)							
 	{		
-		pasteboard.getChildren().add(idx, n);	
+		if (idx < 0) idx = pasteboard.getChildren().size();
+		pasteboard.add(idx, n);	
 		if ("Marquee".equals(n.getId())) 	return;
-		model.addResource(n.getId(), n.getModel());
+//		model.addResource(n.getId(), n.getModel());
 	}
-	public void addAll(ObservableList<Node> n)	{		pasteboard.getChildren().addAll(n);	}
-	public void addAll(Node... n)				{		pasteboard.getChildren().addAll(n);	}
-
+	public void addAll(List<VNode> n)	{		pasteboard.addAllVNodes(n);	}
+	public void addAll(VNode... n)		{		pasteboard.addAllVNodes(n);	}
+	
 	public void remove(Node n)						
+	{		
+		pasteboard.getChildren().remove(n);	
+	}
+	public void remove(VNode n)						
 	{		
 		getDrawModel().removeNode(n);
 //		Object dependent = dependents.get(n);
@@ -916,7 +891,7 @@ public class Controller implements Initializable
 	}
 
 	// **-------------------------------------------------------------------------------
-	public String getState()			{ 	return model.traverseSceneGraph(pasteboard).toString();  }
+	public String getState()			{ 	return model.toString();  }
 
 	// **-------------------------------------------------------------------------------
 	public void reportStatus(String string)	
@@ -934,53 +909,24 @@ public class Controller implements Initializable
 //		attributeTable.setItems(sheets);
 	}
 	// **-------------------------------------------------------------------------------
-	/**
-	 * Set Row Factory for the TableView
-	 */
-	public void setRowFactory()
-	{
-		attributeTable.setRowFactory(new Callback<TableView<AttributeValue>, TableRow<AttributeValue>>()
-		{
-			@Override public TableRow<AttributeValue> call(TableView<AttributeValue> p)
-			{
-				final TableRow<AttributeValue> row = new TableRow<AttributeValue>();
-				row.setOnDragEntered(e ->	{		});
-
-				row.setOnDragDetected(e ->
-				{
-					Dragboard db = row.getTableView().startDragAndDrop(TransferMode.COPY);
-					ClipboardContent content = new ClipboardContent();
-					AttributeValue av = row.getItem();
-					String s = av.makeString();			/// handle multiple selection by asking table to generate the string
-					content.put(DataFormat.PLAIN_TEXT, s);
-					db.setContent(content);
-//					setSelection(row);
-					e.consume();
-				});
-				return row;
-			}
-		});
-	}
-	// **-------------------------------------------------------------------------------
 	// TODO add charts
 	
-	public void scatter(TableView content)	{
-	}
+	public void scatter(TableView content)	{}
 
 	public void timeseries(TableView content)	{
 	}
 	public void hiliteByReference(String ref) {
-		for (BiopaxRef biopax : references)
+		for (BiopaxRef biopax : model.getReferences())
 			if (ref.equals(biopax.getXrefid()))
 				refTable.getSelectionModel().select(biopax);
 	}
 	public void openByReference(String ref) {
-		for (BiopaxRef biopax : references)
+		for (BiopaxRef biopax :  model.getReferences())
 			if (ref.equals(biopax.getXrefid()))
 			{
 				String pmid = biopax.getId();
 				if (StringUtil.hasText(pmid))
-					getInfo(pmid);
+					showPMIDInfo(pmid);
 			}
 	}
 	public void assignDataFile(File f) {
@@ -1011,30 +957,60 @@ public class Controller implements Initializable
 				if (!Double.isNaN(d) && 0 <= d && 1 >= d)
 				{
 					Color gray = new Color(d,d,d, 1);
-					if (node.getStack().getShape() != null)
-						(node.getStack().getShape()).setFill(gray);			// TODO set the attribute
+					Shape shape = node.getStack().getShapeLayer();
+					if (shape != null)
+					{
+						shape.setFill(gray);			// TODO set the attribute
+						if (gray.getRed() < 0.4 || gray.getBlue() < 0.4 || gray.getGreen() < 0.4)
+						{
+							node.getStack().getTextField().setStyle("-fx-text-fill: white");
+						}
+					}
 				}
 			}
 		}
 	}	
-@FXML	private void clearColors(ActionEvent ev) {
-			for (MNode node : model.getResourceMap().values())
-			{
-				node.getAttributeMap().remove("value");
-				Shape shape = node.getStack().getShape();
-				if (shape != null)
-					shape.setFill(Color.WHITE);
+	@FXML	private void clearColors() {
+			
+		for (MNode node : model.getResourceMap().values())
+		{
+			node.getAttributeMap().remove("value");
+			Shape shape = node.getStack().getShapeLayer();
+			if (shape != null)
+			{	
+				shape.setFill(Color.WHITE);
+				node.getStack().getTextField().setStyle("-fx-text-fill: black");
 			}
+		}
 	}
-public void finishRead() {
 	
-	StringBuilder builder = new StringBuilder();
-	for (Gene g : genes)
-		builder.append(g.getName()).append('\n');
-		String genelist = builder.toString();
-		System.out.println(genelist);		
-
-}
-	
-
+	public void setGeneList(GeneList geneList) 	
+	{ 		
+		geneListTable.getItems().addAll(geneList);			// ADD UNIQUE
+		BorderPane parent = (BorderPane) geneListTable.getParent().getParent();
+		VBox east = (VBox) parent.getRight();
+		VBox west = (VBox) parent.getLeft();
+		east.prefWidth(1000);
+		east.prefHeight(1000);
+		east.maxWidth(2000);
+		east.maxHeight(2000);
+		parent.getCenter().setVisible(false);
+		west.setVisible(false);
+	}
+	public void viewPathway(String result)		
+	{ 		
+//		String pathwayFxml = "../gpml/GeneList.fxml";
+//		String fullname = "../gpml/GeneList.fxml";
+		FXMLLoader loader = buildStage("Pathway", "Visio.fxml");
+		Controller newController = loader.getController();
+		try
+		{
+			String gpml  =StringUtil.readTag( result, "ns2:gpml");
+			Decoder decoder = Base64.getDecoder();
+			byte[] cleanXML  = decoder.decode(gpml);
+			String str = new String(cleanXML);
+			newController.open(str);
+		}
+		catch (Exception e) {}
+	}
 }

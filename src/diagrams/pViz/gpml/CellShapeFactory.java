@@ -7,6 +7,7 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.QuadCurveTo;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 
 public class CellShapeFactory {
@@ -18,7 +19,7 @@ public class CellShapeFactory {
 		if ("SR".equals(s))	  			return getSarcoplasmicReticulumPath();
 		if ("ER".equals(s))	  			return getEndoplasmicReticulumPath();
 		if ("Golgi".equals(s))	  		return getGolgiPath();
-		return null;
+		return new Rectangle();
 	}	
 	//-------------------------------------------------------------------------
 	

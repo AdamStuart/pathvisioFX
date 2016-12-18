@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.text.*?>
+
+<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.PathwayController">
+   <top>
+      <HBox>
+         <children>
+            <MenuBar BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
+              <menus>
+                <Menu mnemonicParsing="false" text="File">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Close" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Edit">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="Delete" />
+                  </items>
+                </Menu>
+                <Menu mnemonicParsing="false" text="Help">
+                  <items>
+                    <MenuItem mnemonicParsing="false" text="About" />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <ChoiceBox fx:id="species" prefWidth="150.0" HBox.hgrow="NEVER" />
+            <Button fx:id="search" mnemonicParsing="false" onAction="#doSearch" prefHeight="27.0" prefWidth="40.0" text="F" HBox.hgrow="NEVER" />
+            <TextField fx:id="searchBox" HBox.hgrow="NEVER" />
+         </children>
+      </HBox>
+   </top>
+   <center>
+      <TableView fx:id="pathwayTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn fx:id="idColumn" editable="false" maxWidth="75.0" minWidth="75.0" prefWidth="75.0" text="Id" />
+            <TableColumn fx:id="speciesColumn" editable="false" maxWidth="200.0" minWidth="75.0" prefWidth="120.0" text="Species" />
+            <TableColumn fx:id="nameColumn" editable="false" minWidth="100.0" prefWidth="349.0" text="Name" />
+            <TableColumn fx:id="revisionColumn" editable="false" maxWidth="93.0" minWidth="25.0" prefWidth="87.0" text="Revision" />
+            <TableColumn fx:id="urlColumn" editable="false" maxWidth="75.0" minWidth="7.0" prefWidth="13.0" text="URL" />
+        </columns>
+      </TableView>
+   </center>
+</BorderPane>

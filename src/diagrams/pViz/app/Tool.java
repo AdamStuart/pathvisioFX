@@ -2,8 +2,6 @@ package diagrams.pViz.app;
 
 import java.io.File;
 
-import diagrams.pViz.gpml.GPML;
-import edu.stanford.nlp.util.ArrayUtils;
 import util.FileUtil;
 
 public enum Tool {
@@ -23,19 +21,41 @@ public enum Tool {
 			if (tool.name().toLowerCase().equals(t))	return tool;
 		return Arrow;
 	}
-	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna"};
-	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna"};
+	
+	static boolean contains(Tool[] vals, Tool s)
+	{
+		for (Tool t : vals)
+			if (s.toString().equals(t.toString()))
+				return true;
+		return false;
+	}
+	static boolean contains(Tool[] vals, String s)
+	{
+		for (Tool t : vals)
+			if (s.equals(t.toString()))
+				return true;
+		return false;
+	}
+	public static boolean contains(String[] vals, String s)
+	{
+		for (String t : vals)
+			if (s.equals(t))
+				return true;
+		return false;
+	}
+	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
+	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
 	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Polygon, Polyline, Line, Brace, Shape1 };
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
 
 	public boolean isArrow()				{	return this == Arrow;		}  
-	public boolean isShape()				{	return ArrayUtils.contains(shapes, this);		}
-	public boolean isCellShape()			{	return ArrayUtils.contains(cellShapes, this);		}
-	public static boolean isShape(String s)	{	return ArrayUtils.contains(shapes, s);		}
-	public boolean isControl()				{	return ArrayUtils.contains(controls, this);		}
-	public static boolean isSVG(String type) {	return ArrayUtils.contains(tags, type);	}
+	public boolean isShape()				{	return contains(shapes, this);		}
+	public boolean isCellShape()			{	return contains(cellShapes, this);		}
+	public static boolean isShape(String s)	{	return contains(shapes, s);		}
+	public boolean isControl()				{	return contains(controls, this);		}
+	public static boolean isSVG(String type) {	return contains(tags, type);	}
 
 	// HACK -- convert from GPML type to shape
 	public static Tool lookup(String type) {
@@ -51,6 +71,9 @@ public enum Tool {
 		if ("GeneProduct".equals(type)) return Rectangle;
 		if ("Metabolite".equals(type)) 	return Metabolite;
 		if ("Rna".equals(type)) 		return Rna;
+		if ("ER".equals(type)) 			return ER;
+		if ("SR".equals(type)) 			return SR;
+		if ("Golgi".equals(type)) 		return Golgi;
 		return  fromString(type);
 	}
 	public static Tool appropriateTool(File f) {

@@ -20,16 +20,14 @@ public class MNode {
 	Model model;
 	public MNode(AttributeMap am, Controller c)
 	{
-		this(am,c.getModel(), c.getPasteboard());
+		this(am,c.getModel());
 	}	
 	
-	public MNode(AttributeMap am, Model m, Pasteboard p)
+	public MNode(AttributeMap am, Model m)
 	{
 		attributes = am;
 		model = m;
-		stack = new VNode(this, p);
-		stack.setLayoutX(am.getDouble("X"));
-		stack.setLayoutY(am.getDouble("Y"));
+		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
 	public VNode getStack()					{		return stack;	}
@@ -39,6 +37,14 @@ public class MNode {
 	public Shape getShape() 				{		return getStack().getShapeLayer();	}
 	public String getShapeType() 			{		return attributes.get("ShapeType");	}
 	public AttributeMap getAttributeMap() 	{		return attributes;	}
-	
+	public void rememberPosition() 			
+	{		
+		attributes.putDouble("X",  stack.getLayoutX());	
+		attributes.putDouble("Y",  stack.getLayoutY());	
+		attributes.putDouble("Width",  stack.getWidth());	
+		attributes.putDouble("Height",  stack.getHeight());	
+	}
+
+	public String getInfoStr()	{ return "HTML Template for " + getId() + "\n" + attributes.toString();	}
 	@Override public String toString()	{ return getId() + " = " + attributes.toString();	}
 }
