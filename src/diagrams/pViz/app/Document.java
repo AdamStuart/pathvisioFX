@@ -4,47 +4,44 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
-import java.util.function.Function;
 
-import javax.imageio.ImageIO;
-
-import javafx.application.Platform;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.print.PrinterJob;
 import javafx.stage.FileChooser;
 import model.bio.Gene;
 import model.bio.GeneList;
 import util.FileUtil;
+import util.StringUtil;
 /*
  * Document takes care of reading the state from a file, or writing it to one.
  */
 public class Document
 {
 	
-	Controller drawController;
+	Controller controller;
 	File file = null;
 	private int verbose = 0;
 	
 	public Document(Controller inDC)
 	{
-		drawController = inDC;
+		controller = inDC;
 	}
 	// **-------------------------------------------------------------------------------
 	public void open(String s)		
 	{ 	
+		if (StringUtil.isXML(s))
 		try
 		{
 			org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
 			if (doc != null)
-				drawController.addState(doc);					
+				controller.addState(doc);					
 		}
 		catch (Exception e) 
 		{
 			e.printStackTrace();
 		}
+		else System.err.println("open expected xml: " + s.substring(40));
 	}
-
-	
+	// **-------------------------------------------------------------------------------
 	public void open(File f)		
 	{ 	
 		if (FileUtil.isCDT(f))
@@ -66,7 +63,7 @@ public class Document
 							geneList.add(g);
 					}
 				}
-				drawController.setGeneList(geneList);
+				controller.setGeneList(geneList);
 			}
 			catch (Exception e) 
 			{
@@ -81,11 +78,11 @@ public class Document
 			org.w3c.dom.Document doc = FileUtil.openXML(f);
 			if (doc != null)
 			{
-				drawController.addState(doc);					//  parse XML to sceneGraph
-		        new Thread(() ->
-		           Platform.runLater(() -> {
-		        	   drawController.getModel().resetEdgeTable();	
-		        })  ).start();    
+				controller.addState(doc);					//  parse XML to sceneGraph
+//		        new Thread(() ->
+//		           Platform.runLater(() -> {
+//		        	   drawController.getModel().resetEdgeTable();	
+//		        })  ).start();    
 			}
 			
 		}
@@ -118,7 +115,7 @@ public class Document
 			App.getInstance().getStage().setTitle(file.getName());
 		}
 		if (verbose > 0) System.out.println("about to do the save traversal");
-		String buff =  drawController.getModel().saveState();
+		String buff =  controller.getModel().saveState();
 		if (verbose > 0) System.out.println(buff);
 		 try (FileOutputStream out = new FileOutputStream(file)) 
 		 {
@@ -148,7 +145,7 @@ public class Document
 	{
 		PrinterJob job = PrinterJob.createPrinterJob();
 		if (job == null) return;
-		boolean success = job.printPage(drawController.getPasteboard());
+		boolean success = job.printPage(controller.getPasteboard());
 		if (success)
 			job.endJob();
 	}

@@ -67,8 +67,16 @@ public class Anchor extends MNode {
 	{
 		double position = getPosition();
 		Point2D pt = edge.getEdgeLine().getPointAlongLine(position);
+		
 		getStack().setCenter(pt);
+		getStack().setWidth(4);
+		getStack().setHeight(4);
 		((Circle)getStack().getShapeLayer()).setRadius(2);
+		
+	}
+		
+
+		
 
 //		System.out.println("Setting Anchor position to " + StringUtil.asString(pt));
 //		
@@ -96,7 +104,6 @@ public class Anchor extends MNode {
 //		}
 //		else 
 //			System.out.println("shape is not a circle");
-	}
 
 	public Shape getShape()
 	{

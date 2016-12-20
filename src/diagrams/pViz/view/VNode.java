@@ -48,6 +48,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebView;
 import model.AttributeMap;
+import model.bio.Gene;
 import model.dao.CSVTableData;
 import util.FileUtil;
 import util.MacUtil;
@@ -87,7 +88,16 @@ public class VNode extends ResizableBox {		//StackPane
       }
 	
 	public void setText(String s)		{ 	text.setText(s);	}
-	public String getText()				{ 	return text.getText();	}
+	public String getText()				
+	{ 	
+		String s = text.getText();	
+		if (StringUtil.isEmpty(s))
+		{
+			if (isAnchor()) return "Anchor (" + getModel().getId() + ")";
+			return getId();
+		}
+		return s;
+	}
 	public TextField getTextField()		{ 	return text;	}
 	public Shape getShapeLayer()		{	return shape;	}
 	public void setShapeLayer(Shape s)	{	shape = s;	}
@@ -435,11 +445,17 @@ public class VNode extends ResizableBox {		//StackPane
 				selection.selectX(this);
 	}
 	private void getInfo() {		
+		String name = getText();
+		Gene gene =  getModel().getModel().getGeneList().find(name);
+		if (gene != null)
+		{	gene.getInfo();
+		return;
+		}
 		String s = getModel().getInfoStr();
 		   if (StringUtil.hasText(s))
 		   {  
 			   Alert a = new Alert(AlertType.INFORMATION, s);
-			   a.setHeaderText("Gene Information");
+			   a.setHeaderText("Other Component Information");
 			   a.getDialogPane().setMinWidth(600);
 			   a.setResizable(true);
 			   a.showAndWait();
@@ -482,6 +498,10 @@ public class VNode extends ResizableBox {		//StackPane
 		Shape shape = getShapeLayer();
 		if (shape != null)
 		{
+			shape.setLayoutX(x);
+			shape.setLayoutY(y);
+//			shape.setWidth(w);
+//			shape.setHeight(w);
 			String filler = attrMap.get("Fill");
 			if (filler != null)	shape.setFill(attrMap.getColor("Fill"));
 			String strok = attrMap.get("Stroke");
@@ -696,7 +716,7 @@ public class VNode extends ResizableBox {		//StackPane
 		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
 		list.addAll(toFront, toBack, dup, del);   
 
-		Selection selection = pasteboard.getSelectionMgr();
+//		Selection selection = pasteboard.getSelectionMgr();
 		if (selection.isGroupable())	list.add(makeItem("Group", e ->  	{	controller.group();    }));   
 		if (isUngroupable())			list.add(makeItem("Ungroup", e -> 	{ 	controller.ungroup();  }));   
 		return list;

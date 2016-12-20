@@ -457,64 +457,11 @@ public class Controller implements Initializable
 //		dlog.showAndWait();
 	}
 
-	 @FXML private void test1()
-	{
-		undoStack.push(ActionType.Test);	
-		AttributeMap attrMap = new AttributeMap();
-		attrMap.putFillStroke(Color.PINK, Color.INDIGO);
-		attrMap.putCircle(new Circle(120, 230, 40));
-		attrMap.put("TextLabel", "root");
-		MNode n1 = new MNode(attrMap, model);
-		add(n1.getStack());
-	
-		attrMap.putFillStroke(Color.CORNSILK, Color.BLUE);
-		attrMap.putCircle(new Circle(220, 130, 60));
-		attrMap.setTool(Tool.Circle.toString()); 
-		MNode circ = new MNode(attrMap, model);		//, "Eli"
-		add(circ.getStack());
-	
-		attrMap.putFillStroke(Color.LIGHTSKYBLUE, Color.DARKOLIVEGREEN);
-		attrMap.putCircle(new Circle(220, 330, 60));
-		MNode n3 = new MNode(attrMap, model);	//, "Fristcut"
-		add(n3.getStack());
-		
-		Edge line1 = model.addEdge(circ, n3);		add(0, line1);
-		Edge line2 = model.addEdge(circ, n1);		add(0, line2);
-		
-		Rectangle r1 = new Rectangle(290, 230, 60, 60);
-		attrMap.setTool(Tool.Rectangle.toString());
-		attrMap.putRect(r1);
-		attrMap.putFillStroke(Color.CORNSILK, Color.DARKOLIVEGREEN);
-		MNode n4 = new MNode(attrMap, model);
-		add(n4.getStack());
-	}
+	 @FXML private void test1()	{		Test.test1(this);	}
+	 @FXML private void test2()	{		Test.test2(this);	}
 
 // **-------------------------------------------------------------------------------
-	@FXML private void test2()
-	{
-		undoStack.push(ActionType.Test);	
-		double WIDTH = 20;
-		double HEIGHT = 20;
-		double RADIUS = 10;
-		double spacer = 5 * RADIUS;
-//		ShapeFactory f = getNodeFactory().getShapeFactory();
-		AttributeMap attrMap = new AttributeMap();
-		attrMap.putFillStroke(Color.PINK, Color.INDIGO, 1.0);
-		for (int i=0; i<WIDTH; i++)
-			for (int j=0; j<HEIGHT; j++)
-			{
-				Circle c1 = new Circle(i * spacer, j * spacer, RADIUS);
-				attrMap.putCircle(c1);
-				attrMap.put("ShapeType","Circle");
-				attrMap.put("GraphId", i + ", " + j);
-				add(new MNode(attrMap, model).getStack());
-			}
-	}
-	
-	@FXML private void test3()
-	{
-//		addAll(new GPML(this).makeTestItems());
-	}
+
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
 	{
@@ -528,7 +475,7 @@ public class Controller implements Initializable
 		b.setText("");
 	}
 	
-	private void setupPalette()
+	private void setupPalette()			//Inspector
 	{
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
@@ -567,14 +514,6 @@ public class Controller implements Initializable
 //		addModelToPasteboard();
 
 	}
-	private void addModelToPasteboard() {
-//		for (String key : model.getResourceMap().keySet())
-//		{
-//			MNode node = model.getResourceMap().get(key);
-//			if (node != null)
-//				pasteboard.getChildren().add(node.getStack());
-//		}
-	}	
 			
 	public void updateTables() {
 		
@@ -704,7 +643,7 @@ public class Controller implements Initializable
 		    }
 		  }
 	// **-------------------------------------------------------------------------------
-	void bindInspector()
+	void bindInspector()    //Inspector
 	{
 		strokeLabel.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.PENCIL, GlyphIcon.DEFAULT_ICON_SIZE));
 		fillLabel.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.CAR, GlyphIcon.DEFAULT_ICON_SIZE));
@@ -763,7 +702,7 @@ public class Controller implements Initializable
 //	}
 	
 	// **-------------------------------------------------------------------------------
-	public void setUpInspector()
+	public void setUpInspector()		//Inspector
 	{
 		if(getSelectionManager().count() == 1)
 		{
@@ -833,18 +772,11 @@ public class Controller implements Initializable
 			if (((VNode) n).isAnchor()) return;
 			if (((VNode) n).isLabel()) return;
 			Object prop  = modelNode.getAttributeMap().get("TextLabel");
-			if (prop != null && findGene(""+prop) == null)
+			if (prop != null && model.findGene(""+prop) == null)
 				model.addGene(new Gene(""+prop));
 		}
 	}
 	
-	private Gene findGene(String string) {
-		if (StringUtil.isEmpty(string)) return null;
-		for (Gene g : model.getGenes())
-			if (string.equals(g.getName()))
-				return g;
-		return null;
-	}
 	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
 	@FXML private void dumpEdgeTable()	{		model.dumpEdgeTable();	}
 	@FXML private void dumpViewHierarchy()	{	model.dumpViewHierarchy();	}

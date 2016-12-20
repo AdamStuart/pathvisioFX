@@ -106,13 +106,17 @@ public GPML(Model m) {
 		labl.setLayoutY(10);
 		
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
+		parseShapes(doc.getElementsByTagName("Shape"));
 		handleLabels(doc.getElementsByTagName("Label"));
 		handleBiopax(doc.getElementsByTagName("Biopax"));
 		handleGroups(doc.getElementsByTagName("Groups"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseEdges(doc.getElementsByTagName("Interaction"));
-		parseShapes(doc.getElementsByTagName("Shape"));
+		
 	}
+	
+	
+	
 	private Controller getController() { return model.getController();}
 	private void parseDataNodes(NodeList nodes) {
 		for (int i=0; i<nodes.getLength(); i++)
@@ -146,6 +150,7 @@ public GPML(Model m) {
 		{
 			org.w3c.dom.Node child = shapes.item(i);
 			MNode node = parseGPML(child, model);
+			
 			if (node != null)
 				getController().add(0, node.getStack());
 		}
@@ -223,7 +228,7 @@ public GPML(Model m) {
 			attrMap.put("end", endId);
 			endNode = m.getResource(endId);
 			if (startNode != null && endNode != null) 
-				return new Edge(startNode.getStack(), endNode.getStack(), attrMap, points, anchors);	
+				return new Edge(m, startNode.getStack(), endNode.getStack(), attrMap, points, anchors);	
 			System.err.println("no end node found: " + endId);
 		}
 		return new Edge(attrMap, m);

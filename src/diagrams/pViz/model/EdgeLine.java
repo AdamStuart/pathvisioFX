@@ -264,9 +264,14 @@ public class EdgeLine extends Group {
 		if (points == null || points.size() == 0) return null;
 		return points.get(0).getPoint(); 
 		}
+	public GPMLPoint firstGPMLPoint()
+	{ 
+		if (points == null || points.size() == 0) return null;
+		return points.get(0); 
+		}
 	public Point2D forelastPoint()
 	{ 
-		if (points == null || points.size() < 2) return null;
+		if (points == null || points.size() < 2) return firstPoint();
 		return points.get(points.size()-2).getPoint(); 
 	}
 	public Point2D lastPoint()
@@ -297,29 +302,52 @@ public class EdgeLine extends Group {
 		return LineUtil.toLineCoordinates(getStartPoint(), getEndPoint(), new Point2D(evX, evY));
 	}
 	//----------------------------------------------------------------------
-
+boolean BADPOINT(Point2D pt)
+{
+	return pt == null || Double.isNaN(pt.getX()) || Double.isNaN(pt.getY());
+}
 	private void linearConnect() {
 		Point2D lastPt = lastPoint();
+		VNode startNode = edge.getStartNode();
 		VNode endNode = edge.getEndNode();
-		
-		boolean shorten = SHORTEN;
+		if (endNode == null) return;
+		int shorten = SHORTEN ? 10 : 0;
 		if (endNode != null)		// TODO -- and arrowhead??
 		{
-			if (endNode.isAnchor()) 	shorten = false;
+			if (endNode.isAnchor()) 	shorten = 0;
 //			if (edge.getInteractionType() == MIM.MIM_CATALYSIS) 
 //				shorten = false;	
 		}
 		
-		if (shorten) {
+		if (shorten > 0) {
 			Point2D prev = forelastPoint();
 			if (prev != null)
 			{
+				if (BADPOINT(prev)) 
+					return;
+				if (BADPOINT(lastPt)) 
+					return;
 				Line refline = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
-				lastPt= LineUtil.getIntersection(refline, endNode);
+				lastPt= LineUtil.getIntersection(refline, endNode, shorten);
 			}
 		} 
-		setArrowPt(lastPt);
-		LineUtil.set(getLine(), firstPoint(), lastPt);
+		Point2D start = new Point2D(500,500);
+		if (startNode == null)
+		{
+			String startId = edge.getAttributes().get("start");
+			if (startId != null)
+			{
+				MNode modeNode = edge.getModel().getResource(startId);
+				if (modeNode != null) 
+					startNode =	modeNode.getStack();
+			}
+		}
+		else start = edge.getAdjustedPoint(startNode, firstGPMLPoint());
+		setStartPoint(start);
+		Point2D end = edge.getAdjustedPoint(endNode, lastGPMLPoint());
+		setEndPoint(end);
+		setArrowPt(end);
+		LineUtil.set(getLine(), start, end);
 		getLine().setStroke(edge.getColor());
 		getLine().setStrokeWidth(edge.getStrokeWidth());
 		if (strokeDashArray != null)

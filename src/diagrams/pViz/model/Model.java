@@ -47,13 +47,17 @@ public class Model
 	private Map<String, MNode> resourceMap = FXCollections.observableHashMap();
 	private int nodeCounter = 0;
 	private List<Edge> edgeTable = FXCollections.observableArrayList();
+
 	private Map<String, Shape> shapes = new HashMap<String,Shape>();
 	public Map<String, Shape> getShapes()	{ return shapes; }
+	public Shape findShape(String s ) 		{ return shapes.get(s);	}
+
 	public Map<String, MNode> getResourceMap() {		return resourceMap;	}
-	public Shape findShape(String s ) 	{ return shapes.get(s);	}
-	String title = "PathVisio Mockup";
+
+	private String title = "PathVisio Mockup";
 	public void setTitle(String val) {		title = val;		}
 	public String getTitle() 		{		return title;		}
+	// **-------------------------------------------------------------------------------
 
 	public Model(Controller ct)
 	{
@@ -64,11 +68,15 @@ public class Model
 	{
 		String header = docHeader();
 		StringBuilder saver = new StringBuilder(header);
+		serializeComments(saver);
 		serializeNodes(saver);
 		serializeReferences(saver);
 		serializeEdges(saver);
-		serializeComments(saver);
+		serializeShapes(saver);
 		return saver.toString();
+	}
+	private String docHeader() {
+		return "Header";
 	}
 	
 	private void serializeNodes(StringBuilder saver) {
@@ -80,9 +88,6 @@ public class Model
 	private void serializeShapes(StringBuilder saver) {
 	}
 	private void serializeComments(StringBuilder saver) {
-	}
-	private String docHeader() {
-		return "Header";
 	}
 	//---------------------------------------------------------
 	public void setState(String s)
@@ -111,6 +116,13 @@ public class Model
 	public void clearGenes() 			{		genes.clear();	}
 	public List<Gene> getGenes() 		{		return genes;	}
 	public GeneList getGeneList() 		{		return new GeneList(genes, getSpecies());	}
+	public Gene findGene(String string) {
+		if (StringUtil.isEmpty(string)) return null;
+		for (Gene g : getGenes())
+			if (string.equals(g.getName()))
+				return g;
+		return null;
+	}
 
 	// **-------------------------------------------------------------------------------
 	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
@@ -145,7 +157,7 @@ public class Model
 	// **-------------------------------------------------------------------------------
 	public Edge addEdge(MNode start, MNode end)		
 	{  
-		Edge edge = new Edge(start.getStack(), end.getStack(), null, null, null);
+		Edge edge = new Edge(this, start.getStack(), end.getStack(), null, null, null);
 		addEdge(edge);
 		return edge;
 	}
@@ -185,6 +197,7 @@ public class Model
 			e.connect(false);
 		}
 	}
+	// **-------------------------------------------------------------------------------
 	
 //	EventListener connector = 
 //	

@@ -35,7 +35,8 @@ public class Edge  {
 	private VNode startNode=null, endNode=null;
 	public VNode getStartNode()		{ 	return startNode;	}
 	public VNode getEndNode()		{ 	return endNode;	}
-
+	public Model getModel()		{ 	return model;	}
+	Model model = null;
 	private int zOrder;
 	public int getz() 				{	return zOrder;	}
 	public void setz(int i) 		{	zOrder = i;	}
@@ -44,7 +45,7 @@ public class Edge  {
 	private Color color = Color.BLACK;
 	public Color getColor() 		{	return color;	}
 	public void setColor(Color c) 	{	color = c;	}
-	public Model getModel()			{ 	return getStartNode().getModel().getModel();	}
+//	public Model getModel()			{ 	return getStartNode().getModel().getModel();	}
 	private String graphId;
 	public String getGraphId()		{ return graphId;	}
 	public String getDatabase() 	{ 	return attributes.get("Database");	}
@@ -62,23 +63,25 @@ public class Edge  {
 		return MIM.MIM_STIMULATION;
 	}
 	//----------------------------------------------------------------------
-	public Edge(VNode start, VNode end) 
-    {
-		this(start, end, null, null, null);
-    }
-	
-	public Edge(VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
+//	public Edge(VNode start, VNode end) 
+//    {
+//		this(start, end, null, null, null);
+//    }
+//	
+	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
 	{
     	startNode = start;
     	endNode = end;
 		edgeLine = new EdgeLine(this, pts, anchors);
+		model = inModel;
 		attributes.addAll(attr);
 		init();
     }
     	
-    public Edge(AttributeMap attr, Model model) 
+    public Edge(AttributeMap attr, Model inModel) 
     {
-    	MNode start = model.getResource(attr.get("start"));
+		model = inModel;
+		MNode start = model.getResource(attr.get("start"));
     	if (start != null) 
     		startNode = start.getStack();
     	MNode target = model.getResource(attr.get("end"));
@@ -117,13 +120,16 @@ public class Edge  {
 			// TODO listen to layoutY too?
 //		}
     }
-	private Point2D  getAdjustedPoint(VNode startNode)
+	public Point2D  getAdjustedPoint(VNode vNode, GPMLPoint gpmlPt)
 	{
-		Point2D center = startNode.center();
-		double relX = startNode.getAttributes().getDouble("RelX");
-		double relY = startNode.getAttributes().getDouble("RelY");
-		double width = startNode.getWidth();
-		double height = startNode.getHeight();
+		if (vNode == null)
+			return new Point2D(100,100);
+		Point2D center = vNode.center();
+		if (gpmlPt == null) return center;
+		double relX = gpmlPt.getRelX();
+		double relY = gpmlPt.getRelY();
+		double width = vNode.getWidth();
+		double height = vNode.getHeight();
 		double x = center.getX() + relX * width / 2;
 		double y = center.getY() + relY * height / 2;
 		return new Point2D(x,y);
@@ -137,7 +143,7 @@ public class Edge  {
 //			Shape shape = endNode.getModel().getModel().findShape(edgeLine.startGraphId());
 //			pt = boundsCenter(shape);
 //		} else
-		edgeLine.setStartPoint(getAdjustedPoint(startNode));
+		edgeLine.setStartPoint(getAdjustedPoint(startNode, getEdgeLine().firstGPMLPoint()));
 		pt = new Point2D(0, 0);
 		if (endNode == null) {
 			String val = getAttributes().get("end");
@@ -145,20 +151,24 @@ public class Edge  {
 			if (mNode != null)
 				endNode = mNode.getStack();
 
-			Shape shape = startNode.getModel().getModel().findShape(edgeLine.endGraphId());
+			Shape shape = endNode == null ? 
+					startNode.getModel().getModel().findShape(edgeLine.endGraphId()) : endNode.getShapeLayer();
 			if (shape != null) 
 				pt = boundsCenter(shape);
 			else 
 				System.out.println("no shape");
 		} else
-			pt = getAdjustedPoint(endNode);
+			pt = getAdjustedPoint(endNode, getEdgeLine().lastGPMLPoint());
 		edgeLine.setEndPoint(pt);
 
 		for (Anchor a : edgeLine.getAnchors()) {
 			a.resetPosition();
 		}
 		edgeLine.connect();
-		System.out.println("connect " + getGraphId());
+		String startStr = startNode.getText();
+		String endStr = endNode == null ? "NULL" : endNode.getText();
+		
+		System.out.println("connect " + startStr + " to " + endStr);
 	}
 	public Point2D boundsCenter(Shape s)	{
 		Bounds b = s.getBoundsInParent();
@@ -299,6 +309,15 @@ public class Edge  {
 		{
 			startNode.layoutBoundsProperty().addListener(startbounds);
 			startNode.layoutXProperty().addListener(startposition);
+		}
+		if (endNode == null){
+			String endId = getAttributes().get("end");
+			if (endId != null)
+			{
+				MNode mnode = getModel().getResourceByKey(endId);
+				if (mnode != null)
+					endNode = mnode.getStack();
+			}
 		}
 		if (endNode != null)
 		{	
