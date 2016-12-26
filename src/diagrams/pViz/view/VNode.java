@@ -9,6 +9,7 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.Anchor;
+import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.EdgeLine;
 import diagrams.pViz.model.MNode;
 import gui.Backgrounds;
@@ -19,6 +20,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -38,6 +40,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Path;
@@ -45,6 +48,8 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebView;
 import model.AttributeMap;
@@ -54,12 +59,18 @@ import util.FileUtil;
 import util.MacUtil;
 // a VNode can be a shape or a control or a container
 import util.StringUtil;
-
+// 
+/*
+ * VNode: the view node 
+ * Created by the constructor of "model" the corresponding MNode
+ * It inherits from ResizableBox > DragbleBox > StackPane > Pane > Region etc.
+ * 
+ */
 
 public class VNode extends ResizableBox {		//StackPane
 
 	private MNode model;
-	private Shape shape;
+	private Shape figure;
 	private TextField text;
 	private String title;
 	
@@ -75,7 +86,7 @@ public class VNode extends ResizableBox {		//StackPane
 		selection = pasteboard.getSelectionMgr();
 		AttributeMap attributes = modelNode.getAttributeMap();
 		
-		createShape(attributes.getPosition());
+		createFigure(attributes.getPosition());
 		setId(modelNode.getId());
 		title = attributes.get("TextLabel");
 		if (title == null) title = "";
@@ -99,8 +110,8 @@ public class VNode extends ResizableBox {		//StackPane
 		return s;
 	}
 	public TextField getTextField()		{ 	return text;	}
-	public Shape getShapeLayer()		{	return shape;	}
-	public void setShapeLayer(Shape s)	{	shape = s;	}
+	public Shape getFigure()			{	return figure;	}
+	public void setFigure(Shape s)		{	figure = s;	}
 	public MNode getModel()				{	return model;	}
 	private String gensym(String s)		{	return model.getModel().gensym(s);	}
 	public AttributeMap getAttributes() {	return model.getAttributeMap();	}
@@ -114,15 +125,13 @@ public class VNode extends ResizableBox {		//StackPane
 	}
 	public boolean isAnchor()	{ return getModel() instanceof Anchor;	}
 	public boolean isLabel()	{ return "Label".equals(getModel().getAttributeMap().get("ShapeType"));	}
-	public boolean isShape()	{ return "RoundedRectangle".equals(getModel().getAttributeMap().get("ShapeType"));	}
+	public boolean isShape()	{ return "RoundedRectangle".equals(getModel().getAttributeMap().get("ShapeType"));	}// TODO
 	public void disableResize()	{ setResizeBorderTolerance(0);	}
 	public boolean isGroup()	{ return false;	}			// TODO
 	public List<VNode> ungroup()	{ return FXCollections.emptyObservableList();	}			// TODO
 	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
 
-	 
 	protected void handleMouseDragged(final MouseEvent event) {
-
         if (isAnchor()) 
  	   {
             Anchor anchor = (Anchor) getModel();
@@ -145,9 +154,10 @@ public class VNode extends ResizableBox {		//StackPane
         else super.handleMouseDragged(event);
     }
  	// **-------------------------------------------------------------------------------
-	private void createShape(Point2D center) 
+	private void createFigure(Point2D center) 
 	{	
 		String type = model.getShapeType();
+		if ("None".equals(type)) return;
 		if (type == null) type = "Rectangle";			// TODO
 		Tool tool = Tool.lookup(type);
 		if (tool == null) return ;
@@ -156,7 +166,7 @@ public class VNode extends ResizableBox {		//StackPane
 			addNewNode(tool, model);
 			return;
 		}
-		shape = ShapeFactory.makeNewShape(type, model, this);
+		else figure = ShapeFactory.makeNewShape(type, model, this);
 //		setLayoutX(getAttributes().getDouble("X"));
 //		setLayoutY(getAttributes().getDouble("Y"));
 		Insets insets = new Insets(2,2,2,2);  //getInsets();
@@ -164,9 +174,9 @@ public class VNode extends ResizableBox {		//StackPane
         double vInsets = insets.getTop() + insets.getBottom();
         double w = getAttributes().getDouble("Width", 15) + hInsets;
         double h = getAttributes().getDouble("Height", 15 + vInsets);
-        if (shape instanceof Circle)
+        if (figure instanceof Circle)
         {
-        	Circle c = (Circle) shape;
+        	Circle c = (Circle) figure;
         	c.setRadius(Math.min(w, h)/ 2); 
         	c.setCenterX(center.getX());
         	c.setCenterY(center.getY());
@@ -176,21 +186,38 @@ public class VNode extends ResizableBox {		//StackPane
         		setResizeBorderTolerance(-2);
         	}
         }
-        else if (shape instanceof Rectangle)
+        else if (figure instanceof Rectangle)
         {
-	        Rectangle r = (Rectangle) shape;
+	        Rectangle r = (Rectangle) figure;
 	        r.setWidth(w);
 	        r.setHeight(h);
 	        r.setLayoutX(center.getX() - w /2 ); 
 	        r.setLayoutY(center.getY() - h /2 ); 
         }
-        else if (shape instanceof Path)
+        else if (figure instanceof Path)
         {
 //			Path p = (Path) shape;
 //			p.scaleXProperty().bind(widthProperty());
 
         }
 	}
+ 	// **-------------------------------------------------------------------------------
+
+	private double getCenterX() {
+		return getModel().getAttributeMap().getDouble("CenterX");
+	}
+
+	private double getCenterY() {
+		return getModel().getAttributeMap().getDouble("CenterY");
+	}
+
+	public Point2D center() {
+    	Bounds bounds = getBoundsInParent();
+    	double x = (bounds.getMinX() + bounds.getWidth()  / 2);
+    	double y = (bounds.getMinY() + bounds.getHeight() / 2);
+    	return new Point2D(x,y);
+	}
+
 	public void setCenter(Point2D pt)
 	{
 		setCenter(pt.getX(), pt.getY());
@@ -203,6 +230,7 @@ public class VNode extends ResizableBox {		//StackPane
 		install();
 	}
 	
+ 	// **-------------------------------------------------------------------------------
 	private void install()
 	{
 		double x = getAttributes().getDouble("CenterX");
@@ -213,22 +241,22 @@ public class VNode extends ResizableBox {		//StackPane
 	}
 	
 	public String getTitle() { return "getTitle"; }
-	public void setWidth(double w)	{		super.setWidth(w);		resizeShapeToNode();	}
-	public void setHeight(double h)	{		super.setHeight(h);		resizeShapeToNode();	}
+	public void setWidth(double w)	{		super.setWidth(w);		resizeFigureToNode();	}
+	public void setHeight(double h)	{		super.setHeight(h);		resizeFigureToNode();	}
 	
-	
-	private void resizeShapeToNode() {
-		if (shape != null)
+ 	// **-------------------------------------------------------------------------------
+	private void resizeFigureToNode() {
+		if (figure != null)
 		{
-			if (shape instanceof Rectangle)
+			if (figure instanceof Rectangle)
 			{
-				Rectangle r = (Rectangle) shape;
+				Rectangle r = (Rectangle) figure;
 				r.setWidth(getWidth());	// - ShapeFactory.MARGIN2
 				r.setHeight(getHeight());	// - ShapeFactory.MARGIN2
 			}
-			if (shape instanceof Circle)
+			if (figure instanceof Circle)
 			{
-				Circle c = (Circle) shape;
+				Circle c = (Circle) figure;
 				c.setCenterX(getCenterX());  //getModel().getAttributeMap().getDouble("CenterX"));
 				c.setCenterY(getCenterY());
 				if (isAnchor())
@@ -238,18 +266,15 @@ public class VNode extends ResizableBox {		//StackPane
 				}
 				else c.setRadius(Math.min(getHeight(),getWidth())/2);
 			}
-			if (shape instanceof Path)
+			if (figure instanceof Path)
 			{
-				Path p = (Path) shape;
-				double scale = Math.min(getWidth() / 400, getWidth() / 300);
+				Path p = (Path) figure;
+				double scale = Math.min(getWidth() / 400, getHeight() / 300);
 				p.setScaleX(scale);
 				p.setScaleY(scale);
-
 			}
 		}
-		
 	}
-
 	// **-------------------------------------------------------------------------------
 	private void addNewNode(Tool type, MNode model)
 	{
@@ -266,24 +291,11 @@ public class VNode extends ResizableBox {		//StackPane
 	// **-------------------------------------------------------------------------------
 	public String toString()
 	{
-		Shape shape = getShapeLayer();
+		Shape shape = getFigure();
 		String shapeName = shape == null ? "n/a" : shape.getClass().getSimpleName();
-		return String.format("(%d) %s %s %s [@%3.1f, %3.1f; %3.1f x %3.1f ]", getChildren().size(), shapeName, getId(), getText(), getCenterX(), getCenterY(), getWidth(), getHeight());
-	}
-
-	private double getCenterY() {
-		return getModel().getAttributeMap().getDouble("CenterX");
-	}
-
-	private double getCenterX() {
-		return getModel().getAttributeMap().getDouble("CenterY");
-	}
-
-	public Point2D center() {
-    	Bounds bounds = getBoundsInParent();
-    	double x = (bounds.getMinX() + bounds.getWidth()  / 2);
-    	double y = (bounds.getMinY() + bounds.getHeight() / 2);
-    	return new Point2D(x,y);
+		double x = getLayoutX();
+		double y = getLayoutY();
+		return String.format("(%d) %s %s %s [@%3.1f, %3.1f; %3.1f x %3.1f ] @%3.1f, %3.1f", getChildren().size(), shapeName, getId(), getText(), getCenterX(), getCenterY(), getWidth(), getHeight(), x, y);
 	}
 	// **-------------------------------------------------------------------------------
 	public void addContent(Node content)
@@ -315,16 +327,21 @@ public class VNode extends ResizableBox {		//StackPane
 		text.setEditable(false);
 //		text.setVisible(true);
 		text.setMinWidth(100);
-		text.setMinHeight(20);
+		text.setMinHeight(32);
 		text.setPrefWidth(100);
-		text.setPrefHeight(20);
+		text.setPrefHeight(32);
 //		text.setOnMousePressed(e -> {  mousePressedOnText(e);});
 //		text.setOnMouseDragged(e -> {  mouseDraggedOnText(e);});
 //		text.setOnKeyPressed(e -> 	{  keyPressedOnText(e);});
 		text.setMouseTransparent(true);
 		text.setBackground(Backgrounds.transparent());
-
-		text.setFont(new Font(12));
+		text.setStyle("-fx-font-style: italic;");
+   String style =  "-fx-font: 100px Tahoma; "
+    		+ "-fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, aqua 0%, red 50%);"
+		   + " -fx-stroke: black; -fx-stroke-width: 1;";
+	setStyle(style);
+   
+		text.setFont(new Font(25));
 		setAlignment(text, pos);
 		text.setAlignment(pos);
 		getChildren().add(text);
@@ -443,13 +460,16 @@ public class VNode extends ResizableBox {		//StackPane
 				selection.select(this, !wasSelected);
 			else if (!wasSelected)
 				selection.selectX(this);
+			event.consume();
 	}
+	// **------------------------------------------------------------------------------
 	private void getInfo() {		
 		String name = getText();
-		Gene gene =  getModel().getModel().getGeneList().find(name);
+		Gene gene =  getModel().getModel().findGene(name);
 		if (gene != null)
-		{	gene.getInfo();
-		return;
+		{	
+			gene.getInfo();
+			return;
 		}
 		String s = getModel().getInfoStr();
 		   if (StringUtil.hasText(s))
@@ -479,7 +499,7 @@ public class VNode extends ResizableBox {		//StackPane
 		{
 			attributes.putColor("Fill",   (Color) shape.getFill());	
 			attributes.putColor("Stroke",   (Color) shape.getStroke());	
-			attributes.putDouble("StrokeWidth",   shape.getStrokeWidth());	
+			attributes.putDouble("LineThickness",   shape.getStrokeWidth());	
 		}
 	}
 	public void readGeometry(AttributeMap attrMap, Node content)
@@ -495,21 +515,6 @@ public class VNode extends ResizableBox {		//StackPane
 		if (Double.isNaN(x)) {	x = centerx - w / 2;	attrMap.putDouble("X", x);  }
 		if (Double.isNaN(y)) { y = centery - h / 2;		attrMap.putDouble("Y", y);  }
 		fill( x,  y,  w,  h,  title,  id);
-		Shape shape = getShapeLayer();
-		if (shape != null)
-		{
-			shape.setLayoutX(x);
-			shape.setLayoutY(y);
-//			shape.setWidth(w);
-//			shape.setHeight(w);
-			String filler = attrMap.get("Fill");
-			if (filler != null)	shape.setFill(attrMap.getColor("Fill"));
-			String strok = attrMap.get("Stroke");
-			if (strok != null)	shape.setStroke(attrMap.getColor("Stroke"));
-			double wid = attrMap.getDouble("StrokeWidth");
-			if (!Double.isNaN(wid)) 
-				shape.setStrokeWidth(wid);
-		}
 //		if (content != null)
 //			getChildren().add(content);
 	}
@@ -520,28 +525,83 @@ public class VNode extends ResizableBox {		//StackPane
 		if (Double.isNaN(w)) w = 20;
 		if (Double.isNaN(h)) h = 20;
 	
-		setLayoutX(x - w/2);
-		setLayoutY(y - h/2);
-		setWidth(w);
-		setHeight(h);
-		prefWidth(w);	setMinWidth(w);  
-		prefHeight(h);	setMinHeight(h); 
-	   
-		setStyle("-fx-border-color: green; -fx-border-width: 1; -fx-background-color: beige; -fx-opacity: 1.0;");	    
+		setLayoutX(x);
+		setLayoutY(y);
+		setWidth(w);	prefWidth(w);	setMinWidth(w);  
+		setHeight(h);	prefHeight(h);	setMinHeight(h); 
+		System.out.println(String.format("[@%3.1f, %3.1f; %3.1f x %3.1f ]", x, y, w, h));
+		AttributeMap attr = getModel().getAttributeMap();
+		StringBuilder bldr = new StringBuilder();
+
+//		double fontsize = attr.getDouble("FontSize");
+		FontWeight wt =  FontWeight.NORMAL;
+		FontPosture posture =  FontPosture.REGULAR;
+		double size = 12;
+		
+		String fontweight = attr.get("FontWeight");		// Bold or nothing
+		if ("Bold".equals(fontweight))		
+			wt = FontWeight.BOLD;
+			//bldr.append("-fx-font-weight: bolder; ");
+		String style = attr.get("FontStyle");			// Italic or nothing
+		if ("Italic".equals(style))			
+			posture =  FontPosture.ITALIC;		//bldr.append("-fx-font-style: italic; ");
+		String align = attr.get("Valign");
+		if ("Middle".equals(align))
+			bldr.append("-fx-row-valignment:center;");
+		String fontsize = attr.get("FontSize");
+			if (fontsize != null) 
+				size = StringUtil.toDouble(fontsize);
+
+		
+		
+		String colorTag = getAttributeMap().get("Color");
+		if (colorTag != null)
+			bldr.append("-fx-text-fill:#" + colorTag + "; ");
+		bldr.append(makeStyleString("FontSize"));
+		String str = bldr.toString();
+		if (getTextField() != null) getTextField().setStyle(str);
+		System.out.println(str);
+		setStyle(str);
+		if (text != null) text.setFont(Font.font("times", wt, posture, size)); 
+		bldr = new StringBuilder();		// start over with Shape
+		colorTag = getAttributeMap().get("Color");
+		if (colorTag != null)
+			bldr.append("-fx-border-color:#" + colorTag + "; ");
+		bldr.append(makeStyleString("FillColor"));
+		bldr.append(makeStyleString("LineThickness"));
+		str = bldr.toString();
+		System.out.println(str);
+//		setStyle(str);	    
+		if (getFigure()!= null)
+			getFigure().setStyle(str);	    
 //		addTitleBar(title);
 	}
 	
-	public void addTitleBar(String title)
+	private String makeStyleString(String gpmlTag) {
+		String val = getAttributeMap().get(gpmlTag);
+		if (val == null) return "";
+		String fxml = GPML.asFxml(gpmlTag);
+		if (fxml == null) return "";
+		if ("FillColor".equals(gpmlTag) || "Color".equals(gpmlTag))
+			val = "#" + val;
+		return fxml + ":" + val + "; ";
+	}
+
+	private AttributeMap getAttributeMap() {
+		return getModel().getAttributeMap();
+	}
+
+	public HBox addTitleBar(String title)
 	{		
-		HBox titleBar = new HBox(50);
+		HBox titleBar = new HBox();
 	    titleBar.setMaxHeight(25);
 	    Label idLabel = new Label(getId());
 	    idLabel.setMinWidth(50);
-	    getChildren().addAll(titleBar);
 	    StackPane.setAlignment(titleBar, Pos.TOP_CENTER);
 	    Label titleLabel = new Label(title);
 		titleBar.getChildren().addAll(idLabel, titleLabel);
 	    titleBar.setMouseTransparent(true);
+	    return titleBar;
 	}
 	
 	// **-------------------------------------------------------------------------------
@@ -560,6 +620,7 @@ public class VNode extends ResizableBox {		//StackPane
 		webView.setZoom(0.4);
 		webView.getEngine().load(url);
 		getChildren().add(webView);
+		addTitleBar(url);
 	}
 	
 	// **-------------------------------------------------------------------------------
@@ -586,7 +647,7 @@ public class VNode extends ResizableBox {		//StackPane
 	    imgView.fitHeightProperty().bind(Bindings.subtract(heightProperty(), 40));
 	    imgView.setTranslateY(-10);
 		readGeometry(attrMap, imgView);
-		getChildren().add(imgView);
+		getChildren().add(new VBox(addTitleBar(filepath), imgView));
 	}
 	
 	// **-------------------------------------------------------------------------------
@@ -607,7 +668,7 @@ public class VNode extends ResizableBox {		//StackPane
 					s = s.substring(idx1, idx2);
 				svg.setContent(s);
 				readGeometry(attrMap, svg);
-				getChildren().add(svg);
+				getChildren().add(new VBox(addTitleBar(path), svg));
 			}
 		}
 	}
@@ -619,11 +680,12 @@ public class VNode extends ResizableBox {		//StackPane
 		TableView<ObservableList<StringProperty>> table = new TableView<ObservableList<StringProperty>>();
 		if (attrMap.getId() == null)
 			attrMap.put("GraphId", gensym("T"));
-		CSVTableData data = FileUtil.openCSVfile(attrMap.get("file"), table);		// TODO THIS CURRENTLY ASSUMES ALL INTS!!
-		attrMap.put("name", attrMap.get("file"));
+		String filename = attrMap.get("file");
+		CSVTableData data = FileUtil.openCSVfile(filename, table);		// TODO THIS CURRENTLY ASSUMES ALL INTS!!
+		attrMap.put("name", filename);
 		if (data == null) return;
 		readGeometry(attrMap, table);
-		getChildren().add(table);
+	    getChildren().addAll(new VBox(addTitleBar(filename), table));
 	}
 	// **-------------------------------------------------------------------------------
 	public void makeTextArea()
@@ -694,7 +756,6 @@ public class VNode extends ResizableBox {		//StackPane
 	}
 
 	public List<MenuItem> getMenuItems(MouseEvent event) {
-			
 		ObservableList<MenuItem> list = FXCollections.observableArrayList();
 		//System.out.println("ContextMenu");
 		int nKids = getChildren().size();
@@ -728,5 +789,12 @@ public class VNode extends ResizableBox {		//StackPane
 		MenuItem item = new MenuItem(name);
 		item.setOnAction(foo);
 		return item;
+	}
+
+	public void setBounds(BoundingBox bounds) {
+		setLayoutX(bounds.getMinX());
+		setLayoutY(bounds.getMinY());
+		setWidth(bounds.getWidth());
+		setHeight(bounds.getHeight());
 	}
 }

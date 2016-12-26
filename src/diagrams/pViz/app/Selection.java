@@ -43,7 +43,7 @@ public class Selection
 	{
 		root = layer;
 		items = FXCollections.observableArrayList(); 
-		items.addListener( (ListChangeListener<Node>)c -> { layer.getController().setUpInspector();	});
+		items.addListener( (ListChangeListener<Node>)c -> { root.getController().getInspector().syncInspector();	});
 	}
 	private Model getModel()	{ return getController().getModel();  } 
 	private Controller getController() { return root.getController();	}
@@ -53,7 +53,7 @@ public class Selection
 	//--------------------------------------------------------------------------
 	public ObservableList<VNode> getAll()				{ return items;	}
 
-	public Node first()				{ return count() == 0 ? null : items.get(0);	}
+	public VNode first()			{ return count() == 0 ? null : items.get(0);	}
 	public void clear()				{ for (int i= items.size()-1; i>= 0; i--)
 											deselect(items.get(i));  
 									}
@@ -80,6 +80,7 @@ public class Selection
 		Object ref =  properties.get("BiopaxRef");
 		if (ref != null)
 			getController().hiliteByReference("" + ref);
+		System.out.println(s.toString());
 	}
 	
 	public void select(VNode s, boolean b)	{  if (b) select(s); else deselect(s);	}

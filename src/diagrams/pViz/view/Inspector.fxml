@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox fx:id="inspectTop" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="123.0" prefWidth="591.0" spacing="8.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.Inspector">
+   <children>
+      <VBox prefHeight="123.0" prefWidth="151.0">
+         <children>
+            <Label text="Weight" />
+            <Slider fx:id="weight" blockIncrement="2.0" majorTickUnit="5.0" max="30.0" minorTickCount="1" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" value="1.0" />
+            <Label layoutX="10.0" layoutY="10.0" text="Opacity" />
+            <Slider fx:id="opacity" blockIncrement="25.0" layoutX="10.0" layoutY="27.0" minorTickCount="5" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" value="100.0" />
+         </children>
+      </VBox>
+      <VBox>
+         <children>
+            <HBox>
+               <children>
+                  <Label fx:id="fillLabel" alignment="CENTER_RIGHT" text="Fill" />
+                  <ColorPicker fx:id="fillColor" style="-fx-color-label-visible: false;" />
+               </children>
+            </HBox>
+            <HBox>
+               <children>
+                  <Label fx:id="strokeLabel" text="Stroke" />
+                  <ColorPicker fx:id="lineColor" style="-fx-color-label-visible: false;" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <HBox>
+         <children>
+            <Label text="Rotate" />
+            <Slider fx:id="rotation" majorTickUnit="20.0" max="180.0" min="-180.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" />
+            <Label text="Scale" />
+            <Slider fx:id="scale" blockIncrement="0.25" majorTickUnit="20.0" max="2.0" min="-2.0" minorTickCount="5" orientation="VERTICAL" prefHeight="86.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" />
+         </children>
+      </HBox>
+      <Label text="Other" />
+   </children>
+   <padding>
+      <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+   </padding>
+</HBox>

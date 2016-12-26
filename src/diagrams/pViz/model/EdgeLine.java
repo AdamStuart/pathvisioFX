@@ -113,32 +113,16 @@ public class EdgeLine extends Group {
 		Point2D startPt = firstPoint();
 		Point2D endPt = lastPoint();
 		
-		// TODO Assuming simple connection
+		// TODO Assuming simple connection!!!
 		double x = startPt.getX() + ((endPt.getX() - startPt.getX()) * position);
 		double y = startPt.getY() + ((endPt.getY() - startPt.getY()) * position);
 		return new Point2D(x,y);
 	}
-//	public void setStrokeWidth(double b)
-//	{
-//		if (line != null) line.setStrokeWidth(b);
-//		if (polyline != null) polyline.setStrokeWidth(b);
-//	}
-//	public void setStroke(Color col)
-//	{
-////		if (line != null) line.setStroke(col);
-////		if (polyline != null) polyline.setStroke(col);
-//	}
+	//-----------------------------------------------------
 	Double[] strokeDashArray;
 	public void setStrokeDashArray(Double[] vals)
 	{
 		strokeDashArray = vals;
-//				if (vals == null) {
-//			if (line != null)		line.getStrokeDashArray().removeAll();
-//			if (polyline != null)	polyline.getStrokeDashArray().removeAll();
-//		} else {
-//			if (line != null)		line.getStrokeDashArray().setAll(vals);
-//			if (polyline != null)	polyline.getStrokeDashArray().setAll(vals);
-//		}
 	}
 	public void setStartPoint(Point2D startPt) {
 		if (points.size() < 1)
@@ -160,7 +144,7 @@ public class EdgeLine extends Group {
 	
 	public void dispose()
 	{
-			getChildren().clear();	
+		getChildren().clear();	
 	}
 	
 	public String toString()
@@ -222,7 +206,7 @@ public class EdgeLine extends Group {
 	public void connect()
 	{
 		for (Anchor a : anchors)
-			a.resetPosition();
+			a.resetPosition(edge);
 		switch (type)
 		{
 			case polyline:	polylineConnect(); 		break;
@@ -256,8 +240,8 @@ public class EdgeLine extends Group {
 	}
 	public double getStartX()	{  return  (firstPoint() != null) ? firstPoint().getX() : 0;	}
 	public double getStartY()	{  return  (firstPoint() != null) ? firstPoint().getY() : 0;	}
-	public double getEndX()	{  return  (lastPoint() != null) ? lastPoint().getX() : 0;	}
-	public double getEndY()	{  return  (lastPoint() != null) ? lastPoint().getY() : 0;	}
+	public double getEndX()		{  return  (lastPoint() != null) ? lastPoint().getX() : 0;	}
+	public double getEndY()		{  return  (lastPoint() != null) ? lastPoint().getY() : 0;	}
 
 	public Point2D firstPoint()
 	{ 
@@ -351,48 +335,61 @@ boolean BADPOINT(Point2D pt)
 		getLine().setStroke(edge.getColor());
 		getLine().setStrokeWidth(edge.getStrokeWidth());
 		if (strokeDashArray != null)
+		{
 			getLine().getStrokeDashArray().setAll(strokeDashArray);
+			if (getCurve() != null)
+				getCurve().getStrokeDashArray().setAll(strokeDashArray);
+			if (getPolyline() != null)
+				getPolyline().getStrokeDashArray().setAll(strokeDashArray);
+			
+		}
 	}
 	
 	  //----------------------------------------------------------------------
 
 	private void curveConnect() {
 		getCurve();
-		Line line1 = new Line(firstPoint().getX(), firstPoint().getY(), lastPoint().getX(), lastPoint().getY());
-		Line line2 = new Line(firstPoint().getX(), firstPoint().getY(), lastPoint().getX(), lastPoint().getY());
-//		Point2D lastPt = lastPoint();
-        Point2D line1Start = new Point2D(line1.getStartX(), line1.getStartY());
-        Point2D line1End = new Point2D(line1.getEndX(), line1.getEndY());
-        Point2D line2Start = new Point2D(line2.getStartX(), line2.getStartY());
-        Point2D line2End = new Point2D(line2.getEndX(), line2.getEndY());
-
-        double line1Length = line1End.subtract(line1Start).magnitude();
-        double line2Length = line2End.subtract(line2Start).magnitude();
-
-        // average length:
-        double averLength = (line1Length + line2Length) / 2 ;
-
-        // extend line1 in direction of line1 for aveLength:
-        Point2D control1 = line1End.add(line1End.subtract(line1Start).normalize().multiply(2));
-        
-        // extend line2 in (reverse) direction of line2 for aveLength:
-        Point2D control2 = line2Start.add(line2Start.subtract(line2End).normalize().multiply(100));
+		int nPoints = getPoints().size();
+		Point2D line1End = new Point2D(0,0);
+		for (int i=0; i < nPoints-1; i++)
+		{
+			Point2D a = points.get(i).getPoint();
+			Point2D b = points.get(i+1).getPoint();
+			Line line1 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
+			Line line2 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
+	//		Point2D lastPt = lastPoint();
+	        Point2D line1Start = new Point2D(line1.getStartX(), line1.getStartY());
+	         line1End = new Point2D(line1.getEndX(), line1.getEndY());
+	        Point2D line2Start = new Point2D(line2.getStartX(), line2.getStartY());
+	        Point2D line2End = new Point2D(line2.getEndX(), line2.getEndY());
 	
-        control1 = new Point2D(line1End.getX() + 10, line1End.getY() + 40);
-        control2 = new Point2D(line2End.getX() - 10, line2End.getY() - 40);
-        curve = new CubicCurve(
-                line1End.getX(), line1End.getY(), 
-                control1.getX(), control1.getY(), 
-//                10, 10,
-//                100, 100,
-                control2.getX(), control2.getY(), 
-                line2Start.getX(), line2Start.getY());
-
-        curve.setStroke(Color.BLACK);
-        curve.setFill(null);
-        curve.setStrokeWidth(edge.getStrokeWidth());
-		if (strokeDashArray != null)
-			curve.getStrokeDashArray().setAll(strokeDashArray);
+	        double line1Length = line1End.subtract(line1Start).magnitude();
+	        double line2Length = line2End.subtract(line2Start).magnitude();
+	
+	        // average length:
+	        double averLength = (line1Length + line2Length) / 2 ;
+	
+	        // extend line1 in direction of line1 for aveLength:
+	        Point2D control1 = line1End.add(line1End.subtract(line1Start).normalize().multiply(2));
+	        
+	        // extend line2 in (reverse) direction of line2 for aveLength:
+	        Point2D control2 = line2Start.add(line2Start.subtract(line2End).normalize().multiply(averLength));
+		
+	        control1 = new Point2D(line1End.getX() + 10, line1End.getY() + 40);
+	        control2 = new Point2D(line2End.getX() - 10, line2End.getY() - 40);
+	        curve = new CubicCurve(
+	                line1End.getX(), line1End.getY(), 
+	                control1.getX(), control1.getY(), 
+	                control2.getX(), control2.getY(), 
+	                line2Start.getX(), line2Start.getY());
+	
+	        curve.setStroke(Color.BLACK);
+	        curve.setFill(null);
+	        curve.setStrokeWidth(edge.getStrokeWidth());
+			if (strokeDashArray != null)
+				curve.getStrokeDashArray().setAll(strokeDashArray);
+		}
+		setArrowPt(line1End.getX(), line1End.getY());
 
 	}
 	boolean SHORTEN = true;
@@ -463,9 +460,12 @@ boolean BADPOINT(Point2D pt)
 			GPMLPoint last = points.get(points.size()-1);
 			Color strokeColor = edge.getColor();
 			ArrowType arrowhead = last.getArrowType();
+			if (arrowhead == ArrowType.none) return null;
 			Point2D prev = forelastPoint();
 			if (type == EdgeType.elbow)
 				prev = new Point2D(last.getX(), prev.getY());
+//			Point2D lastpoint2D = last.getPoint();
+//			System.out.println("makeArrowhead: " + lastpoint2D);
 			return makeArrowHead(arrowhead.toString(), prev, last.getPoint(), strokeColor);
 		}
 		return null;

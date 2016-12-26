@@ -206,91 +206,9 @@ public class BridgeDbController implements Initializable
 		pathwayTable.setRowFactory((a) -> {
 	       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, parentController);
 		    });
-//
-//	        row.setOnDragDetected(event -> {
-//	            if (! row.isEmpty()) {
-//	                Integer index = row.getIndex();
-//	                Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
-//	                db.setDragView(row.snapshot(null, null));
-//	                ClipboardContent cc = new ClipboardContent();
-//	                cc.put(PATHWAY_MIME_TYPE, index);
-//	                db.setContent(cc);
-//	                event.consume();
-//	                thisRow = row;
-//	            }
-//	        });
-//
-//	        row.setOnDragEntered(event -> {
-//	            Dragboard db = event.getDragboard();
-//	            if (db.hasContent(PATHWAY_MIME_TYPE)) {
-//	                if (row.getIndex() != ((Integer)db.getContent(PATHWAY_MIME_TYPE)).intValue()) {
-//	                    event.acceptTransferModes(TransferMode.MOVE);
-//	                    event.consume();
-//	                    thisRow = row;
-////	                  if (thisRow != null) 
-////	                 	   thisRow.setOpacity(0.3);
-//	                }
-//	            }
-//	        });
-//
-//	        row.setOnDragExited(event -> {
-//	            if (event.getGestureSource() != thisRow &&
-//	                    event.getDragboard().hasString()) {
-////	               if (thisRow != null) 
-////	            	   thisRow.setOpacity(1);
-//	               thisRow = null;
-//	            }
-//	        });
-//
-//	        row.setOnDragOver(event -> {
-//	            Dragboard db = event.getDragboard();
-//	            if (db.hasContent(PATHWAY_MIME_TYPE)) {
-//	                if (row.getIndex() != ((Integer)db.getContent(PATHWAY_MIME_TYPE)).intValue()) {
-//	                    event.acceptTransferModes(TransferMode.MOVE);
-//	                    event.consume();
-//	                }
-//	            }
-//	        });
-//
-//	        row.setOnMouseClicked(event -> {
-//	        	if (event.getClickCount() == 2)
-//	            {
-//	                int idx = row.getIndex();
-//	        		getInfo(idx);
-//	              event.consume();
-//	            }
-//	        });
-//
-//	        row.setOnDragDropped(event -> {
-//	            Dragboard db = event.getDragboard();
-//	            if (db.hasContent(PATHWAY_MIME_TYPE)) {
-//	                int draggedIndex = (Integer) db.getContent(PATHWAY_MIME_TYPE);
-//	                PathwayRecord draggedNode = pathwayTable.getItems().remove(draggedIndex);
-//
-//	                int  dropIndex = (row.isEmpty()) ? pathwayTable.getItems().size() : row.getIndex();
-//	                pathwayTable.getItems().add(dropIndex, draggedNode);
-//
-//	                event.setDropCompleted(true);
-//	                pathwayTable.getSelectionModel().select(dropIndex);
-//	                event.consume();
-////	                if (thisRow != null) 
-////	             	   thisRow.setOpacity(1);
-//	                thisRow = null;
-//	            }
-//	        });
-//
-//	        return row ;
-
 		
 	}
 	// **-------------------------------------------------------------------------------
-//	@FXML public  void browseGenes(String result)		
-//	{
-//		assert(parentController != null);
-//		parentController.browseGenes(result);
-//		
-//	}
-
 	private void searchPathways(String url) {
 		url = url.replace(" ", "%20");
 		String result = StringUtil.callURL(url, false);

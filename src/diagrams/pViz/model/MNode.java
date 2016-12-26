@@ -5,6 +5,7 @@ import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
+import util.StringUtil;
 
 /*
  * Model Node
@@ -34,8 +35,10 @@ public class MNode {
 	public Model getModel()					{		return model;	}
 	public Object getResource(String id) 	{		return model.getResource(id);	}
 	public String getId() 					{		return attributes.get("GraphId");	}
-	public Shape getShape() 				{		return getStack().getShapeLayer();	}
+	public Shape getShape() 				{		return getStack().getFigure();	}
 	public String getShapeType() 			{		return attributes.get("ShapeType");	}
+	public String getType() 				{		return attributes.get("Type");	}
+	public String getLabel() 				{		return attributes.get("TextLabel");	}
 	public AttributeMap getAttributeMap() 	{		return attributes;	}
 	public void rememberPosition() 			
 	{		
@@ -47,4 +50,68 @@ public class MNode {
 
 	public String getInfoStr()	{ return "HTML Template for " + getId() + "\n" + attributes.toString();	}
 	@Override public String toString()	{ return getId() + " = " + attributes.toString();	}
+	//---------------------------------------------------------------------------------------
+	public String toGPML()	{ 
+		StringBuilder bldr = new StringBuilder();
+		buildNodeOpen(bldr);
+		buildAttributeTag(bldr);
+		buildGraphicsTag(bldr);
+		buildXRefTag(bldr);
+		buildNodeClose(bldr);
+		return bldr.toString();
+	}
+	String elementType;
+	String[]  nodeAttrs = {  "TextLabel", "GraphId", "Type"};
+	String[]  dataNodeTypes = {  "Gene", "GeneProduct", "Protein", "Metabolite", "RNA"};
+	boolean isDataNode(String typ) {
+		if (typ == null) return false;
+		for (String t : dataNodeTypes)
+			if (t.equals(typ))  return true;
+		return false;
+	}
+	private void buildNodeOpen(StringBuilder bldr) {
+		String typ = attributes.get("Type");
+		elementType = (isDataNode(typ)) ? "DataNode" : "Label";
+		bldr.append("<" + elementType + " " + attributeList(nodeAttrs) + ">\n");
+	}
+	private void buildNodeClose(StringBuilder bldr) {
+		bldr.append("</" + elementType + ">\n");
+	}
+
+	String[]  attrs = {  "Key", "Value"};
+	void buildAttributeTag(StringBuilder bldr)
+	{
+		String attributes = attributeList(attrs);
+		if (StringUtil.hasText(attributes))
+			bldr.append( "<Attribute ").append(attributes).append( " >\n");
+	}
+	String[]  xrefattrs = {  "Database", "ID"};
+	void buildXRefTag(StringBuilder bldr)
+	{
+		String attributes = attributeList(xrefattrs);
+		if (StringUtil.hasText(attributes))
+			bldr.append( "<Xref ").append(attributes).append( " >\n");
+	}
+	
+	private String attributeList(String[] strs)
+	{
+		StringBuilder bldr = new StringBuilder();
+		for (String attr : strs)
+		{
+			String val = attributes.get(attr);
+			if (val != null)
+				bldr.append(attr + "=\"" + val + "\" ");
+		}
+		return bldr.toString();
+	}
+	
+	String[] attributeNames = { "CenterX", "CenterY", "Width", "Height", 
+			"ShapeType", "ZOrder", "Valign", "FillColor", "Color", 
+			"FontSize", "FontWeight", "FontStyle" };
+	void buildGraphicsTag(StringBuilder bldr)
+	{
+		String attributes = attributeList(attributeNames);
+		if (StringUtil.hasText(attributes))
+			bldr.append( "<Graphics ").append(attributes).append( " >\n");
+	}
 }

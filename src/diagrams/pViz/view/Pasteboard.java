@@ -1,6 +1,7 @@
 package diagrams.pViz.view;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import animation.NodeVisAnimator;
@@ -10,6 +11,8 @@ import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.tables.GeneListController;
+import diagrams.pViz.tables.PathwayController;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -25,9 +28,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
@@ -52,6 +52,7 @@ import javafx.scene.shape.Shape;
 import javafx.scene.transform.Scale;
 import javafx.stage.Screen;
 import model.AttributeMap;
+import model.bio.PathwayRecord;
 import util.FileUtil;
 import util.LineUtil;
 import util.RectangleUtil;
@@ -93,7 +94,7 @@ public class Pasteboard extends Pane
 
 	private VNode activeStack;
 	public VNode getActiveStack()		{ return activeStack;	}
-	public Shape getActiveShape()		{ return activeStack == null ? null : activeStack.getShapeLayer();	}
+	public Shape getActiveShape()		{ return activeStack == null ? null : activeStack.getFigure();	}
 	public void setActiveStack(VNode s)	{ activeStack = s;	}
 	//@formatter:on
 	/**-------------------------------------------------------------------------------
@@ -123,6 +124,7 @@ public class Pasteboard extends Pane
 		getChildren().add(infoLabel);
 		StackPane.setAlignment(infoLabel, Pos.TOP_RIGHT);
 		infoLabel.setVisible(false);
+		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
 //		turnOnClipping();
 	}
 	
@@ -186,6 +188,33 @@ public class Pasteboard extends Pane
 		e.acceptTransferModes(TransferMode.ANY);
 //		Set<DataFormat> formats = db.getContentTypes();
 //		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
+		if (db.hasContent(GeneListController.GENE_MIME_TYPE))
+		{
+			String id = "" + db.getContent(DataFormat.PLAIN_TEXT);
+			int end = id.indexOf(":");
+			if (end > 0)
+				id = id.substring(0, end);
+			System.out.println(id);
+		}
+		if (db.hasContent(PathwayController.PATHWAY_MIME_TYPE))
+		{
+			Object o = db.getContent(PathwayController.PATHWAY_MIME_TYPE);
+			// Source is the pathway browser
+			if (o instanceof Integer)
+			{
+				String id = "" + db.getContent(DataFormat.PLAIN_TEXT);
+				id = id.substring(0, id.indexOf(":"));
+				System.out.println(id);
+				List<PathwayRecord> results = PathwayController.getPathways(id);
+				for (PathwayRecord rec : results)
+				{
+					System.out.println(rec);
+
+				}
+			}
+			System.out.println(o.toString());
+		}
+		
 		if (db.hasFiles())
 		{
 			List<File> files = db.getFiles();
@@ -253,7 +282,7 @@ public class Pasteboard extends Pane
 	{
 		AttributeMap map = new AttributeMap();
 		map.put("", "");
-		map.put("tool", curTool.toString());
+		map.put("tool", getTool().toString());
 		map.putBool("infoShown", infoLabel.isVisible());
 		map.put("fill", defaultFill.toString());
 		map.put("stroke", defaultStroke.toString());
@@ -264,7 +293,7 @@ public class Pasteboard extends Pane
 	public void setState(String s)		
 	{
 		AttributeMap map = new AttributeMap(s);
-		setTool(Tool.fromString(map.get("tool")));
+		controller.setTool(Tool.fromString(map.get("tool")));
 		infoLabel.setVisible(map.getBool("infoShown")); 
 		defaultFill = map.getPaint("fill");
 		defaultStroke = map.getPaint("stroke");
@@ -273,6 +302,8 @@ public class Pasteboard extends Pane
 	//-------------------------------------------------------------------------------
 	private Group grid;
 	public Group getGrid()	{  return grid;  }
+	List<Line> hLines;
+	List<Line> vLines;
 	
 	public void makeGrid(Button toggler, ScrollPane scrlPane)
 	{
@@ -280,36 +311,25 @@ public class Pasteboard extends Pane
 		grid.setId("grid");
 		double res = Screen.getPrimary().getDpi();			// assumes inches
 		Parent p  = getParent();
+		if (hLines == null) hLines = new ArrayList<Line>();
+		if (vLines == null) vLines = new ArrayList<Line>();
+		
 		if (scrlPane != null)
 		{
-//			Pane drawPane = (Pane) scrlPane.getContent();
-//			ReadOnlyObjectProperty<Bounds> bds = drawPane.boundsInParentProperty();
-//			DoubleBinding leftProp = Bindings.selectDouble(bds, "minX");
-//			DoubleBinding rightProp = Bindings.selectDouble(bds, "maxX");
-//			drawPane.layoutXProperty();
-//			DoubleProperty yProp = drawPane.layoutYProperty();
-//			ReadOnlyDoubleProperty widthProp = drawPane.widthProperty();
-//			ReadOnlyDoubleProperty heightProp = drawPane.heightProperty();
-			
 			double canvasWidth = getWidth();
 			double canvasHeight = getHeight();
-			double nLines = canvasWidth / res;
+			double nLines = Math.max(canvasWidth, canvasHeight) / res;
 			for (int i = 0; i< nLines; i++)
 			{
-				Line vert = new Line(res * i, 0, res * i, canvasHeight);
+				Line vert = new Line();
 				vert.setStrokeWidth(0.25);
-//				drawPane.heightProperty().addListener((o, oldVal, newVal) -> { clipRect.heightProperty().set((double) newVal);  });
-//				drawPane.layoutYProperty().addListener((o, oldVal, newVal) -> { vert.layoutYProperty().set((double) newVal); 	});
-//				drawPane.heightProperty().addListener((o, oldVal, newVal) -> { System.out.println("height changed");  vert.endYProperty().set((double) newVal);  });
-
+				vLines.add(vert);
+				LineUtil.set(vert, res * i, 0, res * i, canvasHeight);
 				
-				
-//				vert.startYProperty().bind(drawPane.layoutYProperty());
-//				vert.endYProperty().bind(drawPane.heightProperty());
-				Line horz = new Line(0, res * i, canvasWidth, res * i);
+				Line horz = new Line();
 				horz.setStrokeWidth(0.25);
-//				horz.startXProperty().bind(leftProp);
-//				horz.endXProperty().bind(rightProp);
+				hLines.add(horz);
+				LineUtil.set(horz, 0, res * i, canvasWidth, res * i);
 				grid.getChildren().addAll(vert, horz);
 			}		
 			grid.setMouseTransparent(true);
@@ -320,6 +340,23 @@ public class Pasteboard extends Pane
 	}
 	public void showGrid(boolean vis)	{	grid.setVisible(vis);	}
 	public boolean isGridVisible()		{	return	grid.isVisible();	}
+	public void resetGrid()		
+	{	
+		double res = 100;  // Screen.getPrimary().getDpi();			// assumes inches
+		double canvasWidth = getWidth();
+		double canvasHeight = getHeight();
+		double nLines = Math.max(canvasWidth, canvasHeight) / res;
+		while (hLines.size() < nLines)
+			hLines.add(new Line());
+		while (vLines.size() < nLines)
+			vLines.add(new Line());
+		
+		for (int i = 0; i< nLines; i++)
+		{
+			LineUtil.set(vLines.get(i), res * i, 0, res * i, canvasHeight);
+			LineUtil.set(hLines.get(i), 0, res * i, canvasWidth, res * i);
+		}
+	}
 	
 	//-------------------------------------------------------------------------------
 	public void showInfo(String s) {	infoLabel.setText(s);	infoLabel.setVisible(true);		}
@@ -379,7 +416,7 @@ public class Pasteboard extends Pane
 			dragLine = new Line();
 			getChildren().add(dragLine);	
 		}
-		x -= 90;			// differnce between scene and pasteboard coords
+		x -= 90;			// TODO  HACK  difference between scene and pasteboard coords
 		y -= 30;
 		dragLine.setStartX(x);
 		dragLine.setStartY(y);
@@ -403,7 +440,7 @@ public class Pasteboard extends Pane
 		@Override public void handle(final MouseEvent event) 
 		{
 			if (verbose)
-				System.out.println("MousePressedHandler, activeShape: " + activeStack);
+				System.out.println("MousePressedHandler, activeStack: " + activeStack);
 			// do nothing for a right-click
 			if (event.isSecondaryButtonDown()) 
 			{ 
@@ -411,35 +448,12 @@ public class Pasteboard extends Pane
 				event.consume();
 				return;	
 			}
-			if (curTool == Tool.Polyline)
+			if (getTool() == Tool.Polyline)
 			{
-				if (verbose) System.out.println("MousePressedHandler, Polyline: " );
-				if (activeStack == null)
-				{
-					AttributeMap at = new AttributeMap("ShapeType:" + curTool.name());
-					MNode mNode = new MNode(at, controller.getDrawModel());
-					activeStack = mNode.getStack();
-					getChildren().add(activeStack);
-
-				}
-				Polyline p = getPolyline();
-				if (event.getClickCount() > 1)
-				{
-					activeStack = null;
-					removeDragLine();
-				}
-				else if (LineUtil.onVertex(startPoint, p) == 0)
-				{
-					activeStack = null;
-					removeDragLine();
-				}
-				else p.getPoints().addAll(event.getX(), event.getY());
-				startDragLine(event.getX(), event.getY());
-				p.setFill(null);
-				event.consume();
+				startPolyline(event);
 				return;
 			}
-			Shape activeShape = activeStack == null ? null : activeStack.getShapeLayer();
+			Shape activeShape = getActiveShape();
 			startPoint = new Point2D(event.getX(), event.getY());
 			if (activeShape instanceof Polyline)
 			{
@@ -461,15 +475,15 @@ public class Pasteboard extends Pane
 //			controller.getUndoStack().push(ActionType.Select);
 			getSelectionMgr().clear();  
 	
-			if (!curTool.isArrow())
+			if (!getTool().isArrow())
 			{
-				AttributeMap map = new AttributeMap("ShapeType", curTool.name());
+				AttributeMap map = new AttributeMap("ShapeType", getTool().name());
 				map.addPoint(event.getX(), event.getY());
 				MNode mNode = new MNode(map, getController());
 				activeStack = mNode.getStack();	
 			}
 			
-			activeShape = activeStack == null ? null : activeStack.getShapeLayer();
+			activeShape = activeStack == null ? null : activeStack.getFigure();
 			if (activeShape instanceof Polygon)
 			{
 				Polygon p = (Polygon) activeShape;
@@ -488,13 +502,6 @@ public class Pasteboard extends Pane
 				p.setEndX(event.getX());
 				p.setEndY(event.getY());
 			}
-//			if (activeShape instanceof Shape)
-//			{
-//			}
-//			if (activeShape instanceof Shape2)
-//			{
-//				Shape2 shape = (Shape2) activeShape;
-//			}
 			if (activeShape == null) 
 			{
 				activeShape = marquee;
@@ -504,45 +511,12 @@ public class Pasteboard extends Pane
 					controller.add(marquee);
 				if (event.getClickCount() > 2)
 				{
-					TextArea newText = new TextArea("Comments: ");
-					newText.setBackground(null);
-					newText.setLayoutX(event.getX());
-					newText.setLayoutY(event.getY());
-					newText.setPrefColumnCount(20);
-					newText.setPrefRowCount(10);
-					newText.selectAll();
-					newText.requestFocus();
-					controller.add(newText);
-		
-					newText.skinProperty().addListener(new ChangeListener<Skin<?>>() {			// doesn't work!
-
-				        @Override
-				        public void changed(
-				          ObservableValue<? extends Skin<?>> ov, Skin<?> t, Skin<?> t1) {
-				            if (t1 != null && t1.getNode() instanceof Region) {
-				                Region r = (Region) t1.getNode();
-				                r.setBackground(Background.EMPTY);
-
-				                r.getChildrenUnmodifiable().stream().
-				                        filter(n -> n instanceof Region).
-				                        map(n -> (Region) n).
-				                        forEach(n -> n.setBackground(Background.EMPTY));
-
-				                r.getChildrenUnmodifiable().stream().
-				                        filter(n -> n instanceof Control).
-				                        map(n -> (Control) n).
-				                        forEach(c -> c.skinProperty().addListener(this)); // *
-				            }
-				        }
-				    });
-					newText.setBackground(Background.EMPTY);
-			    
-//				    
+					addComment(event);
 				}
 			}
 			else
 			{
-				controller.getUndoStack().push(ActionType.New, " " + curTool.name());
+				controller.getUndoStack().push(ActionType.New, " " + getTool().name());
 				getChildren().add(activeStack);
 				getSelectionMgr().select(activeStack);
 			}
@@ -550,6 +524,32 @@ public class Pasteboard extends Pane
 //			factory.setStartPoint(new Point2D(event.getX(), event.getY()));
 			event.consume();
 		}
+
+		private void startPolyline(MouseEvent event) {
+			if (verbose) System.out.println("MousePressedHandler, Polyline: " );
+			if (activeStack == null)
+			{
+				AttributeMap at = new AttributeMap("ShapeType:" + getTool().name());
+				MNode mNode = new MNode(at, controller.getDrawModel());
+				activeStack = mNode.getStack();
+				getChildren().add(activeStack);
+
+			}
+			Polyline p = getPolyline();
+			if (event.getClickCount() > 1)
+			{
+				activeStack = null;
+				removeDragLine();
+			}
+			else if (LineUtil.onVertex(startPoint, p) == 0)
+			{
+				activeStack = null;
+				removeDragLine();
+			}
+			else p.getPoints().addAll(event.getX(), event.getY());
+			startDragLine(event.getX(), event.getY());
+			p.setFill(null);
+			event.consume();		}
 
 		private Polyline tempPolyline;
 		private Polyline getPolyline() {
@@ -573,7 +573,7 @@ public class Pasteboard extends Pane
 			curPoint = new Point2D(event.getX(), event.getY());
 			if (startPoint == null) 
 				startPoint = curPoint;
-			if (curTool == Tool.Arrow)	
+			if (getTool() == Tool.Arrow)	
 			{
 				Rectangle r = RectangleUtil.union(startPoint, curPoint);
 //				System.out.println(r.toString());
@@ -597,7 +597,7 @@ public class Pasteboard extends Pane
 			double h = Math.max(20,Math.abs(curPoint.getY() - startPoint.getY()));
 			if (verbose)
 				System.out.println("setActiveShapeBounds, activeShape: " + activeStack);
-			Shape activeShape = activeStack.getShapeLayer();
+			Shape activeShape = activeStack.getFigure();
 			
 			if (activeShape instanceof Rectangle)
 			{
@@ -733,11 +733,11 @@ public class Pasteboard extends Pane
 			else if (KeyCode.DELETE.equals(key)) 		getSelectionMgr().deleteSelection();		// create an undoable action
 			else if (KeyCode.BACK_SPACE.equals(key)) 	getSelectionMgr().deleteSelection();
 			
- 			else if (KeyCode.R.equals(key)) 	setTool(Tool.Rectangle);
-			else if (KeyCode.C.equals(key)) 	setTool(Tool.Circle);
-			else if (KeyCode.P.equals(key)) 	setTool(Tool.Polygon);
-			else if (KeyCode.L.equals(key)) 	setTool(Tool.Line);
-			else if (KeyCode.W.equals(key)) 	setTool(Tool.Polyline);
+ 			else if (KeyCode.R.equals(key)) 	controller.setTool(Tool.Rectangle);
+			else if (KeyCode.C.equals(key)) 	controller.setTool(Tool.Circle);
+			else if (KeyCode.P.equals(key)) 	controller.setTool(Tool.Polygon);
+			else if (KeyCode.L.equals(key)) 	controller.setTool(Tool.Line);
+			else if (KeyCode.W.equals(key)) 	controller.setTool(Tool.Polyline);
 			
 //			else if (KeyCode.X.equals(key)) 	setTool(Tool.Xhair);
 			else if (KeyCode.ESCAPE.equals(key)) {		terminatePoly();  	removeDragLine(); }
@@ -764,49 +764,75 @@ public class Pasteboard extends Pane
 		}
 	}	
 	//---------------------------------------------------------------------------
-	Tool curTool = Tool.Arrow;
 	boolean sticky = false;
-	public Tool getTool()	{ return curTool;	}
+	public Tool getTool()	{ return controller.getTool();	}
+	public void addComment(MouseEvent event) {
+		TextArea newText = new TextArea("Comments: ");
+		newText.setBackground(null);
+		newText.setLayoutX(event.getX());
+		newText.setLayoutY(event.getY());
+		newText.setPrefColumnCount(20);
+		newText.setPrefRowCount(10);
+		newText.selectAll();
+		newText.requestFocus();
+		controller.add(newText);
+
+		newText.skinProperty().addListener(new ChangeListener<Skin<?>>() {			// doesn't work!
+
+	        @Override
+	        public void changed(
+	          ObservableValue<? extends Skin<?>> ov, Skin<?> t, Skin<?> t1) {
+	            if (t1 != null && t1.getNode() instanceof Region) {
+	                Region r = (Region) t1.getNode();
+	                r.setBackground(Background.EMPTY);
+
+	                r.getChildrenUnmodifiable().stream().
+	                        filter(n -> n instanceof Region).
+	                        map(n -> (Region) n).
+	                        forEach(n -> n.setBackground(Background.EMPTY));
+
+	                r.getChildrenUnmodifiable().stream().
+	                        filter(n -> n instanceof Control).
+	                        map(n -> (Control) n).
+	                        forEach(c -> c.skinProperty().addListener(this)); // *
+	            }
+	        }
+	    });
+		newText.setBackground(Background.EMPTY);
+    
+//	    
+	}
+
+
+	public void setTool(Tool t)
+	{
+		if (getTool() == t) sticky = true;
+		if (getTool() == Tool.Arrow) sticky = false;
+		controller.setTool(t);
+		activeStack = null;
+		if (verbose) 
+			System.out.println("Tool set to: " + t.toString() + (sticky ? "!!" : ""));
+	}
+	
 	public void resetTool()		
 	{		
+		activeStack = null;
 		if (sticky) return;
-		if (isPoly(curTool)) 	return;
+		if (isPoly(getTool())) 	return;
 		if (dragLine != null) 
 			removeDragLine();
-		setTool(Tool.Arrow);	
+		controller.setTool(Tool.Arrow);	
 	}
 	public void resetPoly()		
 	{		
 		if (dragLine != null && dragLine.isVisible()) 
 			removeDragLine();
 		if (sticky) return;
-		setTool(Tool.Arrow);	
+		controller.setTool(Tool.Arrow);	
 	}
 	
 	boolean isPoly(Tool t)	{		return (Tool.Polyline == t || Tool.Polygon == t);	}
-	
-	public void setTool(Tool inTool)
-	{
-		if (curTool == inTool) sticky = true;
-		if (curTool == Tool.Arrow) sticky = false;
-		curTool = inTool;
-		activeStack = null;
-		ToggleGroup group = controller.getToolGroup();
-		for (Toggle t : group.getToggles())
-		{
-			if (t instanceof ToggleButton)
-			{
-				ToggleButton b = (ToggleButton) t;
-				if (b.getId().equals(curTool.name()))
-				{
-					group.selectToggle(t);
-					break;
-				}
-			}
-		}
-		if (verbose) 
-			System.out.println("Tool set to: " + inTool.toString() + (sticky ? "!!" : ""));
-	}
+
 	//---------------------------------------------------------------------------
 	Paint defaultStroke = Color.BLACK;			// TODO  pref
 	Paint defaultFill = Color.WHITESMOKE;

@@ -1,6 +1,6 @@
 package diagrams.pViz.tables;
 
-import diagrams.pViz.app.Controller;
+import diagrams.pViz.app.IController;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ClipboardContent;
@@ -8,24 +8,30 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
 
-public class DraggableTableRow<Record> extends TableRow<Record> {
-	private TableView<Record> table;
-	private TableRow<Record> thisRow;
-	private Controller controller;
-	public DraggableTableRow(TableView<Record> inTable, DataFormat mimeType, Controller cntrlr)
+
+public class DraggableTableRow<IRecord> extends TableRow<IRecord> {
+	private TableView<IRecord> table;
+	private TableRow<IRecord> thisRow;
+	private IController controller;
+	public DraggableTableRow(TableView<IRecord> inTable, DataFormat mimeType, IController cntrlr)
 	{
 		table = inTable;
 		controller = cntrlr;
 		setOnDragDetected(event -> {
         if (! isEmpty()) {
             Integer index = getIndex();
+            IRecord r = table.getItems().get(index);
+            String id = "";
+            if (r != null)
+            	id = r.toString();
             Dragboard db = startDragAndDrop(TransferMode.MOVE);
             db.setDragView(snapshot(null, null));
             ClipboardContent cc = new ClipboardContent();
             cc.put(mimeType, index);
+            cc.put(DataFormat.PLAIN_TEXT, id);
             db.setContent(cc);
             event.consume();
-            thisRow = this;
+            thisRow = (TableRow<IRecord>) this;
         }
     });
 
@@ -65,7 +71,8 @@ public class DraggableTableRow<Record> extends TableRow<Record> {
     	if (event.getClickCount() == 2)
         {
             int idx = getIndex();
-            controller.getInfo(mimeType, idx);
+            IRecord r = table.getItems().get(idx);		// TODO -- need interface to get Id
+            if (controller != null) controller.getInfo(mimeType, "" + idx, "");	//r.getId()
           event.consume();
         }
     });
@@ -74,7 +81,7 @@ public class DraggableTableRow<Record> extends TableRow<Record> {
         Dragboard db = event.getDragboard();
         if (db.hasContent(mimeType)) {
             int draggedIndex = (Integer) db.getContent(mimeType);
-            Record draggedNode = table.getItems().remove(draggedIndex);
+            IRecord draggedNode = table.getItems().remove(draggedIndex);
 
             int  dropIndex = (isEmpty()) ? table.getItems().size() : getIndex();
             table.getItems().add(dropIndex, draggedNode);

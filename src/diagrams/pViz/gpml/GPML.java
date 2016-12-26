@@ -1,5 +1,6 @@
 package diagrams.pViz.gpml;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,17 +9,19 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
-import gui.Backgrounds;
+import javafx.collections.FXCollections;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.BiopaxRef;
 import model.bio.Gene;
-import model.bio.GeneList;
 import model.bio.Species;
+import util.FileUtil;
 import util.StringUtil;
 
 public class GPML {
@@ -26,32 +29,20 @@ public class GPML {
 //	private Controller controller;
 private Model model;
 
-public GPML(Model m) {
-	model = m;
-	Assert.assertNotNull(m);
-}
-//public GPML(Controller c) {
-//	controller = c;
-//	Assert.assertNotNull(controller);
-//}
+	public GPML(Model m) {
+		model = m;
+		Assert.assertNotNull(m);
+	}
+	private Controller getController() { 	return model.getController();	}
 	//----------------------------------------------------------------------------
-//	public void addFile(File f)
-//	{
-//		try
-//		{
-//			Document doc = FileUtil.openXML(f);
-//			if (doc != null) 	read(doc);
-//		}
-//		catch (Exception e) 
-//		{
-//			
-//		}
-//	}
-
-	//----------------------------------------------------------------------------
-	public GeneList readGeneList(org.w3c.dom.Document doc, Species inSpecies)
+	public static GeneListRecord readGeneList(File file, Species inSpecies)
 	{
-		GeneList list = new GeneList(inSpecies);
+		org.w3c.dom.Document doc = FileUtil.openXML(file);
+		if (doc == null) return null;
+		List<Gene> list = FXCollections.observableArrayList();
+		GeneListRecord record = new GeneListRecord();
+		record.setSpecies(inSpecies.common());
+		record.setName(file.getName());
 		
 		NodeList nodes = doc.getElementsByTagName("DataNode");
 		int len = nodes.getLength();
@@ -63,15 +54,14 @@ public GPML(Model m) {
 			if ("GeneProduct".equals(type.getNodeValue()))
 			{
 				String textLabel = nodemap.getNamedItem("TextLabel").getNodeValue();
-				Gene existing = list.find(textLabel);
+				Gene existing = Model.findInList(list, textLabel);
 				if (existing == null)
 					list.add(new Gene(textLabel));
 //				System.out.println(textLabel + " " + ((existing == null) ? "unique" : "found"));
 			}
-				
 		}
-//		list.mapIds("Ensembl");
-		return list;
+		record.setGeneList(list);
+		return record;
 	}
 
 	public void read(org.w3c.dom.Document doc)
@@ -100,24 +90,22 @@ public GPML(Model m) {
 			}
 		
 		}
-		Label labl = new Label(model.getComments());
+		Label labl = new Label(model.getCommentsStr());
 		controller.add(labl);
 		labl.setLayoutX(10);
 		labl.setLayoutY(10);
 		
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
-		parseShapes(doc.getElementsByTagName("Shape"));
 		handleLabels(doc.getElementsByTagName("Label"));
 		handleBiopax(doc.getElementsByTagName("Biopax"));
-		handleGroups(doc.getElementsByTagName("Groups"));
+		handleGroups(doc.getElementsByTagName("Group"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseEdges(doc.getElementsByTagName("Interaction"));
-		
+		parseShapes(doc.getElementsByTagName("Shape"));
 	}
 	
 	
 	
-	private Controller getController() { return model.getController();}
 	private void parseDataNodes(NodeList nodes) {
 		for (int i=0; i<nodes.getLength(); i++)
 		{
@@ -140,9 +128,12 @@ public GPML(Model m) {
 			if ("BiopaxRef".equals(child.getNodeName()))
 				System.out.println("BiopaxRef in Edge");		// TODO
 			Edge edge = parseGPMLEdge(child, model);
+			System.out.println(edge);
 			if (edge != null)
 				getController().add(0,edge);
 		}
+		for (Edge e : model.getEdgeList())
+			e.connect();
 	}
 	
 	private void parseShapes(NodeList shapes) {
@@ -157,7 +148,7 @@ public GPML(Model m) {
 	}
 	// **-------------------------------------------------------------------------------
 	/*
-	 * 	convert an org.w3c.dom.Node  a local node.  
+	 * 	convert an org.w3c.dom.Node to a local MNode.  
 	 * 
 	 */
 	public MNode parseGPML(org.w3c.dom.Node datanode, Model m) {
@@ -281,7 +272,11 @@ public GPML(Model m) {
 			if ("Graphics".equals(name))
 					attrMap.add(child.getAttributes());
 		}
-		attrMap.put("ShapeType", "Label");
+//		attrMap.put("ShapeType", "Label");
+		String shapeType = attrMap.get("ShapeType");
+		if (shapeType == null)
+			attrMap.put("ShapeType", "None");
+				
 		return new MNode(attrMap, model);
 	}
 
@@ -353,6 +348,7 @@ public GPML(Model m) {
 			{
 				model.addResource(label);
 				model.getController().add(label.getStack());
+				label.getStack().toBack();
 			}
 		}
 	}
@@ -363,12 +359,57 @@ public GPML(Model m) {
 		for (int i=0; i<elements.getLength(); i++)
 		{
 			org.w3c.dom.Node child = elements.item(i);
+			NamedNodeMap attrs = child.getAttributes();
 			String name = child.getNodeName();
 			System.out.println(name);
+			if ("#text".equals(name)) continue;
+			if ("Group".equals(name))
+			{
+				System.out.println(name + " " + attrs.getNamedItem("GraphId"));
+				String groupId = "";
+				if (attrs.getNamedItem("GroupId") != null)
+					groupId = attrs.getNamedItem("GroupId").getNodeValue();
+				String graphId = "";
+				if (attrs.getNamedItem("GraphId") != null)
+					graphId = attrs.getNamedItem("GraphId").getNodeValue();
+				model.addGroup(groupId, graphId);
+			}
+		}
+		for (GPMLGroup group : model.getGroups())
+		{
+			String id = group.getAttributeMap().get("GroupId");
+			for (MNode node : model.getNodes())
+				if (id.equals(node.getAttributeMap().get("GroupRef")))
+					group.addToGroup(node);
+			group.calcBounds();
+			group.getStack().setBounds(group.getBounds());
+			model.getController().add(0, group.getStack());
+			Shape shape = group.getStack().getFigure();
+			if (shape != null)
+			{
+				shape.setStyle("-fx-stroke-dash-array: 10 10;");
+				shape.setFill(Color.TRANSPARENT);
+			}
+			group.getStack().toBack();
+			
 		}
 	}
 //	
 	//----------------------------------------------------------------------------
+//	http://fxexperience.com/2011/12/styling-fx-buttons-with-css/
+		
+		public static String asFxml(String gpmlTag) {
+		
+		if (gpmlTag == null) return null;
+		if ("Color".equals(gpmlTag))		return "-fx-border-color";
+		if ("FillColor".equals(gpmlTag))	return "-fx-background-color";
+		if ("LineThickness".equals(gpmlTag)) return "-fx-stroke-width";
+		if ("Opacity".equals(gpmlTag))		return "-fx-opacity";
+		if ("FontSize".equals(gpmlTag))		return "-fx-font-size";
+		if ("Valign".equals(gpmlTag))		return "-fx-row-valignment";
+		
+		return null;
+	}
 	
 	// UNUSED ??
 //	

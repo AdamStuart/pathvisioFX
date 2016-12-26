@@ -66,7 +66,7 @@ public class Test {
 			}
 	}
 	
-	static protected void test3()
+	static protected void test3(Controller c)
 	{
 //		addAll(new GPML(this).makeTestItems());
 	}

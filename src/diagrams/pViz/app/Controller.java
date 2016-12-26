@@ -1,41 +1,54 @@
 package diagrams.pViz.app;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Base64;
 import java.util.Base64.Decoder;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
+
+import javax.imageio.ImageIO;
 
 import animation.BorderPaneAnimator;
 import database.forms.EntrezQuery;
 import diagrams.pViz.app.Action.ActionType;
+import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.tables.DraggableTableRow;
+import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.GeneListTable;
+import diagrams.pViz.tables.LegendRecord;
+import diagrams.pViz.tables.MultiGeneListController;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
+import gui.Backgrounds;
 import gui.Borders;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.Event;
-import javafx.event.EventHandler;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -43,23 +56,23 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
-import javafx.scene.control.ColorPicker;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.Slider;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
@@ -68,27 +81,27 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import model.AttributeMap;
 import model.bio.BiopaxRef;
 import model.bio.Gene;
-import model.bio.GeneList;
+import model.bio.MIM;
 import model.bio.PathwayRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
 
 
-public class Controller implements Initializable
+public class Controller implements Initializable, IController 
 {
     private static final DataFormat BIOPAX_MIME_TYPE = new DataFormat("application/x-java-biopax");
 
@@ -128,35 +141,6 @@ public class Controller implements Initializable
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
 	@FXML private Button toggleGridButton;
-	
-	@FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
-	@FXML private void setRectangle()	{ pasteboard.setTool(Tool.Rectangle);}	// TODO capture double click for stickiness
-	@FXML private void setOval()		{ pasteboard.setTool(Tool.Circle);		}
-	@FXML private void setPolygon()		{ pasteboard.setTool(Tool.Polygon);	}
-	@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
-	@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
-	@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
-	@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
-
-	@FXML private ToggleButton arrow;
-	@FXML private ToggleButton rectangle;
-	@FXML private ToggleButton circle;
-	@FXML private ToggleButton polygon;
-	@FXML private ToggleButton polyline;
-	@FXML private ToggleButton line;
-	@FXML private ToggleButton shape1;
-//	@FXML private ToggleButton shape2;
-	
-	@FXML private ColorPicker fillColor;
-	@FXML private ColorPicker lineColor;
-	@FXML private Slider weight;
-	@FXML private Slider scale;
-	@FXML private Slider rotation;
-//	@FXML private Label status1;
-//	@FXML private Label status2;
-//	@FXML private Label status3;
-	@FXML private Label strokeLabel;
-	@FXML private Label fillLabel;
 	//-------------------------------------------------------------
 	@FXML private MenuItem undo;
 	@FXML private MenuItem redo;
@@ -229,7 +213,7 @@ public class Controller implements Initializable
 	@FXML private void selectAll()		{ 	undoStack.push(ActionType.Select); getSelectionManager().selectAll(); 		}
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
 	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(7); 	}
-	@FXML public void clear()			{ undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
+	@FXML public void clear()			{ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
 	// **-------------------------------------------------------------------------------
 	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup();  }
 	@FXML public  void ungroup()		{ 	undoStack.push(ActionType.Ungroup);	getSelectionManager().ungroup(); }
@@ -265,6 +249,18 @@ public class Controller implements Initializable
 		catch (Exception e) { e.printStackTrace();}
 	}	
 	// **-------------------------------------------------------------------------------
+	public  void buildStage(String title, VBox contents)		
+	{
+		Stage browserStage = new Stage();
+		try 
+		{
+			browserStage.setTitle(title);
+		    browserStage.setScene(new Scene(new ScrollPane(contents), 500, 800));
+		    browserStage.show();
+		}
+		catch (Exception e) { e.printStackTrace();}
+	}
+	
 	public  FXMLLoader buildStage(String title, String fxml)		
 	{
 		Stage browserStage = new Stage();
@@ -288,7 +284,7 @@ public class Controller implements Initializable
 		return null;
 	}
 
-	Species getSpecies()	{ return model.getSpecies();	}
+	public Species getSpecies()	{ return model.getSpecies();	}
 	
 	//@formatter:on
 	// **-------------------------------------------------------------------------------
@@ -309,12 +305,11 @@ public class Controller implements Initializable
 	static String missing(String s)	{		return String.format(ctrlStr, s, "AttributeValueFXML.fxml");	}
 	
 	// **-------------------------------------------------------------------------------
-	private ToggleGroup paletteGroup;
-	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
 	public Selection getSelectionManager() 		{ 	return pasteboard.getSelectionMgr();  }
 	public ObservableList<VNode> getSelection() { 	return getSelectionManager().getAll();  }
-	Stage stage;
-
+	private Stage stage;
+	private Inspector inspector;
+	public Inspector getInspector() { return inspector;	}
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
@@ -325,9 +320,7 @@ public class Controller implements Initializable
 		drawPane.getChildren().add(pasteboard);
 		
 		doc = new Document(this);
-		paletteGroup = new ToggleGroup();
-		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
-		bindInspector();
+		setupInspector();
 		setupBiopaxTable();
 		
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
@@ -354,11 +347,29 @@ public class Controller implements Initializable
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
 		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
 		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 100);
+		
+		rightSideBarButton.fire();
+		bottomSideBarButton.fire();
+		
 		pasteboard.makeGrid(toggleGridButton, scrollPane);
 
 
 		boolean startWithShapes = false;
 		if (startWithShapes) test1();
+	}
+	private void setupInspector() {
+		URL res = getClass().getResource("../view/Inspector.fxml");
+	    FXMLLoader inspectorLoader = new FXMLLoader(res);
+	   try
+	   {
+		   inspectorLoader.load();
+		   inspector = inspectorLoader.getController();
+		   inspector.setParentController(this);
+		   container.setBottom(inspector);
+	   }
+	   catch (Exception e) 
+	   { System.err.println("Inspector failed to load");}
+
 	}
 	static TableRow<BiopaxRef> thisRow = null;
 	private void setupBiopaxTable() {
@@ -378,7 +389,7 @@ public class Controller implements Initializable
 	}
 	private void showPMIDInfo(String pmid)
 	{
-	   String text = EntrezQuery.getPubMedAbstract(pmid);			// TODO move to libFX
+	   String text = EntrezQuery.getPubMedAbstract(pmid);
 	   if (StringUtil.hasText(text))
 	   {  
 		   Alert a = new Alert(AlertType.INFORMATION, text);
@@ -390,47 +401,33 @@ public class Controller implements Initializable
 	}
 	
 	
-	public void getInfo(DataFormat mimeType, int idx) {
+	public void getInfo(DataFormat mimeType, String idx, String id) {
 		try 
 		{
+			int index = StringUtil.toInteger(idx);
+			if (mimeType == GeneListController.GENE_MIME_TYPE)
+			 {
+			   String rowName = "";
+			   if (index >=0 && model.getNReferences() > index)
+				   	rowName = model.getGenes().get(index).getId();
+//			   showGeneInfo(rowName);
+			   return;
+		  }
 			if (mimeType == BIOPAX_MIME_TYPE)
 			 {
-			   String rowName = "" + idx;
-			   if (idx >=0 && model.getNReferences() > idx)
-				   	rowName = model.getReference(idx).getId();
+			   String rowName = "";
+			   if (index >=0 && model.getNReferences() > index)
+				   	rowName = model.getReference(index).getId();
 			   showPMIDInfo(rowName);
 			   return;
 		  }
 		  if (mimeType == PathwayController.PATHWAY_MIME_TYPE)
 		   {
-				PathwayRecord rec = pathwayTable.getItems().get(idx);
-				String url = rec.getUrl();
-				System.out.println("getInfo: " + rec.getId() + " Fetching: " + url);					//TODO
-//				String result = StringUtil.callURL(url, false);
-//				browseGenes(result);
-				
+				System.out.println(" fetching pathway: " + id);					//TODO
+				viewPathway(id);
 			}
-
-		   //		   
-//			   
-//			stage = new Stage();
-//		   stage.setTitle("Information: " + rowName );
-//			FXMLLoader fxmlLoader = new FXMLLoader();
-//			String fullname = "webview.fxml";
-//		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
-//		    if (url == null)
-//		    {
-//		    	System.err.println("Bad path to the FXML file");
-//		    	return;
-//		    }
-//		    fxmlLoader.setLocation(url);
-//		    VBox appPane =  fxmlLoader.load();
-//		    stage.setScene(new Scene(appPane, 600, 400));
-//		    stage.show();
 		}
 		catch (Exception e) { e.printStackTrace();}
-
-		
 	}
 
 	// ------------------------------------------------------
@@ -455,12 +452,42 @@ public class Controller implements Initializable
 	{
 //		AboutDialog dlog = new AboutDialog();
 //		dlog.showAndWait();
+	}	//-----------------------------------------------------------------------
+	@FXML private void addLegend()
+	{
+		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);
 	}
-
-	 @FXML private void test1()	{		Test.test1(this);	}
+	@FXML private void addLegendDlog()
+	{
+		LegendDialog dlog = new LegendDialog();
+		Optional<String> value = dlog.showAndWait();
+		if (value.isPresent())
+			LegendRecord.makeLegend(dlog.resultProperty(), model, this);
+	}
+	@FXML private void test1()	{		Test.test1(this);	}
 	 @FXML private void test2()	{		Test.test2(this);	}
+	 @FXML private void test3()	{		Test.test3(this);	}
 
 // **-------------------------------------------------------------------------------
+	// Tool palette
+	 @FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
+	@FXML private void setRectangle()	{ pasteboard.setTool(Tool.Rectangle);}	// TODO capture double click for stickiness
+	@FXML private void setOval()		{ pasteboard.setTool(Tool.Circle);		}
+	@FXML private void setPolygon()		{ pasteboard.setTool(Tool.Polygon);	}
+	@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
+	@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
+	@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
+	@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
+
+	@FXML private ToggleButton arrow;
+	@FXML private ToggleButton rectangle;
+	@FXML private ToggleButton circle;
+	@FXML private ToggleButton polygon;
+	@FXML private ToggleButton polyline;
+	@FXML private ToggleButton line;
+	@FXML private ToggleButton shape1;
+//		@FXML private ToggleButton shape2;
+		
 
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
@@ -469,14 +496,20 @@ public class Controller implements Initializable
 		b.setId(t.name());
 	}
 	
-	private void setGraphic(Button b, GlyphIcons i)
+	static public void setGraphic(Button b, GlyphIcons i)
 	{
 		b.setGraphic(GlyphsDude.createIcon(i, GlyphIcon.DEFAULT_ICON_SIZE));
 		b.setText("");
 	}
+	// **-------------------------------------------------------------------------------
 	
-	private void setupPalette()			//Inspector
+	private ToggleGroup paletteGroup;
+	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
+
+	private void setupPalette()	
 	{
+		paletteGroup = new ToggleGroup();
+		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
 		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
@@ -485,14 +518,34 @@ public class Controller implements Initializable
 		setGraphic(line, Tool.Line, FontAwesomeIcons.LONG_ARROW_RIGHT);
 		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.HEART);
 //		setGraphic(shape2, Tool.Brace, FontAwesomeIcons.BARCODE);
-
+	
 		setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
 		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
 //		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
 		setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
-	// **-------------------------------------------------------------------------------
+	Tool curTool = Tool.Arrow;
+	public Tool getTool() {		return curTool;	}
+	
+	public void setTool(Tool inTool)
+	{
+		curTool = inTool;
+		ToggleGroup group = getToolGroup();
+//		group.selectToggle(value);
+		for (Toggle t : group.getToggles())		// TODO this should reduce to a single line.
+		{
+			if (t instanceof ToggleButton)
+			{
+				ToggleButton b = (ToggleButton) t;
+				if (b.getId().equals(curTool.name()))
+				{
+					group.selectToggle(t);
+					break;
+				}
+			}
+		}
+	}	// **-------------------------------------------------------------------------------
 	public void setState(String s)
 	{
 		pasteboard.clear();
@@ -518,35 +571,60 @@ public class Controller implements Initializable
 	public void updateTables() {
 		
 		refTable.getItems().addAll(model.getReferences());
-		geneListTable.populateTable(model.getGeneList());
+		geneListTable.populateTable(model, model.getGenes());
 	}
 
 	//-----------------------------------------------------------------------------
-	static final String RESOURCE = "bridgeDBmap.fxml";
-    static final String STYLE = "idmapping.css";
+	static final String RESOURCE = "../gpml/GeneList.fxml";
+    static final String STYLE = "genelistStyles.css";
 	public void doNewGeneList() 
 	{
 		try
 		{
 			Stage stage = new Stage();
-			URL resource = BridgeDbController.class.getResource(RESOURCE);
-	        FXMLLoader loader = new FXMLLoader(resource);
-	        Scene scene = new Scene(loader.load());
-	        BridgeDbController controller = (BridgeDbController) loader.getController();
-			scene.getStylesheets().add(BridgeDbController.class.getResource(STYLE).toExternalForm());
+			URL res = getClass().getResource(RESOURCE);
+		    FXMLLoader geneListLoader = new FXMLLoader(res);
+	        Scene scene = new Scene(geneListLoader.load());
+		    GeneListController glc = (GeneListController) geneListLoader.getController();   
+		    glc.setParentController(this);
+//		    glc.loadTables(model);
+		    glc.loadTables(geneListTable.getItems());
+//			scene.getStylesheets().add(GeneListController.class.getResource(STYLE).toExternalForm());
 	        stage.setTitle("Gene List Window");
 	        stage.setX(20);
 			stage.setWidth(800);
 			stage.setHeight(650);
-			controller.setParentController(this);
-			controller.start();
 			stage.setScene(scene);
 			stage.show();
 		}
-		catch (Exception e) { e.printStackTrace();
-			
+		catch (Exception e) { e.printStackTrace();	}
+	}
+	
+	static final String MG_RESOURCE = "../tables/MultiGeneList.fxml";
+    static final String MG_STYLE = "../tables/genelistStyles.css";
+	public void doNewMultiGeneList() 
+	{
+		try
+		{
+			Stage stage = new Stage();
+			URL res = getClass().getResource(MG_RESOURCE);
+		    FXMLLoader geneListLoader = new FXMLLoader(res);
+	        Scene scene = new Scene(geneListLoader.load());
+		    MultiGeneListController glc = (MultiGeneListController) geneListLoader.getController();   
+		    glc.setParentController(this);
+			scene.getStylesheets().add(getClass().getResource(MG_STYLE).toExternalForm());
+	        stage.setTitle("Multi Gene List Window");
+	        stage.setX(20);
+			stage.setWidth(800);
+			stage.setHeight(650);
+			stage.setScene(scene);
+			stage.show();
 		}
-	}//	public void addState(String s)			// used in undo restore
+		catch (Exception e) { e.printStackTrace();	}
+	}
+	
+		
+//	public void addState(String s)			// used in undo restore
 //	{
 //		Scanner scan = new Scanner(s);
 //		while (scan.hasNextLine())
@@ -569,12 +647,9 @@ public class Controller implements Initializable
 		// TODO Auto-generated method stub
 		
 	}
-	void addGenes(GeneList inList)
+	void addGenes(List<Gene> inList)
 	{
-		List<Gene> genes = geneListTable.getItems();
-		for (Gene g: inList)
-			if (null == GeneList.findInList(geneListTable.getItems(), g.getName()))
-				genes.add(g);
+		model.addGenes(inList);
 	}
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
@@ -643,44 +718,6 @@ public class Controller implements Initializable
 		    }
 		  }
 	// **-------------------------------------------------------------------------------
-	void bindInspector()    //Inspector
-	{
-		strokeLabel.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.PENCIL, GlyphIcon.DEFAULT_ICON_SIZE));
-		fillLabel.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.CAR, GlyphIcon.DEFAULT_ICON_SIZE));
-		fillLabel.setText("");		fillLabel.setMinWidth(30);		fillLabel.setAlignment(Pos.BASELINE_CENTER);
-		strokeLabel.setText(""); 	strokeLabel.setMinWidth(30);	strokeLabel.setAlignment(Pos.BASELINE_CENTER);
-		
-		fillColor.setOnAction(evt -> apply(true, fillColor));
-		lineColor.addEventHandler(ActionEvent.ACTION, evt -> apply(true, lineColor));
-
-		scale.valueProperty().addListener((ov, old, val) ->   {  	pasteboard.setZoom(scale.getValue());        });	
-		weight.valueProperty().addListener((ov, old, val) ->    {   apply(false, weight);   });	
-		rotation.valueProperty().addListener((ov, old, val) ->  {   apply(false, rotation);  });	
-		
-		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
-		EventHandler<Event> evH = event -> {	undoStack.push(ActionType.Property);  };
-//		opacity.setOnMousePressed(evH); 
-		weight.setOnMousePressed(evH);
-		rotation.setOnMousePressed(evH);
-	}
-		
-	// **-------------------------------------------------------------------------------
-	private String getStyleSettings(Control src)
-	{
-		Color fill = fillColor.getValue();
-		Color stroke = lineColor.getValue();
-		if (fill == null) fill = Color.GRAY;
-		if (stroke == null) stroke = Color.DARKGRAY;
-		String fillHex = "-fx-fill: #" + fill.toString().substring(2, 8) + ";\n";
-		String strokeHex = "-fx-stroke: #" + stroke.toString().substring(2, 8) + ";\n";
-		String wtStr = String.format("-fx-stroke-width: %.1f;\n", weight.getValue());
-		String opacStr = ""; // String.format("-fx-opacity: %.2f;\n", opacity.getValue());
-		String rotStr = String.format("-fx-rotate: %.1f;\n", rotation.getValue());
-
-		StringBuilder buff = new StringBuilder();
-		buff.append(fillHex).append(strokeHex).append(wtStr).append(opacStr).append(rotStr);
-		return buff.toString();
-	}
 //	
 //	public static String getStyle(Shape n)
 //	{
@@ -702,59 +739,7 @@ public class Controller implements Initializable
 //	}
 	
 	// **-------------------------------------------------------------------------------
-	public void setUpInspector()		//Inspector
-	{
-		if(getSelectionManager().count() == 1)
-		{
-			VNode firstNode = getSelection().get(0);
-			if (firstNode.getShape() != null)
-			{
-				Shape n = firstNode.getShape();
-				Paint fill = n.getFill();
-				Paint stroke = n.getStroke();
-				double wt = n.getStrokeWidth();
-				double opac = n.getOpacity();
-				double rot = n.getRotate();
-				
-				fillColor.setValue((Color) fill);
-				lineColor.setValue((Color) stroke);
-				weight.setValue(wt);
-//				opacity.setValue(100 * opac);
-				rotation.setValue(rot);
-			}
-			if (firstNode instanceof StackPane)
-			{
-				StackPane n = (StackPane) getSelection().get(0);
-				String style = n.getStyle();
-				AttributeMap attr = new AttributeMap(style, true);
-				Color fill = attr.getColor("-fx-background-color");
-				Color stroke = attr.getColor("-fx-border-color");
-				double opac = attr.getDouble("-fx-opacity", 1);
-				double wt = attr.getDouble("-fx-border-width", 12);
-				double rot = attr.getDouble("-fx-rotate", 0);
-//				stroke = attr.getColor("-fx-border-color");
-//				n.getBackground().getFills().get(0).getFill();
-//				""
-//				Paint stroke = n.getChildren().get(0).getBetBorder().getStrokes().get(0).get();
-//				double wt = n.getStrokeWidth();
-//				double opac = n.getOpacity();
-//				
-				fillColor.setValue(fill);
-				lineColor.setValue(stroke);
-				weight.setValue(wt);
-				rotation.setValue(rot);
-//				opacity.setValue(100 * opac);
-			}
-			
-		}
-	}
-	// **-------------------------------------------------------------------------------
-	private void apply(boolean undoable, Control src)							
-	{ 	 			
-		if (undoable) 
-			undoStack.push(ActionType.Property); 
-		getSelectionManager().applyStyle(getStyleSettings(src));	
-	}
+
 	// **-------------------------------------------------------------------------------
 	public void selectAll(List<Node> n)	{		getSelectionManager().selectAll(n);	}
 
@@ -789,12 +774,13 @@ public class Controller implements Initializable
 		pasteboard.add(idx, e.getEdgeLine());
 		for (Anchor anchor : e.getEdgeLine().getAnchors())
 		{
-			VNode stack = anchor.getStack();
-			Shape shap = stack.getShapeLayer();
+			VNode anchorStack = anchor.getStack();
+			Shape shap = anchorStack.getFigure();
 			if (shap instanceof Circle)
 				System.out.println(String.format("(%.2f, %.2f)", ((Circle)shap).getCenterX(), ((Circle)shap).getCenterY()));
-			pasteboard.add(stack);
+			pasteboard.add(anchorStack);
 		}
+		e.connect();
 	}
 	public void add(int idx, VNode n)							
 	{		
@@ -889,7 +875,7 @@ public class Controller implements Initializable
 				if (!Double.isNaN(d) && 0 <= d && 1 >= d)
 				{
 					Color gray = new Color(d,d,d, 1);
-					Shape shape = node.getStack().getShapeLayer();
+					Shape shape = node.getStack().getFigure();
 					if (shape != null)
 					{
 						shape.setFill(gray);			// TODO set the attribute
@@ -907,7 +893,7 @@ public class Controller implements Initializable
 		for (MNode node : model.getResourceMap().values())
 		{
 			node.getAttributeMap().remove("value");
-			Shape shape = node.getStack().getShapeLayer();
+			Shape shape = node.getStack().getFigure();
 			if (shape != null)
 			{	
 				shape.setFill(Color.WHITE);
@@ -916,20 +902,49 @@ public class Controller implements Initializable
 		}
 	}
 	
-	public void setGeneList(GeneList geneList) 	
+	public void setGeneList(GeneListRecord rec) 	
 	{ 		
-		geneListTable.getItems().addAll(geneList);			// ADD UNIQUE
-		BorderPane parent = (BorderPane) geneListTable.getParent().getParent();
-		VBox east = (VBox) parent.getRight();
-		VBox west = (VBox) parent.getLeft();
-		east.prefWidth(1000);
-		east.prefHeight(1000);
-		east.maxWidth(2000);
-		east.maxHeight(2000);
-		parent.getCenter().setVisible(false);
-		west.setVisible(false);
+		if (rec == null) return;			// TODO clear gene lists?
+		geneListTable.getItems().addAll(rec.getGeneList());			// ADD UNIQUE
+		model.setGeneList(rec, rec.getGeneList());
+		model.fillIdlist();
 	}
-	public void viewPathway(String result)		
+	public void viewPathway(PathwayRecord rec)		
+	{ 
+		String url = rec.getUrl();
+//		Thread thread = new Thread() {
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		viewPathway(result);
+	}
+	public void viewPathwayAsImage(PathwayRecord rec)		
+	{ 
+		String url = rec.getPngUrl();
+//		Thread thread = new Thread() {
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		String png64  =StringUtil.readTag( result, "ns1:data");
+		Decoder decoder = Base64.getDecoder();
+		byte[] imageBytes  = decoder.decode(png64);
+		InputStream stream = new ByteArrayInputStream(imageBytes);
+		WritableImage wimg;
+		BufferedImage bufferedimage = null;
+		try {
+			 bufferedimage = ImageIO.read(stream);
+			 wimg = new WritableImage(bufferedimage.getWidth(),  bufferedimage.getHeight());
+			wimg = SwingFXUtils.toFXImage(bufferedimage, wimg);
+			ImageView view = new ImageView(wimg);
+			view.prefWidth(300);
+			view.minWidth(300);
+			view.prefHeight(300);
+			view.minHeight(300);
+			Alert alert = new Alert(AlertType.INFORMATION);
+			alert.setGraphic(view);
+			alert.showAndWait();		 
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	private void viewPathway(String result)		
 	{ 		
 //		String pathwayFxml = "../gpml/GeneList.fxml";
 //		String fullname = "../gpml/GeneList.fxml";
@@ -944,5 +959,9 @@ public class Controller implements Initializable
 			newController.open(str);
 		}
 		catch (Exception e) {}
+	}
+	public void getPathwayAt(Integer o) {
+		
+		
 	}
 }

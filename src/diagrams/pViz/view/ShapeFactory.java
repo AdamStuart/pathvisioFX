@@ -111,14 +111,20 @@ public class ShapeFactory {
 	}
 	
 	static private void setDefaultAttributes(Shape newShape) {
-		newShape.setFill(Color.WHITESMOKE);
-		newShape.setStroke(Color.BLUE);
-		newShape.setStrokeWidth(2f);
+		newShape.setFill(Color.WHITE);
+		newShape.setStroke(Color.BLACK);
+		newShape.setStrokeWidth(0.5f);
 	}
 	public static void setAttributes(Shape shape, AttributeMap map) {
-		// if (verbose>0) System.out.println(map.toString());
-		if (shape == null)	return;
-		for (String k : map.keySet()) 
+		// if (verbose>0) System.out.println(map.toString());		if (shape == null)	return;
+		
+		if (shape instanceof Rectangle && "RoundedRectangle".equals(map.get("ShapeType")))
+		{	
+			((Rectangle)shape).setArcWidth(10);
+			((Rectangle)shape).setArcHeight(10);
+		
+		}
+ 		for (String k : map.keySet()) 
 		{
 			String val = map.get(k);
 			k = k.toLowerCase();
@@ -131,7 +137,7 @@ public class ShapeFactory {
 			if (k.equals("valign"))				;// TODO	
 			if (k.equals("zorder"))				;// TODO	
 			if (k.equals("stroke"))				k = "-fx-stroke";
-			if (k.equals("strokeWidth"))		k = "-fx-stroke-weight";
+			if (k.equals("strokewidth"))		k = "-fx-stroke-weight";
 			if (k.equals("graphid"))			shape.setId(val);
 			double d = StringUtil.toDouble(val); // exception safe: comes back
 													// NaN if val is not a
