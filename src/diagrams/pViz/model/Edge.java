@@ -41,7 +41,7 @@ public class Edge  {
 	public int getz() 				{	return zOrder;	}
 	public void setz(int i) 		{	zOrder = i;	}
 	public double getStrokeWidth() {	return attributes.getDouble("LineThickness");	}
-
+	public String getLayer()		{ 	return getAttributes().get("Layer");	}
 	private Color color = Color.BLACK;
 	public Color getColor() 		{	return color;	}
 	public void setColor(Color c) 	{	color = c;	}
@@ -189,7 +189,14 @@ public class Edge  {
    		edgeLine.connect();
 //   		System.out.println("connect");
    }
-   
+   public boolean references(String state)
+   {
+	   if (state.equals(attributes.get("GraphRef"))) return true;
+	   for (GPMLPoint pt : edgeLine.getPoints())
+		   if (state.equals(pt.getGraphRef()))
+			   return true;
+	   return false;
+   }
 	public boolean touches(String graphId)
 	{
 		if (graphId.equals(attributes.get("start")))	return true;

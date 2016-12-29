@@ -31,7 +31,7 @@ public class CommentRecord implements GPMLRecord {
 
 	}
 	public String toGPML() {
-		return "<Comment Source=\"" + getSource() + ">" + getText() + "></Comment>";
+		return "<Comment Source=\"" + getSource() + "\">" + getText() + "</Comment>\n";
 	}
 
 }

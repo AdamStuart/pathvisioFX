@@ -72,7 +72,7 @@ import util.FileUtil;
 		    if (doc != null)
 		   	{
 		    	Controller c = (Controller) fxmlLoader.getController();
-		    	c.addState(doc);	
+		    	c.addXMLDoc(doc);	
 		    }
 		    stage.setScene(new Scene(appPane, 1000, 800));
 		    stage.show();

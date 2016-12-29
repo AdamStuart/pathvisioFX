@@ -35,7 +35,7 @@ public class Document
 		{
 			org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
 			if (doc != null)
-				controller.addState(doc);					
+				controller.addXMLDoc(doc);					
 		}
 		catch (Exception e) 
 		{
@@ -91,7 +91,7 @@ public class Document
 			org.w3c.dom.Document doc = FileUtil.openXML(f);
 			if (doc != null)
 			{
-				controller.addState(doc);					//  parse XML to Model and MNodes
+				controller.addXMLDoc(doc);					//  parse XML to Model and MNodes
 //		        new Thread(() ->
 //		           Platform.runLater(() -> {
 //		        	   drawController.getModel().resetEdgeTable();	

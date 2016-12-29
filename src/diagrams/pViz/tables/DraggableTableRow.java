@@ -1,6 +1,7 @@
 package diagrams.pViz.tables;
 
 import diagrams.pViz.app.IController;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.input.ClipboardContent;
@@ -67,12 +68,14 @@ public class DraggableTableRow<IRecord> extends TableRow<IRecord> {
         }
     });
 
-    setOnMouseClicked(event -> {
+      setOnMouseClicked(event -> {
     	if (event.getClickCount() == 2)
         {
             int idx = getIndex();
             IRecord r = table.getItems().get(idx);		// TODO -- need interface to get Id
-            if (controller != null) controller.getInfo(mimeType, "" + idx, "");	//r.getId()
+            String colName = getColumnId(event.getX());
+            if (controller != null) 
+            	controller.getInfo(mimeType, "" + idx, colName, event);	//r.getId()
           event.consume();
         }
     });
@@ -96,5 +99,15 @@ public class DraggableTableRow<IRecord> extends TableRow<IRecord> {
     });
 
 	}
+	public  String getColumnId(double x)
+    {
+    	for (TableColumn col : table.getColumns())
+    	{
+    		double width = col.getWidth();
+    		if (width > x) return col.getId();
+    		x -= width;
+    	}
+     	return "";
+    }
 
 }

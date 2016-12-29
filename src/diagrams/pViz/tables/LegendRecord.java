@@ -19,17 +19,21 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.DataFormat;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
+import javafx.scene.transform.Translate;
 import model.AttributeMap;
-import model.bio.BiopaxRef;
+import model.bio.BiopaxRecord;
 import model.bio.MIM;
 
 public class LegendRecord implements GPMLRecord {
@@ -75,7 +79,7 @@ public class LegendRecord implements GPMLRecord {
 	}
 	public static MNode makeLegend(String title, String comment, boolean addNodeTypes, boolean addEdgeTypes, boolean addRefs, Model model, Controller ctrlr, boolean smallVersion) {
 
-		int lab1wid = 50;
+		int lab1wid = 120;
 		int lab2wid = 150;
 		int lineHeight = 36;
 		int reflineHeight = 24;
@@ -142,7 +146,19 @@ public class LegendRecord implements GPMLRecord {
 				
 				Label spacer = new Label();	spacer.setMinWidth(SPACING); spacer.prefWidth(SPACING);
 				Label label1 = new Label();
-				label1.setGraphic(new Rectangle(20,10));
+				double width =legendEntry.getStack().getWidth();
+				double height =legendEntry.getStack().getHeight();
+				WritableImage img = new WritableImage((int) width, (int) height);
+//				SnapshotParameters params = new SnapshotParameters();
+//				params.setTransform(new Translate(90, 20));
+				legendEntry.getStack().snapshot(null, img);
+				
+				Alert alert = new Alert(AlertType.INFORMATION);
+				alert.setGraphic(new ImageView(img));
+				alert.showAndWait();		 
+				
+				label1.setGraphic(new ImageView(img));
+			
 				Label label2 = new Label(key);
 				Label label3 = new Label(legendEntry.getLabel());
 				label1.setMinWidth(lab1wid); label1.prefWidth(lab1wid);	label1.setMinHeight(lineHeight);
@@ -207,7 +223,7 @@ public class LegendRecord implements GPMLRecord {
 		{
 			separatorLine = new Line(0,20, WIDTH, 20);
 			box.getChildren().add(separatorLine);
-			for (BiopaxRef ref : model.getReferences())
+			for (BiopaxRecord ref : model.getReferences())
 			{
 				Label label1 = new Label();
 				label1.setFont(Fonts.regularSerif);

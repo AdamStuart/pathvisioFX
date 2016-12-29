@@ -38,7 +38,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import model.AttributeMap;
-import model.bio.BiopaxRef;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.Species;
 import model.stat.Range;
@@ -112,18 +112,14 @@ public class Model
 	private static String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \n";
 	private static String namespace = "xmlns=\"http://pathvisio.org/GPML/2013a\"\n";
 	
-	private String docHeader() {
-		return xmlHeader +  "<Pathway ";  //<BiopaxRef>d62</BiopaxRef>  
-		//Graphics
-
-	}
+	private String docHeader() {		return xmlHeader +  "<Pathway ";	}
 	
 	private void serializeComments(StringBuilder saver) {
 		for (CommentRecord rec : getComments())
 			saver.append(rec.toGPML());
 	}
 	private void serializeReferences(StringBuilder saver) {
-		for (BiopaxRef rec : getReferences())
+		for (BiopaxRecord rec : getReferences())
 			saver.append(rec.toGPML());
 	}
 	private void serializeNodes(StringBuilder saver) {
@@ -164,9 +160,10 @@ public class Model
 	List<Gene> genes = FXCollections.observableArrayList();
 	GeneListRecord geneListRecord = null;
 	public void setGeneList(GeneListRecord rec, List<Gene> gs) {		genes = gs;	geneListRecord = rec; }
-	public void addGene(Gene g) 		{		genes.add(g);	}
-	public void clearGenes() 			{		genes.clear();	}
-	public List<Gene> getGenes() 		{		return genes;	}
+	public int getNGenes() 				{	return	genes.size();	}
+	public void addGene(Gene g) 		{	genes.add(g);	}
+	public void clearGenes() 			{	genes.clear();	}
+	public List<Gene> getGenes() 		{	return genes;	}
 //	public List<Gene> getGeneList() 		{		return new GeneList(genes, getSpecies());	}
 	public Gene findGene(String string) {
 		if (StringUtil.isEmpty(string)) return null;
@@ -344,19 +341,20 @@ public class Model
 		return scatter;
 	}
 	// **-------------------------------------------------------------------------------
-	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
-	public void addRef(BiopaxRef ref) 	{	if (!refExists(ref))			references.add(ref);		}
-	private boolean refExists(BiopaxRef ref) {
-		String id = ref.getId();
-		if (id == null) return false;
-		for (BiopaxRef r : references)
-			if (id.equals(r.getId())) return true;
-		return false;
+	ObservableList<BiopaxRecord> references = FXCollections.observableArrayList();
+	public void addRef(BiopaxRecord ref) 	{	if (!refExists(ref.getId()))	references.add(ref);		}
+	private boolean refExists(String ref) {		return findRef(ref) != null;	}
+	private BiopaxRecord findRef(String ref) {
+		if (ref == null) return null;
+		for (BiopaxRecord r : references)
+			if (ref.equals(r.getRdfid())) return r;
+		return null;
 	}
 	public int getNReferences() 		{	return references.size();	}
-	public BiopaxRef getReference(int i) {	return references.get(i);	}
+	public BiopaxRecord getReference(String ref) 	{	return findRef(ref);		}
+	public BiopaxRecord getReference(int i) {	return references.get(i);	}
 	public void clearRefs() 			{	references.clear();	}
-	public List<BiopaxRef> getReferences() { return references;	}
+	public List<BiopaxRecord> getReferences() { return references;	}
 	private void readReferences(String state) {
 	}
 	// **-------------------------------------------------------------------------------
@@ -374,14 +372,16 @@ public class Model
 	private void readNodes(String state) {
 	}
 	// **-------------------------------------------------------------------------------
-	public Edge addEdge(MNode start, MNode end)		
+	public Edge addEdge(MNode start, MNode end, String activeLayer)		
 	{  
-		Edge edge = new Edge(this, start.getStack(), end.getStack(), null, null, null);
+		AttributeMap attributes = new AttributeMap();
+		attributes.put("Layer", activeLayer);
+		Edge edge = new Edge(this, start.getStack(), end.getStack(), attributes, null, null);
 		addEdge(edge);
 		return edge;
 	}
 	
-	public void addEdge(Edge e)			{  	edgeList.add(e);	}
+	public void addEdge(Edge e)			{  edgeList.add(e);	}
 	public void setAnchorVisibility(boolean visible)			
 	{ 
 		for (Edge e : edgeList)
@@ -714,6 +714,21 @@ public class Model
 		for (Edge e : edgeList)
 			System.out.println(e);
 		}
+	public void applyState(String state, AttributeMap attrMap) {
+		
+		for (MNode node : resourceMap.values())
+		{
+			if (node.getId().equals(state))
+				for (String key : attrMap.keySet())
+					node.attributes.put("State" + key, attrMap.get(key));
+		}
+		for (Edge edge : edgeList)
+		{
+			if (edge.references(state))
+				for (String key : attrMap.keySet())
+					edge.getAttributes().put("State" + key, attrMap.get(key));
+		}
+	}
 	
 }
 

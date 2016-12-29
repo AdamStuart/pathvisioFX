@@ -27,6 +27,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import model.bio.PathwayRecord;
 import util.FileUtil;
 import util.StringUtil;
@@ -48,7 +49,7 @@ public class PathwayController implements Initializable, IController  {
 
 	static TableRow<PathwayRecord> thisRow = null;
 	private Controller parentController;
-	public void setController(Controller c)	{ parentController = c;	}
+	public void setParentController(Controller c)	{ parentController = c;	}
 
 	//---------------------------------------------------------------------------
 	public static String HUMAN_PATHWAYS = "http://webservice.wikipathways.org/listPathways?organism=Homo%20sapiens";
@@ -134,7 +135,33 @@ public class PathwayController implements Initializable, IController  {
 		return list;
 	}
 
+	public void viewPathwayByIndex(String idx) {
+		if (StringUtil.isInteger(idx))
+		{
+			int i = StringUtil.toInteger(idx);
+			PathwayRecord rec = pathwayTable.getItems().get(i);
+			viewPathway(rec, false);
+		}
+	}
+	public void viewPathway(PathwayRecord rec, boolean edit) {
+		if (parentController != null)
+		{
+			if (edit)  parentController.viewPathway(rec);
+			else parentController.viewPathwayAsImage(rec);
+		}
+	}
 	
+	public void getInfo(DataFormat mimetype, String a, String colname, MouseEvent ev) {
+//		System.out.println("getInfo: " + a + " Fetching: " + ev);	
+		if (StringUtil.isInteger(a))
+		{
+			int idx = StringUtil.toInteger(a);
+			PathwayRecord rec = pathwayTable.getItems().get(idx);
+			boolean edit = ev.isShiftDown();
+			viewPathway(rec, edit);
+		}
+	}
+
 	
 	   //---------------------------------------------------------------------------
 	public static String FIND_PATHWAYS_BASE = "http://webservice.wikipathways.org/findPathwaysByText?";
@@ -142,9 +169,7 @@ public class PathwayController implements Initializable, IController  {
 	{
 		String text = searchBox.getText().trim();
 		if (StringUtil.isEmpty(text)) 			return;
-		
 		String queryText = "", speciesComponent = "";
-		
 		if (StringUtil.hasText(text))
 			queryText = "query=" + text;
 		String selection = species.getSelectionModel().getSelectedItem();
@@ -186,25 +211,7 @@ public class PathwayController implements Initializable, IController  {
 		
 		pathwayTable.setRowFactory((a) -> {
 		       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, this);
-			    });
-		
-	}
-	public void getInfo(DataFormat mimetype, String a, String b) {
-		System.out.println("getInfo: " + a + " Fetching: " + b);	
-		if (StringUtil.isInteger(a))
-		{
-			int idx = StringUtil.toInteger(a);
-			PathwayRecord rec = pathwayTable.getItems().get(idx);
-			boolean edit = true;
-			if (parentController != null)
-			{
-				if (edit)  parentController.viewPathway(rec);
-				else parentController.viewPathwayAsImage(rec);
-			}
+			});
 		}
-//		return;
-//		System.out.println("getInfo: " + rec.getId() + " Fetching: " + url);					//TODO
-//		else 
-//			System.err.println("launching the gene list controller is deprecated");
-	}
+
 }

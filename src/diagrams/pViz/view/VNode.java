@@ -30,11 +30,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -43,7 +44,11 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.ClosePath;
+import javafx.scene.shape.LineTo;
+import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
+import javafx.scene.shape.PathElement;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
@@ -53,6 +58,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebView;
 import model.AttributeMap;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.dao.CSVTableData;
 import util.FileUtil;
@@ -67,12 +73,15 @@ import util.StringUtil;
  * 
  */
 
-public class VNode extends ResizableBox {		//StackPane
+public class VNode extends ResizableBox implements Comparable<VNode> {		//StackPane
 
 	private MNode model;
 	private Shape figure;
-	private TextField text;
+	private Label text;
 	private String title;
+	private boolean movable;
+	private boolean resizable;
+	private boolean editable;
 	
 	private Pasteboard pasteboard = null;
 	private Selection selection = null;
@@ -90,12 +99,27 @@ public class VNode extends ResizableBox {		//StackPane
 		setId(modelNode.getId());
 		title = attributes.get("TextLabel");
 		if (title == null) title = "";
+		String biopaxRef = attributes.get("BiopaxRef");
+		if (biopaxRef != null)
+			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT);
+		String db = attributes.get("Database");
+//		String dbid = attributes.get("ID");
+//			if (db != null && dbid != null)
+//				tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_RIGHT);
+
 		addText(title);
 		System.out.println(title);
 		addPorts();
 //		setBorder(Borders.redBorder);
 //        addEventHandler(MouseEvent.DRAG_DETECTED, this::handleMouseDetected);
         readGeometry(attributes, this);
+        movable = attributes.getBool("Movable", true);
+        resizable = attributes.getBool("Resizable", true);
+        setResize(resizable);
+        editable = attributes.getBool("Editable", true);
+         Tooltip tooltip = new Tooltip();
+         tooltip.setText(attributes.getAttributes(true));
+         Tooltip.install(this,  tooltip);
       }
 	
 	public void setText(String s)		{ 	text.setText(s);	}
@@ -109,24 +133,74 @@ public class VNode extends ResizableBox {		//StackPane
 		}
 		return s;
 	}
-	public TextField getTextField()		{ 	return text;	}
+	public Label getTextField()		{ 	return text;	}
 	public Shape getFigure()			{	return figure;	}
 	public void setFigure(Shape s)		{	figure = s;	}
 	public MNode getModel()				{	return model;	}
 	private String gensym(String s)		{	return model.getModel().gensym(s);	}
 	public AttributeMap getAttributes() {	return model.getAttributeMap();	}
 //	public void setAttributes(AttributeMap attrs){	model.getAttributeMap().addAll(attrs);	}
+//	public void disableResize()	{ setResizeBorderTolerance(0);	}
+	public boolean canResize()	{	return resizable;	}
+	public void handleResize(MouseEvent event)
+	{
+		if (resizable)
+			super.handleResize(event.getSceneX(), event.getSceneY());
+	}
 
+	public void setResize(boolean enable)
+	{
+		setResizeEnabledNorth(enable);
+		setResizeEnabledEast(enable);
+		setResizeEnabledWest(enable);
+		setResizeEnabledSouth(enable);
+		resizable = enable;	
+	}
+	public boolean isMovable()	{	return movable;	}
+	public void setMovable(boolean b)	{ movable = b;	}
+	public boolean isEditable()	{	return editable;}
+	public void setEditable(boolean b)	{ editable = b;	}
+	public void applyLocks(boolean mov, boolean resiz, boolean edit) {
+		setMovable(mov);
+		setResize(resiz);
+		setEditable(edit);
+	}
+	
 	public Point2D boundsCenter()	{
 		Bounds b = getBoundsInParent();
 		double x = (b.getMinX() + b.getMaxX()) / 2;
 		double y = (b.getMinY() + b.getMaxY()) / 2;
 		return new Point2D(x, y);		
 	}
+	
+	
+	public void tagCorner(Color color, Pos position)	
+	{
+		double cornerX = 0;
+		double dX = 1;
+		double dY = 1;
+		double cornerY = 0;
+		double size = 8;
+		if (position == Pos.BOTTOM_LEFT || position == Pos.BOTTOM_RIGHT) 	cornerY = getHeight();
+		if (position == Pos.TOP_RIGHT  || position == Pos.BOTTOM_RIGHT)  	cornerX = getHeight();
+		if (position == Pos.BOTTOM_LEFT || position == Pos.BOTTOM_RIGHT) 	dY = -1;
+		if (position == Pos.TOP_RIGHT || position == Pos.BOTTOM_RIGHT) 		dX = -1;
+		
+		PathElement[] elements = new PathElement[4];
+		elements[0] = new MoveTo(cornerX, cornerY);
+		elements[1] = new LineTo(cornerX, cornerY + dY *  size);
+		elements[2] = new LineTo(cornerX + dX *  size, cornerY);
+		elements[3] = new ClosePath();
+		Path tag = new Path(elements);
+		tag.setStrokeWidth(0.5);
+		tag.setFill(color);
+		getChildren().add(tag);
+		StackPane.setAlignment(tag, position);
+	
+	}
 	public boolean isAnchor()	{ return getModel() instanceof Anchor;	}
 	public boolean isLabel()	{ return "Label".equals(getModel().getAttributeMap().get("ShapeType"));	}
 	public boolean isShape()	{ return "RoundedRectangle".equals(getModel().getAttributeMap().get("ShapeType"));	}// TODO
-	public void disableResize()	{ setResizeBorderTolerance(0);	}
 	public boolean isGroup()	{ return false;	}			// TODO
 	public List<VNode> ungroup()	{ return FXCollections.emptyObservableList();	}			// TODO
 	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
@@ -229,14 +303,18 @@ public class VNode extends ResizableBox {		//StackPane
 		getAttributes().putDouble("CenterY", y);
 		install();
 	}
-	
+	public String getLayerName() 		{	return getAttributes().get("Layer");	}
+	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}
+	public LayerRecord getLayer() 		{	return getController().getLayer(getLayerName());	}
+	public boolean isLayerLocked() 		{	LayerRecord rec = getLayer(); return rec == null || rec.getLock();	}
+
  	// **-------------------------------------------------------------------------------
 	private void install()
 	{
 		double x = getAttributes().getDouble("CenterX");
 		double y = getAttributes().getDouble("CenterY");
-		double w = getAttributes().getDouble("Width");
-		double h = getAttributes().getDouble("Height");
+		double w = getAttributes().getDouble("Width",20);
+		double h = getAttributes().getDouble("Height",20);
 		fill(x,y,w,h, getTitle(), getId());
 	}
 	
@@ -251,8 +329,8 @@ public class VNode extends ResizableBox {		//StackPane
 			if (figure instanceof Rectangle)
 			{
 				Rectangle r = (Rectangle) figure;
-				r.setWidth(getWidth());	// - ShapeFactory.MARGIN2
-				r.setHeight(getHeight());	// - ShapeFactory.MARGIN2
+				r.setWidth(getWidth());	// getAttributes().getDouble("Width", 80)) //- ShapeFactory.MARGIN2
+				r.setHeight(getHeight());	// getAttributes().getDouble("Height", 20) //- ShapeFactory.MARGIN2
 			}
 			if (figure instanceof Circle)
 			{
@@ -323,25 +401,30 @@ public class VNode extends ResizableBox {		//StackPane
 			}
 		}								//   End DEBUG
 		Pos pos = Pos.CENTER;
-		text = new TextField(textLabel);
-		text.setEditable(false);
+//		if (textLabel.indexOf("vessel") > 0)
+//			textLabel = textLabel.replace("&#xA;", "\n");
+//		if (textLabel.indexOf("&#xA;") > 0)
+//			textLabel = textLabel.replace("&#xA;", "\n");
+
+		text = new Label(textLabel);
+//		text.setEditable(false);
 //		text.setVisible(true);
-		text.setMinWidth(100);
+		text.setMinWidth(180);
 		text.setMinHeight(32);
-		text.setPrefWidth(100);
-		text.setPrefHeight(32);
+		text.setPrefWidth(220);
+		text.setPrefHeight(40);
 //		text.setOnMousePressed(e -> {  mousePressedOnText(e);});
 //		text.setOnMouseDragged(e -> {  mouseDraggedOnText(e);});
 //		text.setOnKeyPressed(e -> 	{  keyPressedOnText(e);});
 		text.setMouseTransparent(true);
 		text.setBackground(Backgrounds.transparent());
-		text.setStyle("-fx-font-style: italic;");
-   String style =  "-fx-font: 100px Tahoma; "
-    		+ "-fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, aqua 0%, red 50%);"
-		   + " -fx-stroke: black; -fx-stroke-width: 1;";
-	setStyle(style);
+//		text.setStyle("-fx-font-style: italic;");
+//   String style =  "-fx-font: 100px Tahoma; "
+//    		+ "-fx-fill: linear-gradient(from 0% 0% to 100% 200%, repeat, aqua 0%, red 50%);"
+//		   + " -fx-stroke: black; -fx-stroke-width: 1;";
+//	setStyle(style);
    
-		text.setFont(new Font(25));
+		text.setFont(new Font(18));
 		setAlignment(text, pos);
 		text.setAlignment(pos);
 		getChildren().add(text);
@@ -465,6 +548,16 @@ public class VNode extends ResizableBox {		//StackPane
 	// **------------------------------------------------------------------------------
 	private void getInfo() {		
 		String name = getText();
+		String biopaxRef = getAttributes().get("BiopaxRef");
+		if (biopaxRef != null)
+		{
+			BiopaxRecord rec = getModel().getModel().getReference(biopaxRef);
+			if (rec != null)
+			{
+				getController().showPMIDInfo(rec.getId());
+				return;
+			}
+		}
 		Gene gene =  getModel().getModel().findGene(name);
 		if (gene != null)
 		{	
@@ -759,7 +852,7 @@ public class VNode extends ResizableBox {		//StackPane
 		ObservableList<MenuItem> list = FXCollections.observableArrayList();
 		//System.out.println("ContextMenu");
 		int nKids = getChildren().size();
-		Controller controller = pasteboard.getController();
+		Controller controller = getController();
 		if (nKids > 0)
 		{
 			Node content = getChildren().get(0);
@@ -773,9 +866,10 @@ public class VNode extends ResizableBox {		//StackPane
 		}
 		MenuItem toFront = makeItem("Bring To Front", e -> {   	controller.toFront();   });
 		MenuItem toBack = 	makeItem("Send To Back", e -> {   	controller.toBack();   });
+		Menu toLayer = 	makeLayerMenu();
 		MenuItem dup = 		makeItem("Duplicate", a -> 	{		controller.duplicateSelection();	});
 		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
-		list.addAll(toFront, toBack, dup, del);   
+		list.addAll(toFront, toBack, toLayer, dup, del);   
 
 //		Selection selection = pasteboard.getSelectionMgr();
 		if (selection.isGroupable())	list.add(makeItem("Group", e ->  	{	controller.group();    }));   
@@ -791,10 +885,41 @@ public class VNode extends ResizableBox {		//StackPane
 		return item;
 	}
 
+	private Menu makeLayerMenu() {
+		Menu menu = new Menu("Move To Layer");
+		for (LayerRecord layer : getController().getLayers())
+		{
+			MenuItem item = new MenuItem(layer.getName());
+			menu.getItems().add(item);
+			item.setOnAction(e -> 	{ 	getController().moveSelectionToLayer(layer.getName());  });
+		}
+		return menu;
+	}
+	Controller getController()
+	{
+		return pasteboard.getController();
+	}
 	public void setBounds(BoundingBox bounds) {
 		setLayoutX(bounds.getMinX());
 		setLayoutY(bounds.getMinY());
 		setWidth(bounds.getWidth());
 		setHeight(bounds.getHeight());
 	}
+
+	public void setLayer(String layername) {
+		getAttributes().put("Layer", layername);
+		LayerRecord active = getController().getLayer(layername);
+		setVisible(active.getVis());
+		setMouseTransparent(active.getLock());
+	}
+
+	@Override
+	public int compareTo(VNode other ) {
+		double a = getAttributes().getDouble("ZOrder",0);
+		double b = ((VNode)other).getAttributes().getDouble("ZOrder",0);
+		return a == b ? 0 : (a > b ? 1 : -1);
+	}
+
+
+
 }

@@ -3,6 +3,8 @@ package diagrams.pViz.view;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import animation.NodeVisAnimator;
 import diagrams.pViz.app.Action.ActionType;
@@ -13,6 +15,7 @@ import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
+import gui.Backgrounds;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -66,6 +69,9 @@ import util.RectangleUtil;
  *  
  *  The Pasteboard also remembers the state of which tool is active and what default
  *  attributes will be assigned to new nodes.
+ *  
+ *  The Pasteboard supports layers of items.  Each layer is a group which can be
+ *  hidden or mouseTransparent.
  */
 public class Pasteboard extends Pane
 {
@@ -82,15 +88,19 @@ public class Pasteboard extends Pane
 	public Rectangle getMarquee()			{ return marquee;	}
 	private Label infoLabel;
 	public Label getInfoLabel()				{ return infoLabel;	}
+	private Layer backgroundLayer = new Layer("Background");
+	private Layer gridLayer = new Layer("Grid");
+	private Layer contentLayer = new Layer("Content");
 
-//	SimpleDoubleProperty widthProperty = new SimpleDoubleProperty();
-//	SimpleDoubleProperty heightProperty = new SimpleDoubleProperty();
-//	public double getWidth()	{ return widthProperty.get();	}
-//	public double getHeight()	{ return heightProperty.get();	}
-//	public  void setWidth(double d)	{  widthProperty.set(d);	}
-//	public void setHeight(double d)	{  heightProperty.set(d);	}
-//	public SimpleDoubleProperty widthProperty()	{  return widthProperty;	}
-//	public SimpleDoubleProperty heightProperty()	{  return heightProperty;	}
+	public Layer getBackgroundLayer()		{ return backgroundLayer;	}
+	public Layer getGridLayer()				{ return gridLayer;	}
+	public Layer getContentLayer()			{ return contentLayer;	}
+	
+	public void restoreBackgroundOrder() {
+		gridLayer.toBack();
+		backgroundLayer.toBack();
+		
+	}
 
 	private VNode activeStack;
 	public VNode getActiveStack()		{ return activeStack;	}
@@ -103,31 +113,51 @@ public class Pasteboard extends Pane
 	 * @param pane
 	 *            the pane on which the selection rectangle will be drawn.
 	 */
+	static public int CANVAS_WIDTH = 2000;
+	static public int CANVAS_HEIGHT = 2000;
 	public Pasteboard(Controller ctrl) 
 	{
 //		drawPane = pane;
 		super();
-		setWidth(2000);
-		setHeight(2000);
+		setWidth(CANVAS_WIDTH);
+		setHeight(CANVAS_HEIGHT);
 		setId("root");
 		controller = ctrl;
 //		factory = new NodeFactory(this);
 //		edgeFactory = new EdgeFactory(this);
 //		shapeFactory = factory.getShapeFactory();
 		makeMarquee();
+		createBackground();
+		getChildren().addAll(backgroundLayer, gridLayer);
+		
 		selectionMgr = new Selection(this);
 //		pane.getChildren().add(marquee);
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
 		infoLabel = new Label("");
 		infoLabel.setId(INFO_LABEL_ID);
-		getChildren().add(infoLabel);
+		add(infoLabel);
 		StackPane.setAlignment(infoLabel, Pos.TOP_RIGHT);
 		infoLabel.setVisible(false);
 		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
 //		turnOnClipping();
 	}
 	
+	private void createBackground() {
+		Rectangle r = new Rectangle(-10, -10, CANVAS_WIDTH + 20, CANVAS_HEIGHT + 20);
+		r.setId("Background");
+		r.setFill(Backgrounds.whiteGradient);
+		r.setMouseTransparent(true);
+		r.getProperties().put("Layer", "Background");
+		backgroundLayer.add(r);
+	}
+	
+	
+	private Layer getLayer(String string) {
+		if ("Background".equals(string)) return getBackgroundLayer();
+		if ("Grid".equals(string)) return getGridLayer();
+		return getContentLayer();		// TODO support user named layers
+	}
 	public void makeMarquee() {
 		marquee = new Rectangle();
 		marquee.setId("Marquee");
@@ -140,16 +170,32 @@ public class Pasteboard extends Pane
 	public static boolean isMarquee(Node node) {
 		return node != null && "Marquee".equals(node.getId());
 	}
+	public void add(Node node)				{	getChildren().add(node);	}
+	public void remove(Node node)			{	getChildren().remove(node);	}
 
-	public void clear()	{ getChildren().clear();	}
-	public void add(VNode vnode)	{ getChildren().add(vnode);	}
-	public void add(int idx, Node node)		{ getChildren().add(idx, node);	}
-	public void add(int idx, VNode vnode)	{ getChildren().add(idx, vnode);	}
-	public void addAll(Node[] n) {		getChildren().addAll(n);	}
-	public void addAll(ObservableList<Node> n) {	getChildren().addAll(n);	}
-	public void addAllVNodes(VNode[] n) {		getChildren().addAll(n);	}
-	public void addAllVNodes(List<VNode> n) {	getChildren().addAll(n);	}
-
+	public void clear()						{ 	getChildren().clear();	}
+	public void clearLayer()				{ 	getChildren().clear();	}
+	public void add(VNode vnode)			{	vnode.setLayerName(activeLayerName); 	getChildren().add(vnode);	}
+	public void add(int idx, Node node)		{	node.getProperties().put("Layer", activeLayerName); 	getChildren().add(idx, node);	}
+	public void add(int idx, VNode vnode)	
+	{	
+		vnode.setLayerName(activeLayerName); 	
+		getContentLayer().add(idx, vnode);	
+	}
+	
+	public void addAll(Node[] n) 			{	for (Node node : n )
+													node.getProperties().put("Layer", activeLayerName); 
+												getChildren().addAll(n);
+											}
+//	public void addAll(ObservableList<Node> n) {	for (Node node : n )
+//			node.getProperties().put("Layer", activeLayerName); 
+//										getChildren().addAll(n);	}
+	public void addAllVNodes(VNode[] n) 	{	for (VNode node : n) add(node);	}
+	public void addAllVNodes(List<VNode> n) {	for (VNode node : n) add(node);	}
+	
+	String activeLayerName = "Content";
+	public String activeLayerName()			{ return activeLayerName; }
+//	ObservableList<Node> getActiveLayer()	{	return getChildren();	}
 	private Rectangle clipRect = new Rectangle();
 	private void turnOnClipping()
 	{
@@ -194,7 +240,7 @@ public class Pasteboard extends Pane
 			int end = id.indexOf(":");
 			if (end > 0)
 				id = id.substring(0, end);
-			System.out.println(id);
+			if (verbose) System.out.println(id);
 		}
 		if (db.hasContent(PathwayController.PATHWAY_MIME_TYPE))
 		{
@@ -204,15 +250,15 @@ public class Pasteboard extends Pane
 			{
 				String id = "" + db.getContent(DataFormat.PLAIN_TEXT);
 				id = id.substring(0, id.indexOf(":"));
-				System.out.println(id);
+				if (verbose) System.out.println(id);
 				List<PathwayRecord> results = PathwayController.getPathways(id);
 				for (PathwayRecord rec : results)
 				{
-					System.out.println(rec);
+					if (verbose) System.out.println(rec);
 
 				}
 			}
-			System.out.println(o.toString());
+			if (verbose) System.out.println(o.toString());
 		}
 		
 		if (db.hasFiles())
@@ -249,7 +295,7 @@ public class Pasteboard extends Pane
 			if (content != null)
 			{
 				String text = content.toString();
-	System.out.println("Dropped: " + text);
+				if (verbose) 	System.out.println("Dropped: " + text);
 				AttributeMap attrMap = new AttributeMap();
 				attrMap.putDouble("X", e.getX());
 				attrMap.putDouble("Y", e.getY());
@@ -260,7 +306,7 @@ public class Pasteboard extends Pane
 				attrMap.put("ShapeType", text);
 				attrMap.put("TextLabel", text);
 				MNode node = new MNode(attrMap, getModel());
-				getChildren().add(node.getStack());
+				add(node.getStack());
 			}
 		}
 			
@@ -301,7 +347,7 @@ public class Pasteboard extends Pane
 	
 	//-------------------------------------------------------------------------------
 	private Group grid;
-	public Group getGrid()	{  return grid;  }
+//	public Group getGrid()	{  return grid;  }
 	List<Line> hLines;
 	List<Line> vLines;
 	
@@ -335,6 +381,7 @@ public class Pasteboard extends Pane
 			grid.setMouseTransparent(true);
 			getController().add(grid);
 		}
+		gridLayer.add(grid);
 		new NodeVisAnimator(grid, toggler);
 
 	}
@@ -414,7 +461,7 @@ public class Pasteboard extends Pane
 		if (dragLine == null)
 		{
 			dragLine = new Line();
-			getChildren().add(dragLine);	
+			add(dragLine);	
 		}
 		x -= 90;			// TODO  HACK  difference between scene and pasteboard coords
 		y -= 30;
@@ -426,7 +473,7 @@ public class Pasteboard extends Pane
 	public void removeDragLine() {
 		if (dragLine != null)
 		{
-			getChildren().remove(dragLine);	
+			remove(dragLine);	
 			dragLine = null;
 		}
 	}
@@ -517,7 +564,7 @@ public class Pasteboard extends Pane
 			else
 			{
 				controller.getUndoStack().push(ActionType.New, " " + getTool().name());
-				getChildren().add(activeStack);
+				add(activeStack);
 				getSelectionMgr().select(activeStack);
 			}
 			
@@ -532,7 +579,7 @@ public class Pasteboard extends Pane
 				AttributeMap at = new AttributeMap("ShapeType:" + getTool().name());
 				MNode mNode = new MNode(at, controller.getDrawModel());
 				activeStack = mNode.getStack();
-				getChildren().add(activeStack);
+				add(activeStack);
 
 			}
 			Polyline p = getPolyline();
@@ -851,7 +898,42 @@ public class Pasteboard extends Pane
 //		setTranslateX(0);
 //		setTranslateY(0);
 	}
-
+	public void resetLayerVisibility(String layername, boolean vis) {
+		if (layername == null) return;
+		List<Node> layerNodes = getChildrenInLayer(layername);
+		for (Node n : layerNodes)
+			n.setVisible(vis);
+	}
+	public void resetLayerLock(String layername, boolean lock) {
+		if (layername == null) return;
+		List<Node> layerNodes = getChildrenInLayer(layername);
+		for (Node n : layerNodes)
+		{
+			n.setMouseTransparent(lock);
+			n.setOpacity(lock ? 0.5 : 1.0);
+		}
+	}
 	
+	
+	private List<Node> getChildrenInLayer(String layername) {
+		return getChildren().stream() 			//convert list to stream
+				.filter(node -> layername.equals(getLayerName(node)))	//filters the line, equals to layername
+				.collect(Collectors.toList());			//collect the output and convert streams to a List
+	}
+	
+	String getLayerName(Node n)
+	{
+		if (n == null) return "";
+		if (n instanceof VNode) 
+			return ((VNode) n).getLayerName();
+		Object nodeLayer = getProperties().get("Layer");
+		if ( nodeLayer == null) 
+		{ 
+			System.err.println("getLayerName error: " + n);
+			return""; 
+		}
+		return nodeLayer.toString();
+		
+	}
 }
 

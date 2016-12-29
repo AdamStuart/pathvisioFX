@@ -4,7 +4,6 @@ import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
-import javafx.fxml.FXML;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
@@ -34,8 +33,8 @@ public class Test {
 		MNode n3 = new MNode(attrMap, model);	//, "Fristcut"
 		c.add(n3.getStack());
 		
-		Edge line1 = model.addEdge(circ, n3);		c.add(0, line1);
-		Edge line2 = model.addEdge(circ, n1);		c.add(0, line2);
+		Edge line1 = model.addEdge(circ, n3, "Content");		c.add(0, line1, "Content");
+		Edge line2 = model.addEdge(circ, n1, "Content");		c.add(0, line2, "Content");
 		
 		Rectangle r1 = new Rectangle(290, 230, 60, 60);
 		attrMap.setTool(Tool.Rectangle.toString());

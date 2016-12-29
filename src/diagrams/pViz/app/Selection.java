@@ -65,6 +65,7 @@ public class Selection
 	public void select(VNode s)		
 	{
 		if ("Marquee".equals(s.getId())) return;
+		if (s.isLayerLocked()) return;
 		items.add(s);	
 		s.setEffect(new DropShadow()); 
 		s.showPorts(true);
@@ -80,9 +81,10 @@ public class Selection
 		Object ref =  properties.get("BiopaxRef");
 		if (ref != null)
 			getController().hiliteByReference("" + ref);
-		System.out.println(s.toString());
+		if (verbose ) 	System.out.println(s.toString());
 	}
-	
+	boolean verbose = false;
+
 	public void select(VNode s, boolean b)	{  if (b) select(s); else deselect(s);	}
 	public void deselect(VNode s)	
 	{ 
@@ -151,7 +153,7 @@ public class Selection
 			newAttrs.put("GraphId", newId);
 			newAttrs.incrementZOrder();
 			MNode clone = new MNode(newAttrs, controller);
-			controller.add(-1,clone.getStack());
+			controller.add(clone.getStack());
 			newSelection.add(clone.getStack());
 		}
 //		items.removeAll();
@@ -201,7 +203,7 @@ public class Selection
 				int end = styleSettings.indexOf(";", start);
 				double d = StringUtil.toDouble(styleSettings.substring(start, end));
 				if (!Double.isNaN(d))
-					n.setOpacity(d / 100.);
+					n.setOpacity(d);
 			}
 		}
 	}
@@ -215,7 +217,7 @@ public class Selection
 	//--------------------------------------------------------------------------
 	public void translate(KeyCode key)		
 	{
-		double amount = 3;
+		double amount = 30;
 		double dx = 0, dy = 0;
 		if (key == KeyCode.LEFT)		dx = amount;
 		else if (key == KeyCode.RIGHT)	dx = -amount;
@@ -398,4 +400,32 @@ public class Selection
 	
 	//--------------------------------------------------------------------------
 	@Override	public String toString()	{		return items.size() + " selected";	}
+	public void applyLocks(boolean movable, boolean resizable, boolean editable) {
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).applyLocks(movable, resizable, editable);
+	}
+	public void setMovable(boolean b)	{ 
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).setMovable(b);	
+		}
+	public void setEditable(boolean b)	{ 
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).setEditable(b);	
+	}
+	public void setResizable(boolean b){
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).setResize(b);	
+	}
+	public void setLayer(String layername) {
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).setLayer(layername);	
+		}
+
+
+
 }

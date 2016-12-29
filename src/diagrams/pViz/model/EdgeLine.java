@@ -87,11 +87,11 @@ public class EdgeLine extends Group {
 	public EdgeType getEdgeType()	{ return type;	}
 	public void setEdgeType(EdgeType t)	{ type = t;	}
 
-	public List<GPMLPoint> getPoints() 		{ 	return points;	}
+	public List<GPMLPoint> getPoints() 	{ 	return points;	}
 	public List<Anchor> getAnchors() 	{ 	return anchors;	}
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
 	public void removeAnchor(Anchor a) 	{ 	anchors.remove(a);	}
-
+	public String getLayer()			{ 	return edge.getLayer();	}
 	 //----------------------------------------------------------------------
 	public EdgeLine(Edge container, List<GPMLPoint> pts, List<Anchor> anchorList) 
 	{
@@ -292,6 +292,7 @@ boolean BADPOINT(Point2D pt)
 }
 	private void linearConnect() {
 		Point2D lastPt = lastPoint();
+//		if (lastPt != null) return;
 		VNode startNode = edge.getStartNode();
 		VNode endNode = edge.getEndNode();
 		if (endNode == null) return;

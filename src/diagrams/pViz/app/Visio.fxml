@@ -103,11 +103,6 @@
                                  </accelerator>
                               </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem fx:id="connect" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
                               <MenuItem mnemonicParsing="false" onAction="#deleteSelection" text="Delete" />
                               <MenuItem mnemonicParsing="false" onAction="#selectAll" text="Select All">
                                  <accelerator>
@@ -121,7 +116,43 @@
                               </MenuItem>
                            </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="Arrange">
+                        <Menu mnemonicParsing="false" text="Select">
+                           <items>
+                           <MenuItem fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="tofront" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="toback" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="moveToLayer" mnemonicParsing="false" text="Move To Layer">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="connect" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Tools">
                            <items>
                               <MenuItem fx:id="browseGenes" mnemonicParsing="false" onAction="#doNewGeneList" text="New Gene List">
                                  <accelerator>
@@ -135,32 +166,17 @@
                               </MenuItem>
                               <MenuItem fx:id="addLegend" mnemonicParsing="false" onAction="#addLegend" text="Add Legend" />
                               <MenuItem fx:id="addLegendDlog" mnemonicParsing="false" onAction="#addLegendDlog" text="Add Legend..." />
+                              <MenuItem fx:id="showLayers" mnemonicParsing="false" onAction="#showLayers" text="Show Layer Palette">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="L" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
                               <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
-                           <MenuItem fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="tofront" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="toback" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
                               <MenuItem fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
                               <MenuItem fx:id="hideAnchors" mnemonicParsing="false" onAction="#hideAnchors" text="Hide Anchors" />
                            </items>

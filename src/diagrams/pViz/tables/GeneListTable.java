@@ -26,7 +26,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import model.bio.BiopaxRef;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import util.StringUtil;
 

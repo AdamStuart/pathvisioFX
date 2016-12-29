@@ -8,9 +8,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.Base64;
 import java.util.Base64.Decoder;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -32,16 +30,16 @@ import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.MultiGeneListController;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.view.Inspector;
+import diagrams.pViz.view.LayerController;
+import diagrams.pViz.view.LayerRecord;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
-import gui.Backgrounds;
 import gui.Borders;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventTarget;
@@ -57,12 +55,10 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -81,20 +77,17 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Line;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
-import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
-import model.AttributeMap;
-import model.bio.BiopaxRef;
+import javafx.util.Pair;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
-import model.bio.MIM;
 import model.bio.PathwayRecord;
 import model.bio.Species;
 import util.FileUtil;
@@ -123,16 +116,17 @@ public class Controller implements Initializable, IController
 	@FXML private ScrollPane scrollPane;
 	@FXML private ListView<Action> undoview = null;
 	private GeneListTable geneListTable = null;
+	private PathwayController pathwayController = null;
 	@FXML private BorderPane container;			// root of fxml	
 
-	@FXML private TableView<BiopaxRef> refTable;
-	@FXML private TableColumn<BiopaxRef, String> refCol;
-	@FXML private TableColumn<BiopaxRef, String> idCol;
-	@FXML private TableColumn<BiopaxRef, String> dbCol;
-	@FXML private TableColumn<BiopaxRef, String> authorCol;
-	@FXML private TableColumn<BiopaxRef, String> titleCol;
-	@FXML private TableColumn<BiopaxRef, String> sourceCol;
-	@FXML private TableColumn<BiopaxRef, String> yearCol;
+	@FXML private TableView<BiopaxRecord> refTable;
+	@FXML private TableColumn<BiopaxRecord, String> refCol;
+	@FXML private TableColumn<BiopaxRecord, String> idCol;
+	@FXML private TableColumn<BiopaxRecord, String> dbCol;
+	@FXML private TableColumn<BiopaxRecord, String> authorCol;
+	@FXML private TableColumn<BiopaxRecord, String> titleCol;
+	@FXML private TableColumn<BiopaxRecord, String> sourceCol;
+	@FXML private TableColumn<BiopaxRecord, String> yearCol;
 	@FXML private Button tableOptions;
 
 	@FXML private Button gene;		// something to drag in the Genelist window
@@ -214,12 +208,30 @@ public class Controller implements Initializable, IController
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
 	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(7); 	}
 	@FXML public void clear()			{ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
+	
+	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
+	@FXML private void dumpEdgeTable()	{		model.dumpEdgeTable();	}
+	@FXML private void dumpViewHierarchy()	{	model.dumpViewHierarchy();	}
+	@FXML private void dumpNodeTable()	{		model.dumpNodeTable();	}
 	// **-------------------------------------------------------------------------------
 	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup();  }
 	@FXML public  void ungroup()		{ 	undoStack.push(ActionType.Ungroup);	getSelectionManager().ungroup(); }
 	@FXML public  void toFront()		{	undoStack.push(ActionType.Reorder);	getSelectionManager().toFront(); 	}
-	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.getGrid().toBack();  	}
-
+	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.restoreBackgroundOrder();  	}
+	@FXML public  void toLayer()		
+	{	
+		String layername = "Content";
+		undoStack.push(ActionType.Reorder);	  
+		getSelectionManager().setLayer(layername);
+		pasteboard.restoreBackgroundOrder();  	
+	}
+	public List<LayerRecord> getLayers()	{	return layerController.getLayers();	}
+	public void moveSelectionToLayer(String layername)
+	{
+		undoStack.push(ActionType.Reorder);	  
+		getSelectionManager().setLayer(layername);
+		pasteboard.restoreBackgroundOrder();  	
+	}
 	@FXML private void hideAnchors()	{ 	model.setAnchorVisibility(false);	}
 	@FXML private void showAnchors()	{ 	model.setAnchorVisibility(true);	}
 
@@ -240,13 +252,17 @@ public class Controller implements Initializable, IController
 		    }
 		    fxmlLoader.setLocation(url);
 		    Pane appPane =  fxmlLoader.load();
-		    PathwayController c = (PathwayController) fxmlLoader.getController();
-		    c.setController(this);
+		    pathwayController = (PathwayController) fxmlLoader.getController();
+		    pathwayController.setParentController(this);
 		    browserStage.setScene(new Scene(appPane, 800, 800));
 		    browserStage.show();
-		    c.doSearch();
+		    pathwayController.doSearch();
 		}
-		catch (Exception e) { e.printStackTrace();}
+		catch (Exception e) 
+		{ 
+			System.err.println("Loading error in browsePathways()");
+			e.printStackTrace();
+		}
 	}	
 	// **-------------------------------------------------------------------------------
 	public  void buildStage(String title, VBox contents)		
@@ -261,12 +277,12 @@ public class Controller implements Initializable, IController
 		catch (Exception e) { e.printStackTrace();}
 	}
 	
-	public  FXMLLoader buildStage(String title, String fxml)		
+	public  Pair<FXMLLoader, Stage> buildStage(String title, String fxml, int wid, int hght)		
 	{
-		Stage browserStage = new Stage();
+		Stage stage = new Stage();
 		try 
 		{
-			browserStage.setTitle(title);
+			stage.setTitle(title);
 			FXMLLoader fxmlLoader = new FXMLLoader();
 		    URL url = getClass().getResource(fxml);		// this gets the fxml file from the same directory as this class
 		    if (url == null)
@@ -275,10 +291,10 @@ public class Controller implements Initializable, IController
 		    	return null;
 		    }
 		    fxmlLoader.setLocation(url);
-		    SplitPane appPane =  fxmlLoader.load();
-		    browserStage.setScene(new Scene(appPane, 1200, 800));
-		    browserStage.show();
-		    return fxmlLoader;
+		    Region appPane =  fxmlLoader.load();
+		    stage.setScene(new Scene(appPane, wid, hght));
+		    stage.show();
+		    return new Pair<FXMLLoader, Stage>(fxmlLoader, stage);
 		}
 		catch (Exception e) { e.printStackTrace();}
 		return null;
@@ -288,6 +304,7 @@ public class Controller implements Initializable, IController
 	
 	//@formatter:on
 	// **-------------------------------------------------------------------------------
+
 	@FXML private MenuItem connect;			// TODO bind enableProperty to selection size > 2
 	@FXML private void addEdges()		
 	{ 	
@@ -295,7 +312,7 @@ public class Controller implements Initializable, IController
 		{
 			List<Edge> edges = getDrawModel().connectSelectedNodes();
 			for (Edge e: edges)
-				add(0, e);
+				add(0, e, getActiveLayer());
 		}
 	}
 	
@@ -346,13 +363,20 @@ public class Controller implements Initializable, IController
 		setupListviews();
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
 		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
-		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 100);
+		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 150);
 		
 		rightSideBarButton.fire();
 		bottomSideBarButton.fire();
 		
 		pasteboard.makeGrid(toggleGridButton, scrollPane);
-
+		Pair<FXMLLoader, Stage> pair = buildStage("Layers", "../view/Layers.fxml", 250, 300);
+		layerController = (LayerController) pair.getKey().getController();
+		layerController.setParentController(this);
+		Stage stage = pair.getValue();
+		layerController.setStage(stage);
+		stage.hide();
+		stage.setOnCloseRequest(ev -> { stage.hide(); } );
+		stage.setAlwaysOnTop(true);
 
 		boolean startWithShapes = false;
 		if (startWithShapes) test1();
@@ -371,23 +395,23 @@ public class Controller implements Initializable, IController
 	   { System.err.println("Inspector failed to load");}
 
 	}
-	static TableRow<BiopaxRef> thisRow = null;
+	static TableRow<BiopaxRecord> thisRow = null;
 	private void setupBiopaxTable() {
 		
 //		TableColumn[] allCols = { refCol, idCol, dbCol, authorCol, titleCol, sourceCol, yearCol };
 
-		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("xrefid"));
-		idCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("id"));
-		dbCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("db"));
-		authorCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("authors"));
-		titleCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("title"));
-		sourceCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("source"));
-		yearCol.setCellValueFactory(new PropertyValueFactory<BiopaxRef, String>("year"));
+		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("xrefid"));
+		idCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("id"));
+		dbCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("db"));
+		authorCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("authors"));
+		titleCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("title"));
+		sourceCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("source"));
+		yearCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("year"));
 
-		refTable.setRowFactory((a) -> {  return new DraggableTableRow<BiopaxRef>(refTable, BIOPAX_MIME_TYPE, this);   });
+		refTable.setRowFactory((a) -> {  return new DraggableTableRow<BiopaxRecord>(refTable, BIOPAX_MIME_TYPE, this);   });
 		
 	}
-	private void showPMIDInfo(String pmid)
+	public void showPMIDInfo(String pmid)
 	{
 	   String text = EntrezQuery.getPubMedAbstract(pmid);
 	   if (StringUtil.hasText(text))
@@ -401,14 +425,14 @@ public class Controller implements Initializable, IController
 	}
 	
 	
-	public void getInfo(DataFormat mimeType, String idx, String id) {
+	public void getInfo(DataFormat mimeType, String idx, String colname, MouseEvent ev) {
 		try 
 		{
 			int index = StringUtil.toInteger(idx);
 			if (mimeType == GeneListController.GENE_MIME_TYPE)
 			 {
 			   String rowName = "";
-			   if (index >=0 && model.getNReferences() > index)
+			   if (index >=0 && model.getNGenes() > index)
 				   	rowName = model.getGenes().get(index).getId();
 //			   showGeneInfo(rowName);
 			   return;
@@ -423,9 +447,15 @@ public class Controller implements Initializable, IController
 		  }
 		  if (mimeType == PathwayController.PATHWAY_MIME_TYPE)
 		   {
-				System.out.println(" fetching pathway: " + id);					//TODO
-				viewPathway(id);
+			   if (pathwayController != null)
+			   {
+				   pathwayController.viewPathwayByIndex(idx);
+				   return;
+			   }
 			}
+		  
+		  System.out.println("getInfo wasn't matched: " + mimeType.toString());					//TODO
+		  //
 		}
 		catch (Exception e) { e.printStackTrace();}
 	}
@@ -456,6 +486,25 @@ public class Controller implements Initializable, IController
 	@FXML private void addLegend()
 	{
 		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);
+	}
+	LayerController layerController;
+	@FXML private void showLayers()
+	{
+		layerController.getStage().show();
+	}
+	public LayerRecord getLayer(String name)
+	{
+		return layerController.getLayer(name);
+	}
+	@FXML private void addLayer()
+	{
+		if (layerController != null)
+			layerController.addLayer();
+	}
+	@FXML private void removeLayer()
+	{
+		if (layerController != null)
+			layerController.removeLayer();
 	}
 	@FXML private void addLegendDlog()
 	{
@@ -546,30 +595,30 @@ public class Controller implements Initializable, IController
 			}
 		}
 	}	// **-------------------------------------------------------------------------------
-	public void setState(String s)
-	{
-		pasteboard.clear();
-		pasteboard.getChildren().add(pasteboard.getGrid());
-//		addState(s);
-	}
+//	public void setState(String s)
+//	{
+//		pasteboard.clear();
+//		pasteboard.getChildren().addAll(pasteboard.getGrid().getNodes());
+////		addState(s);
+//	}
 	//-----------------------------------------------------------------------------
-	public void addState(org.w3c.dom.Document doc)
+	public void addXMLDoc(org.w3c.dom.Document doc)
 	{
-		new GPML(model).read(doc);
+		new GPML(model, getActiveLayer()).read(doc);
 		updateTables();
 		Window window = refTable.getScene().getWindow();
         if (window instanceof Stage) 
         	((Stage) window).setTitle(model.getTitle());	
-        new Thread(() ->
-        Platform.runLater(() -> {  getModel().resetEdgeTable();	} )  ).start();  
+        Thread postponed =  new Thread(() -> Platform.runLater(() -> {  getModel().resetEdgeTable();	} )  );
+        postponed.start();  
         hideAnchors();
 
 //		addModelToPasteboard();
 
 	}
 			
+	public String getActiveLayer() {		return pasteboard.activeLayerName();	}
 	public void updateTables() {
-		
 		refTable.getItems().addAll(model.getReferences());
 		geneListTable.populateTable(model, model.getGenes());
 	}
@@ -677,20 +726,6 @@ public class Controller implements Initializable, IController
 //		attributeTable.setStyle(CSS_Gray2);
 //		attributeCol.setCellValueFactory(new PropertyValueFactory<>("attribute"));
 //		valueCol.setCellValueFactory(new PropertyValueFactory<>("value"));
-		
-		if (pathwayTable != null)
-			setupPathwayTable();
-	}
-	
-	TableView<PathwayRecord> pathwayTable = null;
-	private void setupPathwayTable()
-	{
-//		pathwayTable.setItems(genes);
-//		pathwayTable.setCellFactory(list ->  { return new GeneCell();   });
-//		pathwayTable.setStyle(CSS_Gray2);
-//		nameCol.setCellValueFactory(new PropertyValueFactory<>("name"));
-//		ensemblCol.setCellValueFactory(new PropertyValueFactory<>("ensembl"));
-		
 	}
 	
 	//---------------------------------------------------------------------------------
@@ -753,23 +788,12 @@ public class Controller implements Initializable, IController
 //		model.addResource(n.getId(), n.getModel());
 		if (n instanceof VNode)
 		{
-			MNode modelNode = ((VNode) n).getModel();
-			if (((VNode) n).isAnchor()) return;
-			if (((VNode) n).isLabel()) return;
-			Object prop  = modelNode.getAttributeMap().get("TextLabel");
-			if (prop != null && model.findGene(""+prop) == null)
-				model.addGene(new Gene(""+prop));
 		}
 	}
-	
-	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
-	@FXML private void dumpEdgeTable()	{		model.dumpEdgeTable();	}
-	@FXML private void dumpViewHierarchy()	{	model.dumpViewHierarchy();	}
-	
-	@FXML private void dumpNodeTable()	{		model.dumpNodeTable();	}
-	public void add(int idx, Edge e)							
+	public void add(int idx, Edge e, String layername)							
 	{		
 		if (e == null) return;
+		e.getAttributes().put("Layer", layername);
 		model.addEdge(e);
 		pasteboard.add(idx, e.getEdgeLine());
 		for (Anchor anchor : e.getEdgeLine().getAnchors())
@@ -782,12 +806,20 @@ public class Controller implements Initializable, IController
 		}
 		e.connect();
 	}
-	public void add(int idx, VNode n)							
+//	public void add(Edge e)		{	pasteboard.add(0,e);	}
+	public void add(VNode n)							
 	{		
-		if (idx < 0) idx = pasteboard.getChildren().size();
-		pasteboard.add(idx, n);	
-		if ("Marquee".equals(n.getId())) 	return;
-//		model.addResource(n.getId(), n.getModel());
+		pasteboard.add(n);	
+		MNode modelNode = n.getModel();
+		if (n.isAnchor()) return;
+		if (n.isLabel()) return;
+		Object prop  = modelNode.getAttributeMap().get("TextLabel");
+		if (prop != null && model.findGene(""+prop) == null)
+			model.addGene(new Gene(""+prop));
+	}
+	public void add(int index, VNode n)							
+	{		
+		pasteboard.add(index, n);	
 	}
 	public void addAll(List<VNode> n)	{		pasteboard.addAllVNodes(n);	}
 	public void addAll(VNode... n)		{		pasteboard.addAllVNodes(n);	}
@@ -799,23 +831,12 @@ public class Controller implements Initializable, IController
 	public void remove(VNode n)						
 	{		
 		getDrawModel().removeNode(n);
-//		Object dependent = dependents.get(n);
-//		if (dependent != null)
-//		{
-//			pasteboard.getChildren().remove(dependent);	
-//			dependents.remove(n);
-//		}
 		pasteboard.getChildren().remove(n);	
 	}
-
 	// **-------------------------------------------------------------------------------
 	public String getState()			{ 	return model.toString();  }
-
-	// **-------------------------------------------------------------------------------
-	public void reportStatus(String string)	
-	{		
-//		status1.setText(string);	
-	}
+	public void reportStatus(String string)	 {}	 //		status1.setText(string);	
+	
 //	public void setStatus2(String status)	{	status2.setText(status);	}
 //	public void setStatus3(String status)	{	status3.setText(status);	}
 	// **-------------------------------------------------------------------------------
@@ -831,16 +852,15 @@ public class Controller implements Initializable, IController
 	
 	public void scatter(TableView content)	{}
 
-	public void timeseries(TableView content)	{
-	}
+	public void timeseries(TableView content)	{	}
 	public void hiliteByReference(String ref) {
-		for (BiopaxRef biopax : model.getReferences())
-			if (ref.equals(biopax.getXrefid()))
+		for (BiopaxRecord biopax : model.getReferences())
+			if (ref.equals(biopax.getRdfid()))
 				refTable.getSelectionModel().select(biopax);
 	}
 	public void openByReference(String ref) {
-		for (BiopaxRef biopax :  model.getReferences())
-			if (ref.equals(biopax.getXrefid()))
+		for (BiopaxRecord biopax :  model.getReferences())
+			if (ref.equals(biopax.getRdfid()))
 			{
 				String pmid = biopax.getId();
 				if (StringUtil.hasText(pmid))
@@ -948,8 +968,8 @@ public class Controller implements Initializable, IController
 	{ 		
 //		String pathwayFxml = "../gpml/GeneList.fxml";
 //		String fullname = "../gpml/GeneList.fxml";
-		FXMLLoader loader = buildStage("Pathway", "Visio.fxml");
-		Controller newController = loader.getController();
+		Pair<FXMLLoader, Stage> pair = buildStage("Pathway", "Visio.fxml", 1200, 800);
+		Controller newController = pair.getKey().getController();
 		try
 		{
 			String gpml  =StringUtil.readTag( result, "ns2:gpml");
