@@ -27,6 +27,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polygon;
@@ -65,7 +66,7 @@ public class Selection
 	public void select(VNode s)		
 	{
 		if ("Marquee".equals(s.getId())) return;
-		if (s.isLayerLocked()) return;
+//		if (s.isLayerLocked()) return;
 		items.add(s);	
 		s.setEffect(new DropShadow()); 
 		s.showPorts(true);
@@ -147,7 +148,7 @@ public class Selection
 			if (!(n instanceof VNode))		continue;
 			VNode node = (VNode) n;
 			node.rememberPositionEtc(offset);
-			AttributeMap newAttrs = new AttributeMap(node.getModel().getAttributeMap());
+			AttributeMap newAttrs = new AttributeMap(node.getAttributes());
 			String oldId = newAttrs.get("GraphId");
 			String newId = controller.getModel().cloneResourceId(oldId);
 			newAttrs.put("GraphId", newId);
@@ -385,7 +386,7 @@ public class Selection
 		for (Node n : items)
 			if (n != null && !n.getId().equals("Marquee"))
 				if (n instanceof VNode)
-					b.append(Model.describe(((VNode)n).getModel()));
+					b.append(Model.describe(((VNode)n).modelNode()));
 		return b.toString();
 	}
 
@@ -425,6 +426,27 @@ public class Selection
 			if (n instanceof VNode)
 				((VNode)n).setLayer(layername);	
 		}
+
+	public void putColor(String string, Color value) {
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).getAttributes().putColor(string, value);	
+	}
+	public void putDouble(String string, Double value) {
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).getAttributes().putDouble(string, value);	
+	}
+	public void put(String string, String value) {
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).getAttributes().put(string, value);	
+	}
+	public void extract() {
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).extractPosition();	
+	}
 
 
 

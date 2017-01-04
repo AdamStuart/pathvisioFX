@@ -49,7 +49,7 @@ public class Document
 		try
 		{
 			List<Gene> geneList = FXCollections.observableArrayList();
-			GeneListRecord record = new GeneListRecord();
+			GeneListRecord record = new GeneListRecord(f.getName());
 			record.setSpecies(species.common());
 			record.setName(f.getName());
 			List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
@@ -63,11 +63,12 @@ public class Document
 					if (skip>0) { skip--;  continue; }
 					Gene g = new Gene("");
 					g.setData(line);
-					Gene existing = Model.findInList(geneList, g.getData());				// slow?
-					if (existing == null)
+//					Gene existing = Model.findInList(geneList, g.getName());		// slow?
+//					if (existing == null)
 						geneList.add(g);
 				}
 			}
+			record.setColumnList();
 			record.setGeneList(geneList);
 			return record;
 		}

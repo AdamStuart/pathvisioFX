@@ -5,17 +5,18 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.gpml.GPMLGroup;
+import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.chart.LineChart;
@@ -159,6 +160,7 @@ public class Model
 	// **-------------------------------------------------------------------------------
 	List<Gene> genes = FXCollections.observableArrayList();
 	GeneListRecord geneListRecord = null;
+	public GeneListRecord getGeneList() {	return	geneListRecord ; }
 	public void setGeneList(GeneListRecord rec, List<Gene> gs) {		genes = gs;	geneListRecord = rec; }
 	public int getNGenes() 				{	return	genes.size();	}
 	public void addGene(Gene g) 		{	genes.add(g);	}
@@ -181,6 +183,14 @@ public class Model
 		if ( find(g.getName()) == null) 
 			return genes.add(g);
 		return false;
+	}
+	
+	public boolean add(GeneListRecord g)
+	{
+		boolean anyTrue = false;
+		for (Gene gene : g.getGeneList())
+			anyTrue |= add(gene);
+		return anyTrue;
 	}
 	
 	public List<Gene> intersection(List<Gene> other)
@@ -207,8 +217,8 @@ public class Model
 		String name = nameOrId.trim();
 		for (Gene g : list)
 		{
-			if (name.equalsIgnoreCase(g.getName())) return g;
-			if (name.equalsIgnoreCase(g.getId())) return g;
+			if (name.equals(g.getName())) return g;			//IgnoreCase
+//			if (name.equalsIgnoreCase(g.getId())) return g;
 		}
 		return null;
 	}
@@ -265,95 +275,19 @@ public class Model
 		}
 	}
 	//--------------------------------------------------------------------
-	 
-	Map<String, DimensionRecord> dimensions = new HashMap<String, DimensionRecord>();
-	public VBox buildHypercube()
-	{
-		String[] headers = geneListRecord.getHeader1().split("\t");
-		int nCols = headers.length - 4;
-		VBox vbox = new VBox(12);
-		for (int col = 4; col < nCols; col++)
-		{
-			String title = headers[col];
-			List<Double> vals = new ArrayList<Double>();
-			for (Gene g : genes)
-				vals.add(new Double(g.getValue(col)));
-			DimensionRecord rec = new DimensionRecord(title, vals);
-			dimensions.put(title, rec);
-			rec.buildChart();
-//			vbox.getChildren().add(rec.getChart());
-		}
-		for (int col = 4; col < nCols; col += 2)
-		{
-			String xDim = headers[col];
-			String yDim = headers[col+1];
-			DimensionRecord xRec = dimensions.get(xDim);
-			DimensionRecord yRec = dimensions.get(yDim);
-			if (xRec != null && yRec != null)
-			{
-				LineChart<Number, Number> x1D = xRec.getChart();
-				LineChart<Number, Number> y1D = yRec.getChart();
-				ScatterChart<Number, Number> xy2D = buildScatterChart(xRec, yRec);
-				HBox conglom = new HBox(xy2D, new VBox(x1D, y1D));
-				vbox.getChildren().add(conglom);
-			}
-			break;
-		}	
-		return vbox;
-	}
-
-	private ScatterChart<Number, Number> buildScatterChart(DimensionRecord xRec, DimensionRecord yRec) {
-		final NumberAxis xAxis = new NumberAxis();
-		Range xRange = xRec.getRange();
-		xAxis.setLowerBound(xRange.min);
-		xAxis.setUpperBound(xRange.max);
-		xAxis.setLabel(xRec.getTitle());
-		final NumberAxis yAxis = new NumberAxis();
-		Range yRange = yRec.getRange();
-		yAxis.setLowerBound(yRange.min);
-		yAxis.setUpperBound(yRange.max);
-		yAxis.setLabel(yRec.getTitle());
-
-		ScatterChart<Number, Number>	scatter = new ScatterChart<Number, Number>(xAxis, yAxis);
-		scatter.setTitle(xRec.getTitle() + " x " + yRec.getTitle());
-		XYChart.Series<Number, Number> dataSeries = new XYChart.Series<Number, Number>();
-		scatter.getStyleClass().add("custom-chart");
-		dataSeries.setName("Genes");
-		int sz = Math.min(xRec.getNValues(), yRec.getNValues());
-		for (int i=0; i< sz; i++)
-		{
-			double x = xRec.getValue(i);
-			double y = yRec.getValue(i);
-			if (Double.isNaN(x) || Double.isNaN(y)) continue;
-			XYChart.Data<Number, Number> data = new XYChart.Data<Number, Number>(x, y);
-//			Region plotpoint = new Region();
-			Rectangle r = new Rectangle(2,2);
-			r.setFill(i<2000 ? Color.FIREBRICK : Color.YELLOW);
-//	        plotpoint.setShape(r);
-	        data.setNode(r);
-	        
-			dataSeries.getData().add(data);
-		}
-//		Shape circle = new Circle(1);
-//		circle.setFill(Color.RED);
-		dataSeries.setNode(new Rectangle(1,1));
-		scatter.getData().addAll(dataSeries);
-		return scatter;
-	}
-	// **-------------------------------------------------------------------------------
 	ObservableList<BiopaxRecord> references = FXCollections.observableArrayList();
 	public void addRef(BiopaxRecord ref) 	{	if (!refExists(ref.getId()))	references.add(ref);		}
-	private boolean refExists(String ref) {		return findRef(ref) != null;	}
+	private boolean refExists(String ref) 	{	return findRef(ref) != null;	}
 	private BiopaxRecord findRef(String ref) {
 		if (ref == null) return null;
 		for (BiopaxRecord r : references)
 			if (ref.equals(r.getRdfid())) return r;
 		return null;
 	}
-	public int getNReferences() 		{	return references.size();	}
+	public int getNReferences() 			{	return references.size();	}
 	public BiopaxRecord getReference(String ref) 	{	return findRef(ref);		}
 	public BiopaxRecord getReference(int i) {	return references.get(i);	}
-	public void clearRefs() 			{	references.clear();	}
+	public void clearRefs() 				{	references.clear();	}
 	public List<BiopaxRecord> getReferences() { return references;	}
 	private void readReferences(String state) {
 	}
@@ -516,6 +450,7 @@ public class Model
 		if (Pasteboard.isMarquee(node)) return;
 //		if (node instanceof Edge)			buff.append(describe(node));	
 		if (node instanceof Shape)			buff.append(StringUtil.spaces(indent) + describe(node) + "\n");	
+		if (node instanceof Group)			buff.append(StringUtil.spaces(indent) + describe(node) + "\n");	
 		if (node instanceof StackPane)		buff.append(StringUtil.spaces(indent) + describe(node) + "\n");
 		if (node instanceof Parent)
 			for (Node n : ((Parent) node).getChildrenUnmodifiable())
@@ -534,6 +469,7 @@ public class Model
 	}
 	// **-------------------------------------------------------------------------------
 	static public String describe(MNode node)	{	return node.toGPML();	}
+	static public String describe(Layer node)	{	return node.getName();	}
 	static public String describe(Node node)	{	return node.getClass().getSimpleName() + ": " + node.getId() + " " +
 				StringUtil.asString(node.getBoundsInParent());	}
 	static String getBoundsString(double x, double y, double w, double h)	{
@@ -636,6 +572,7 @@ public class Model
 	}
 	//-------------------------------------------------------------------------
 	public void dumpNodeTable() {
+		System.out.println(resourceMap.keySet().size());
 		for (String key : resourceMap.keySet())
 		{
 			String s;

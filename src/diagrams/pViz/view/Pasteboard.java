@@ -88,17 +88,21 @@ public class Pasteboard extends Pane
 	public Rectangle getMarquee()			{ return marquee;	}
 	private Label infoLabel;
 	public Label getInfoLabel()				{ return infoLabel;	}
-	private Layer backgroundLayer = new Layer("Background");
-	private Layer gridLayer = new Layer("Grid");
-	private Layer contentLayer = new Layer("Content");
-
-	public Layer getBackgroundLayer()		{ return backgroundLayer;	}
-	public Layer getGridLayer()				{ return gridLayer;	}
-	public Layer getContentLayer()			{ return contentLayer;	}
+	private LayerRecord backgroundLayer = new LayerRecord("Background");
+	private LayerRecord gridLayer = new LayerRecord("Grid");
+	private LayerRecord contentLayer = new LayerRecord("Content");
+//
+	public Layer getBackgroundLayer()		{ return backgroundLayer.getLayer();	}
+	public Layer getGridLayer()				{ return gridLayer.getLayer();	}
+	public Layer getContentLayer()			{ return contentLayer.getLayer();	}
+	
+	public LayerRecord getBackgroundLayerRecord()		{ return backgroundLayer;	}
+	public LayerRecord getGridLayerRecord()				{ return gridLayer;	}
+	public LayerRecord getContentLayerRecord()			{ return contentLayer;	}
 	
 	public void restoreBackgroundOrder() {
-		gridLayer.toBack();
-		backgroundLayer.toBack();
+		gridLayer.getLayer().toBack();
+		backgroundLayer.getLayer().toBack();
 		
 	}
 
@@ -128,17 +132,17 @@ public class Pasteboard extends Pane
 //		shapeFactory = factory.getShapeFactory();
 		makeMarquee();
 		createBackground();
-		getChildren().addAll(backgroundLayer, gridLayer);
-		
+		getChildren().addAll(getBackgroundLayer(), getGridLayer(), getContentLayer());
+		activeLayerName = "Content";
 		selectionMgr = new Selection(this);
 //		pane.getChildren().add(marquee);
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
-		infoLabel = new Label("");
-		infoLabel.setId(INFO_LABEL_ID);
-		add(infoLabel);
-		StackPane.setAlignment(infoLabel, Pos.TOP_RIGHT);
-		infoLabel.setVisible(false);
+//		infoLabel = new Label("");
+//		infoLabel.setId(INFO_LABEL_ID);
+//		add(infoLabel);
+//		StackPane.setAlignment(infoLabel, Pos.TOP_RIGHT);
+//		infoLabel.setVisible(false);
 		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
 //		turnOnClipping();
 	}
@@ -154,9 +158,11 @@ public class Pasteboard extends Pane
 	
 	
 	private Layer getLayer(String string) {
-		if ("Background".equals(string)) return getBackgroundLayer();
-		if ("Grid".equals(string)) return getGridLayer();
-		return getContentLayer();		// TODO support user named layers
+		LayerRecord rec = controller.getLayerRecord(string);
+		return rec == null ? null : rec.getLayer();
+//		if ("Background".equals(string)) return getBackgroundLayer();
+//		if ("Grid".equals(string)) return getGridLayer();
+//		return getContentLayer();		// TODO support user named layers
 	}
 	public void makeMarquee() {
 		marquee = new Rectangle();
@@ -170,13 +176,13 @@ public class Pasteboard extends Pane
 	public static boolean isMarquee(Node node) {
 		return node != null && "Marquee".equals(node.getId());
 	}
-	public void add(Node node)				{	getChildren().add(node);	}
-	public void remove(Node node)			{	getChildren().remove(node);	}
+	public void add(Node node)				{	getActiveLayer().add(node);	}
+	public void remove(Node node)			{	getActiveLayer().remove(node);	}
 
-	public void clear()						{ 	getChildren().clear();	}
-	public void clearLayer()				{ 	getChildren().clear();	}
-	public void add(VNode vnode)			{	vnode.setLayerName(activeLayerName); 	getChildren().add(vnode);	}
-	public void add(int idx, Node node)		{	node.getProperties().put("Layer", activeLayerName); 	getChildren().add(idx, node);	}
+	public void clear()						{ 	getActiveLayer().clear();	}
+	public void clearLayer()				{ 	getActiveLayer().clear();	}
+	public void add(VNode vnode)			{	vnode.setLayerName(activeLayerName); 	getActiveLayer().add(vnode);	}
+	public void add(int idx, Node node)		{	node.getProperties().put("Layer", activeLayerName); 	getActiveLayer().add(idx, node);	}
 	public void add(int idx, VNode vnode)	
 	{	
 		vnode.setLayerName(activeLayerName); 	
@@ -194,7 +200,14 @@ public class Pasteboard extends Pane
 	public void addAllVNodes(List<VNode> n) {	for (VNode node : n) add(node);	}
 	
 	String activeLayerName = "Content";
-	public String activeLayerName()			{ return activeLayerName; }
+	Layer getActiveLayer() 					
+	{ 	
+		LayerRecord rec =  controller.getLayerRecord(activeLayerName);
+		if (rec == null)	rec = contentLayer;
+		return rec.getLayer();	
+	}
+	public String activeLayerName()			{ 	return activeLayerName; }
+	public void setActiveLayer(String s)	{  	activeLayerName = s; }
 //	ObservableList<Node> getActiveLayer()	{	return getChildren();	}
 	private Rectangle clipRect = new Rectangle();
 	private void turnOnClipping()
@@ -526,6 +539,7 @@ public class Pasteboard extends Pane
 			{
 				AttributeMap map = new AttributeMap("ShapeType", getTool().name());
 				map.addPoint(event.getX(), event.getY());
+				map.put("Layer",  activeLayerName);
 				MNode mNode = new MNode(map, getController());
 				activeStack = mNode.getStack();	
 			}
@@ -898,6 +912,7 @@ public class Pasteboard extends Pane
 //		setTranslateX(0);
 //		setTranslateY(0);
 	}
+	//---------------------------------------------------------------------------
 	public void resetLayerVisibility(String layername, boolean vis) {
 		if (layername == null) return;
 		List<Node> layerNodes = getChildrenInLayer(layername);
@@ -914,8 +929,17 @@ public class Pasteboard extends Pane
 		}
 	}
 	
-	
+	public void addLayer(LayerRecord newLayer) {
+		getChildren().add(newLayer.getLayer());
+	}
+
 	private List<Node> getChildrenInLayer(String layername) {
+		
+		Layer layer =  getLayer(layername);
+		if (layer != null)
+			return layer.getNodes();
+		
+//OBSOLETE?		
 		return getChildren().stream() 			//convert list to stream
 				.filter(node -> layername.equals(getLayerName(node)))	//filters the line, equals to layername
 				.collect(Collectors.toList());			//collect the output and convert streams to a List
@@ -933,6 +957,19 @@ public class Pasteboard extends Pane
 			return""; 
 		}
 		return nodeLayer.toString();
+	}
+	public void resetLayerOrder(ObservableList<LayerRecord> items) {
+		for (LayerRecord rec : items)
+		{
+			System.err.println("raising layer: " + rec.getName());
+			Layer layer = getLayer(rec.getName());
+			if (layer != null)
+				layer.toFront();
+		}
+	}
+	public void selectByType(String s) {
+		System.out.println("selectByType " + s); 
+//		for (VNode)
 		
 	}
 }

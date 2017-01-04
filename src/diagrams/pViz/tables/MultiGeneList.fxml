@@ -23,7 +23,7 @@
       <HBox BorderPane.alignment="CENTER">
          <children>
             <Button fx:id="westSidebar" mnemonicParsing="false" text="West" />
-            <MenuBar>
+            <MenuBar HBox.hgrow="ALWAYS">
               <menus>
                 <Menu mnemonicParsing="false" text="File">
                   <items>
@@ -46,22 +46,22 @@
       </HBox>
    </top>
    <center>
-      <VBox BorderPane.alignment="CENTER">
+      <VBox fx:id="splitContainer" BorderPane.alignment="CENTER">
          <children>
-            <ToolBar prefHeight="40.0" prefWidth="200.0">
+            <ToolBar prefHeight="40.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
               <items>
                 <Button fx:id="union" mnemonicParsing="false" text="Union" />
                   <Button fx:id="intersect" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Intersection" />
                   <Button fx:id="diff" layoutX="73.0" layoutY="10.0" mnemonicParsing="false" text="Difference" />
               </items>
             </ToolBar>
-            <ScrollPane fx:id="scrollpane" VBox.vgrow="ALWAYS">
+            <ScrollPane fx:id="scrollpane" fitToHeight="true" fitToWidth="true" VBox.vgrow="ALWAYS">
                <content>
-                  <SplitPane fx:id="splitpane" dividerPositions="0.298, 0.7" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308">
+                  <SplitPane fx:id="splitpane" dividerPositions="0.298, 0.7">
                     <items>
                       <AnchorPane>
                            <children>
-                              <TableView fx:id="firstTable" prefHeight="359.0" prefWidth="180.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-9.0" AnchorPane.topAnchor="0.0">
+                              <TableView fx:id="firstTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="2.0" AnchorPane.topAnchor="0.0">
                                 <columns>
                                   <TableColumn fx:id="flagColumn1" prefWidth="28.0" text="C1" />
                                   <TableColumn fx:id="geneNameColumn1" prefWidth="140.0" text="C2" />
@@ -81,7 +81,7 @@
                         </AnchorPane>
                         <AnchorPane layoutX="10.0" layoutY="10.0">
                            <children>
-                              <TableView fx:id="thirdTable" prefHeight="359.0" prefWidth="180.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-9.0" AnchorPane.topAnchor="0.0">
+                              <TableView fx:id="thirdTable" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="-9.0" AnchorPane.topAnchor="0.0">
                                  <columns>
                                     <TableColumn fx:id="flagColumn3" prefWidth="27.0" text="C1" />
                                     <TableColumn fx:id="geneNameColumn3" prefWidth="123.0" text="C2" />

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:id="keyFramePalette" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="141.0" prefWidth="306.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.KeyFrameController">
+   <children>
+      <TableView fx:id="layersTable" prefHeight="141.0" prefWidth="318.0">
+        <columns>
+          <TableColumn fx:id="keyFrameNameColumn" minWidth="50.0" prefWidth="167.0" text="Name" />
+            <TableColumn fx:id="keyFrameTimeColumn" maxWidth="90.0" minWidth="50.0" prefWidth="70.0" text="Hold" />
+            <TableColumn fx:id="keyFramePathColumn" minWidth="50.0" prefWidth="63.0" text="Move" />
+        </columns>
+      </TableView>
+   </children>
+</VBox>

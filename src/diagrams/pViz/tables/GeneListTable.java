@@ -1,10 +1,14 @@
 package diagrams.pViz.tables;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.app.Document;
+import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.model.Model;
 import gui.DropUtil;
 import javafx.event.EventHandler;
@@ -26,12 +30,11 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import util.StringUtil;
 
 public class GeneListTable extends TableView<Gene> {
-	private static final DataFormat GENE_MIME_TYPE = GeneListController.GENE_MIME_TYPE;
+//	private static final DataFormat GENE_MIME_TYPE = GeneListController.GENE_MIME_TYPE;
 	static TableRow<Gene> thisRow = null;
 	Controller controller;
 
@@ -79,6 +82,19 @@ public class GeneListTable extends TableView<Gene> {
 		getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
 		
+	}
+	public void doDrag(DragEvent e)
+	{
+		Dragboard db = e.getDragboard();
+		Set<DataFormat> formats = db.getContentTypes();
+		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
+		 for (File f : db.getFiles())
+		 {
+			 GeneListRecord genes = Document.readCDT(f, controller.getSpecies());
+			 addGeneList(genes);
+		 }
+		 
+		 e.consume();
 	}
 	private final class KeyHandler implements EventHandler<KeyEvent> {
 		@Override
@@ -143,18 +159,17 @@ public class GeneListTable extends TableView<Gene> {
 		content.put(DataFormat.PLAIN_TEXT, "GENE " + draggable.toString());
 		db.setContent(content);
 //		draggable.setVisible(false);
-ev.consume();
+		ev.consume();
 		System.out.println("startGeneDrag");
 	}
 
-	private void doDrag(DragEvent e)
-	{
-//		Dragboard db = e.getDragboard();
-//		Set<DataFormat> formats = db.getContentTypes();
-//		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
-//		e.consume();
-	}
 	
+	private void addGeneList(GeneListRecord genes) {
+		 if (genes == null) return;
+		controller.getModel().add(genes);
+		
+	}
+
 	private void dragReleased(DragEvent e)
 	{
 		if (yOffset < 0) return;

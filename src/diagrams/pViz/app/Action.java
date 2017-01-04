@@ -82,6 +82,7 @@ public class Action
 		Group,
 		Move,
 		New,
+		Opacity,
 		Paste,
 		Property,
 		Resize,

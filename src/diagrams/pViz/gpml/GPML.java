@@ -45,7 +45,7 @@ public class GPML {
 		org.w3c.dom.Document doc = FileUtil.openXML(file);
 		if (doc == null) return null;
 		List<Gene> list = FXCollections.observableArrayList();
-		GeneListRecord record = new GeneListRecord();
+		GeneListRecord record = new GeneListRecord(file.getName());
 		record.setSpecies(inSpecies.common());
 		record.setName(file.getName());
 		
@@ -56,13 +56,13 @@ public class GPML {
 			org.w3c.dom.Node domNode = nodes.item(i);
 			NamedNodeMap nodemap = domNode.getAttributes();
 			org.w3c.dom.Node type = nodemap.getNamedItem("Type");
-			if ("GeneProduct".equals(type.getNodeValue()))
+			if ("GeneProduct".equals(type.getNodeValue()) || "Protein".equals(type.getNodeValue()))
 			{
 				String textLabel = nodemap.getNamedItem("TextLabel").getNodeValue();
 				Gene existing = Model.findInList(list, textLabel);
 				if (existing == null)
 					list.add(new Gene(textLabel));
-//				System.out.println(textLabel + " " + ((existing == null) ? "unique" : "found"));
+				System.out.println(textLabel + " " + ((existing == null) ? "unique" : "found"));
 			}
 		}
 		record.setGeneList(list);
@@ -111,10 +111,10 @@ public class GPML {
 		parseStateNodes(doc.getElementsByTagName("State"));
 		getController().getPasteboard().restoreBackgroundOrder();
 //		getController().getPasteboard().getChildren().sort(c);
-		List<Node> sorted = getController().getPasteboard().getChildren().stream()
-        	.sorted(Comparator.comparing(null).reversed())
-        	.peek(System.out::println)
-        	.collect(Collectors.toCollection(()->FXCollections.observableArrayList()));
+//		List<Node> sorted = getController().getPasteboard().getChildren().stream()
+//        	.sorted(Comparator.comparing(null).reversed())
+//        	.peek(System.out::println)
+//        	.collect(Collectors.toCollection(()->FXCollections.observableArrayList()));
 	}
 	
 	Comparator<Node> c = new Comparator<Node>()

@@ -1,21 +1,12 @@
 package diagrams.pViz.app;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.util.Base64;
-import java.util.Base64.Decoder;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
-import javax.imageio.ImageIO;
-
 import animation.BorderPaneAnimator;
-import database.forms.EntrezQuery;
 import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.Anchor;
@@ -23,25 +14,26 @@ import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
-import diagrams.pViz.tables.DraggableTableRow;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.GeneListTable;
 import diagrams.pViz.tables.LegendRecord;
-import diagrams.pViz.tables.MultiGeneListController;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.view.Inspector;
+import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
 import diagrams.pViz.view.LayerRecord;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import gui.Borders;
+import gui.DropUtil;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
-import javafx.embed.swing.SwingFXUtils;
+import javafx.concurrent.Worker;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -50,8 +42,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
@@ -59,16 +49,11 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
@@ -77,18 +62,18 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
-import model.bio.PathwayRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -96,7 +81,6 @@ import util.StringUtil;
 
 public class Controller implements Initializable, IController 
 {
-    private static final DataFormat BIOPAX_MIME_TYPE = new DataFormat("application/x-java-biopax");
 
 	//@formatter:off
 	private Model model;
@@ -119,14 +103,6 @@ public class Controller implements Initializable, IController
 	private PathwayController pathwayController = null;
 	@FXML private BorderPane container;			// root of fxml	
 
-	@FXML private TableView<BiopaxRecord> refTable;
-	@FXML private TableColumn<BiopaxRecord, String> refCol;
-	@FXML private TableColumn<BiopaxRecord, String> idCol;
-	@FXML private TableColumn<BiopaxRecord, String> dbCol;
-	@FXML private TableColumn<BiopaxRecord, String> authorCol;
-	@FXML private TableColumn<BiopaxRecord, String> titleCol;
-	@FXML private TableColumn<BiopaxRecord, String> sourceCol;
-	@FXML private TableColumn<BiopaxRecord, String> yearCol;
 	@FXML private Button tableOptions;
 
 	@FXML private Button gene;		// something to drag in the Genelist window
@@ -149,7 +125,9 @@ public class Controller implements Initializable, IController
 	@FXML private MenuItem delete;
 	@FXML private VBox west;
 	@FXML private HBox bottomPadding;
+	@FXML private BorderPane 	loadContainer;
 
+	
 	//------------------------------------------
 	static Image dragImage;
 	@FXML private void dragControl(MouseEvent e)
@@ -176,6 +154,15 @@ public class Controller implements Initializable, IController
 	        db.setContent(cc);
 		}
 	}
+	@FXML private void selectProtein()	{ 	pasteboard.selectByType("Protein");	}
+	@FXML private void selectGene()		{ pasteboard.selectByType("Gene");		}
+	@FXML private void selectMetabolite(){ 	pasteboard.selectByType("Metabolite");		}
+	@FXML private void selectRna()		{ 	pasteboard.selectByType("Rna");		}
+	@FXML private void selectLabels()	{ 	pasteboard.selectByType("Label");		}
+	@FXML private void selectShapes()	{ 	pasteboard.selectByType("Shape");		}
+	@FXML private void selectEdges()	{ 	pasteboard.selectByType("Edge");		}
+	@FXML private void moveToLayer()	{ 	System.err.println("moveToLayer called, not its subitem");		}
+	@FXML private void addKeyFrame()	{ 	inspector.addKeyFrame();	}
 
 	@FXML private void undo()			{ 	undoStack.undo();	}
 	@FXML private void redo()			{ 	undoStack.redo();		}	
@@ -195,6 +182,23 @@ public class Controller implements Initializable, IController
 			if (w instanceof Stage)
 				((Stage) w).close();
 		}
+	}
+	static String jupy = "https://nbviewer.jupyter.org/github/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC3.ipynb";
+	@FXML private void showJupyter()	
+	{ 	
+		try 
+		{
+			Stage browser = new Stage();
+		    WebView webview = new WebView();
+		    browser.setScene(new Scene(webview, 800, 1200));
+			final WebEngine webEngine = webview.getEngine();
+			webEngine.getLoadWorker().stateProperty().addListener((x,y,newState) -> {
+			     if (newState == Worker.State.SUCCEEDED) 
+			         browser.setTitle(webEngine.getLocation());   }  );
+			 webEngine.load(jupy);
+			 browser.show();
+		}
+		catch(Exception e) { e.printStackTrace();	}
 	}
 	@FXML private void print()			{ 	doc.print();			}
 	@FXML private void quit()			{ 	Platform.exit();			}
@@ -220,10 +224,10 @@ public class Controller implements Initializable, IController
 	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.restoreBackgroundOrder();  	}
 	@FXML public  void toLayer()		
 	{	
-		String layername = "Content";
-		undoStack.push(ActionType.Reorder);	  
-		getSelectionManager().setLayer(layername);
-		pasteboard.restoreBackgroundOrder();  	
+//		String layername = "Content";
+//		undoStack.push(ActionType.Reorder);	  
+//		getSelectionManager().setLayer(layername);
+//		pasteboard.restoreBackgroundOrder();  	
 	}
 	public List<LayerRecord> getLayers()	{	return layerController.getLayers();	}
 	public void moveSelectionToLayer(String layername)
@@ -238,31 +242,7 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	@FXML public  void browsePathways()		
 	{
-		Stage browserStage = new Stage();
-		try 
-		{
-			browserStage.setTitle("Pathway Browser");
-			FXMLLoader fxmlLoader = new FXMLLoader();
-			String fullname = "../tables/PathwayList.fxml";
-		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
-		    if (url == null)
-		    {
-		    	System.err.println("Bad path to the FXML file: " + fullname);
-		    	return;
-		    }
-		    fxmlLoader.setLocation(url);
-		    Pane appPane =  fxmlLoader.load();
-		    pathwayController = (PathwayController) fxmlLoader.getController();
-		    pathwayController.setParentController(this);
-		    browserStage.setScene(new Scene(appPane, 800, 800));
-		    browserStage.show();
-		    pathwayController.doSearch();
-		}
-		catch (Exception e) 
-		{ 
-			System.err.println("Loading error in browsePathways()");
-			e.printStackTrace();
-		}
+			App.browsePathways(this);
 	}	
 	// **-------------------------------------------------------------------------------
 	public  void buildStage(String title, VBox contents)		
@@ -275,29 +255,6 @@ public class Controller implements Initializable, IController
 		    browserStage.show();
 		}
 		catch (Exception e) { e.printStackTrace();}
-	}
-	
-	public  Pair<FXMLLoader, Stage> buildStage(String title, String fxml, int wid, int hght)		
-	{
-		Stage stage = new Stage();
-		try 
-		{
-			stage.setTitle(title);
-			FXMLLoader fxmlLoader = new FXMLLoader();
-		    URL url = getClass().getResource(fxml);		// this gets the fxml file from the same directory as this class
-		    if (url == null)
-		    {
-		    	System.err.println("Bad path to the FXML file: " + fxml);
-		    	return null;
-		    }
-		    fxmlLoader.setLocation(url);
-		    Region appPane =  fxmlLoader.load();
-		    stage.setScene(new Scene(appPane, wid, hght));
-		    stage.show();
-		    return new Pair<FXMLLoader, Stage>(fxmlLoader, stage);
-		}
-		catch (Exception e) { e.printStackTrace();}
-		return null;
 	}
 
 	public Species getSpecies()	{ return model.getSpecies();	}
@@ -312,7 +269,7 @@ public class Controller implements Initializable, IController
 		{
 			List<Edge> edges = getDrawModel().connectSelectedNodes();
 			for (Edge e: edges)
-				add(0, e, getActiveLayer());
+				add(0, e, getActiveLayerName());
 		}
 	}
 	
@@ -327,6 +284,9 @@ public class Controller implements Initializable, IController
 	private Stage stage;
 	private Inspector inspector;
 	public Inspector getInspector() { return inspector;	}
+	@FXML private void showInspector() {
+		bottomSideBarButton.fire();
+	}
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
@@ -337,9 +297,7 @@ public class Controller implements Initializable, IController
 		drawPane.getChildren().add(pasteboard);
 		
 		doc = new Document(this);
-		setupInspector();
-		setupBiopaxTable();
-		
+		setupInspector();		
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
 		pasteboard.getStylesheets().add(cssURL);
 		stage = App.getInstance().getStage();
@@ -357,6 +315,7 @@ public class Controller implements Initializable, IController
 		if (east != null)
 		{
 			geneListTable = new GeneListTable(this);
+			DropUtil.makeFileDropPane(geneListTable, e -> { geneListTable.doDrag(e); });
 			east.getChildren().add(geneListTable);
 		}
 		setupPalette();
@@ -369,7 +328,10 @@ public class Controller implements Initializable, IController
 		bottomSideBarButton.fire();
 		
 		pasteboard.makeGrid(toggleGridButton, scrollPane);
-		Pair<FXMLLoader, Stage> pair = buildStage("Layers", "../view/Layers.fxml", 250, 300);
+		
+		Pair<FXMLLoader, Stage> loader = App.getInstance().makeLoader();
+		
+		Pair<FXMLLoader, Stage> pair = App.buildStage("Layers", "../view/Layers.fxml", 250, 300);
 		layerController = (LayerController) pair.getKey().getController();
 		layerController.setParentController(this);
 		Stage stage = pair.getValue();
@@ -378,8 +340,12 @@ public class Controller implements Initializable, IController
 		stage.setOnCloseRequest(ev -> { stage.hide(); } );
 		stage.setAlwaysOnTop(true);
 
+		loader.getValue().toFront();
 		boolean startWithShapes = false;
 		if (startWithShapes) test1();
+		
+        Thread postponed =  new Thread(() -> Platform.runLater(() -> {  loader.getValue().toFront();	} )  );
+        postponed.start();
 	}
 	private void setupInspector() {
 		URL res = getClass().getResource("../view/Inspector.fxml");
@@ -395,34 +361,8 @@ public class Controller implements Initializable, IController
 	   { System.err.println("Inspector failed to load");}
 
 	}
-	static TableRow<BiopaxRecord> thisRow = null;
-	private void setupBiopaxTable() {
-		
-//		TableColumn[] allCols = { refCol, idCol, dbCol, authorCol, titleCol, sourceCol, yearCol };
 
-		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("xrefid"));
-		idCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("id"));
-		dbCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("db"));
-		authorCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("authors"));
-		titleCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("title"));
-		sourceCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("source"));
-		yearCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("year"));
-
-		refTable.setRowFactory((a) -> {  return new DraggableTableRow<BiopaxRecord>(refTable, BIOPAX_MIME_TYPE, this);   });
-		
-	}
-	public void showPMIDInfo(String pmid)
-	{
-	   String text = EntrezQuery.getPubMedAbstract(pmid);
-	   if (StringUtil.hasText(text))
-	   {  
-		   Alert a = new Alert(AlertType.INFORMATION, text);
-		   a.setHeaderText("PubMed Abstract");
-		   a.getDialogPane().setMinWidth(600);
-		   a.setResizable(true);
-		   a.showAndWait();
-	   }
-	}
+	public void doNewGeneList()	{		App.doNewGeneList(null);	}
 	
 	
 	public void getInfo(DataFormat mimeType, String idx, String colname, MouseEvent ev) {
@@ -435,14 +375,6 @@ public class Controller implements Initializable, IController
 			   if (index >=0 && model.getNGenes() > index)
 				   	rowName = model.getGenes().get(index).getId();
 //			   showGeneInfo(rowName);
-			   return;
-		  }
-			if (mimeType == BIOPAX_MIME_TYPE)
-			 {
-			   String rowName = "";
-			   if (index >=0 && model.getNReferences() > index)
-				   	rowName = model.getReference(index).getId();
-			   showPMIDInfo(rowName);
 			   return;
 		  }
 		  if (mimeType == PathwayController.PATHWAY_MIME_TYPE)
@@ -482,7 +414,11 @@ public class Controller implements Initializable, IController
 	{
 //		AboutDialog dlog = new AboutDialog();
 //		dlog.showAndWait();
-	}	//-----------------------------------------------------------------------
+	}
+	//-----------------------------------------------------------------------
+	@FXML private void doNewMultiGeneList()  { 	App.doNewMultiGeneList(); 	}
+	
+	//-----------------------------------------------------------------------
 	@FXML private void addLegend()
 	{
 		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);
@@ -490,9 +426,11 @@ public class Controller implements Initializable, IController
 	LayerController layerController;
 	@FXML private void showLayers()
 	{
-		layerController.getStage().show();
+		if (layerController.getStage().isShowing())
+			layerController.getStage().hide();
+		else layerController.getStage().show();
 	}
-	public LayerRecord getLayer(String name)
+	public LayerRecord getLayerRecord(String name)
 	{
 		return layerController.getLayer(name);
 	}
@@ -604,11 +542,11 @@ public class Controller implements Initializable, IController
 	//-----------------------------------------------------------------------------
 	public void addXMLDoc(org.w3c.dom.Document doc)
 	{
-		new GPML(model, getActiveLayer()).read(doc);
+		new GPML(model, getActiveLayerName()).read(doc);
 		updateTables();
-		Window window = refTable.getScene().getWindow();
-        if (window instanceof Stage) 
-        	((Stage) window).setTitle(model.getTitle());	
+//		Window window = refTable.getScene().getWindow();
+//        if (window instanceof Stage) 
+//        	((Stage) window).setTitle(model.getTitle());	
         Thread postponed =  new Thread(() -> Platform.runLater(() -> {  getModel().resetEdgeTable();	} )  );
         postponed.start();  
         hideAnchors();
@@ -617,60 +555,14 @@ public class Controller implements Initializable, IController
 
 	}
 			
-	public String getActiveLayer() {		return pasteboard.activeLayerName();	}
+	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}
+	public String getActiveLayerName() 	{		return pasteboard.activeLayerName();	}
 	public void updateTables() {
-		refTable.getItems().addAll(model.getReferences());
+//		refTable.getItems().addAll(model.getReferences());
 		geneListTable.populateTable(model, model.getGenes());
 	}
 
 	//-----------------------------------------------------------------------------
-	static final String RESOURCE = "../gpml/GeneList.fxml";
-    static final String STYLE = "genelistStyles.css";
-	public void doNewGeneList() 
-	{
-		try
-		{
-			Stage stage = new Stage();
-			URL res = getClass().getResource(RESOURCE);
-		    FXMLLoader geneListLoader = new FXMLLoader(res);
-	        Scene scene = new Scene(geneListLoader.load());
-		    GeneListController glc = (GeneListController) geneListLoader.getController();   
-		    glc.setParentController(this);
-//		    glc.loadTables(model);
-		    glc.loadTables(geneListTable.getItems());
-//			scene.getStylesheets().add(GeneListController.class.getResource(STYLE).toExternalForm());
-	        stage.setTitle("Gene List Window");
-	        stage.setX(20);
-			stage.setWidth(800);
-			stage.setHeight(650);
-			stage.setScene(scene);
-			stage.show();
-		}
-		catch (Exception e) { e.printStackTrace();	}
-	}
-	
-	static final String MG_RESOURCE = "../tables/MultiGeneList.fxml";
-    static final String MG_STYLE = "../tables/genelistStyles.css";
-	public void doNewMultiGeneList() 
-	{
-		try
-		{
-			Stage stage = new Stage();
-			URL res = getClass().getResource(MG_RESOURCE);
-		    FXMLLoader geneListLoader = new FXMLLoader(res);
-	        Scene scene = new Scene(geneListLoader.load());
-		    MultiGeneListController glc = (MultiGeneListController) geneListLoader.getController();   
-		    glc.setParentController(this);
-			scene.getStylesheets().add(getClass().getResource(MG_STYLE).toExternalForm());
-	        stage.setTitle("Multi Gene List Window");
-	        stage.setX(20);
-			stage.setWidth(800);
-			stage.setHeight(650);
-			stage.setScene(scene);
-			stage.show();
-		}
-		catch (Exception e) { e.printStackTrace();	}
-	}
 	
 		
 //	public void addState(String s)			// used in undo restore
@@ -785,10 +677,6 @@ public class Controller implements Initializable, IController
 		if (n == null) return;
 		pasteboard.getChildren().add(n);	
 		if ("Marquee".equals(n.getId())) 	return;
-//		model.addResource(n.getId(), n.getModel());
-		if (n instanceof VNode)
-		{
-		}
 	}
 	public void add(int idx, Edge e, String layername)							
 	{		
@@ -810,17 +698,14 @@ public class Controller implements Initializable, IController
 	public void add(VNode n)							
 	{		
 		pasteboard.add(n);	
-		MNode modelNode = n.getModel();
+		MNode modelNode = n.modelNode();
 		if (n.isAnchor()) return;
 		if (n.isLabel()) return;
 		Object prop  = modelNode.getAttributeMap().get("TextLabel");
 		if (prop != null && model.findGene(""+prop) == null)
 			model.addGene(new Gene(""+prop));
 	}
-	public void add(int index, VNode n)							
-	{		
-		pasteboard.add(index, n);	
-	}
+	public void add(int index, VNode n)		 {	 pasteboard.add(index, n); 	}
 	public void addAll(List<VNode> n)	{		pasteboard.addAllVNodes(n);	}
 	public void addAll(VNode... n)		{		pasteboard.addAllVNodes(n);	}
 	
@@ -854,9 +739,9 @@ public class Controller implements Initializable, IController
 
 	public void timeseries(TableView content)	{	}
 	public void hiliteByReference(String ref) {
-		for (BiopaxRecord biopax : model.getReferences())
-			if (ref.equals(biopax.getRdfid()))
-				refTable.getSelectionModel().select(biopax);
+//		for (BiopaxRecord biopax : model.getReferences())
+//			if (ref.equals(biopax.getRdfid()))
+//				refTable.getSelectionModel().select(biopax);
 	}
 	public void openByReference(String ref) {
 		for (BiopaxRecord biopax :  model.getReferences())
@@ -864,7 +749,7 @@ public class Controller implements Initializable, IController
 			{
 				String pmid = biopax.getId();
 				if (StringUtil.hasText(pmid))
-					showPMIDInfo(pmid);
+					ReferenceController.showPMIDInfo(pmid);
 			}
 	}
 	public void assignDataFile(File f) {
@@ -929,59 +814,5 @@ public class Controller implements Initializable, IController
 		model.setGeneList(rec, rec.getGeneList());
 		model.fillIdlist();
 	}
-	public void viewPathway(PathwayRecord rec)		
-	{ 
-		String url = rec.getUrl();
-//		Thread thread = new Thread() {
-		String result = StringUtil.callURL(url, false);   // TODO threaded
-		viewPathway(result);
-	}
-	public void viewPathwayAsImage(PathwayRecord rec)		
-	{ 
-		String url = rec.getPngUrl();
-//		Thread thread = new Thread() {
-		String result = StringUtil.callURL(url, false);   // TODO threaded
-		String png64  =StringUtil.readTag( result, "ns1:data");
-		Decoder decoder = Base64.getDecoder();
-		byte[] imageBytes  = decoder.decode(png64);
-		InputStream stream = new ByteArrayInputStream(imageBytes);
-		WritableImage wimg;
-		BufferedImage bufferedimage = null;
-		try {
-			 bufferedimage = ImageIO.read(stream);
-			 wimg = new WritableImage(bufferedimage.getWidth(),  bufferedimage.getHeight());
-			wimg = SwingFXUtils.toFXImage(bufferedimage, wimg);
-			ImageView view = new ImageView(wimg);
-			view.prefWidth(300);
-			view.minWidth(300);
-			view.prefHeight(300);
-			view.minHeight(300);
-			Alert alert = new Alert(AlertType.INFORMATION);
-			alert.setGraphic(view);
-			alert.showAndWait();		 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	private void viewPathway(String result)		
-	{ 		
-//		String pathwayFxml = "../gpml/GeneList.fxml";
-//		String fullname = "../gpml/GeneList.fxml";
-		Pair<FXMLLoader, Stage> pair = buildStage("Pathway", "Visio.fxml", 1200, 800);
-		Controller newController = pair.getKey().getController();
-		try
-		{
-			String gpml  =StringUtil.readTag( result, "ns2:gpml");
-			Decoder decoder = Base64.getDecoder();
-			byte[] cleanXML  = decoder.decode(gpml);
-			String str = new String(cleanXML);
-			newController.open(str);
-		}
-		catch (Exception e) {}
-	}
-	public void getPathwayAt(Integer o) {
-		
-		
-	}
+	public void setActiveLayer(String s) {		pasteboard.setActiveLayer(s);	}
 }

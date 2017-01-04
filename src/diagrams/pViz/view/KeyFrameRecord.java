@@ -44,4 +44,7 @@ public class KeyFrameRecord
 	public String getName()  { return name.get();}
 	public void setName(String b)  { name.set(b);}
 
+	String state;
+	public void setState(String xml)	{  state = xml;	}
+	public String getState()	{  return state;	}
 }

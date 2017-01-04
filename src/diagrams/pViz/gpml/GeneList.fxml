@@ -5,9 +5,11 @@
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
@@ -20,13 +22,43 @@
             <Button fx:id="draggable" minWidth="60.0" mnemonicParsing="false" text="All" />
             <MenuBar fx:id="menubar" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
               <menus>
+                  <Menu mnemonicParsing="false" text="File">
+                    <items>
+                        <MenuItem fx:id="newGeneList" mnemonicParsing="false" onAction="#newGeneList" text="New Gene List">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="N" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways" />
+                        <MenuItem fx:id="chart" mnemonicParsing="false" onAction="#doChart" text="Chart All Columns" />
+                        <MenuItem fx:id="chartVis" mnemonicParsing="false" onAction="#doChartVisible" text="Chart Visible Columns" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="open" mnemonicParsing="false" onAction="#doOpen" text="Open" />
+                        <MenuItem mnemonicParsing="false" text="Open Recent" />
+                        <MenuItem fx:id="filter" mnemonicParsing="false" onAction="#filterSelectedGenes" text="Filter Selected" />
+                        <MenuItem fx:id="close" mnemonicParsing="false" onAction="#doClose" text="Close" />
+                    </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Edit">
+                     <items>
+                        <MenuItem mnemonicParsing="false" text="Cut" />
+                        <MenuItem mnemonicParsing="false" text="Copy" />
+                        <MenuItem mnemonicParsing="false" text="Paste" />
+                        <MenuItem mnemonicParsing="false" text="Paste Special" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="selectAll" mnemonicParsing="false" onAction="#selectAll" text="Select All" />
+                        <MenuItem fx:id="showAllColumns" mnemonicParsing="false" onAction="#showAllColumns" text="Show All Columns" />
+                        <MenuItem fx:id="editColumns" mnemonicParsing="false" onAction="#editColumns" text="Edit Columns" />
+                     </items>
+                  </Menu>
                 <Menu mnemonicParsing="false" text="Gene">
                   <items>
-                    <MenuItem fx:id="addColumn" mnemonicParsing="false" onAction="#doAddColumn" text="Add Column..." />
-                        <MenuItem fx:id="chart" mnemonicParsing="false" onAction="#doChart" text="Chart..." />
+                        <MenuItem fx:id="drill" mnemonicParsing="false" onAction="#drillDown" text="Drill Down">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="D" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                         <MenuItem fx:id="info" mnemonicParsing="false" onAction="#getInfo" text="Get Info..." />
-                        <MenuItem fx:id="group" mnemonicParsing="false" onAction="#groupSelectedGenes" text="Group Selected" />
-                        <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways" />
+                    <MenuItem fx:id="addColumn" mnemonicParsing="false" onAction="#doAddColumn" text="Add Column..." />
                   </items>
                 </Menu>
               </menus>

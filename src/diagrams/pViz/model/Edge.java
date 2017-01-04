@@ -146,12 +146,12 @@ public class Edge  {
 		pt = new Point2D(0, 0);
 		if (endNode == null) {
 			String val = getAttributes().get("end");
-			MNode mNode = startNode.getModel().getModel().getResourceByKey(val);
+			MNode mNode = startNode.modelNode().getModel().getResourceByKey(val);
 			if (mNode != null)
 				endNode = mNode.getStack();
 
 			Shape shape = endNode == null ? 
-					startNode.getModel().getModel().findShape(edgeLine.endGraphId()) : endNode.getFigure();
+					startNode.modelNode().getModel().findShape(edgeLine.endGraphId()) : endNode.getFigure();
 			if (shape != null) 
 				pt = boundsCenter(shape);
 			else 

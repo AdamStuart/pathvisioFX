@@ -153,10 +153,10 @@ public class LegendRecord implements GPMLRecord {
 //				params.setTransform(new Translate(90, 20));
 				legendEntry.getStack().snapshot(null, img);
 				
-				Alert alert = new Alert(AlertType.INFORMATION);
-				alert.setGraphic(new ImageView(img));
-				alert.showAndWait();		 
-				
+//				Alert alert = new Alert(AlertType.INFORMATION);
+//				alert.setGraphic(new ImageView(img));
+//				alert.showAndWait();		 
+//				
 				label1.setGraphic(new ImageView(img));
 			
 				Label label2 = new Label(key);

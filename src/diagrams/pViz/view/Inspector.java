@@ -70,13 +70,13 @@ public class Inspector extends HBox implements Initializable {
 		fillLabel.setText("");		fillLabel.setMinWidth(30);		fillLabel.setAlignment(Pos.BASELINE_CENTER);
 		strokeLabel.setText(""); 	strokeLabel.setMinWidth(30);	strokeLabel.setAlignment(Pos.BASELINE_CENTER);
 		
-		fillColor.setOnAction(evt -> apply(true, fillColor));
-		lineColor.addEventHandler(ActionEvent.ACTION, evt -> apply(true, lineColor));
+		fillColor.setOnAction(evt -> fillChanged(true));
+		lineColor.addEventHandler(ActionEvent.ACTION, evt -> strokeChanged(true));
 
 		scale.valueProperty().addListener((ov, old, val) ->   {  	pasteboard.setZoom(scale.getValue());        });	
-		weight.valueProperty().addListener((ov, old, val) ->    {   apply(false, weight);   });	
-		rotation.valueProperty().addListener((ov, old, val) ->  {   apply(false, rotation);  });	
-		opacity.valueProperty().addListener((ov, old, val) ->  {   apply(false, opacity);  });	
+		weight.valueProperty().addListener((ov, old, val) ->    {   weightChanged(false);   });	
+		rotation.valueProperty().addListener((ov, old, val) ->  {   rotationChanged(false);  });	
+		opacity.valueProperty().addListener((ov, old, val) ->  {   opacityChanged(false);  });	
 		
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
 		EventHandler<Event> evH = event -> {	controller.getUndoStack().push(ActionType.Property);  };
@@ -117,7 +117,7 @@ public class Inspector extends HBox implements Initializable {
 		String fillHex = "-fx-fill: #" + fill.toString().substring(2, 8) + ";\n";
 		String strokeHex = "-fx-stroke: #" + stroke.toString().substring(2, 8) + ";\n";
 		String wtStr = String.format("-fx-stroke-width: %.1f;\n", weight.getValue());
-		String opacStr = String.format("-fx-opacity: %.2f;\n", opacity.getValue() / 100);
+		String opacStr = String.format("-fx-opacity: %.2f;\n", opacity.getValue() / 100.);
 		String rotStr = String.format("-fx-rotate: %.1f;\n", rotation.getValue());
 
 		StringBuilder buff = new StringBuilder();
@@ -125,13 +125,48 @@ public class Inspector extends HBox implements Initializable {
 		return buff.toString();
 	}
 	// **-------------------------------------------------------------------------------
-	private void apply(boolean undoable, Control src)							
+	private void fillChanged(boolean undoable)							
 	{ 	 			
 		if (undoable) 
 			controller.getUndoStack().push(ActionType.Property); 
-		selection.applyStyle(getStyleSettings(src));	
+		selection.applyStyle(getStyleSettings(fillColor));	
+		selection.putColor("Color", fillColor.getValue());	
 	}
 	
+	private void weightChanged(boolean undoable)							
+	{ 	 			
+		if (undoable) 
+			controller.getUndoStack().push(ActionType.Property); 
+		selection.applyStyle(getStyleSettings(weight));	
+		selection.putDouble("LineThickness", weight.getValue());	
+	}
+	
+	private void strokeChanged(boolean undoable)							
+	{ 	 			
+		if (undoable) 
+			controller.getUndoStack().push(ActionType.Property); 
+		selection.applyStyle(getStyleSettings(lineColor));	
+		selection.putColor("LineColor", lineColor.getValue());	
+
+	}
+	
+	private void opacityChanged(boolean undoable)							
+	{ 	 			
+		if (undoable) 
+			controller.getUndoStack().push(ActionType.Opacity); 
+		selection.applyStyle(getStyleSettings(opacity));	
+		selection.putDouble("Opacity", opacity.getValue() / 100.);	
+	}
+	
+	private void rotationChanged(boolean undoable)							
+	{ 	 			
+		if (undoable) 
+			controller.getUndoStack().push(ActionType.Rotate); 
+		selection.applyStyle(getStyleSettings(rotation));	
+		selection.putDouble("Rotation", rotation.getValue() / 100.);	
+	}
+	
+	// **-------------------------------------------------------------------------------
 	private void applyLocks()
 	{
 		selection.applyLocks(movable.isSelected(), resizable.isSelected(), editable.isSelected());
@@ -151,6 +186,7 @@ public class Inspector extends HBox implements Initializable {
 		selection.setEditable(editable.isSelected());	
 	}
 
+	// **-------------------------------------------------------------------------------
 	public void syncInspector()		//Inspector
 	{
 		if(selection.count() == 1)
@@ -158,7 +194,7 @@ public class Inspector extends HBox implements Initializable {
 			
 			VNode firstNode = selection.first();
 			
-			resizable.setSelected(firstNode.isResizable());
+			resizable.setSelected(firstNode.canResize());
 			movable.setSelected(firstNode.isMovable());
 			editable.setSelected(firstNode.isEditable());
 
@@ -255,6 +291,7 @@ public class Inspector extends HBox implements Initializable {
 		@FXML public void addKeyFrame() {
 			KeyFrameRecord newRec = new KeyFrameRecord(true, "New KeyFrame", 2, 1);
 			keyFramesTable.getItems().add(newRec);
+			newRec.setState(controller.getState());
 		}
 		public List<KeyFrameRecord> getLayers()	{	return keyFramesTable.getItems();	}
 		public KeyFrameRecord getLayer(String name) {

@@ -1,6 +1,5 @@
 package diagrams.pViz.view;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javafx.scene.Group;
@@ -20,12 +19,14 @@ public class Layer extends Group {
 	public void unlock()				{ locked = false;	}
 	
 	public int getCount() 				{ return getChildren().size();	}
-	public List<Node> getNodes() 		{return getChildren();	}
+	public List<Node> getNodes() 		{ return getChildren();	}
 
+	public void clear()					{ getChildren().clear();	}
 	
 	public Layer(String s)
 	{
 		name = s;
+		setId(s);
 		vis = true;
 		locked = false;
 	}
@@ -36,6 +37,20 @@ public class Layer extends Group {
 		node.setVisible(vis);
 	}
 	public void add(Node node)
+	{
+		if (locked) return;
+		getChildren().add(node);
+		node.setVisible(vis);
+	}
+	
+	public void remove(VNode node)
+	{
+		if (locked) return;
+		getChildren().remove(node);
+		node.setVisible(vis);
+	}
+	
+	public void remove(Node node)
 	{
 		if (locked) return;
 		getChildren().add(node);

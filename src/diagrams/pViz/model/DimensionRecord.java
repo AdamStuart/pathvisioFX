@@ -41,7 +41,7 @@ public class DimensionRecord {
 	}
 	public Range getRange() {		return range;	}
 	
-	void buildChart()
+	public void build1DChart()
 	{
 		chart = histogram.makeRawDataChart();
 		chart.setPrefHeight(100);

@@ -7,17 +7,38 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.ListChangeListener;
+import javafx.scene.Node;
 import javafx.scene.input.DataFormat;
 
 public class LayerRecord implements GPMLRecord {
 
-	public LayerRecord(boolean v, boolean lk, String nm, int ct)
+	public LayerRecord(Layer layer, boolean visibl, boolean locked)
 	{
-		setVis(v);
-		setLock(v);
-		setName(nm);
-		setCount(ct);
+		theLayer = layer;
+		setVis(visibl);
+		setLock(locked);
+		setName(layer.getName());
+		theLayer.getChildren().addListener(listen);
 	}
+	public LayerRecord(String name)
+	{
+		this(new Layer(name), true, false);
+	}
+	
+	ListChangeListener<Node> listen = new ListChangeListener<Node>()
+	{
+		@Override public void onChanged(Change<? extends Node> c)	
+		{ 
+			System.out.println("ListChangeListener");
+			count.set(theLayer.getChildren().size());	
+		}
+	};
+	
+	private Layer theLayer = null;
+	public void setLayer(Layer lay ) { theLayer = lay;	}
+	public Layer getLayer() { return theLayer;	}
+	
 	@Override
 	public void getInfo(DataFormat mimetype, String a, String b) {
 
@@ -46,5 +67,9 @@ public class LayerRecord implements GPMLRecord {
 	public int getCount()  { return count.get();}
 	public void setCount(int s)  { count.set(s);}
 
+	public void add(int index, Node node) 	{ 	theLayer.add(index, node); 	}
+	public void add(Node node) 				{ 	theLayer.add(node); 	}
+	public void remove(VNode node) 			{ 	theLayer.remove(node); 	}
+	public void remove(Node node) 			{ 	theLayer.remove(node); 	}
 
 }

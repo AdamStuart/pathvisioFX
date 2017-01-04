@@ -1,20 +1,33 @@
 package diagrams.pViz.tables;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Base64.Decoder;
+
+import javax.imageio.ImageIO;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.IController;
+import diagrams.pViz.app.ISpeciesSpecific;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphsDude;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.SelectionMode;
@@ -23,18 +36,24 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
+import javafx.util.Pair;
 import model.bio.PathwayRecord;
+import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
 
 //http://www.wikipathways.org/index.php/Help:WikiPathways_Webservice/API
 
-public class PathwayController implements Initializable, IController  {
+public class PathwayController implements Initializable, IController, ISpeciesSpecific  {
 
 	@FXML private TableView<PathwayRecord> pathwayTable;
 	@FXML private TableColumn<PathwayRecord, String> idColumn;
@@ -77,6 +96,54 @@ public class PathwayController implements Initializable, IController  {
 			setupPathwayTable();
 		
 //		getAllPathways(PathwayController.HUMAN_PATHWAYS);
+		
+		
+	}
+	static public void viewPathway(PathwayRecord rec)		
+	{ 
+		String url = rec.getUrl();
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		viewPathway(result);
+	}
+	static public void viewPathwayAsImage(PathwayRecord rec)		
+	{ 
+		String url = rec.getPngUrl();
+//		Thread thread = new Thread() {
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		String png64  =StringUtil.readTag( result, "ns1:data");
+		Decoder decoder = Base64.getDecoder();
+		byte[] imageBytes  = decoder.decode(png64);
+		InputStream stream = new ByteArrayInputStream(imageBytes);
+		WritableImage wimg;
+		BufferedImage bufferedimage = null;
+		try {
+			 bufferedimage = ImageIO.read(stream);
+			 wimg = new WritableImage(bufferedimage.getWidth(),  bufferedimage.getHeight());
+			wimg = SwingFXUtils.toFXImage(bufferedimage, wimg);
+			App.showImage(rec.getName(), wimg);
+			} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	static private void viewPathway(String result)		
+	{ 		
+//		String pathwayFxml = "../gpml/GeneList.fxml";
+//		String fullname = "../gpml/GeneList.fxml";
+		Pair<FXMLLoader, Stage> pair = App.buildStage("Pathway", "Visio.fxml", 1200, 800);
+		Controller newController = pair.getKey().getController();
+		try
+		{
+			String gpml  =StringUtil.readTag( result, "ns2:gpml");
+			Decoder decoder = Base64.getDecoder();
+			byte[] cleanXML  = decoder.decode(gpml);
+			String str = new String(cleanXML);
+			newController.open(str);
+			pair.getValue().show();
+		}
+		catch (Exception e) {}
+	}
+	public void getPathwayAt(Integer o) {
 		
 		
 	}
@@ -143,12 +210,14 @@ public class PathwayController implements Initializable, IController  {
 			viewPathway(rec, false);
 		}
 	}
+	
 	public void viewPathway(PathwayRecord rec, boolean edit) {
-		if (parentController != null)
-		{
-			if (edit)  parentController.viewPathway(rec);
-			else parentController.viewPathwayAsImage(rec);
-		}
+//		if (parentController != null)
+//		{
+			if (edit) viewPathway(rec);
+			else viewPathwayAsImage(rec);
+//		}
+//		else System.err.println("no parentController in viewPathway");
 	}
 	
 	public void getInfo(DataFormat mimetype, String a, String colname, MouseEvent ev) {
@@ -161,9 +230,7 @@ public class PathwayController implements Initializable, IController  {
 			viewPathway(rec, edit);
 		}
 	}
-
-	
-	   //---------------------------------------------------------------------------
+	//---------------------------------------------------------------------------
 	public static String FIND_PATHWAYS_BASE = "http://webservice.wikipathways.org/findPathwaysByText?";
 	@FXML public void doSearch()	
 	{
@@ -213,5 +280,9 @@ public class PathwayController implements Initializable, IController  {
 		       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, this);
 			});
 		}
+	@Override
+	public Species getSpecies() {
+		return parentController == null ? Species.Human : parentController.getSpecies();		// TODO should assertNonNull parentController?
+	}
 
 }

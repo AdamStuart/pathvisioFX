@@ -21,15 +21,19 @@ import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import model.bio.Gene;
+import model.bio.Species;
 import util.FileUtil;
 
 
@@ -54,6 +58,7 @@ public class MultiGeneListController  implements Initializable  {
 	@FXML private TableColumn<Gene, String> geneNameColumn3;
 
 	@FXML private VBox west;
+	@FXML private VBox splitContainer;
 	@FXML private MenuBar menubar;
 	@FXML private Button westSidebar;
 //	@FXML private MenuItem info;
@@ -71,66 +76,88 @@ public class MultiGeneListController  implements Initializable  {
 		westSidebar.fire();		// start with columns hidden
 		//-------
 		//-------
-		flagColumn1.setCellValueFactory(new PropertyValueFactory<Gene, String>("flag"));
+		flagColumn1.setCellValueFactory(new PropertyValueFactory<Gene, String>("•"));
 		geneNameColumn1.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
-		flagColumn2.setCellValueFactory(new PropertyValueFactory<Gene, String>("flag"));
+		flagColumn2.setCellValueFactory(new PropertyValueFactory<Gene, String>(""));
 		geneNameColumn2.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
-		flagColumn3.setCellValueFactory(new PropertyValueFactory<Gene, String>("flag"));
+		flagColumn3.setCellValueFactory(new PropertyValueFactory<Gene, String>(""));
 		geneNameColumn3.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
-
+		
+		firstTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		firstTable.setRowFactory((a) -> {
 		       return new DraggableTableRow<Gene>(firstTable, GeneListController.GENE_MIME_TYPE, parentController);
 			    });
+		DropUtil.makeDropPane(firstTable, e -> { handleDropEvent(e);}	);
+
+		secondTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		secondTable.setRowFactory((a) -> {
 		       return new DraggableTableRow<Gene>(secondTable, GeneListController.GENE_MIME_TYPE, parentController);
 			    });
+		DropUtil.makeDropPane(secondTable, e -> { handleDropEvent(e);}	);
+
+		thirdTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		thirdTable.setRowFactory((a) -> {
 		       return new DraggableTableRow<Gene>(thirdTable, GeneListController.GENE_MIME_TYPE, parentController);
 			    });
-		
-		DropUtil.makeDropPane(firstTable, e -> { handleDropEvent(e);}	);
-		DropUtil.makeDropPane(secondTable, e -> { handleDropEvent(e);}	);
 		DropUtil.makeDropPane(thirdTable, e -> { handleDropEvent(e);}	);
+		
+		
+		VBox.setVgrow(scrollpane, Priority.ALWAYS);
+//		ScrollPane.positionInArea(splitpane, areaX, areaY, areaWidth, areaHeight, areaBaselineOffset, margin, halignment, valignment, isSnapToPixel); setVgrow(splitpane, Priority.ALWAYS);
+//		splitContainer.setBorder(Borders.greenBorder);
+//		scrollpane.setFitToHeight(true);
+//		scrollpane.setFitToWidth(true);
+//		splitpane.setBorder(Borders.blueBorder1);
 	}
 
 	private void handleDropEvent(DragEvent e) 
 	{
-			System.out.println("handleDropEvent");
-			Dragboard db = e.getDragboard();
-			if (db.hasFiles())
+		System.out.println("handleDropEvent");
+		Dragboard db = e.getDragboard();
+		if (db.hasFiles())
+		{
+			TableView<Gene> targetTable = null;
+			EventTarget targ = e.getTarget();
+			if (targ instanceof Node)
 			{
-				TableView targetTable = null;
-				EventTarget targ = e.getTarget();
-				if (targ instanceof Node)
+				if (targ instanceof TableView)
+					targetTable= (TableView<Gene>) targ;
+				else if (targ instanceof TableColumn)
+					targetTable= ((TableColumn<Gene, ?>)targ).getTableView();
+				else
 				{
-					if (targ instanceof TableView)
-						targetTable= (TableView)targ;
-					else
-					{
 					Parent parent = ((Node)targ).getParent();
 					if (parent instanceof TableView)
 						targetTable = (TableView)parent;
+					if (parent instanceof TableRow)
+						targetTable = ((TableRow)parent).getTableView();
 					System.out.println((Node) targ);
 				}
-				if (targetTable == null)
-				{
-					System.err.println("No Target Table");
-					return;
-				}
-				List<File> files = db.getFiles();
-				for (File file : files)
-				{
-					GeneListRecord rec = null;
-					if (FileUtil.isCDT(file))
-						rec = Document.readCDT(file, parentController.getSpecies());
-					else if (FileUtil.isGPML(file))
-						rec = GPML.readGeneList(file, parentController.getSpecies());
+			}
+			if (targetTable == null)
+			{
+				System.err.println("No Target Table");
+				return;
+			}
+			List<File> files = db.getFiles();
+			for (File file : files)
+			{
+				GeneListRecord rec = null;
+				if (FileUtil.isCDT(file))
+					rec = Document.readCDT(file, getSpecies());
+				else if (FileUtil.isGPML(file))
+					rec = GPML.readGeneList(file, getSpecies());
 
-					if (rec != null) targetTable.getItems().addAll(rec.getGeneList());
+				if (rec != null) 
+					targetTable.getItems().addAll(rec.getGeneList());
 
-				}
 			}
 		}
+	}
+
+	private Species getSpecies() {
+		// TODO Auto-generated method stub
+		return Species.Human;
 	}
 
 	//------------------------------------------------------
