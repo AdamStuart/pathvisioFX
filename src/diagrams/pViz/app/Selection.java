@@ -7,6 +7,7 @@ import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.GroupMouseHandler;
+import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.Shape1;
 import diagrams.pViz.view.VNode;
@@ -165,6 +166,7 @@ public class Selection
 	//--------------------------------------------------------------------------
 	public void doGroup()
 	{
+		getUndoStack().push(ActionType.Group);
 		Group group = new Group();
 		group.addEventHandler(MouseEvent.ANY, new GroupMouseHandler(root));
 		group.getChildren().addAll(items);
@@ -172,6 +174,7 @@ public class Selection
 		getController().add(group);
 		group.setTranslateX(10);
 	}
+	private UndoStack getUndoStack() {		return getController().getUndoStack();	}
 	//--------------------------------------------------------------------------
 	public void applyStyle(String styleSettings)
 	{
@@ -228,7 +231,8 @@ public class Selection
 	}	
 	
 	public void translate(double dx, double dy)		
-	{		//undoStack.push(new AMove(selection, dx, dy));	
+	{		
+		getUndoStack().push(ActionType.Move);	
 		for (Node n : items)
 		{
 			if (n.getParent() instanceof Group)
@@ -328,6 +332,17 @@ public class Selection
 		for (Node n : root.getChildrenUnmodifiable()) 
 		{
 			if (n.isMouseTransparent())	 continue;
+			if (n instanceof Layer)
+			{
+				Layer layer = (Layer) n;
+				for (Node node : layer.getChildren()) 
+				{
+					if (!(node instanceof VNode))	 continue;
+					Bounds bounds = node.boundsInParentProperty().get();
+					if (bounds.intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()))
+						select((VNode)node); 
+				}
+			}
 			if (!(n instanceof VNode))	 continue;
 			Bounds bounds = n.boundsInParentProperty().get();
 			if (bounds.intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()))
@@ -352,18 +367,18 @@ public class Selection
 	public void toBack()	{	for (Node n : items)	n.toBack();		}
 	
 	//--------------------------------------------------------------------------
-	public void group()
-	{
-		Group group = new Group();
-		for (Node n : items)
-			group.getChildren().addAll(n);
-		
-		deleteSelection();
-		AttributeMap attr = new AttributeMap("ShapeType:Group");
-		MNode model = new MNode(attr, getController().getDrawModel());
-		getController().add(model.getStack());
-		select(model.getStack());
-	}	
+//	public void group()
+//	{
+//		Group group = new Group();
+//		for (Node n : items)
+//			group.getChildren().addAll(n);
+//		
+//		deleteSelection();
+//		AttributeMap attr = new AttributeMap("ShapeType:Group");
+//		MNode model = new MNode(attr, getController().getDrawModel());
+//		getController().add(model.getStack());
+//		select(model.getStack());
+//	}	
 	
 	public void ungroup()
 	{

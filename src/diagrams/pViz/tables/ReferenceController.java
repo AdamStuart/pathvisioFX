@@ -1,5 +1,6 @@
 package diagrams.pViz.tables;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,25 +13,19 @@ import database.forms.EntrezQuery;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.IController;
 import diagrams.pViz.app.ISpeciesSpecific;
-import icon.FontAwesomeIcons;
-import icon.GlyphIcon;
-import icon.GlyphsDude;
+import diagrams.pViz.gpml.GPML;
+import diagrams.pViz.gpml.ReferenceListRecord;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.DataFormat;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import model.bio.BiopaxRecord;
 import model.bio.PathwayRecord;
@@ -38,15 +33,14 @@ import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
 
-//http://www.wikipathways.org/index.php/Help:WikiPathways_Webservice/API
 
-public class ReferenceController implements Initializable, IController, ISpeciesSpecific  {
+public class ReferenceController extends TableController<BiopaxRecord> implements Initializable, IController, ISpeciesSpecific  {
 
     private static final DataFormat BIOPAX_MIME_TYPE = new DataFormat("application/x-java-biopax");
 
-    @FXML private TableView<BiopaxRecord> refTable;
+    @FXML private TableView<BiopaxRecord> theTable;
 	@FXML private TableColumn<BiopaxRecord, String> refCol;
-	@FXML private TableColumn<BiopaxRecord, String> idCol;
+	@FXML private TableColumn<BiopaxRecord, String> dbidCol;
 	@FXML private TableColumn<BiopaxRecord, String> dbCol;
 	@FXML private TableColumn<BiopaxRecord, String> authorCol;
 	@FXML private TableColumn<BiopaxRecord, String> titleCol;
@@ -59,6 +53,9 @@ public class ReferenceController implements Initializable, IController, ISpecies
 	static TableRow<PathwayRecord> thisRow = null;
 	private Controller parentController;
 	public void setParentController(Controller c)	{ parentController = c;	}
+	private String state;
+	public void setState(String s) { 	state = s; }
+	public String getState() 	{ 	return state; 	}
 
 	static public void showPMIDInfo(String pmid)
 	{
@@ -73,33 +70,15 @@ public class ReferenceController implements Initializable, IController, ISpecies
 	   }
 	}
 	//---------------------------------------------------------------------------
-	public static String HUMAN_PATHWAYS = "http://webservice.wikipathways.org/listPathways?organism=Homo%20sapiens";
-	
-	public static String tooltip = " ";
+	public static String tooltip = "Double click reference to fetch its abstract";
 	//---------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
-		search.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.SEARCH, GlyphIcon.DEFAULT_ICON_SIZE));
-		search.setText("");
-		search.setTooltip(new Tooltip(tooltip));
-		searchBox.setTooltip(new Tooltip(tooltip));
-		searchBox.setText("ATF2");
-		searchBox.addEventHandler(KeyEvent.KEY_PRESSED, e -> {  if (e.getCode() == KeyCode.ENTER) doSearch();	} );
-		searchBox.selectAll();
-		if (refTable != null)
+		super.initialize(location, resources);
+		if (theTable != null)
 			setupReferenceTable();
-		
-//		getAllPathways(PathwayController.HUMAN_PATHWAYS);
-		
-		
 	}
-	//---------------------------------------------------------------------------
-//	String allPathwaysCache;
-//	private void getAllPathways(String url) {
-//		pathwayTable.getItems().clear();
-//		List<PathwayRecord> paths = getPathways(url);
-//		pathwayTable.getItems().addAll(paths);
-//	}
+	
 	//---------------------------------------------------------------------------
 	
 	private List<BiopaxRecord> getScoredReferences(String url) {
@@ -152,7 +131,7 @@ public class ReferenceController implements Initializable, IController, ISpecies
 		if (StringUtil.isInteger(idx))
 		{
 			int i = StringUtil.toInteger(idx);
-			BiopaxRecord rec = refTable.getItems().get(i);
+			BiopaxRecord rec = theTable.getItems().get(i);
 			viewReference(rec, false);
 		}
 	}
@@ -164,7 +143,7 @@ public class ReferenceController implements Initializable, IController, ISpecies
 		if (StringUtil.isInteger(a))
 		{
 			int idx = StringUtil.toInteger(a);
-			BiopaxRecord rec = refTable.getItems().get(idx);
+			BiopaxRecord rec = theTable.getItems().get(idx);
 			boolean edit = ev.isShiftDown();
 			viewReference(rec, edit);
 		}
@@ -189,36 +168,73 @@ public class ReferenceController implements Initializable, IController, ISpecies
 		String query = REFERENCE_QUERY;
 //		query += speciesComponent + queryText;
 		System.out.println(query);
-		refTable.getItems().clear();
+		theTable.getItems().clear();
 		List<BiopaxRecord> paths = getScoredReferences(query);
-		refTable.getItems().addAll(paths);
+		theTable.getItems().addAll(paths);
 		
 	}
 	
 	public void openByReference(String ref) {
-		for (BiopaxRecord rec : refTable.getItems())
+		for (BiopaxRecord rec : theTable.getItems())
 			if (ref.equals(rec.getId()))
 			{
 			}
 	}
    //---------------------------------------------------------------------------
-	
+	public static final DataFormat REFERENCE_MIME_TYPE = new DataFormat("application/x-java-serialized-reference");
+
 	private void setupReferenceTable()
 	{
-//		System.out.println("setupPathwayTable");
+//		System.out.println("setupReferenceTable");
 
-		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("xrefid"));
-		idCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("id"));
+		allColumns.add(refCol);
+		allColumns.add(dbidCol);
+		allColumns.add(dbCol);
+		allColumns.add(authorCol);
+		allColumns.add(titleCol);
+		allColumns.add(sourceCol);
+		allColumns.add(yearCol);
+		makeSeparatorColumn();
+		columnTable.getItems().addAll(allColumns);
+		
+		refCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("rfid"));
+		dbidCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("id"));
 		dbCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("db"));
 		authorCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("authors"));
 		titleCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("title"));
 		sourceCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("source"));
 		yearCol.setCellValueFactory(new PropertyValueFactory<BiopaxRecord, String>("year"));
-		refTable.setRowFactory((a) -> {  return new DraggableTableRow<BiopaxRecord>(refTable, BIOPAX_MIME_TYPE, this);   });
+		theTable.setRowFactory((a) -> {  return new DraggableTableRow<BiopaxRecord>(theTable, BIOPAX_MIME_TYPE, this, referenceListRecord);   });
+
+		}
+	TableColumn separatorColumn = new TableColumn();
+	protected void makeSeparatorColumn() {
+		allColumns.add(separatorColumn);  
+		separatorColumn.setPrefWidth(0);  
+		separatorColumn.setText("--------");		// TODO horizontal line in TableCell
 	}
+//	private List<TableColumn<BiopaxRecord,?>> allColumns = new ArrayList<TableColumn<BiopaxRecord,?>>();
+	private ReferenceListRecord referenceListRecord;		// the model
+
+	protected void processFile(File file) {
+		ReferenceListRecord record = GPML.readReferenceList(file);
+		for (BiopaxRecord ref : record.getReferences())
+			theTable.getItems().add(ref);			// TODO check for extant
+	}
+
 	@Override
 	public Species getSpecies() {
 		return parentController == null ? Species.Human : parentController.getSpecies();		// TODO should assertNonNull parentController?
+	}
+	@Override public void reorderColumns(int a, int b) 
+	{	
+		TableColumn col = allColumns.remove(a);
+		allColumns.add(b, col);
+	}
+
+	@Override
+	void createTableRecord() {
+		referenceListRecord = new ReferenceListRecord("ReferenceList");
 	}
 
 }

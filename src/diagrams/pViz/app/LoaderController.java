@@ -15,12 +15,15 @@ public class LoaderController implements IController, Initializable {
 		// TODO Auto-generated method stub
 
 	}
+	private String state;
+	public void setState(String s) { 	state = s; }
+	public String getState() 	{ 	return state; 	}
 
 	@Override
-	public void getInfo(DataFormat fmt, String a, String colname, MouseEvent event) {
-	}
+	public void getInfo(DataFormat fmt, String a, String colname, MouseEvent event) { 	}
 	
-	
+	public void resetTableColumns() {}
+	@Override public void reorderColumns(int a, int b) {	}
 	
 	@FXML private void newGeneList()	{ 	App.doNewGeneList(null);	}
 	@FXML private void newPathwayList()	{ 	App.browsePathways(null);	}

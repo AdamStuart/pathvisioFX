@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.gpml.GPMLGroup;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
@@ -19,17 +18,11 @@ import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.chart.LineChart;
-import javafx.scene.chart.NumberAxis;
-import javafx.scene.chart.ScatterChart;
-import javafx.scene.chart.XYChart;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
@@ -41,8 +34,8 @@ import javafx.scene.text.Text;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
+import model.bio.GeneListRecord;
 import model.bio.Species;
-import model.stat.Range;
 import services.bridgedb.BridgeDbIdMapper;
 import services.bridgedb.MappingSource;
 import util.StringUtil;
@@ -651,6 +644,7 @@ public class Model
 		for (Edge e : edgeList)
 			System.out.println(e);
 		}
+	
 	public void applyState(String state, AttributeMap attrMap) {
 		
 		for (MNode node : resourceMap.values())

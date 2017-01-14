@@ -147,7 +147,7 @@ public class Edge  {
 		if (endNode == null) {
 			String val = getAttributes().get("end");
 			MNode mNode = startNode.modelNode().getModel().getResourceByKey(val);
-			if (mNode != null)
+			if (mNode != null)	
 				endNode = mNode.getStack();
 
 			Shape shape = endNode == null ? 

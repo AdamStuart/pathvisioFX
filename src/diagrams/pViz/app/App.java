@@ -1,24 +1,29 @@
 package diagrams.pViz.app;
 
 import java.net.URL;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
 //import edu.stanford.nlp.util.ArrayUtils;
 import javafx.application.Application;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import javafx.util.Pair;
+import model.bio.GeneListRecord;
 import util.FileUtil;
 
 //---------------------------------------------------------------------------------------
@@ -34,6 +39,7 @@ import util.FileUtil;
 	    @Override public  void init() 
 		{
 		    instance = this;
+	    	startLogging();
 		}
 	
 	    @Override public  void start(Stage stage) throws Exception 
@@ -43,12 +49,25 @@ import util.FileUtil;
 //	    	makeLoader();
 	    	
 	    }
+	    @Override public  void stop() throws Exception 
+	    {
+	    	stopLogging();
+	    }
 
 	 static public App getInstance()	{ return instance;	}
 	 static private App instance;
 	 private Stage theStage;
 	 public Stage getStage() 			{ return theStage;  }
-
+	//---------------------------------------------------------------------------------------
+	 public void startLogging()
+	 {
+	    Log.info("startLogging");
+	 }
+	//---------------------------------------------------------------------------------------
+	 public void stopLogging()
+	 {
+		 Log.info("stopLogging");
+	 }
 	//---------------------------------------------------------------------------------------
 	static double PHI = 1.618;
 	 public Pair<FXMLLoader, Stage> makeLoader()
@@ -76,6 +95,7 @@ import util.FileUtil;
 		return null;
 	}
 	 
+		//---------------------------------------------------------------------------------------
 	 public void doNew()		{		doNew(new Stage(), null);	}
 	public void doNew(String xml)
 	{
@@ -88,7 +108,6 @@ import util.FileUtil;
 		{
 		}
 	}
-	
 	
 	public void doNew(Stage stage, org.w3c.dom.Document doc)
 	{
@@ -114,12 +133,34 @@ import util.FileUtil;
 		    	c.addXMLDoc(doc);	
 		    }
 		    stage.setScene(new Scene(appPane, 1000, 800));
+		    registerWindow(stage);
 		    stage.show();
 		}
 		catch (Exception e) { e.printStackTrace();}
 		
 	}
- //---------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------
+	static private ObservableList<Stage> stageList = FXCollections.observableArrayList();
+	private static void registerWindow(Stage stage)  
+	{	 	
+		stageList.add(stage); 	
+		stage.setOnHidden(e -> stageList.remove(stage) );
+	}
+	
+	static public List<MenuItem> getWindowsMenus()
+	{
+		return stageList.stream().
+				map(stage -> { return makeMenu(stage); }).
+				collect(Collectors.toList());
+	}
+
+	static private MenuItem makeMenu(Stage stage) {
+		MenuItem item = new MenuItem(stage.getTitle());
+		item.setOnAction(e -> { stage.toFront(); } );
+		return item;
+	}
+
+//---------------------------------------------------------------------------------------
 	static public  void browsePathways(Controller parent)		
 	{
 		Stage browserStage = new Stage();
@@ -139,6 +180,7 @@ import util.FileUtil;
 		    PathwayController pathwayController = (PathwayController) fxmlLoader.getController();
 		    pathwayController.setParentController(parent);
 		    browserStage.setScene(new Scene(appPane, 800, 800));
+		    registerWindow(browserStage);
 		    browserStage.show();
 		    pathwayController.doSearch();
 		}
@@ -148,29 +190,89 @@ import util.FileUtil;
 			e.printStackTrace();
 		}
 	}
+	//---------------------------------------------------------------------------------------
 	static final String GENELIST = "../gpml/GeneList.fxml";
-	   static public  void doNewGeneList(GeneListRecord geneList) 
+   static public  void doNewGeneList(GeneListRecord geneList) 
+	{
+		if (geneList == null)
+			geneList = new GeneListRecord("Empty");
+		try
 		{
-			if (geneList == null)
-				geneList = new GeneListRecord("Empty");
-			try
-			{
-				Pair<FXMLLoader, Stage> pair = buildStage("Gene List Window", GENELIST, 800, 650)	;
-				if (pair == null) return;
-				GeneListController glc = (GeneListController) pair.getKey().getController();   
-				pair.getValue().show();
-			    glc.loadTables(geneList, true);
-			}
-			catch (Exception e) { e.printStackTrace();	}
+			Pair<FXMLLoader, Stage> pair = buildStage("Gene List Window", GENELIST, 800, 650)	;
+			if (pair == null) return;
+			GeneListController glc = (GeneListController) pair.getKey().getController();   
+			Stage s =  pair.getValue();
+		    registerWindow(s);
+			s.show();
+		    glc.loadTables(geneList, true);
 		}
-		static public  Stage buildStage(String title, Region content, int wid, int hght)		
+		catch (Exception e) { e.printStackTrace();	}
+	}
+	//---------------------------------------------------------------------------------------
+	static final String RESOURCE = "../tables/ReferenceList.fxml";
+    static final String STYLE = "genelistStyles.css";
+	static  public Pair<FXMLLoader, Stage>  openReferenceList() {
+		try
 		{
 			Stage stage = new Stage();
-			stage.setTitle(title);
-		    stage.setScene(new Scene(content, wid, hght));
-		    stage.show();
-		    return stage;
+			URL res = getInstance().getClass().getResource(RESOURCE);
+		    FXMLLoader referenceLoader = new FXMLLoader(res);
+	        Scene scene = new Scene(referenceLoader.load());
+//			scene.getStylesheets().add(getInstance().getClass().getResource(STYLE).toExternalForm());
+	        stage.setTitle("Reference Window");
+	        stage.setX(20);
+			stage.setWidth(800);
+			stage.setHeight(450);
+			stage.setScene(scene);
+		    registerWindow(stage);
+			stage.show();
+			return (new Pair<FXMLLoader, Stage>(referenceLoader, stage));
 		}
+		catch (Exception e) { e.printStackTrace();	}
+		return null;
+	}
+ 	
+	//---------------------------------------------------------------------------------------
+	static final String MG_RESOURCE = "../tables/MultiGeneList.fxml";
+    static final String MG_STYLE = "../tables/genelistStyles.css";
+    static public void doNewMultiGeneList() 
+	{
+		try
+		{
+			Stage stage = new Stage();
+			URL res = getInstance().getClass().getResource(MG_RESOURCE);
+		    FXMLLoader geneListLoader = new FXMLLoader(res);
+	        Scene scene = new Scene(geneListLoader.load());
+			scene.getStylesheets().add(getInstance().getClass().getResource(MG_STYLE).toExternalForm());
+	        stage.setTitle("Multi Gene List Window");
+	        stage.setX(20);
+			stage.setWidth(800);
+			stage.setHeight(650);
+			stage.setScene(scene);
+		    registerWindow(stage);
+			stage.show();
+		}
+		catch (Exception e) { e.printStackTrace();	}
+	}
+
+	//---------------------------------------------------------------------------------------
+	public static void showImage(String title, WritableImage wimg) {
+		ImageView view = new ImageView(wimg);
+		Stage stage = buildStage( title, new HBox(view), 800, 650);
+        stage.setX(20);
+	}
+
+	//---------------------------------------------------------------------------------------
+	//---------------------------------------------------------------------------------------
+	static public  Stage buildStage(String title, Parent content, int wid, int hght)		
+	{
+		Stage stage = new Stage();
+		stage.setTitle(title);
+	    stage.setScene(new Scene(content, wid, hght));
+	    registerWindow(stage);
+	    stage.show();
+	    return stage;
+	}
 		
 	static public  Pair<FXMLLoader, Stage> buildStage(String title, String fxml, int wid, int hght)		
 	{
@@ -194,67 +296,4 @@ import util.FileUtil;
 		return null;
 	}
 	
-	
-	static final String RESOURCE = "../tables/ReferenceList.fxml";
-    static final String STYLE = "genelistStyles.css";
-	static  public Pair<FXMLLoader, Stage>  openReferenceList() {
-		try
-		{
-			Stage stage = new Stage();
-			URL res = getInstance().getClass().getResource(RESOURCE);
-		    FXMLLoader referenceLoader = new FXMLLoader(res);
-	        Scene scene = new Scene(referenceLoader.load());
-//			scene.getStylesheets().add(getInstance().getClass().getResource(STYLE).toExternalForm());
-	        stage.setTitle("Reference Window");
-	        stage.setX(20);
-			stage.setWidth(800);
-			stage.setHeight(450);
-			stage.setScene(scene);
-			stage.show();
-			return (new Pair<FXMLLoader, Stage>(referenceLoader, stage));
-		}
-		catch (Exception e) { e.printStackTrace();	}
-		return null;
-}
-
- 	
-	static final String MG_RESOURCE = "../tables/MultiGeneList.fxml";
-    static final String MG_STYLE = "../tables/genelistStyles.css";
-    static public void doNewMultiGeneList() 
-	{
-		try
-		{
-			Stage stage = new Stage();
-			URL res = getInstance().getClass().getResource(MG_RESOURCE);
-		    FXMLLoader geneListLoader = new FXMLLoader(res);
-	        Scene scene = new Scene(geneListLoader.load());
-			scene.getStylesheets().add(getInstance().getClass().getResource(MG_STYLE).toExternalForm());
-	        stage.setTitle("Multi Gene List Window");
-	        stage.setX(20);
-			stage.setWidth(800);
-			stage.setHeight(650);
-			stage.setScene(scene);
-			stage.show();
-		}
-		catch (Exception e) { e.printStackTrace();	}
-	}
-
-	public static void showImage(String title, WritableImage wimg) {
-		Stage stage = new Stage();
-		ScrollPane scroller = new ScrollPane();
-		ImageView view = new ImageView(wimg);
-//		view.prefWidth(300);
-//		view.minWidth(300);
-//		view.prefHeight(300);
-//		view.minHeight(300);
-		scroller.setContent(view);
-        Scene scene = new Scene(scroller);
-        stage.setTitle(title);
-        stage.setX(20);
-		stage.setWidth(800);
-		stage.setHeight(650);
-		stage.setScene(scene);
-		stage.show();
-	}
-
 }

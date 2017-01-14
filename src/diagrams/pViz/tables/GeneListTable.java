@@ -8,7 +8,6 @@ import java.util.Set;
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Document;
-import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.model.Model;
 import gui.DropUtil;
 import javafx.event.EventHandler;
@@ -31,6 +30,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import model.bio.Gene;
+import model.bio.GeneListRecord;
 import util.StringUtil;
 
 public class GeneListTable extends TableView<Gene> {
@@ -41,7 +41,7 @@ public class GeneListTable extends TableView<Gene> {
 	public GeneListTable(Controller c) {
 		controller = c;
 		setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(this, GeneListController.GENE_MIME_TYPE, controller);
+		       return new DraggableTableRow<Gene>(this, GeneListController.GENE_MIME_TYPE, controller, controller.getModel().getGeneList());
 			    });
 		setupGeneListTable();
 		VBox.setVgrow(this, Priority.ALWAYS);
@@ -79,8 +79,8 @@ public class GeneListTable extends TableView<Gene> {
 		draggable.setOnDragDetected(ev -> dragStart(ev));
 //		draggable.setOnMouseDragged(ev -> doDrag(ev));
 //		draggable.setOnMouseReleased(ev -> dragReleased(ev));
-		getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
+//		getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+//		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
 		
 	}
 	public void doDrag(DragEvent e)
@@ -95,28 +95,6 @@ public class GeneListTable extends TableView<Gene> {
 		 }
 		 
 		 e.consume();
-	}
-	private final class KeyHandler implements EventHandler<KeyEvent> {
-		@Override
-		public void handle(KeyEvent event) {
-
- 			KeyCode key = event.getCode();
- 			
-// 			if (key.isArrowKey())	getSelectionModel().translate(key);
-//			else 
-				if (KeyCode.DELETE.equals(key)) 	removeSelectedRows();		// create an undoable action
-			else if (KeyCode.BACK_SPACE.equals(key)) removeSelectedRows();
-//			
-// 			else if (KeyCode.R.equals(key)) 	setTool(Tool.Rectangle);
-//			else if (KeyCode.C.equals(key)) 	setTool(Tool.Circle);
-//			else if (KeyCode.P.equals(key)) 	setTool(Tool.Polygon);
-//			else if (KeyCode.L.equals(key)) 	setTool(Tool.Line);
-//			else if (KeyCode.W.equals(key)) 	setTool(Tool.Polyline);
-//			
-////			else if (KeyCode.X.equals(key)) 	setTool(Tool.Xhair);
-//			else if (KeyCode.ESCAPE.equals(key)) {		terminatePoly();  	removeDragLine(); }
-//			else if (KeyCode.SPACE.equals(key)) {		terminatePoly();	removeDragLine(); }
-		}
 	}
 	static boolean ENSEMBL_REQD = false;
 	public void populateTable(Model m, List<Gene> genes)

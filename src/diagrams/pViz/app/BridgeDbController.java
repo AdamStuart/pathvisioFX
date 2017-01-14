@@ -204,7 +204,7 @@ public class BridgeDbController implements Initializable
 		
 		
 		pathwayTable.setRowFactory((a) -> {
-	       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, parentController);
+	       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, parentController, null);
 		    });
 		
 	}

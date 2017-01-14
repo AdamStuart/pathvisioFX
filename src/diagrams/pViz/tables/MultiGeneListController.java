@@ -8,7 +8,6 @@ import java.util.ResourceBundle;
 import animation.BorderPaneAnimator;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Document;
-import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.gpml.GPML;
 import gui.DropUtil;
 import icon.FontAwesomeIcons;
@@ -33,6 +32,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import model.bio.Gene;
+import model.bio.GeneListRecord;
 import model.bio.Species;
 import util.FileUtil;
 
@@ -85,19 +85,19 @@ public class MultiGeneListController  implements Initializable  {
 		
 		firstTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		firstTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(firstTable, GeneListController.GENE_MIME_TYPE, parentController);
+		       return new DraggableTableRow<Gene>(firstTable, GeneListController.GENE_MIME_TYPE, parentController, null);
 			    });
 		DropUtil.makeDropPane(firstTable, e -> { handleDropEvent(e);}	);
 
 		secondTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		secondTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(secondTable, GeneListController.GENE_MIME_TYPE, parentController);
+		       return new DraggableTableRow<Gene>(secondTable, GeneListController.GENE_MIME_TYPE, parentController, null);
 			    });
 		DropUtil.makeDropPane(secondTable, e -> { handleDropEvent(e);}	);
 
 		thirdTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		thirdTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(thirdTable, GeneListController.GENE_MIME_TYPE, parentController);
+		       return new DraggableTableRow<Gene>(thirdTable, GeneListController.GENE_MIME_TYPE, parentController, null);
 			    });
 		DropUtil.makeDropPane(thirdTable, e -> { handleDropEvent(e);}	);
 		

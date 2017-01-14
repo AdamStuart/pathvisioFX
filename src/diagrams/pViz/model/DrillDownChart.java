@@ -7,7 +7,6 @@ import java.util.concurrent.CountDownLatch;
 
 import animation.Transitions;
 import chart.scatter.SynthFileStream;
-import chart.scatter.SynthGenController;
 import chart.scatter.SynthGenMetaFileStream;
 import chart.scatter.SynthGenRecord;
 import diagrams.pViz.tables.GeneListController;
@@ -47,6 +46,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Callback;
 import javafx.util.Duration;
+import model.chart.DimensionRecord;
 import model.chart.OverlaidScatterChart;
 import util.RectangleUtil;
 

@@ -74,6 +74,7 @@ import javafx.stage.Window;
 import javafx.util.Pair;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
+import model.bio.GeneListRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -102,9 +103,7 @@ public class Controller implements Initializable, IController
 	private GeneListTable geneListTable = null;
 	private PathwayController pathwayController = null;
 	@FXML private BorderPane container;			// root of fxml	
-
 	@FXML private Button tableOptions;
-
 	@FXML private Button gene;		// something to drag in the Genelist window
 
 	@FXML private Button bottomSideBarButton;
@@ -127,6 +126,8 @@ public class Controller implements Initializable, IController
 	@FXML private HBox bottomPadding;
 	@FXML private BorderPane 	loadContainer;
 
+	@Override public void resetTableColumns() {	}
+	@Override public void reorderColumns(int a, int b) {	}
 	
 	//------------------------------------------
 	static Image dragImage;
@@ -533,12 +534,12 @@ public class Controller implements Initializable, IController
 			}
 		}
 	}	// **-------------------------------------------------------------------------------
-//	public void setState(String s)
-//	{
-//		pasteboard.clear();
+	public void setState(String s)
+	{
+		pasteboard.clear();
 //		pasteboard.getChildren().addAll(pasteboard.getGrid().getNodes());
-////		addState(s);
-//	}
+		model.setState(s);
+	}
 	//-----------------------------------------------------------------------------
 	public void addXMLDoc(org.w3c.dom.Document doc)
 	{
@@ -564,7 +565,7 @@ public class Controller implements Initializable, IController
 
 	//-----------------------------------------------------------------------------
 	
-		
+//		
 //	public void addState(String s)			// used in undo restore
 //	{
 //		Scanner scan = new Scanner(s);
@@ -588,10 +589,7 @@ public class Controller implements Initializable, IController
 		// TODO Auto-generated method stub
 		
 	}
-	void addGenes(List<Gene> inList)
-	{
-		model.addGenes(inList);
-	}
+//	void addGenes(List<Gene> inList) 	{ 	model.addGenes(inList); }
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
 	{
@@ -692,7 +690,7 @@ public class Controller implements Initializable, IController
 				System.out.println(String.format("(%.2f, %.2f)", ((Circle)shap).getCenterX(), ((Circle)shap).getCenterY()));
 			pasteboard.add(anchorStack);
 		}
-		e.connect();
+//		e.connect();
 	}
 //	public void add(Edge e)		{	pasteboard.add(0,e);	}
 	public void add(VNode n)							
@@ -703,7 +701,7 @@ public class Controller implements Initializable, IController
 		if (n.isLabel()) return;
 		Object prop  = modelNode.getAttributeMap().get("TextLabel");
 		if (prop != null && model.findGene(""+prop) == null)
-			model.addGene(new Gene(""+prop));
+			model.addGene(new Gene(model.getGeneList(), ""+prop));
 	}
 	public void add(int index, VNode n)		 {	 pasteboard.add(index, n); 	}
 	public void addAll(List<VNode> n)	{		pasteboard.addAllVNodes(n);	}
@@ -719,7 +717,7 @@ public class Controller implements Initializable, IController
 		pasteboard.getChildren().remove(n);	
 	}
 	// **-------------------------------------------------------------------------------
-	public String getState()			{ 	return model.toString();  }
+	public String getState()					{ 	return model.saveState();  }
 	public void reportStatus(String string)	 {}	 //		status1.setText(string);	
 	
 //	public void setStatus2(String status)	{	status2.setText(status);	}

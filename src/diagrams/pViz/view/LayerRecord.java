@@ -30,7 +30,7 @@ public class LayerRecord implements GPMLRecord {
 	{
 		@Override public void onChanged(Change<? extends Node> c)	
 		{ 
-			System.out.println("ListChangeListener");
+//			System.out.println("LayerRecord ListChangeListener");
 			count.set(theLayer.getChildren().size());	
 		}
 	};

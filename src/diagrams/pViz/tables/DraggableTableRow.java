@@ -8,16 +8,19 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.TransferMode;
+import model.bio.TableRecord;
 
 
 public class DraggableTableRow<IRecord> extends TableRow<IRecord> {
 	private TableView<IRecord> table;
 	private TableRow<IRecord> thisRow;
 	private IController controller;
-	public DraggableTableRow(TableView<IRecord> inTable, DataFormat mimeType, IController cntrlr)
+	private TableRecord tableRecord;
+	public DraggableTableRow(TableView<IRecord> inTable, DataFormat mimeType, IController cntrlr, TableRecord rec)
 	{
 		table = inTable;
 		controller = cntrlr;
+		tableRecord = rec;
 		setOnDragDetected(event -> {
         if (! isEmpty()) {
             Integer index = getIndex();
@@ -39,13 +42,21 @@ public class DraggableTableRow<IRecord> extends TableRow<IRecord> {
     setOnDragEntered(event -> {
         Dragboard db = event.getDragboard();
         if (db.hasContent(mimeType)) {
-            if (getIndex() != ((Integer)db.getContent(mimeType)).intValue()) {
-                event.acceptTransferModes(TransferMode.MOVE);
-                event.consume();
-                thisRow = thisRow;
-//              if (thisRow != null) 
-//             	   thisRow.setOpacity(0.3);
-            }
+            
+        	Object obj = db.getContent(mimeType);
+        	event.acceptTransferModes(TransferMode.MOVE);
+            event.consume();
+            
+//            if (obj instanceof Integer)
+//        	{
+//	        	if (getIndex() != ((Integer)obj).intValue()) {
+//	                event.acceptTransferModes(TransferMode.MOVE);
+//	                event.consume();
+//	                thisRow = thisRow;
+//	//              if (thisRow != null) 
+//	//             	   thisRow.setOpacity(0.3);
+//	            }
+//        	}
         }
     });
 
@@ -61,43 +72,57 @@ public class DraggableTableRow<IRecord> extends TableRow<IRecord> {
     setOnDragOver(event -> {
         Dragboard db = event.getDragboard();
         if (db.hasContent(mimeType)) {
-            if (getIndex() != ((Integer)db.getContent(mimeType)).intValue()) {
+//            if (getIndex() != ((Integer)db.getContent(mimeType)).intValue()) {
                 event.acceptTransferModes(TransferMode.MOVE);
                 event.consume();
-            }
+//            }
         }
     });
 
       setOnMouseClicked(event -> {
-    	if (event.getClickCount() == 2)
-        {
-            int idx = getIndex();
-            IRecord r = table.getItems().get(idx);		// TODO -- need interface to get Id
-            String colName = getColumnId(event.getX());
-            if (controller != null) 
-            	controller.getInfo(mimeType, "" + idx, colName, event);	//r.getId()
-          event.consume();
-        }
+          int idx = getIndex();
+          String colName = getColumnId(event.getX());
+          if (controller != null) 
+          {
+        	  if (event.getClickCount() == 2)
+              	controller.getInfo(mimeType, "" + idx, colName, event);	//r.getId()
+              event.consume();
+         }
     });
 
     setOnDragDropped(event -> {
         Dragboard db = event.getDragboard();
         if (db.hasContent(mimeType)) {
-            int draggedIndex = (Integer) db.getContent(mimeType);
-            IRecord draggedNode = table.getItems().remove(draggedIndex);
-
-            int  dropIndex = (isEmpty()) ? table.getItems().size() : getIndex();
-            table.getItems().add(dropIndex, draggedNode);
-
-            event.setDropCompleted(true);
-            table.getSelectionModel().select(dropIndex);
-            event.consume();
-//            if (thisRow != null) 
-//         	   thisRow.setOpacity(1);
-            thisRow = null;
-        }
+            Object obj = db.getContent(mimeType);
+            if (obj instanceof Integer)
+            {
+	            int draggedIndex = (Integer) obj;
+	            reorderRecords(draggedIndex, getIndex());
+	            event.setDropCompleted(true);
+	            event.consume();
+	//            if (thisRow != null) 
+	//         	   thisRow.setOpacity(1);
+	            thisRow = null;
+	            controller.resetTableColumns();
+            }
+            if (obj instanceof TableColumn)
+            {
+            	TableColumn col = (TableColumn) obj;
+            	System.out.println("TableColumn");
+            	
+            }
+       }
     });
 
+	}
+	private void reorderRecords(int draggedIndex, int index) {
+        IRecord draggedNode = table.getItems().remove(draggedIndex);
+        int  dropIndex = index; // (isEmpty()) ? table.getItems().size() : getIndex();
+        table.getItems().add(dropIndex, draggedNode);
+        table.getSelectionModel().clearAndSelect(dropIndex);
+        controller.reorderColumns(draggedIndex,  index);
+//        if (tableRecord != null)
+//        	tableRecord.reorderColumns(draggedIndex,  index);
 	}
 	public  String getColumnId(double x)
     {

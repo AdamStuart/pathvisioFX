@@ -4,14 +4,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.app.GeneListRecord;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
@@ -24,6 +22,7 @@ import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
+import model.bio.GeneListRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -61,11 +60,36 @@ public class GPML {
 				String textLabel = nodemap.getNamedItem("TextLabel").getNodeValue();
 				Gene existing = Model.findInList(list, textLabel);
 				if (existing == null)
-					list.add(new Gene(textLabel));
+					list.add(new Gene(record, textLabel));
 				System.out.println(textLabel + " " + ((existing == null) ? "unique" : "found"));
 			}
 		}
 		record.setGeneList(list);
+		return record;
+	}
+
+	public static ReferenceListRecord readReferenceList(File file)
+	{
+		org.w3c.dom.Document doc = FileUtil.openXML(file);
+		if (doc == null) return null;
+		List<BiopaxRecord> list = FXCollections.observableArrayList();
+		ReferenceListRecord record = new ReferenceListRecord(file.getName());
+		
+		NodeList nodes = doc.getElementsByTagName("Biopax");
+		int len = nodes.getLength();
+		for (int i=0; i<len; i++)
+		{
+			org.w3c.dom.Node domNode = nodes.item(i);
+			int childLen = domNode.getChildNodes().getLength();
+			for (int j=0; j<childLen; j++)
+			{
+				org.w3c.dom.Node gchild = domNode.getChildNodes().item(j);
+				String jname = gchild.getNodeName();
+				if ("bp:PublicationXref".equals(jname))
+					list.add(new BiopaxRecord(gchild));
+			}
+		}
+		record.addReferences(list);
 		return record;
 	}
 
@@ -101,13 +125,13 @@ public class GPML {
 		labl.setLayoutX(10);
 		labl.setLayoutY(10);
 		
-		parseShapes(doc.getElementsByTagName("Shape"));
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
 		handleLabels(doc.getElementsByTagName("Label"));
 		handleBiopax(doc.getElementsByTagName("Biopax"));
 		handleGroups(doc.getElementsByTagName("Group"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseEdges(doc.getElementsByTagName("Interaction"));
+		parseShapes(doc.getElementsByTagName("Shape"));
 		parseStateNodes(doc.getElementsByTagName("State"));
 		getController().getPasteboard().restoreBackgroundOrder();
 //		getController().getPasteboard().getChildren().sort(c);
@@ -121,9 +145,7 @@ public class GPML {
 	{
 		@Override public int compare(Node o1, Node o2) {
 			if (o1 instanceof VNode && o2 instanceof VNode)
-			{
-				return -1 * ((VNode)o1).compareTo((VNode)o2);
-			}
+				return ((VNode)o2).compareTo((VNode)o1);
 			return 0;
 		}
 	};
@@ -159,6 +181,7 @@ public class GPML {
 	
 	
 	private void parseEdges(NodeList edges) {
+		System.err.println("-------------------------------------");
 		System.out.println("Edges: "+ edges.getLength());
 		String layerName = activeLayer; 
 		for (int i=0; i<edges.getLength(); i++)
@@ -167,8 +190,6 @@ public class GPML {
 			String name = child.getNodeName();
 			System.out.println(name + " " + child.getAttributes().getNamedItem("GraphId"));
 			
-			if ("BiopaxRef".equals(child.getNodeName()))
-				System.out.println("BiopaxRef in Edge");		// TODO
 			Edge edge = parseGPMLEdge(child, model, activeLayer);
 			System.out.println(edge);
 			if (edge != null)
@@ -185,7 +206,7 @@ public class GPML {
 			MNode node = parseGPML(child, model, activeLayer);
 			
 			if (node != null)
-				getController().add(node.getStack());
+				getController().add(0, node.getStack());
 		}
 	}
 	// **-------------------------------------------------------------------------------
@@ -366,7 +387,6 @@ public class GPML {
 			String name = child.getNodeName();
 			System.out.println(name);
 			
-			
 			for (int j=0; j<child.getChildNodes().getLength(); j++)
 			{
 				org.w3c.dom.Node gchild = child.getChildNodes().item(j);
@@ -393,7 +413,7 @@ public class GPML {
 			{
 				model.addResource(label);
 				model.getController().add(label.getStack());
-				label.getStack().toBack();
+//				label.getStack().toBack();
 			}
 		}
 	}

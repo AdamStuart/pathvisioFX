@@ -5,11 +5,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
-import diagrams.pViz.model.Model;
 import javafx.collections.FXCollections;
 import javafx.print.PrinterJob;
 import javafx.stage.FileChooser;
 import model.bio.Gene;
+import model.bio.GeneListRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -48,6 +48,7 @@ public class Document
 	{
 		try
 		{
+			boolean cdt = FileUtil.isCDT(f);
 			List<Gene> geneList = FXCollections.observableArrayList();
 			GeneListRecord record = new GeneListRecord(f.getName());
 			record.setSpecies(species.common());
@@ -56,13 +57,15 @@ public class Document
 			if (lines.size() > 0)
 			{
 				record.setHeader1(lines.get(0));
-				record.setHeader2(lines.get(1));
-				int skip = 2;
+				if (cdt)
+					record.setHeader2(lines.get(1));
+				int skip = cdt ? 2 : 1;
 				for (String line : lines)
 				{
 					if (skip>0) { skip--;  continue; }
-					Gene g = new Gene("");
-					g.setData(line);
+					Gene g = new Gene(record, "");
+					if (cdt) 	g.setData(line);
+					else 		g.setData2(line);
 //					Gene existing = Model.findInList(geneList, g.getName());		// slow?
 //					if (existing == null)
 						geneList.add(g);
@@ -81,24 +84,16 @@ public class Document
 	}
 	public void open(File f)		
 	{ 	
-		if (FileUtil.isCDT(f))
-		{
-			controller.setGeneList(readCDT(f, controller.getSpecies()));
-		}
-			
-			
 		try
 		{
-			org.w3c.dom.Document doc = FileUtil.openXML(f);
-			if (doc != null)
+			if (FileUtil.isCDT(f))
+				controller.setGeneList(readCDT(f, controller.getSpecies()));
+			else if (FileUtil.isGPML(f) || FileUtil.isXML(f))
 			{
-				controller.addXMLDoc(doc);					//  parse XML to Model and MNodes
-//		        new Thread(() ->
-//		           Platform.runLater(() -> {
-//		        	   drawController.getModel().resetEdgeTable();	
-//		        })  ).start();    
+				org.w3c.dom.Document doc = FileUtil.openXML(f);
+				if (doc != null)
+					controller.addXMLDoc(doc);		//  parse XML to Model and MNodes
 			}
-			
 		}
 		catch (Exception e) 
 		{
@@ -115,8 +110,6 @@ public class Document
 		if (file != null)				// dialog wasn't canceled
 			open(file);			
 	}
-	
-	
 	// **-------------------------------------------------------------------------------
 	public void save()		
 	{ 	
@@ -163,6 +156,4 @@ public class Document
 		if (success)
 			job.endJob();
 	}
-	// **-------------------------------------------------------------------------------
-
 }

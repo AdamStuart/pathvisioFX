@@ -69,6 +69,9 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	static TableRow<PathwayRecord> thisRow = null;
 	private Controller parentController;
 	public void setParentController(Controller c)	{ parentController = c;	}
+	private String state;
+	public void setState(String s) { 	state = s; }
+	public String getState() 	{ 	return state; 	}
 
 	//---------------------------------------------------------------------------
 	public static String HUMAN_PATHWAYS = "http://webservice.wikipathways.org/listPathways?organism=Homo%20sapiens";
@@ -277,12 +280,14 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		urlColumn.setVisible(false);
 		
 		pathwayTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, this);
+		       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, this, null);
 			});
 		}
 	@Override
 	public Species getSpecies() {
 		return parentController == null ? Species.Human : parentController.getSpecies();		// TODO should assertNonNull parentController?
 	}
+	@Override public void resetTableColumns() {	}
+	@Override public void reorderColumns(int a, int b) {	}
 
 }

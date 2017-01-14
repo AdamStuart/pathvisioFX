@@ -47,7 +47,18 @@ public class LayerController implements IController, Initializable {
 	@FXML private TableColumn<LayerRecord, Integer> layerCountColumn;
 	@FXML private Button addLayer;
 	@FXML private Button removeLayer;
-	
+	@Override public void reorderColumns(int a, int b) {	}
+
+	private String state;
+	public void setState(String s)
+	{
+		state = s;
+	}
+	public String getState()
+	{
+		return state;
+	}
+
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		setGraphic(addLayer, FontAwesomeIcons.PLUS_CIRCLE);
@@ -165,7 +176,7 @@ public class LayerController implements IController, Initializable {
 		layerNameColumn.setEditable(true);
 		
 		layersTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<LayerRecord>(layersTable, LAYER_MIME_TYPE, this);
+		       return new DraggableTableRow<LayerRecord>(layersTable, LAYER_MIME_TYPE, this, null);
 			    });
 		
 		boolean verbose = false;
@@ -218,5 +229,7 @@ public class LayerController implements IController, Initializable {
 	private Stage stage;
 	public void setStage(Stage value) 	{		stage = value;	}
 	public Stage getStage() 			{		return stage;	}
+
+	@Override public void resetTableColumns() {	}
 
 }

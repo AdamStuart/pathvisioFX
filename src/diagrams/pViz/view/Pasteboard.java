@@ -189,10 +189,10 @@ public class Pasteboard extends Pane
 		getContentLayer().add(idx, vnode);	
 	}
 	
-	public void addAll(Node[] n) 			{	for (Node node : n )
-													node.getProperties().put("Layer", activeLayerName); 
-												getChildren().addAll(n);
-											}
+	public void addAll(Node[] n) 	{	for (Node node : n )
+											node.getProperties().put("Layer", activeLayerName); 
+										getChildren().addAll(n);
+									}
 //	public void addAll(ObservableList<Node> n) {	for (Node node : n )
 //			node.getProperties().put("Layer", activeLayerName); 
 //										getChildren().addAll(n);	}
@@ -283,14 +283,10 @@ public class Pasteboard extends Pane
 				int offset = 0;
 				for (File f : files)
 				{
-					if (FileUtil.isCDT(f))					// CDT is a genelist format
-						controller.open(f);
-					if (FileUtil.isGPML(f))					// css files are added to the Scene
-						controller.open(f);
-					else if (FileUtil.isCSS(f))					// css files are added to the Scene
-						controller.addStylesheet(f);
-					else if (FileUtil.isDataFile(f))		// data files are applied to the nodes
-						controller.assignDataFile(f);
+					if (FileUtil.isCDT(f))				controller.open(f);				// CDT is a genelist format
+					else if (FileUtil.isGPML(f))		controller.open(f);				// gpml files are parsed 
+					else if (FileUtil.isCSS(f))			controller.addStylesheet(f);	// css files are added to the Scene
+					else if (FileUtil.isDataFile(f))	controller.assignDataFile(f);	// data files are applied to the nodes
 					else
 					{
 						offset += 20;

@@ -28,15 +28,15 @@ public class Action
 	public boolean isUndone()	{ return state == ActionState.Undone; }
 	
 	ActionType type = ActionType.Undefined;
-	protected Controller controller;
-	public void setController(Controller c)	{		controller =c;	}
-	public Controller getController()		{		return controller;	}
+	protected IController controller;
+	public void setController(IController c)	{		controller =c;	}
+	public IController getController()		{		return controller;	}
 	
 	protected ActionState state;
 	final long creation;
 	protected String debugText;
 	public String getText()			{	return debugText;	}
-	public void setText(String s)			{	debugText = s;	}
+	public void setText(String s)	{	debugText = s;	}
 
 	protected String preState;
 	public void saveState()		{	preState = controller.getState();	}
