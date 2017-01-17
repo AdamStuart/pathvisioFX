@@ -5,10 +5,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+import javafx.collections.FXCollections;
 import javafx.print.PrinterJob;
 import javafx.stage.FileChooser;
 import model.bio.Gene;
-import model.bio.GeneList;
+import model.bio.GeneListRecord;
+import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
 /*
@@ -33,7 +35,7 @@ public class Document
 		{
 			org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
 			if (doc != null)
-				controller.addState(doc);					
+				controller.addXMLDoc(doc);					
 		}
 		catch (Exception e) 
 		{
@@ -42,49 +44,56 @@ public class Document
 		else System.err.println("open expected xml: " + s.substring(40));
 	}
 	// **-------------------------------------------------------------------------------
-	public void open(File f)		
-	{ 	
-		if (FileUtil.isCDT(f))
-		{
-			try
-			{
-				GeneList geneList = new GeneList();
-				List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
-				if (lines.size() > 0)
-				{
-					int skip = 2;
-					for (String line : lines)
-					{
-						if (skip>0) { skip--;  continue; }
-						Gene g = new Gene("");
-						g.setData(line);
-						Gene existing = geneList.find(g);
-						if (existing == null)
-							geneList.add(g);
-					}
-				}
-				controller.setGeneList(geneList);
-			}
-			catch (Exception e) 
-			{
-				e.printStackTrace();
-			}
-			return;
-		}
-			
-			
+	public static GeneListRecord readCDT(File f, Species species)
+	{
 		try
 		{
-			org.w3c.dom.Document doc = FileUtil.openXML(f);
-			if (doc != null)
+			boolean cdt = FileUtil.isCDT(f);
+			List<Gene> geneList = FXCollections.observableArrayList();
+			GeneListRecord record = new GeneListRecord(f.getName());
+			record.setSpecies(species.common());
+			record.setName(f.getName());
+			List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
+			if (lines.size() > 0)
 			{
-				controller.addState(doc);					//  parse XML to sceneGraph
-//		        new Thread(() ->
-//		           Platform.runLater(() -> {
-//		        	   drawController.getModel().resetEdgeTable();	
-//		        })  ).start();    
+				record.setHeader1(lines.get(0));
+				if (cdt)
+					record.setHeader2(lines.get(1));
+				int skip = cdt ? 2 : 1;
+				for (String line : lines)
+				{
+					if (skip>0) { skip--;  continue; }
+					Gene g = new Gene(record, "");
+					if (cdt) 	g.setData(line);
+					else 		g.setData2(line);
+//					Gene existing = Model.findInList(geneList, g.getName());		// slow?
+//					if (existing == null)
+						geneList.add(g);
+				}
 			}
-			
+			record.setColumnList();
+			record.setGeneList(geneList);
+			return record;
+		}
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
+		return null;
+
+	}
+	public void open(File f)		
+	{ 	
+		try
+		{
+			if (FileUtil.isCDT(f))
+				controller.setGeneList(readCDT(f, controller.getSpecies()));
+			else if (FileUtil.isGPML(f) || FileUtil.isXML(f))
+			{
+				org.w3c.dom.Document doc = FileUtil.openXML(f);
+				if (doc != null)
+					controller.addXMLDoc(doc);		//  parse XML to Model and MNodes
+			}
 		}
 		catch (Exception e) 
 		{
@@ -101,8 +110,6 @@ public class Document
 		if (file != null)				// dialog wasn't canceled
 			open(file);			
 	}
-	
-	
 	// **-------------------------------------------------------------------------------
 	public void save()		
 	{ 	
@@ -149,6 +156,4 @@ public class Document
 		if (success)
 			job.endJob();
 	}
-	// **-------------------------------------------------------------------------------
-
 }

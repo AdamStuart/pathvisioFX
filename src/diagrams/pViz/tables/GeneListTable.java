@@ -1,10 +1,14 @@
 package diagrams.pViz.tables;
 
+import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Set;
 
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.app.Document;
+import diagrams.pViz.model.Model;
 import gui.DropUtil;
 import javafx.event.EventHandler;
 import javafx.scene.control.Button;
@@ -26,93 +30,19 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import model.bio.Gene;
-import model.bio.GeneList;
+import model.bio.GeneListRecord;
 import util.StringUtil;
 
 public class GeneListTable extends TableView<Gene> {
-	private static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
+//	private static final DataFormat GENE_MIME_TYPE = GeneListController.GENE_MIME_TYPE;
 	static TableRow<Gene> thisRow = null;
 	Controller controller;
 
 	public GeneListTable(Controller c) {
 		controller = c;
-		setRowFactory(tv -> {
-			TableRow<Gene> row = new TableRow<>();
-
-			row.setOnDragDetected(event -> {
-				if (!row.isEmpty()) {
-					Integer index = row.getIndex();
-					Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
-					db.setDragView(row.snapshot(null, null));
-					ClipboardContent cc = new ClipboardContent();
-					cc.put(GENE_MIME_TYPE, index);
-					db.setContent(cc);
-					event.consume();
-					thisRow = row;
-				}
-			});
-
-			row.setOnDragEntered(event -> {
-				Dragboard db = event.getDragboard();
-				if (db.hasContent(GENE_MIME_TYPE)) {
-					if (row.getIndex() != ((Integer) db.getContent(GENE_MIME_TYPE)).intValue()) {
-						event.acceptTransferModes(TransferMode.MOVE);
-						event.consume();
-						thisRow = row;
-						// if (thisRow != null)
-						// thisRow.setOpacity(0.3);
-					}
-				}
-			});
-
-			row.setOnDragExited(event -> {
-				if (event.getGestureSource() != thisRow && event.getDragboard().hasString()) {
-					// if (thisRow != null)
-					// thisRow.setOpacity(1);
-					thisRow = null;
-				}
-			});
-
-			row.setOnDragOver(event -> {
-				Dragboard db = event.getDragboard();
-				if (db.hasContent(GENE_MIME_TYPE)) {
-					if (row.getIndex() != ((Integer) db.getContent(GENE_MIME_TYPE)).intValue()) {
-						event.acceptTransferModes(TransferMode.MOVE);
-						event.consume();
-					}
-				}
-			});
-
-			row.setOnMouseClicked(event -> {
-				if (event.getClickCount() == 2) {
-					int idx = row.getIndex();
-					getInfo(idx);
-					event.consume();
-				}
-			});
-
-			row.setOnDragDropped(event -> {
-				Dragboard db = event.getDragboard();
-				if (db.hasContent(GENE_MIME_TYPE)) {
-					getSelectionModel().clearSelection();
-					int draggedIndex = (Integer) db.getContent(GENE_MIME_TYPE);
-					Gene draggedNode = getItems().remove(draggedIndex);
-
-					int dropIndex = (row.isEmpty()) ? getItems().size() : row.getIndex();
-					getItems().add(dropIndex, draggedNode);
-					getSelectionModel().select(dropIndex);
-
-					event.setDropCompleted(true);
-					getSelectionModel().select(dropIndex);
-					event.consume();
-					// if (thisRow != null)
-					// thisRow.setOpacity(1);
-					thisRow = null;
-				}
-			});
-
-			return row;
-		});
+		setRowFactory((a) -> {
+		       return new DraggableTableRow<Gene>(this, GeneListController.GENE_MIME_TYPE, controller, controller.getModel().getGeneList());
+			    });
 		setupGeneListTable();
 		VBox.setVgrow(this, Priority.ALWAYS);
 	}
@@ -122,15 +52,17 @@ public class GeneListTable extends TableView<Gene> {
 	private TableColumn<Gene, String> speciesColumn = new TableColumn<Gene, String>("Species");
 	private TableColumn<Gene, String> dbColumn = new TableColumn<Gene, String>("Database");
 	private TableColumn<Gene, String> dbidColumn = new TableColumn<Gene, String>("DatabaseId");
+	private TableColumn<Gene, String> termsColumn = new TableColumn<Gene, String>("Terms");
+	
 	private Button draggable;
 	
 		
 	private void setupGeneListTable()
 	{
 //		System.out.println("setupPathwayTable");
-		getColumns().addAll(nameColumn, idColumn, urlColumn, speciesColumn);
+		getColumns().addAll(nameColumn, idColumn, termsColumn, urlColumn, speciesColumn);
 		idColumn.setPrefWidth(200);
-		nameColumn.setPrefWidth(130);
+		nameColumn.setPrefWidth(100);
 		speciesColumn.setMaxWidth(100);
 		idColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("ensembl"));
 		urlColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("url"));
@@ -138,6 +70,7 @@ public class GeneListTable extends TableView<Gene> {
 		speciesColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("species"));
 		dbColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("datbase"));
 		dbidColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("dbid"));
+		termsColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("termSummary"));
 
 		speciesColumn.setVisible(false);
 		urlColumn.setVisible(false);
@@ -146,36 +79,27 @@ public class GeneListTable extends TableView<Gene> {
 		draggable.setOnDragDetected(ev -> dragStart(ev));
 //		draggable.setOnMouseDragged(ev -> doDrag(ev));
 //		draggable.setOnMouseReleased(ev -> dragReleased(ev));
-		getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
+//		getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+//		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
 		
 	}
-	private final class KeyHandler implements EventHandler<KeyEvent> {
-		@Override
-		public void handle(KeyEvent event) {
-
- 			KeyCode key = event.getCode();
- 			
-// 			if (key.isArrowKey())	getSelectionModel().translate(key);
-//			else 
-				if (KeyCode.DELETE.equals(key)) 	removeSelectedRows();		// create an undoable action
-			else if (KeyCode.BACK_SPACE.equals(key)) removeSelectedRows();
-//			
-// 			else if (KeyCode.R.equals(key)) 	setTool(Tool.Rectangle);
-//			else if (KeyCode.C.equals(key)) 	setTool(Tool.Circle);
-//			else if (KeyCode.P.equals(key)) 	setTool(Tool.Polygon);
-//			else if (KeyCode.L.equals(key)) 	setTool(Tool.Line);
-//			else if (KeyCode.W.equals(key)) 	setTool(Tool.Polyline);
-//			
-////			else if (KeyCode.X.equals(key)) 	setTool(Tool.Xhair);
-//			else if (KeyCode.ESCAPE.equals(key)) {		terminatePoly();  	removeDragLine(); }
-//			else if (KeyCode.SPACE.equals(key)) {		terminatePoly();	removeDragLine(); }
-		}
+	public void doDrag(DragEvent e)
+	{
+		Dragboard db = e.getDragboard();
+		Set<DataFormat> formats = db.getContentTypes();
+		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
+		 for (File f : db.getFiles())
+		 {
+			 GeneListRecord genes = Document.readCDT(f, controller.getSpecies());
+			 addGeneList(genes);
+		 }
+		 
+		 e.consume();
 	}
 	static boolean ENSEMBL_REQD = false;
-	public void populateTable(GeneList genes)
+	public void populateTable(Model m, List<Gene> genes)
 	{
-		genes.fillIdlist();
+		m.fillIdlist();
 		if (genes != null) 
 		{
 			getItems().clear();
@@ -213,18 +137,17 @@ public class GeneListTable extends TableView<Gene> {
 		content.put(DataFormat.PLAIN_TEXT, "GENE " + draggable.toString());
 		db.setContent(content);
 //		draggable.setVisible(false);
-ev.consume();
+		ev.consume();
 		System.out.println("startGeneDrag");
 	}
 
-	private void doDrag(DragEvent e)
-	{
-//		Dragboard db = e.getDragboard();
-//		Set<DataFormat> formats = db.getContentTypes();
-//		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
-//		e.consume();
-	}
 	
+	private void addGeneList(GeneListRecord genes) {
+		 if (genes == null) return;
+		controller.getModel().add(genes);
+		
+	}
+
 	private void dragReleased(DragEvent e)
 	{
 		if (yOffset < 0) return;

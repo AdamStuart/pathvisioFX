@@ -1,42 +1,99 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.gpml.GeneListController">
+<BorderPane fx:id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.GeneListController">
    <top>
       <HBox>
          <children>
-            <Button fx:id="draggable" minWidth="60.0" mnemonicParsing="false" text="X" />
-            <MenuBar BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
+            <Button fx:id="westSidebar" layoutX="10.0" layoutY="10.0" minWidth="60.0" mnemonicParsing="false" text="West" />
+            <Button fx:id="draggable" minWidth="60.0" mnemonicParsing="false" text="All" />
+            <MenuBar fx:id="menubar" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
               <menus>
+                  <Menu mnemonicParsing="false" text="File">
+                    <items>
+                        <MenuItem fx:id="newGeneList" mnemonicParsing="false" onAction="#newGeneList" text="New Gene List">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="N" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways" />
+                        <MenuItem fx:id="chart" mnemonicParsing="false" onAction="#doChart" text="Chart All Columns" />
+                        <MenuItem fx:id="chartVis" mnemonicParsing="false" onAction="#doChartVisible" text="Chart Visible Columns" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="open" mnemonicParsing="false" onAction="#doOpen" text="Open" />
+                        <MenuItem mnemonicParsing="false" text="Open Recent" />
+                        <MenuItem fx:id="filter" mnemonicParsing="false" onAction="#filterSelectedGenes" text="Filter Selected" />
+                        <MenuItem fx:id="close" mnemonicParsing="false" onAction="#doClose" text="Close" />
+                    </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Edit">
+                     <items>
+                        <MenuItem mnemonicParsing="false" text="Cut" />
+                        <MenuItem mnemonicParsing="false" text="Copy" />
+                        <MenuItem mnemonicParsing="false" text="Paste" />
+                        <MenuItem mnemonicParsing="false" text="Paste Special" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="selectAll" mnemonicParsing="false" onAction="#selectAll" text="Select All" />
+                        <MenuItem fx:id="showAllColumns" mnemonicParsing="false" onAction="#showAllColumns" text="Show All Columns" />
+                        <MenuItem fx:id="editColumns" mnemonicParsing="false" onAction="#editColumns" text="Edit Columns" />
+                     </items>
+                  </Menu>
                 <Menu mnemonicParsing="false" text="Gene">
                   <items>
-                    <MenuItem fx:id="addColumn" mnemonicParsing="false" onAction="#doAddColumn" text="Add Column..." />
-                        <MenuItem fx:id="chart" mnemonicParsing="false" onAction="#doChart" text="Chart..." />
+                        <MenuItem fx:id="drill" mnemonicParsing="false" onAction="#drillDown" text="Drill Down">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="D" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                         <MenuItem fx:id="info" mnemonicParsing="false" onAction="#getInfo" text="Get Info..." />
-                        <MenuItem fx:id="group" mnemonicParsing="false" onAction="#groupSelectedGenes" text="Group Selected" />
+                    <MenuItem fx:id="addColumn" mnemonicParsing="false" onAction="#doAddColumn" text="Add Column..." />
                   </items>
                 </Menu>
               </menus>
             </MenuBar>
+            <ChoiceBox fx:id="species" prefWidth="150.0" />
+            <Button fx:id="search" mnemonicParsing="false" onAction="#doSearch" prefHeight="27.0" prefWidth="40.0" text="F" />
+            <TextField fx:id="searchBox" />
          </children>
       </HBox>
    </top>
    <center>
-      <TableView fx:id="geneListTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+      <TableView fx:id="theTable" BorderPane.alignment="CENTER">
         <columns>
-            <TableColumn fx:id="nameColumn" editable="false" minWidth="100.0" prefWidth="349.0" text="Name" />
-          <TableColumn fx:id="idColumn" editable="false" maxWidth="250.0" minWidth="180.0" prefWidth="180.0" text="Id" />
-            <TableColumn fx:id="speciesColumn" editable="false" maxWidth="200.0" minWidth="75.0" prefWidth="81.0" text="Species" />
-            <TableColumn fx:id="urlColumn" editable="false" maxWidth="75.0" minWidth="7.0" prefWidth="13.0" text="URL" />
+            <TableColumn fx:id="geneNameColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Name" />
+          <TableColumn fx:id="geneIdColumn" editable="false" maxWidth="250.0" minWidth="50.0" text="Id" />
+            <TableColumn fx:id="termsColumn" editable="false" maxWidth="500.0" minWidth="50.0" prefWidth="150.0" text="Terms" />
+            <TableColumn fx:id="dataColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Data" />
+            <TableColumn fx:id="locationColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Location" />
+            <TableColumn fx:id="databaseColumn" editable="false" maxWidth="200.0" minWidth="50.0" text="Database" />
+            <TableColumn fx:id="dbidColumn" editable="false" maxWidth="500.0" minWidth="20.0" prefWidth="100.0" text="dbID" />
+            <TableColumn fx:id="urlColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="URL" />
         </columns>
       </TableView>
    </center>
+   <left>
+      <VBox prefHeight="371.0" prefWidth="228.0" BorderPane.alignment="CENTER">
+         <children>
+            <TableView fx:id="columnTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+              <columns>
+                <TableColumn fx:id="typeColumn" prefWidth="41.0" text="Type" />
+                <TableColumn fx:id="colNameColumn" prefWidth="134.0" text="Name" />
+                  <TableColumn fx:id="widthColumn" prefWidth="43.0" text="Width" />
+              </columns>
+            </TableView>
+         </children>
+      </VBox>
+   </left>
 </BorderPane>

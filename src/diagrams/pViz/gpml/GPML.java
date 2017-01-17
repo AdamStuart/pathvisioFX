@@ -1,6 +1,8 @@
 package diagrams.pViz.gpml;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.junit.Assert;
@@ -11,47 +13,40 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
-import gui.Backgrounds;
+import diagrams.pViz.view.VNode;
+import javafx.collections.FXCollections;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Shape;
 import model.AttributeMap;
-import model.bio.BiopaxRef;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
-import model.bio.GeneList;
+import model.bio.GeneListRecord;
 import model.bio.Species;
+import util.FileUtil;
 import util.StringUtil;
 
 public class GPML {
 
 //	private Controller controller;
-private Model model;
-
-public GPML(Model m) {
-	model = m;
-	Assert.assertNotNull(m);
-}
-//public GPML(Controller c) {
-//	controller = c;
-//	Assert.assertNotNull(controller);
-//}
+	private Model model;
+	String activeLayer = "Content";
+	public GPML(Model m, String layer) {
+		model = m;
+		if (layer != null) activeLayer = layer;
+		Assert.assertNotNull(m);
+	}
+	private Controller getController() { 	return model.getController();	}
 	//----------------------------------------------------------------------------
-//	public void addFile(File f)
-//	{
-//		try
-//		{
-//			Document doc = FileUtil.openXML(f);
-//			if (doc != null) 	read(doc);
-//		}
-//		catch (Exception e) 
-//		{
-//			
-//		}
-//	}
-
-	//----------------------------------------------------------------------------
-	public GeneList readGeneList(org.w3c.dom.Document doc, Species inSpecies)
+	public static GeneListRecord readGeneList(File file, Species inSpecies)
 	{
-		GeneList list = new GeneList(inSpecies);
+		org.w3c.dom.Document doc = FileUtil.openXML(file);
+		if (doc == null) return null;
+		List<Gene> list = FXCollections.observableArrayList();
+		GeneListRecord record = new GeneListRecord(file.getName());
+		record.setSpecies(inSpecies.common());
+		record.setName(file.getName());
 		
 		NodeList nodes = doc.getElementsByTagName("DataNode");
 		int len = nodes.getLength();
@@ -60,22 +55,47 @@ public GPML(Model m) {
 			org.w3c.dom.Node domNode = nodes.item(i);
 			NamedNodeMap nodemap = domNode.getAttributes();
 			org.w3c.dom.Node type = nodemap.getNamedItem("Type");
-			if ("GeneProduct".equals(type.getNodeValue()))
+			if ("GeneProduct".equals(type.getNodeValue()) || "Protein".equals(type.getNodeValue()))
 			{
 				String textLabel = nodemap.getNamedItem("TextLabel").getNodeValue();
-				Gene existing = list.find(textLabel);
+				Gene existing = Model.findInList(list, textLabel);
 				if (existing == null)
-					list.add(new Gene(textLabel));
-//				System.out.println(textLabel + " " + ((existing == null) ? "unique" : "found"));
+					list.add(new Gene(record, textLabel));
+				System.out.println(textLabel + " " + ((existing == null) ? "unique" : "found"));
 			}
-				
 		}
-//		list.mapIds("Ensembl");
-		return list;
+		record.setGeneList(list);
+		return record;
+	}
+
+	public static ReferenceListRecord readReferenceList(File file)
+	{
+		org.w3c.dom.Document doc = FileUtil.openXML(file);
+		if (doc == null) return null;
+		List<BiopaxRecord> list = FXCollections.observableArrayList();
+		ReferenceListRecord record = new ReferenceListRecord(file.getName());
+		
+		NodeList nodes = doc.getElementsByTagName("Biopax");
+		int len = nodes.getLength();
+		for (int i=0; i<len; i++)
+		{
+			org.w3c.dom.Node domNode = nodes.item(i);
+			int childLen = domNode.getChildNodes().getLength();
+			for (int j=0; j<childLen; j++)
+			{
+				org.w3c.dom.Node gchild = domNode.getChildNodes().item(j);
+				String jname = gchild.getNodeName();
+				if ("bp:PublicationXref".equals(jname))
+					list.add(new BiopaxRecord(gchild));
+			}
+		}
+		record.addReferences(list);
+		return record;
 	}
 
 	public void read(org.w3c.dom.Document doc)
 	{
+//		if (doc != null) return;
 		model.clearComments();
 		Controller controller = model.getController();
 		NodeList nodes = doc.getElementsByTagName("Pathway");
@@ -100,56 +120,90 @@ public GPML(Model m) {
 			}
 		
 		}
-		Label labl = new Label(model.getComments());
+		Label labl = new Label(model.getCommentsStr());
 		controller.add(labl);
 		labl.setLayoutX(10);
 		labl.setLayoutY(10);
 		
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
-		parseShapes(doc.getElementsByTagName("Shape"));
 		handleLabels(doc.getElementsByTagName("Label"));
 		handleBiopax(doc.getElementsByTagName("Biopax"));
-		handleGroups(doc.getElementsByTagName("Groups"));
+		handleGroups(doc.getElementsByTagName("Group"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseEdges(doc.getElementsByTagName("Interaction"));
-		
+		parseShapes(doc.getElementsByTagName("Shape"));
+		parseStateNodes(doc.getElementsByTagName("State"));
+		getController().getPasteboard().restoreBackgroundOrder();
+//		getController().getPasteboard().getChildren().sort(c);
+//		List<Node> sorted = getController().getPasteboard().getChildren().stream()
+//        	.sorted(Comparator.comparing(null).reversed())
+//        	.peek(System.out::println)
+//        	.collect(Collectors.toCollection(()->FXCollections.observableArrayList()));
 	}
 	
+	Comparator<Node> c = new Comparator<Node>()
+	{
+		@Override public int compare(Node o1, Node o2) {
+			if (o1 instanceof VNode && o2 instanceof VNode)
+				return ((VNode)o2).compareTo((VNode)o1);
+			return 0;
+		}
+	};
 	
-	
-	private Controller getController() { return model.getController();}
 	private void parseDataNodes(NodeList nodes) {
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = nodes.item(i);
-			MNode node = parseGPML(child, model);
+			MNode node = parseGPML(child, model, activeLayer);
 			model.addResource(node.getId(), node);
 			getController().add(node.getStack());
 			System.out.println("adding: " + node);
 		}
-		
 	}
+	
+	private void parseStateNodes(NodeList nodes) {
+		for (int i=0; i<nodes.getLength(); i++)
+		{
+			AttributeMap attrMap = new AttributeMap();
+			org.w3c.dom.Node child = nodes.item(i);
+			String name = child.getNodeName();
+			String state = "" +child.getAttributes().getNamedItem("GraphRef");
+			attrMap.put("State", state);
+			attrMap.put("TextLabel", "" +child.getAttributes().getNamedItem("TextLabel"));
+			attrMap.put("GraphId", "" +child.getAttributes().getNamedItem("GraphId"));
+			if ("Graphics".equals(name))
+				attrMap.add(child.getAttributes());
+			
+			model.applyState(state, attrMap);
+		}
+	}
+	
+	
+	
 	private void parseEdges(NodeList edges) {
+		System.err.println("-------------------------------------");
 		System.out.println("Edges: "+ edges.getLength());
+		String layerName = activeLayer; 
 		for (int i=0; i<edges.getLength(); i++)
 		{
 			org.w3c.dom.Node child = edges.item(i);
 			String name = child.getNodeName();
 			System.out.println(name + " " + child.getAttributes().getNamedItem("GraphId"));
 			
-			if ("BiopaxRef".equals(child.getNodeName()))
-				System.out.println("BiopaxRef in Edge");		// TODO
-			Edge edge = parseGPMLEdge(child, model);
+			Edge edge = parseGPMLEdge(child, model, activeLayer);
+			System.out.println(edge);
 			if (edge != null)
-				getController().add(0,edge);
+				getController().add(0, edge, layerName);
 		}
+		for (Edge e : model.getEdgeList())
+			e.connect();
 	}
 	
 	private void parseShapes(NodeList shapes) {
 		for (int i=0; i<shapes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = shapes.item(i);
-			MNode node = parseGPML(child, model);
+			MNode node = parseGPML(child, model, activeLayer);
 			
 			if (node != null)
 				getController().add(0, node.getStack());
@@ -157,12 +211,13 @@ public GPML(Model m) {
 	}
 	// **-------------------------------------------------------------------------------
 	/*
-	 * 	convert an org.w3c.dom.Node  a local node.  
+	 * 	convert an org.w3c.dom.Node to a local MNode.  
 	 * 
 	 */
-	public MNode parseGPML(org.w3c.dom.Node datanode, Model m) {
+	public MNode parseGPML(org.w3c.dom.Node datanode, Model m, String activeLayer) {
 //		Model m = ctrl.getModel();
 		AttributeMap attrMap = new AttributeMap();
+		attrMap.put("Layer", activeLayer);
 		attrMap.add(datanode.getAttributes());
 		NodeList elems = datanode.getChildNodes();
 		for (int i=0; i<elems.getLength(); i++)
@@ -179,13 +234,15 @@ public GPML(Model m) {
 			attrMap.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
 		}
+		attrMap.put("Resizable", "false");
 		return  new MNode(attrMap, m);
 	}
 		//----------------------------------------------------------------------------
-	public Edge parseGPMLEdge(org.w3c.dom.Node edgeML, Model m) {
+	public Edge parseGPMLEdge(org.w3c.dom.Node edgeML, Model m, String activeLayer) {
 	try
 	{
 		AttributeMap attrMap = new AttributeMap();
+		attrMap.put("Layer", activeLayer);
 		attrMap.add(edgeML.getAttributes());
 		List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 		List<Anchor> anchors = new ArrayList<Anchor>();
@@ -281,7 +338,11 @@ public GPML(Model m) {
 			if ("Graphics".equals(name))
 					attrMap.add(child.getAttributes());
 		}
-		attrMap.put("ShapeType", "Label");
+//		attrMap.put("ShapeType", "Label");
+		String shapeType = attrMap.get("ShapeType");
+		if (shapeType == null)
+			attrMap.put("ShapeType", "None");
+				
 		return new MNode(attrMap, model);
 	}
 
@@ -326,7 +387,6 @@ public GPML(Model m) {
 			String name = child.getNodeName();
 			System.out.println(name);
 			
-			
 			for (int j=0; j<child.getChildNodes().getLength(); j++)
 			{
 				org.w3c.dom.Node gchild = child.getChildNodes().item(j);
@@ -334,7 +394,7 @@ public GPML(Model m) {
 //				System.out.println(name);
 				if ("bp:PublicationXref".equals(jname))
 				{
-					BiopaxRef ref = new BiopaxRef(gchild);
+					BiopaxRecord ref = new BiopaxRecord(gchild);
 					model.addRef(ref);
 					System.out.println(ref);					//TODO
 				}
@@ -353,6 +413,7 @@ public GPML(Model m) {
 			{
 				model.addResource(label);
 				model.getController().add(label.getStack());
+//				label.getStack().toBack();
 			}
 		}
 	}
@@ -363,12 +424,58 @@ public GPML(Model m) {
 		for (int i=0; i<elements.getLength(); i++)
 		{
 			org.w3c.dom.Node child = elements.item(i);
+			NamedNodeMap attrs = child.getAttributes();
 			String name = child.getNodeName();
 			System.out.println(name);
+			if ("#text".equals(name)) continue;
+			if ("Group".equals(name))
+			{
+				System.out.println(name + " " + attrs.getNamedItem("GraphId"));
+				String groupId = "";
+				if (attrs.getNamedItem("GroupId") != null)
+					groupId = attrs.getNamedItem("GroupId").getNodeValue();
+				String graphId = "";
+				if (attrs.getNamedItem("GraphId") != null)
+					graphId = attrs.getNamedItem("GraphId").getNodeValue();
+				model.addGroup(groupId, graphId);
+			}
+		}
+		for (GPMLGroup group : model.getGroups())
+		{
+			String id = group.getAttributeMap().get("GroupId");
+			for (MNode node : model.getNodes())
+				if (id.equals(node.getAttributeMap().get("GroupRef")))
+					group.addToGroup(node);
+			group.calcBounds();
+			VNode stack = group.getStack();
+			stack.setBounds(group.getBounds());
+			model.getController().add(stack);
+			Shape shape = group.getStack().getFigure();
+			if (shape != null)
+			{
+				shape.setStyle("-fx-stroke-dash-array: 10 10;");
+				shape.setFill(Color.TRANSPARENT);
+			}
+			stack.toBack();
+			
 		}
 	}
 //	
 	//----------------------------------------------------------------------------
+//	http://fxexperience.com/2011/12/styling-fx-buttons-with-css/
+		
+		public static String asFxml(String gpmlTag) {
+		
+		if (gpmlTag == null) return null;
+		if ("Color".equals(gpmlTag))		return "-fx-border-color";
+		if ("FillColor".equals(gpmlTag))	return "-fx-background-color";
+		if ("LineThickness".equals(gpmlTag)) return "-fx-stroke-width";
+		if ("Opacity".equals(gpmlTag))		return "-fx-opacity";
+		if ("FontSize".equals(gpmlTag))		return "-fx-font-size";
+		if ("Valign".equals(gpmlTag))		return "-fx-row-valignment";
+		
+		return null;
+	}
 	
 	// UNUSED ??
 //	

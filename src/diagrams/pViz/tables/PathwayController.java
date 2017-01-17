@@ -1,54 +1,77 @@
 package diagrams.pViz.tables;
 
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Base64.Decoder;
+
+import javax.imageio.ImageIO;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.app.IController;
+import diagrams.pViz.app.ISpeciesSpecific;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphsDude;
+import javafx.embed.swing.SwingFXUtils;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.ClipboardContent;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.WritableImage;
 import javafx.scene.input.DataFormat;
-import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.TransferMode;
+import javafx.scene.input.MouseEvent;
+import javafx.stage.Stage;
+import javafx.util.Pair;
 import model.bio.PathwayRecord;
+import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
 
 //http://www.wikipathways.org/index.php/Help:WikiPathways_Webservice/API
 
-public class PathwayController implements Initializable  {
+public class PathwayController implements Initializable, IController, ISpeciesSpecific  {
 
 	@FXML private TableView<PathwayRecord> pathwayTable;
-	@FXML private ChoiceBox<String> species;
-	@FXML private Button search;
-	@FXML private TextField searchBox;
 	@FXML private TableColumn<PathwayRecord, String> idColumn;
 	@FXML private TableColumn<PathwayRecord, String> nameColumn;
 	@FXML private TableColumn<PathwayRecord, String> revisionColumn;
 	@FXML private TableColumn<PathwayRecord, String> urlColumn;
 	@FXML private TableColumn<PathwayRecord, String> speciesColumn;
 
+	@FXML private ChoiceBox<String> species;
+	@FXML private Button search;
+	@FXML private TextField searchBox;
+
 	static TableRow<PathwayRecord> thisRow = null;
 	private Controller parentController;
-	public void setController(Controller c)	{ parentController = c;	}
+	public void setParentController(Controller c)	{ parentController = c;	}
+	private String state;
+	public void setState(String s) { 	state = s; }
+	public String getState() 	{ 	return state; 	}
 
 	//---------------------------------------------------------------------------
 	public static String HUMAN_PATHWAYS = "http://webservice.wikipathways.org/listPathways?organism=Homo%20sapiens";
@@ -79,13 +102,61 @@ public class PathwayController implements Initializable  {
 		
 		
 	}
-	//---------------------------------------------------------------------------
-	String allPathwaysCache;
-	private void getAllPathways(String url) {
-		pathwayTable.getItems().clear();
-		List<PathwayRecord> paths = getPathways(url);
-		pathwayTable.getItems().addAll(paths);
+	static public void viewPathway(PathwayRecord rec)		
+	{ 
+		String url = rec.getUrl();
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		viewPathway(result);
 	}
+	static public void viewPathwayAsImage(PathwayRecord rec)		
+	{ 
+		String url = rec.getPngUrl();
+//		Thread thread = new Thread() {
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		String png64  =StringUtil.readTag( result, "ns1:data");
+		Decoder decoder = Base64.getDecoder();
+		byte[] imageBytes  = decoder.decode(png64);
+		InputStream stream = new ByteArrayInputStream(imageBytes);
+		WritableImage wimg;
+		BufferedImage bufferedimage = null;
+		try {
+			 bufferedimage = ImageIO.read(stream);
+			 wimg = new WritableImage(bufferedimage.getWidth(),  bufferedimage.getHeight());
+			wimg = SwingFXUtils.toFXImage(bufferedimage, wimg);
+			App.showImage(rec.getName(), wimg);
+			} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	static private void viewPathway(String result)		
+	{ 		
+//		String pathwayFxml = "../gpml/GeneList.fxml";
+//		String fullname = "../gpml/GeneList.fxml";
+		Pair<FXMLLoader, Stage> pair = App.buildStage("Pathway", "Visio.fxml", 1200, 800);
+		Controller newController = pair.getKey().getController();
+		try
+		{
+			String gpml  =StringUtil.readTag( result, "ns2:gpml");
+			Decoder decoder = Base64.getDecoder();
+			byte[] cleanXML  = decoder.decode(gpml);
+			String str = new String(cleanXML);
+			newController.open(str);
+			pair.getValue().show();
+		}
+		catch (Exception e) {}
+	}
+	public void getPathwayAt(Integer o) {
+		
+		
+	}
+	//---------------------------------------------------------------------------
+//	String allPathwaysCache;
+//	private void getAllPathways(String url) {
+//		pathwayTable.getItems().clear();
+//		List<PathwayRecord> paths = getPathways(url);
+//		pathwayTable.getItems().addAll(paths);
+//	}
 	//---------------------------------------------------------------------------
 	
 	private List<PathwayRecord> getScoredPathways(String url) {
@@ -111,7 +182,7 @@ public class PathwayController implements Initializable  {
 		return list;
 	}
 	
-	private List<PathwayRecord> getPathways(String url) {
+	public static List<PathwayRecord> getPathways(String url) {
 		List<PathwayRecord> list = new ArrayList<PathwayRecord>();
 		url = url.replace(" ", "%20");
 		String result = StringUtil.callURL(url, false);
@@ -125,14 +196,8 @@ public class PathwayController implements Initializable  {
 				int sz = nodes.getLength();
 				for (int i=0; i<sz; i++)
 				{
-	//				Node node = nodes.item(i);
-//					NodeList paths = doc.getElementsByTagName("ns1:result");
-//					int nPaths = paths.getLength();
-//					for (int j=0; j<nPaths; j++)
-//					{
-						PathwayRecord rec = new PathwayRecord(nodes.item(i));
-						list.add(rec);
-//					}
+					PathwayRecord rec = new PathwayRecord(nodes.item(i));
+					list.add(rec);
 				}
 			}		
 		}
@@ -140,17 +205,41 @@ public class PathwayController implements Initializable  {
 		return list;
 	}
 
+	public void viewPathwayByIndex(String idx) {
+		if (StringUtil.isInteger(idx))
+		{
+			int i = StringUtil.toInteger(idx);
+			PathwayRecord rec = pathwayTable.getItems().get(i);
+			viewPathway(rec, false);
+		}
+	}
 	
+	public void viewPathway(PathwayRecord rec, boolean edit) {
+//		if (parentController != null)
+//		{
+			if (edit) viewPathway(rec);
+			else viewPathwayAsImage(rec);
+//		}
+//		else System.err.println("no parentController in viewPathway");
+	}
 	
-	   //---------------------------------------------------------------------------
+	public void getInfo(DataFormat mimetype, String a, String colname, MouseEvent ev) {
+//		System.out.println("getInfo: " + a + " Fetching: " + ev);	
+		if (StringUtil.isInteger(a))
+		{
+			int idx = StringUtil.toInteger(a);
+			PathwayRecord rec = pathwayTable.getItems().get(idx);
+			boolean edit = ev.isShiftDown();
+			viewPathway(rec, edit);
+		}
+	}
+	//---------------------------------------------------------------------------
 	public static String FIND_PATHWAYS_BASE = "http://webservice.wikipathways.org/findPathwaysByText?";
 	@FXML public void doSearch()	
 	{
 		String text = searchBox.getText().trim();
 		if (StringUtil.isEmpty(text)) 			return;
-		
 		String queryText = "", speciesComponent = "";
-		
 		if (StringUtil.hasText(text))
 			queryText = "query=" + text;
 		String selection = species.getSelectionModel().getSelectedItem();
@@ -174,13 +263,13 @@ public class PathwayController implements Initializable  {
 	}
    //---------------------------------------------------------------------------
 	
-	public static final DataFormat PATHWAY_MIME_TYPE = new DataFormat("application/x-java-serialized-object2");
+	public static final DataFormat PATHWAY_MIME_TYPE = new DataFormat("application/x-java-serialized-pathway");
 
 	private void setupPathwayTable()
 	{
 //		System.out.println("setupPathwayTable");
 //		TableColumn[] allCols = { idColumn, urlColumn, nameColumn, speciesColumn, revisionColumn };
-
+		pathwayTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		idColumn.setCellValueFactory(new PropertyValueFactory<PathwayRecord, String>("id"));
 		urlColumn.setCellValueFactory(new PropertyValueFactory<PathwayRecord, String>("url"));
 		nameColumn.setCellValueFactory(new PropertyValueFactory<PathwayRecord, String>("name"));
@@ -190,95 +279,15 @@ public class PathwayController implements Initializable  {
 //		speciesColumn.setVisible(false);
 		urlColumn.setVisible(false);
 		
-		
-		pathwayTable.setRowFactory(tv -> {
-	        TableRow<PathwayRecord> row = new TableRow<>();
-
-	        row.setOnDragDetected(event -> {
-	            if (! row.isEmpty()) {
-	                Integer index = row.getIndex();
-	                Dragboard db = row.startDragAndDrop(TransferMode.MOVE);
-	                db.setDragView(row.snapshot(null, null));
-	                ClipboardContent cc = new ClipboardContent();
-	                cc.put(PATHWAY_MIME_TYPE, index);
-	                db.setContent(cc);
-	                event.consume();
-	                thisRow = row;
-	            }
-	        });
-
-	        row.setOnDragEntered(event -> {
-	            Dragboard db = event.getDragboard();
-	            if (db.hasContent(PATHWAY_MIME_TYPE)) {
-	                if (row.getIndex() != ((Integer)db.getContent(PATHWAY_MIME_TYPE)).intValue()) {
-	                    event.acceptTransferModes(TransferMode.MOVE);
-	                    event.consume();
-	                    thisRow = row;
-//	                  if (thisRow != null) 
-//	                 	   thisRow.setOpacity(0.3);
-	                }
-	            }
-	        });
-
-	        row.setOnDragExited(event -> {
-	            if (event.getGestureSource() != thisRow &&
-	                    event.getDragboard().hasString()) {
-//	               if (thisRow != null) 
-//	            	   thisRow.setOpacity(1);
-	               thisRow = null;
-	            }
-	        });
-
-	        row.setOnDragOver(event -> {
-	            Dragboard db = event.getDragboard();
-	            if (db.hasContent(PATHWAY_MIME_TYPE)) {
-	                if (row.getIndex() != ((Integer)db.getContent(PATHWAY_MIME_TYPE)).intValue()) {
-	                    event.acceptTransferModes(TransferMode.MOVE);
-	                    event.consume();
-	                }
-	            }
-	        });
-
-	        row.setOnMouseClicked(event -> {
-	        	if (event.getClickCount() == 2)
-	            {
-	                int idx = row.getIndex();
-	        		getInfo(idx);
-	              event.consume();
-	            }
-	        });
-
-	        row.setOnDragDropped(event -> {
-	            Dragboard db = event.getDragboard();
-	            if (db.hasContent(PATHWAY_MIME_TYPE)) {
-	                int draggedIndex = (Integer) db.getContent(PATHWAY_MIME_TYPE);
-	                PathwayRecord draggedNode = pathwayTable.getItems().remove(draggedIndex);
-
-	                int  dropIndex = (row.isEmpty()) ? pathwayTable.getItems().size() : row.getIndex();
-	                pathwayTable.getItems().add(dropIndex, draggedNode);
-
-	                event.setDropCompleted(true);
-	                pathwayTable.getSelectionModel().select(dropIndex);
-	                event.consume();
-//	                if (thisRow != null) 
-//	             	   thisRow.setOpacity(1);
-	                thisRow = null;
-	            }
-	        });
-
-	        return row ;
-	    });
-
-		
+		pathwayTable.setRowFactory((a) -> {
+		       return new DraggableTableRow<PathwayRecord>(pathwayTable, PATHWAY_MIME_TYPE, this, null);
+			});
+		}
+	@Override
+	public Species getSpecies() {
+		return parentController == null ? Species.Human : parentController.getSpecies();		// TODO should assertNonNull parentController?
 	}
-	private void getInfo(int idx) {
-		PathwayRecord rec = pathwayTable.getItems().get(idx);
-		String url = rec.getUrl();
-		System.out.println("getInfo: " + rec.getId() + " Fetching: " + url);					//TODO
-		String result = StringUtil.callURL(url, false);
-		if (parentController != null)
-			parentController.viewPathway(result);
-		else 
-			System.err.println("launching the gene list controller is deprecated");
-	}
+	@Override public void resetTableColumns() {	}
+	@Override public void reorderColumns(int a, int b) {	}
+
 }

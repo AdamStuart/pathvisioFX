@@ -1,18 +1,21 @@
 package diagrams.pViz.model;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.gpml.GPMLGroup;
+import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.layout.Background;
@@ -29,10 +32,12 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import model.AttributeMap;
-import model.bio.BiopaxRef;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
-import model.bio.GeneList;
+import model.bio.GeneListRecord;
 import model.bio.Species;
+import services.bridgedb.BridgeDbIdMapper;
+import services.bridgedb.MappingSource;
 import util.StringUtil;
 
 public class Model
@@ -40,14 +45,24 @@ public class Model
 /*
  *  Model - the set of record lists	
  *  
- *  We need to keep track of species, nodes, edges, genelists, pathways, references, comments
+ *  We need to keep track of species, nodes, edges, genelists, pathways, references, comments, groups
  */
 	private Controller controller;
 	public Controller getController() { return controller; } 
 	private Map<String, MNode> resourceMap = FXCollections.observableHashMap();
 	private int nodeCounter = 0;
-	private List<Edge> edgeTable = FXCollections.observableArrayList();
+	public Collection<MNode> getNodes()			{ return resourceMap.values();	}
 
+	private List<Edge> edgeList = FXCollections.observableArrayList();
+	public List<Edge> getEdgeList()			{ return edgeList;	}
+	public List<Edge> getEdgeList(String nodeId)			
+	{ 
+		List<Edge> hits = new ArrayList<Edge>();
+		for (Edge e : edgeList)
+			if (e.touches(nodeId))
+					hits.add(e);
+		return hits;	
+	}
 	private Map<String, Shape> shapes = new HashMap<String,Shape>();
 	public Map<String, Shape> getShapes()	{ return shapes; }
 	public Shape findShape(String s ) 		{ return shapes.get(s);	}
@@ -63,6 +78,19 @@ public class Model
 	{
 		controller = ct;
 	}
+	//-------------------------------------------------------------------------
+	private Species species;
+	public Species getSpecies() {
+		if (species == null) 
+			species = Species.Human;
+		return species;
+	}
+	public void setSpecies(Species s) {			species = s;	}
+	public void addGenes(List<Gene> inList) {
+		for (Gene g: inList)
+			if (null == findInList(genes, g.getName()))
+				genes.add(g);
+	}
 	// **-------------------------------------------------------------------------------
 	public String saveState()
 	{
@@ -70,24 +98,36 @@ public class Model
 		StringBuilder saver = new StringBuilder(header);
 		serializeComments(saver);
 		serializeNodes(saver);
-		serializeReferences(saver);
 		serializeEdges(saver);
-		serializeShapes(saver);
+		serializeReferences(saver);
 		return saver.toString();
 	}
-	private String docHeader() {
-		return "Header";
-	}
+	String[] pathwayAttributes = {"Name", "Organism", "License"};
+	private static String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \n";
+	private static String namespace = "xmlns=\"http://pathvisio.org/GPML/2013a\"\n";
 	
-	private void serializeNodes(StringBuilder saver) {
+	private String docHeader() {		return xmlHeader +  "<Pathway ";	}
+	
+	private void serializeComments(StringBuilder saver) {
+		for (CommentRecord rec : getComments())
+			saver.append(rec.toGPML());
 	}
 	private void serializeReferences(StringBuilder saver) {
+		for (BiopaxRecord rec : getReferences())
+			saver.append(rec.toGPML());
 	}
+	private void serializeNodes(StringBuilder saver) {
+		for (MNode node : getResourceMap().values())
+			saver.append(node.toGPML());
+		}
 	private void serializeEdges(StringBuilder saver) {
+		for (Edge edge : getEdgeList())
+			saver.append(edge.toGPML());
 	}
-	private void serializeShapes(StringBuilder saver) {
-	}
-	private void serializeComments(StringBuilder saver) {
+	public void serializeGroups(StringBuilder bldr)
+	{
+		for (GPMLGroup g : getGroups())
+			bldr.append(g.toGPML());
 	}
 	//---------------------------------------------------------
 	public void setState(String s)
@@ -99,23 +139,27 @@ public class Model
 	}
 	// **-------------------------------------------------------------------------------
 	
-	List<String> comments = new ArrayList<String>();
-	public void addComment(String key, String val) {		comments.add(key + ": " + val);	}
+	List<CommentRecord> comments = new ArrayList<CommentRecord>();
+	public void addComment(String source, String text) {		comments.add(new CommentRecord(source, text));	}
 	public void clearComments() {		comments.clear();			}
-	public String getComments() {
+	public String getCommentsStr() {
 		StringBuilder b = new StringBuilder();
-		for (String c : comments)
-			b.append(c).append("\n");
+		for (CommentRecord c : comments)
+			b.append(c.getText()).append("\n");
 		return b.toString();
 	}
-	private void readComments(String state) {
-	}
+	public List<CommentRecord> getComments() {		return comments;	}
+
 	// **-------------------------------------------------------------------------------
-	ObservableList<Gene> genes = FXCollections.observableArrayList();
-	public void addGene(Gene g) 		{		genes.add(g);	}
-	public void clearGenes() 			{		genes.clear();	}
-	public List<Gene> getGenes() 		{		return genes;	}
-	public GeneList getGeneList() 		{		return new GeneList(genes, getSpecies());	}
+	List<Gene> genes = FXCollections.observableArrayList();
+	GeneListRecord geneListRecord = null;
+	public GeneListRecord getGeneList() {	return	geneListRecord ; }
+	public void setGeneList(GeneListRecord rec, List<Gene> gs) {		genes = gs;	geneListRecord = rec; }
+	public int getNGenes() 				{	return	genes.size();	}
+	public void addGene(Gene g) 		{	genes.add(g);	}
+	public void clearGenes() 			{	genes.clear();	}
+	public List<Gene> getGenes() 		{	return genes;	}
+//	public List<Gene> getGeneList() 		{		return new GeneList(genes, getSpecies());	}
 	public Gene findGene(String string) {
 		if (StringUtil.isEmpty(string)) return null;
 		for (Gene g : getGenes())
@@ -123,21 +167,121 @@ public class Model
 				return g;
 		return null;
 	}
-
-	// **-------------------------------------------------------------------------------
-	ObservableList<BiopaxRef> references = FXCollections.observableArrayList();
-	public void addRef(BiopaxRef ref) 	{	if (!refExists(ref))			references.add(ref);		}
-	private boolean refExists(BiopaxRef ref) {
-		String id = ref.getId();
-		if (id == null) return false;
-		for (BiopaxRef r : references)
-			if (id.equals(r.getId())) return true;
+	public Gene findGene(Gene other) {
+		if (other == null) return null;
+		return findGene(other.getName());
+	}
+	public boolean add(Gene g)
+	{
+		if ( find(g.getName()) == null) 
+			return genes.add(g);
 		return false;
 	}
-	public int getNReferences() 		{	return references.size();	}
-	public BiopaxRef getReference(int i) {	return references.get(i);	}
-	public void clearRefs() 			{	references.clear();	}
-	public List<BiopaxRef> getReferences() { return references;	}
+	
+	public boolean add(GeneListRecord g)
+	{
+		boolean anyTrue = false;
+		for (Gene gene : g.getGeneList())
+			anyTrue |= add(gene);
+		return anyTrue;
+	}
+	
+	public List<Gene> intersection(List<Gene> other)
+	{
+		List<Gene> intersection = FXCollections.observableArrayList();
+		for (Gene g : genes)
+			if (findInList(other, g.getName()) == null)
+				intersection.add(g);
+		return intersection;
+	}
+	
+	public List<Gene> union(List<Gene> other)
+	{
+		List<Gene> union = FXCollections.observableArrayList();
+		union.addAll(genes);
+		for (Gene g : other)
+			if (findInList(genes, g.getName()) == null)
+				union.add(g);
+		return union;
+	}
+	static public Gene findInList(List<Gene> list, String nameOrId)
+	{
+		if (nameOrId == null) return null;
+		String name = nameOrId.trim();
+		for (Gene g : list)
+		{
+			if (name.equals(g.getName())) return g;			//IgnoreCase
+//			if (name.equalsIgnoreCase(g.getId())) return g;
+		}
+		return null;
+	}
+	public Gene find(String nameOrId)
+	{
+		if (nameOrId == null) return null;
+		String name = nameOrId.trim();
+		for (Gene g : genes)
+		{
+			if (name.equalsIgnoreCase(g.getName())) return g;
+			if (name.equalsIgnoreCase(g.getId())) return g;
+		}
+		return null;
+	}
+	public Gene find(Gene g)	{		return find(g.getName());	}
+
+	//--------------------------------------------------------------------
+
+	static String TAB = "\t";
+	static String NL = "\n";
+	public static String BDB = "http://webservice.bridgedb.org/";
+	public void fillIdlist()
+	{
+		if (species == null) 
+			species = Species.Human;
+		StringBuilder str = new StringBuilder();
+		for (Gene g : genes)
+		{
+			if (StringUtil.hasText(g.getIdlist())) continue;
+			String name = g.getName();
+			MappingSource sys = MappingSource.guessSource(species, name);
+			str.append(name + TAB + sys.system() + NL);
+		}
+		try
+		{
+			List<String> output = BridgeDbIdMapper.post(BDB, species.common(), "xrefsBatch", "", str.toString());
+			for (String line : output)
+			{
+				String [] flds = line.split("\t");
+				String name = flds[0];
+				String allrefs = flds[2];
+				for (Gene g : genes)
+				{
+					if (!g.getName().equals(name)) continue;
+					System.out.println("setting ids for " + name );	
+					g.setIdlist(allrefs);
+					g.setEnsembl(BridgeDbIdMapper.getEnsembl(allrefs));
+				}
+			}
+		}
+		catch(Exception ex) 
+		{ 
+			System.err.println(ex.getMessage());	
+		}
+	}
+	//--------------------------------------------------------------------
+	ObservableList<BiopaxRecord> references = FXCollections.observableArrayList();
+	public void addRef(BiopaxRecord ref) 	{	if (!refExists(ref.getId()))	references.add(ref);		}
+	private boolean refExists(String ref) 	{	return findRef(ref) != null;	}
+	private BiopaxRecord findRef(String ref) {
+		if (ref == null) return null;
+		for (BiopaxRecord r : references)
+			if (ref.equals(r.getRdfid())) return r;
+		return null;
+	}
+	public int getNReferences() 			{	return references.size();	}
+	public BiopaxRecord getReference(String ref) 	{	return findRef(ref);		}
+	public BiopaxRecord getReference(int i) {	return references.get(i);	}
+	public void clearRefs() 				{	references.clear();	}
+	public List<BiopaxRecord> getReferences() { return references;	}
 	private void readReferences(String state) {
 	}
 	// **-------------------------------------------------------------------------------
@@ -155,47 +299,22 @@ public class Model
 	private void readNodes(String state) {
 	}
 	// **-------------------------------------------------------------------------------
-	public Edge addEdge(MNode start, MNode end)		
+	public Edge addEdge(MNode start, MNode end, String activeLayer)		
 	{  
-		Edge edge = new Edge(this, start.getStack(), end.getStack(), null, null, null);
+		AttributeMap attributes = new AttributeMap();
+		attributes.put("Layer", activeLayer);
+		Edge edge = new Edge(this, start.getStack(), end.getStack(), attributes, null, null);
 		addEdge(edge);
 		return edge;
 	}
 	
-	public void addEdge(Edge e)			{  	edgeTable.add(e);	}
+	public void addEdge(Edge e)			{  edgeList.add(e);	}
 	public void setAnchorVisibility(boolean visible)			
 	{ 
-		for (Edge e : edgeTable)
+		for (Edge e : edgeList)
 			e.getEdgeLine().setAnchorVis(visible);	
 	}
 	private void readEdges(String state) {
-	}
-	// **-------------------------------------------------------------------------------
-	public List<Edge> connectSelectedNodes()		
-	{  
-		List<Edge> edges = new ArrayList<Edge>();
-		List<VNode> selection = controller.getSelection();
-		for (int i=0; i<selection.size()-1; i++)
-		{
-			VNode start = selection.get(i);
-			if (start.getShape() instanceof Line) continue;
-			for (int j=i+1; j < selection.size(); j++)
-			{
-				VNode end = selection.get(j);
-				if (end.getShape() instanceof Line) continue;
-				edges.add(addEdge( start.getModel(), end.getModel()));
-			}
-		}
-		return edges;
-	}
-	public void removeEdge(Edge edge)			{  		edgeTable.remove(edge);	}
-	public void connectAllEdges() {
-		for (int z = edgeTable.size()-1; z >= 0; z--)
-		{
-			Edge e = edgeTable.get(z);
-			e.connect(true);
-			e.connect(false);
-		}
 	}
 	// **-------------------------------------------------------------------------------
 	
@@ -203,14 +322,14 @@ public class Model
 //	
 	public void removeEdges(Node node)		
 	{  
-		for (int z = edgeTable.size()-1; z >= 0; z--)
+		for (int z = edgeList.size()-1; z >= 0; z--)
 		{
-			Edge e = edgeTable.get(z);
+			Edge e = edgeList.get(z);
 			if (e.isStart(node) || e.isEnd(node))
 			{
 				e.removeListeners();
 				e.getEdgeLine().dispose();
-				edgeTable.remove(e);
+				edgeList.remove(e);
 			}
 		}
 //		List<Edge> okEdges = edgeTable.stream().filter(new TouchingNodeFilter(node)).collect(Collectors.toList());
@@ -218,13 +337,6 @@ public class Model
 //		edgeTable.addAll(okEdges);
 	}
 	// **-------------------------------------------------------------------------------
-
-	public static class TouchingNodeFilter implements Predicate<Edge>
-	{
-		Node node;
-		TouchingNodeFilter(Node n)				{	node = n;		}
-		@Override public boolean test(Edge e)	{	return (!e.isStart(node) && !e.isEnd(node));	}
-	}
 	
 	public void removeNode(VNode node)		
 	{  
@@ -260,7 +372,45 @@ public class Model
 	{
 		return gensym(oldId.substring(0,1));
 	}
+	//------------------------------------------------------------------------- GROUPS
+	Map<String, GPMLGroup> groups = new HashMap<String, GPMLGroup>();
 	
+	public void addGroup(String groupId, String graphId) {
+		AttributeMap attr = new AttributeMap();
+		attr.put("LineStyle", "Broken");
+		attr.put("GraphId", graphId);
+		attr.put("GroupId", groupId);
+		groups.put(groupId, new GPMLGroup(attr, getController()));
+	}
+	public Collection<GPMLGroup> getGroups() { return groups.values();	}
+	
+	// **-------------------------------------------------------------------------------
+	public List<Edge> connectSelectedNodes()		
+	{  
+		List<Edge> edges = new ArrayList<Edge>();
+		List<VNode> selection = controller.getSelection();
+		for (int i=0; i<selection.size()-1; i++)
+		{
+			VNode start = selection.get(i);
+			if (start.getShape() instanceof Line) continue;
+			for (int j=i+1; j < selection.size(); j++)
+			{
+				VNode end = selection.get(j);
+				if (end.getShape() instanceof Line) continue;		//TODO add anchor
+				edges.add(new Edge(this, start, end, null, null, null));
+			}
+		}
+		return edges;
+	}
+	public void removeEdge(Edge edge)			{  		edgeList.remove(edge);	}
+	public void connectAllEdges() {
+		for (int z = edgeList.size()-1; z >= 0; z--)
+		{
+			Edge e = edgeList.get(z);
+			e.connect(true);
+			e.connect(false);
+		}
+	}
 	
 // **-------------------------------------------------------------------------------
 	static String XMLHEAD = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
@@ -281,7 +431,7 @@ public class Model
 
 		buff.append(String.format(GraphicsHEAD,	width, height));
 		traverse(buff, root, 0);
-		for (Edge e : edgeTable)
+		for (Edge e : edgeList)
 			buff.append(e.toString() + "\n");
 		buff.append("</Pathway>\n");
 		return buff;
@@ -293,6 +443,7 @@ public class Model
 		if (Pasteboard.isMarquee(node)) return;
 //		if (node instanceof Edge)			buff.append(describe(node));	
 		if (node instanceof Shape)			buff.append(StringUtil.spaces(indent) + describe(node) + "\n");	
+		if (node instanceof Group)			buff.append(StringUtil.spaces(indent) + describe(node) + "\n");	
 		if (node instanceof StackPane)		buff.append(StringUtil.spaces(indent) + describe(node) + "\n");
 		if (node instanceof Parent)
 			for (Node n : ((Parent) node).getChildrenUnmodifiable())
@@ -310,7 +461,8 @@ public class Model
 			}
 	}
 	// **-------------------------------------------------------------------------------
-	static public String describe(MNode node)	{	return node.getStack().asGPML();	}
+	static public String describe(MNode node)	{	return node.toGPML();	}
+	static public String describe(Layer node)	{	return node.getName();	}
 	static public String describe(Node node)	{	return node.getClass().getSimpleName() + ": " + node.getId() + " " +
 				StringUtil.asString(node.getBoundsInParent());	}
 	static String getBoundsString(double x, double y, double w, double h)	{
@@ -413,6 +565,7 @@ public class Model
 	}
 	//-------------------------------------------------------------------------
 	public void dumpNodeTable() {
+		System.out.println(resourceMap.keySet().size());
 		for (String key : resourceMap.keySet())
 		{
 			String s;
@@ -448,13 +601,33 @@ public class Model
 
 	public void resetEdgeTable()
 	{
-		for (Edge e : edgeTable)
+		System.out.println("resetEdgeTable: " + edgeList.size());
+		for (Edge e : edgeList)
 		{
 			VNode start = e.getStartNode();
-			if (start == null) continue;
+			if (start == null) 
+			{
+				String startId = e.getAttributes().get("start");
+				if (startId != null)
+				{
+					MNode startMNode = getResource("start");
+					start = (startMNode == null) ? null : startMNode.getStack();
+				}
+			}
 			EdgeLine edgeline = e.getEdgeLine();
+			VNode end = e.getEndNode();
+			if (end == null) 
+			{
+				String endId = e.getAttributes().get("end");
+				if (endId != null)
+				{
+					MNode endMNode = getResource("end");
+					end = (endMNode == null) ? null : endMNode.getStack();
+				}
+			}
 			if (edgeline == null) continue;
 			e.connect();
+//			e.addListeners();
 //			Line line = edgeline.getLine();
 //			line.setStartX(startPt.getX());
 //			line.setStartY(startPt.getY());
@@ -467,18 +640,27 @@ public class Model
 		System.out.println(out);
 	}
 	public void dumpEdgeTable() {
-		System.out.println("\n" + edgeTable.size());
-		for (Edge e : edgeTable)
+		System.out.println("\n" + edgeList.size());
+		for (Edge e : edgeList)
 			System.out.println(e);
 		}
-	//-------------------------------------------------------------------------
-	private Species species;
-	public Species getSpecies() {
-		if (species == null) 
-			species = Species.Human;
-		return species;
+	
+	public void applyState(String state, AttributeMap attrMap) {
+		
+		for (MNode node : resourceMap.values())
+		{
+			if (node.getId().equals(state))
+				for (String key : attrMap.keySet())
+					node.attributes.put("State" + key, attrMap.get(key));
+		}
+		for (Edge edge : edgeList)
+		{
+			if (edge.references(state))
+				for (String key : attrMap.keySet())
+					edge.getAttributes().put("State" + key, attrMap.get(key));
+		}
 	}
-	public void setSpecies(Species s) {			species = s;	}
+	
 }
 
 

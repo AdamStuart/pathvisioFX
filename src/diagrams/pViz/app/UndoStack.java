@@ -8,15 +8,15 @@ import javafx.scene.control.ListView;
 
 public class UndoStack
 {
-	private Controller controller;
+	private IController controller;
 	private ObservableList<Action> actions;
 	private ListView<Action> undostackView;			// may be null
 
 	int curStackPtr = 0; //  or number of actions available to redo
-	int verbose = 0;
+	int verbose = 3;
 
 	// -------------------------------------------------------
-	public UndoStack(Controller c, ListView<Action> undoview)
+	public UndoStack(IController c, ListView<Action> undoview)
 	{
 		if (verbose > 0)
 			System.out.println("created undo stack");
@@ -40,7 +40,7 @@ public class UndoStack
 		{
 			a.undo();
 			String savedState = a.getState();
-//			controller.setState(savedState);
+			controller.setState(savedState);
 			actions.set(curStackPtr, a);
 			curStackPtr++;
 			refresh();
@@ -72,6 +72,7 @@ public class UndoStack
 	}	
 	public void push(ActionType actionType, String text)
 	{
+		Log.action(actionType);
 		while (actions.size() > 0)				// throw away undone Actions
 		{
 			Action a = actions.get(0);
@@ -84,13 +85,13 @@ public class UndoStack
 		action.doIt(); // this only sets the state flag
 		action.setController(controller);
 		action.saveState();
-		action.setSelection(controller.getSelection()); // this is redundant since
+//		action.setSelection(controller.getSelection()); // this is redundant since
 						// we save the full state, but is a future optimization
 		actions.add(0, action);
 		action.setText(text);
 		if (verbose > 0)
 			System.out.println(action.getText() + ": \n" + action.getState());
-		controller.reportStatus("Push: " + action.getText() + " " + actions.size());
+//		controller.reportStatus("Push: " + action.getText() + " " + actions.size());
 	}
 
 	// -------------------------------------------------------

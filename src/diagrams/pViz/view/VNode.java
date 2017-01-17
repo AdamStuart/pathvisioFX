@@ -8,9 +8,12 @@ import diagrams.grapheditor.utils.ResizableBox;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
+import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.gpml.Anchor;
+import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.EdgeLine;
 import diagrams.pViz.model.MNode;
+import diagrams.pViz.tables.ReferenceController;
 import gui.Backgrounds;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
@@ -19,6 +22,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -28,40 +32,58 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.ClosePath;
+import javafx.scene.shape.LineTo;
+import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
+import javafx.scene.shape.PathElement;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebView;
 import model.AttributeMap;
+import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.dao.CSVTableData;
 import util.FileUtil;
 import util.MacUtil;
 // a VNode can be a shape or a control or a container
 import util.StringUtil;
+// 
+/*
+ * VNode: the view node 
+ * Created by the constructor of "model" the corresponding MNode
+ * It inherits from ResizableBox > DragbleBox > StackPane > Pane > Region etc.
+ * 
+ */
 
-
-public class VNode extends ResizableBox {		//StackPane
+public class VNode extends ResizableBox implements Comparable<VNode> {		//StackPane
 
 	private MNode model;
-	private Shape shape;
-	private TextField text;
+	private Shape figure;
+	private Label text;
 	private String title;
+	private boolean movable;
+	private boolean resizable;
+	private boolean editable;
 	
 	private Pasteboard pasteboard = null;
 	private Selection selection = null;
@@ -75,17 +97,31 @@ public class VNode extends ResizableBox {		//StackPane
 		selection = pasteboard.getSelectionMgr();
 		AttributeMap attributes = modelNode.getAttributeMap();
 		
-		createShape(attributes.getPosition());
+		createFigure(attributes.getPosition());
 		setId(modelNode.getId());
 		title = attributes.get("TextLabel");
 		if (title == null) title = "";
+		String biopaxRef = attributes.get("BiopaxRef");
+		if (biopaxRef != null)
+			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT);
+
 		addText(title);
 		System.out.println(title);
 		addPorts();
-//		setBorder(Borders.redBorder);
-//        addEventHandler(MouseEvent.DRAG_DETECTED, this::handleMouseDetected);
+
         readGeometry(attributes, this);
-      }
+        movable = attributes.getBool("Movable", true);
+        attributes.putBool("Movable", movable);
+        resizable = attributes.getBool("Resizable", true);
+        setResize(resizable);
+        attributes.putBool("Resizable", resizable);
+        editable = attributes.getBool("Editable", true);
+        attributes.putBool("Editable", editable);
+         Tooltip tooltip = new Tooltip();
+         tooltip.setOnShowing(v -> { tooltip.setText(attributes.getAttributes(true));});
+         Tooltip.install(this,  tooltip);
+ 		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
+     }
 	
 	public void setText(String s)		{ 	text.setText(s);	}
 	public String getText()				
@@ -93,39 +129,97 @@ public class VNode extends ResizableBox {		//StackPane
 		String s = text.getText();	
 		if (StringUtil.isEmpty(s))
 		{
-			if (isAnchor()) return "Anchor (" + getModel().getId() + ")";
+			if (isAnchor()) return "Anchor (" + modelNode().getId() + ")";
 			return getId();
 		}
 		return s;
 	}
-	public TextField getTextField()		{ 	return text;	}
-	public Shape getShapeLayer()		{	return shape;	}
-	public void setShapeLayer(Shape s)	{	shape = s;	}
-	public MNode getModel()				{	return model;	}
+	private Controller getController()  { 	return pasteboard.getController();   	}
+	public Label getTextField()			{ 	return text;	}
+	public Shape getFigure()			{	return figure;	}
+	public void setFigure(Shape s)		{	figure = s;	}
+	public MNode modelNode()			{	return model;	}
 	private String gensym(String s)		{	return model.getModel().gensym(s);	}
 	public AttributeMap getAttributes() {	return model.getAttributeMap();	}
 //	public void setAttributes(AttributeMap attrs){	model.getAttributeMap().addAll(attrs);	}
+//	public void disableResize()	{ setResizeBorderTolerance(0);	}
+	// **-------------------------------------------------------------------------------
+	public boolean canResize()	{	return resizable;	}
+	public void handleResize(MouseEvent event)
+	{
+		if (resizable)
+			super.handleResize(event.getSceneX(), event.getSceneY());
+	}
 
+	public void setResize(boolean enable)
+	{
+		setResizeEnabledNorth(enable);
+		setResizeEnabledEast(enable);
+		setResizeEnabledWest(enable);
+		setResizeEnabledSouth(enable);
+		resizable = enable;	
+	}
+	// **-------------------------------------------------------------------------------
+	public boolean isMovable()	{	return movable;	}
+	public void setMovable(boolean b)	{ movable = b;	}
+	public boolean isEditable()	{	return editable;}
+	public void setEditable(boolean b)	{ editable = b;	}
+	// **-------------------------------------------------------------------------------
+	public void applyLocks(boolean mov, boolean resiz, boolean edit) {
+		setMovable(mov);
+		setResize(resiz);
+		setEditable(edit);
+	}
+	
+	// **-------------------------------------------------------------------------------
 	public Point2D boundsCenter()	{
 		Bounds b = getBoundsInParent();
 		double x = (b.getMinX() + b.getMaxX()) / 2;
 		double y = (b.getMinY() + b.getMaxY()) / 2;
 		return new Point2D(x, y);		
 	}
-	public boolean isAnchor()	{ return getModel() instanceof Anchor;	}
-	public boolean isLabel()	{ return "Label".equals(getModel().getAttributeMap().get("ShapeType"));	}
-	public boolean isShape()	{ return "RoundedRectangle".equals(getModel().getAttributeMap().get("ShapeType"));	}
-	public void disableResize()	{ setResizeBorderTolerance(0);	}
+	// **-------------------------------------------------------------------------------
+	public void tagCorner(Color color, Pos position)	
+	{
+		double cornerX = 0;
+		double dX = 1;
+		double dY = 1;
+		double cornerY = 0;
+		double size = 8;
+		if (position == Pos.BOTTOM_LEFT || position == Pos.BOTTOM_RIGHT) 	cornerY = getHeight();
+		if (position == Pos.TOP_RIGHT  || position == Pos.BOTTOM_RIGHT)  	cornerX = getHeight();
+		if (position == Pos.BOTTOM_LEFT || position == Pos.BOTTOM_RIGHT) 	dY = -1;
+		if (position == Pos.TOP_RIGHT || position == Pos.BOTTOM_RIGHT) 		dX = -1;
+		
+		PathElement[] elements = new PathElement[4];
+		elements[0] = new MoveTo(cornerX, cornerY);
+		elements[1] = new LineTo(cornerX, cornerY + dY *  size);
+		elements[2] = new LineTo(cornerX + dX *  size, cornerY);
+		elements[3] = new ClosePath();
+		Path tag = new Path(elements);
+		tag.setStrokeWidth(0.5);
+		tag.setFill(color);
+		getChildren().add(tag);
+		StackPane.setAlignment(tag, position);
+	
+	}
+	// **-------------------------------------------------------------------------------
+	public boolean isAnchor()	{ return modelNode() instanceof Anchor;	}
+	public boolean isLabel()	{ return "Label".equals(modelNode().getAttributeMap().get("ShapeType"));	}
+	public boolean isShape()	{ return "RoundedRectangle".equals(modelNode().getAttributeMap().get("ShapeType"));	}// TODO
+	// **-------------------------------------------------------------------------------
 	public boolean isGroup()	{ return false;	}			// TODO
-	public List<VNode> ungroup()	{ return FXCollections.emptyObservableList();	}			// TODO
+	public List<VNode> ungroup()	
+	{ 
+		return FXCollections.emptyObservableList();	
+	}			// TODO
+	
 	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
 
-	 
 	protected void handleMouseDragged(final MouseEvent event) {
-
         if (isAnchor()) 
  	   {
-            Anchor anchor = (Anchor) getModel();
+            Anchor anchor = (Anchor) modelNode();
             EdgeLine edgeLine = anchor.getEdge().getEdgeLine();
             double pX = 100; // TODO  HACK -- assumes palette is open
             double pY = 20; // pasteboard.getParent().getLayoutY();
@@ -139,15 +233,14 @@ public class VNode extends ResizableBox {		//StackPane
             Point2D pt = edgeLine.getPointAlongLine(pos);
             setCenter(pt);
             event.consume();
-            return;
-//        	   System.out.println("Anchor handleMouseDragged: X at " + (int) event.getX() );
 	   }
         else super.handleMouseDragged(event);
     }
  	// **-------------------------------------------------------------------------------
-	private void createShape(Point2D center) 
+	private void createFigure(Point2D center) 
 	{	
 		String type = model.getShapeType();
+		if ("None".equals(type)) return;
 		if (type == null) type = "Rectangle";			// TODO
 		Tool tool = Tool.lookup(type);
 		if (tool == null) return ;
@@ -156,7 +249,7 @@ public class VNode extends ResizableBox {		//StackPane
 			addNewNode(tool, model);
 			return;
 		}
-		shape = ShapeFactory.makeNewShape(type, model, this);
+		else figure = ShapeFactory.makeNewShape(type, model, this);
 //		setLayoutX(getAttributes().getDouble("X"));
 //		setLayoutY(getAttributes().getDouble("Y"));
 		Insets insets = new Insets(2,2,2,2);  //getInsets();
@@ -164,9 +257,9 @@ public class VNode extends ResizableBox {		//StackPane
         double vInsets = insets.getTop() + insets.getBottom();
         double w = getAttributes().getDouble("Width", 15) + hInsets;
         double h = getAttributes().getDouble("Height", 15 + vInsets);
-        if (shape instanceof Circle)
+        if (figure instanceof Circle)
         {
-        	Circle c = (Circle) shape;
+        	Circle c = (Circle) figure;
         	c.setRadius(Math.min(w, h)/ 2); 
         	c.setCenterX(center.getX());
         	c.setCenterY(center.getY());
@@ -176,21 +269,38 @@ public class VNode extends ResizableBox {		//StackPane
         		setResizeBorderTolerance(-2);
         	}
         }
-        else if (shape instanceof Rectangle)
+        else if (figure instanceof Rectangle)
         {
-	        Rectangle r = (Rectangle) shape;
+	        Rectangle r = (Rectangle) figure;
 	        r.setWidth(w);
 	        r.setHeight(h);
 	        r.setLayoutX(center.getX() - w /2 ); 
 	        r.setLayoutY(center.getY() - h /2 ); 
         }
-        else if (shape instanceof Path)
+        else if (figure instanceof Path)
         {
 //			Path p = (Path) shape;
 //			p.scaleXProperty().bind(widthProperty());
 
         }
 	}
+ 	// **-------------------------------------------------------------------------------
+
+	private double getCenterX() {
+		return modelNode().getAttributeMap().getDouble("CenterX");
+	}
+
+	private double getCenterY() {
+		return modelNode().getAttributeMap().getDouble("CenterY");
+	}
+
+	public Point2D center() {
+    	Bounds bounds = getBoundsInParent();
+    	double x = (bounds.getMinX() + bounds.getWidth()  / 2);
+    	double y = (bounds.getMinY() + bounds.getHeight() / 2);
+    	return new Point2D(x,y);
+	}
+
 	public void setCenter(Point2D pt)
 	{
 		setCenter(pt.getX(), pt.getY());
@@ -200,36 +310,52 @@ public class VNode extends ResizableBox {		//StackPane
 	{
 		getAttributes().putDouble("CenterX", x);
 		getAttributes().putDouble("CenterY", y);
-		install();
+		installPosition();
 	}
 	
-	private void install()
+	public String getLayerName() 		{	return getAttributes().get("Layer");	}
+	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}
+	public boolean isLayerLocked() 		{	LayerRecord rec = getLayer(); return rec == null || rec.getLock();	}
+
+ 	// **-------------------------------------------------------------------------------
+	private void installPosition()
 	{
 		double x = getAttributes().getDouble("CenterX");
 		double y = getAttributes().getDouble("CenterY");
-		double w = getAttributes().getDouble("Width");
-		double h = getAttributes().getDouble("Height");
+		double w = getAttributes().getDouble("Width",20);
+		double h = getAttributes().getDouble("Height",20);
 		fill(x,y,w,h, getTitle(), getId());
 	}
 	
-	public String getTitle() { return "getTitle"; }
-	public void setWidth(double w)	{		super.setWidth(w);		resizeShapeToNode();	}
-	public void setHeight(double h)	{		super.setHeight(h);		resizeShapeToNode();	}
+	public void extractPosition()
+	{
+		Bounds b = getBoundsInParent();
+		getAttributes().putDouble("X", b.getMinX());
+		getAttributes().putDouble("CenterX", (b.getMinX() + b.getMaxX()) / 2);
+		getAttributes().putDouble("Y", b.getMinX());
+		getAttributes().putDouble("CenterY", (b.getMinY() + b.getMaxY()) / 2);
+		getAttributes().putDouble("Width",b.getWidth());
+		getAttributes().putDouble("Height",b.getHeight());
+	}
 	
+	public String getTitle() 		{ 	return "getTitle"; }
+	public void setWidth(double w)	{	super.setWidth(w);		resizeFigureToNode();	}
+	public void setHeight(double h)	{	super.setHeight(h);		resizeFigureToNode();	}
 	
-	private void resizeShapeToNode() {
-		if (shape != null)
+ 	// **-------------------------------------------------------------------------------
+	private void resizeFigureToNode() {
+		if (figure != null)
 		{
-			if (shape instanceof Rectangle)
+			if (figure instanceof Rectangle)
 			{
-				Rectangle r = (Rectangle) shape;
-				r.setWidth(getWidth());	// - ShapeFactory.MARGIN2
-				r.setHeight(getHeight());	// - ShapeFactory.MARGIN2
+				Rectangle r = (Rectangle) figure;
+				r.setWidth(getWidth());	
+				r.setHeight(getHeight());
 			}
-			if (shape instanceof Circle)
+			if (figure instanceof Circle)
 			{
-				Circle c = (Circle) shape;
-				c.setCenterX(getCenterX());  //getModel().getAttributeMap().getDouble("CenterX"));
+				Circle c = (Circle) figure;
+				c.setCenterX(getCenterX()); 
 				c.setCenterY(getCenterY());
 				if (isAnchor())
 				{
@@ -238,18 +364,15 @@ public class VNode extends ResizableBox {		//StackPane
 				}
 				else c.setRadius(Math.min(getHeight(),getWidth())/2);
 			}
-			if (shape instanceof Path)
+			if (figure instanceof Path)
 			{
-				Path p = (Path) shape;
-				double scale = Math.min(getWidth() / 400, getWidth() / 300);
+				Path p = (Path) figure;
+				double scale = Math.min(getWidth() / 400, getHeight() / 300);
 				p.setScaleX(scale);
 				p.setScaleY(scale);
-
 			}
 		}
-		
 	}
-
 	// **-------------------------------------------------------------------------------
 	private void addNewNode(Tool type, MNode model)
 	{
@@ -266,24 +389,11 @@ public class VNode extends ResizableBox {		//StackPane
 	// **-------------------------------------------------------------------------------
 	public String toString()
 	{
-		Shape shape = getShapeLayer();
+		Shape shape = getFigure();
 		String shapeName = shape == null ? "n/a" : shape.getClass().getSimpleName();
-		return String.format("(%d) %s %s %s [@%3.1f, %3.1f; %3.1f x %3.1f ]", getChildren().size(), shapeName, getId(), getText(), getCenterX(), getCenterY(), getWidth(), getHeight());
-	}
-
-	private double getCenterY() {
-		return getModel().getAttributeMap().getDouble("CenterX");
-	}
-
-	private double getCenterX() {
-		return getModel().getAttributeMap().getDouble("CenterY");
-	}
-
-	public Point2D center() {
-    	Bounds bounds = getBoundsInParent();
-    	double x = (bounds.getMinX() + bounds.getWidth()  / 2);
-    	double y = (bounds.getMinY() + bounds.getHeight() / 2);
-    	return new Point2D(x,y);
+		double x = getLayoutX();
+		double y = getLayoutY();
+		return String.format("(%d) %s %s %s [@%3.1f, %3.1f; %3.1f x %3.1f ] @%3.1f, %3.1f", getChildren().size(), shapeName, getId(), getText(), getCenterX(), getCenterY(), getWidth(), getHeight(), x, y);
 	}
 	// **-------------------------------------------------------------------------------
 	public void addContent(Node content)
@@ -293,10 +403,11 @@ public class VNode extends ResizableBox {		//StackPane
 	    setMargin(content, new Insets(25,0,0,0));
 	}
 
+	// **-------------------------------------------------------------------------------
 	public void addText(String textLabel)
 	{
 		boolean showAlignmentSpots = false;
-		if (showAlignmentSpots )		// DEBUG
+		if (showAlignmentSpots )		// DEBUG-------------------
 		{
 			for (int i=0; i< 9 ; i++)
 			{
@@ -309,22 +420,16 @@ public class VNode extends ResizableBox {		//StackPane
 				label.setTextAlignment(TextAlignment.CENTER);
 				getChildren().add(label);
 			}
-		}								//   End DEBUG
+		}								// End DEBUG-------------------
 		Pos pos = Pos.CENTER;
-		text = new TextField(textLabel);
-		text.setEditable(false);
-//		text.setVisible(true);
-		text.setMinWidth(100);
-		text.setMinHeight(20);
-		text.setPrefWidth(100);
-		text.setPrefHeight(20);
-//		text.setOnMousePressed(e -> {  mousePressedOnText(e);});
-//		text.setOnMouseDragged(e -> {  mouseDraggedOnText(e);});
-//		text.setOnKeyPressed(e -> 	{  keyPressedOnText(e);});
+		text = new Label(textLabel);
+		text.setMinWidth(180);
+		text.setMinHeight(32);
+		text.setPrefWidth(220);
+		text.setPrefHeight(40);
 		text.setMouseTransparent(true);
-		text.setBackground(Backgrounds.transparent());
-
-		text.setFont(new Font(12));
+		text.setBackground(Backgrounds.transparent());   
+		text.setFont(new Font(18));
 		setAlignment(text, pos);
 		text.setAlignment(pos);
 		getChildren().add(text);
@@ -419,6 +524,11 @@ public class VNode extends ResizableBox {		//StackPane
      *
      * @param event {@link MouseEvent}
      */
+    protected void handleMouseReleased(final MouseEvent event) {
+    	getController().getUndoStack().push(ActionType.Move);
+		pasteboard.getSelectionMgr().extract();
+		super.handleMouseReleased(event);
+    }
 
 	double prevMouseX, prevMouseY;
 	protected void handleMousePressed(final MouseEvent event) {
@@ -443,15 +553,28 @@ public class VNode extends ResizableBox {		//StackPane
 				selection.select(this, !wasSelected);
 			else if (!wasSelected)
 				selection.selectX(this);
+			event.consume();
 	}
+	// **------------------------------------------------------------------------------
 	private void getInfo() {		
 		String name = getText();
-		Gene gene =  getModel().getModel().getGeneList().find(name);
-		if (gene != null)
-		{	gene.getInfo();
-		return;
+		String biopaxRef = getAttributes().get("BiopaxRef");
+		if (biopaxRef != null)
+		{
+			BiopaxRecord rec = modelNode().getModel().getReference(biopaxRef);
+			if (rec != null)
+			{
+				ReferenceController.showPMIDInfo(rec.getId());
+				return;
+			}
 		}
-		String s = getModel().getInfoStr();
+		Gene gene =  modelNode().getModel().findGene(name);
+		if (gene != null)
+		{	
+			gene.getInfo();
+			return;
+		}
+		String s = modelNode().getInfoStr();
 		   if (StringUtil.hasText(s))
 		   {  
 			   Alert a = new Alert(AlertType.INFORMATION, s);
@@ -479,7 +602,7 @@ public class VNode extends ResizableBox {		//StackPane
 		{
 			attributes.putColor("Fill",   (Color) shape.getFill());	
 			attributes.putColor("Stroke",   (Color) shape.getStroke());	
-			attributes.putDouble("StrokeWidth",   shape.getStrokeWidth());	
+			attributes.putDouble("LineThickness",   shape.getStrokeWidth());	
 		}
 	}
 	public void readGeometry(AttributeMap attrMap, Node content)
@@ -495,21 +618,6 @@ public class VNode extends ResizableBox {		//StackPane
 		if (Double.isNaN(x)) {	x = centerx - w / 2;	attrMap.putDouble("X", x);  }
 		if (Double.isNaN(y)) { y = centery - h / 2;		attrMap.putDouble("Y", y);  }
 		fill( x,  y,  w,  h,  title,  id);
-		Shape shape = getShapeLayer();
-		if (shape != null)
-		{
-			shape.setLayoutX(x);
-			shape.setLayoutY(y);
-//			shape.setWidth(w);
-//			shape.setHeight(w);
-			String filler = attrMap.get("Fill");
-			if (filler != null)	shape.setFill(attrMap.getColor("Fill"));
-			String strok = attrMap.get("Stroke");
-			if (strok != null)	shape.setStroke(attrMap.getColor("Stroke"));
-			double wid = attrMap.getDouble("StrokeWidth");
-			if (!Double.isNaN(wid)) 
-				shape.setStrokeWidth(wid);
-		}
 //		if (content != null)
 //			getChildren().add(content);
 	}
@@ -520,28 +628,84 @@ public class VNode extends ResizableBox {		//StackPane
 		if (Double.isNaN(w)) w = 20;
 		if (Double.isNaN(h)) h = 20;
 	
-		setLayoutX(x - w/2);
-		setLayoutY(y - h/2);
-		setWidth(w);
-		setHeight(h);
-		prefWidth(w);	setMinWidth(w);  
-		prefHeight(h);	setMinHeight(h); 
-	   
-		setStyle("-fx-border-color: green; -fx-border-width: 1; -fx-background-color: beige; -fx-opacity: 1.0;");	    
+		setLayoutX(x);
+		setLayoutY(y);
+		setWidth(w);	prefWidth(w);	setMinWidth(w);  
+		setHeight(h);	prefHeight(h);	setMinHeight(h); 
+		System.out.println(String.format("[@%3.1f, %3.1f; %3.1f x %3.1f ]", x, y, w, h));
+		AttributeMap attr = modelNode().getAttributeMap();
+		StringBuilder bldr = new StringBuilder();
+
+//		double fontsize = attr.getDouble("FontSize");
+		FontWeight wt =  FontWeight.NORMAL;
+		FontPosture posture =  FontPosture.REGULAR;
+		double size = 12;
+		
+		String fontweight = attr.get("FontWeight");		// Bold or nothing
+		if ("Bold".equals(fontweight))		
+			wt = FontWeight.BOLD;
+			//bldr.append("-fx-font-weight: bolder; ");
+		String style = attr.get("FontStyle");			// Italic or nothing
+		if ("Italic".equals(style))			
+			posture =  FontPosture.ITALIC;		//bldr.append("-fx-font-style: italic; ");
+		String align = attr.get("Valign");
+		if ("Middle".equals(align))
+			bldr.append("-fx-row-valignment:center;");
+		String fontsize = attr.get("FontSize");
+			if (fontsize != null) 
+				size = StringUtil.toDouble(fontsize);
+
+		
+		
+		String colorTag = getAttributeMap().get("Color");
+		if (colorTag != null)
+			bldr.append("-fx-text-fill:#" + colorTag + "; ");
+		bldr.append(makeStyleString("FontSize"));
+		String str = bldr.toString();
+		if (getTextField() != null) getTextField().setStyle(str);
+		System.out.println(str);
+		setStyle(str);
+		if (text != null) text.setFont(Font.font("times", wt, posture, size)); 
+		bldr = new StringBuilder();		// start over with Shape
+		colorTag = getAttributeMap().get("Color");
+		if (colorTag != null)
+			bldr.append("-fx-border-color:#" + colorTag + "; ");
+		bldr.append(makeStyleString("FillColor"));
+		bldr.append(makeStyleString("Opacity"));
+		bldr.append(makeStyleString("LineThickness"));
+		str = bldr.toString();
+		System.out.println(str);
+//		setStyle(str);	    
+		if (getFigure()!= null)
+			getFigure().setStyle(str);	    
 //		addTitleBar(title);
 	}
 	
-	public void addTitleBar(String title)
+	private String makeStyleString(String gpmlTag) {
+		String val = getAttributeMap().get(gpmlTag);
+		if (val == null) return "";
+		String fxml = GPML.asFxml(gpmlTag);
+		if (fxml == null) return "";
+		if ("FillColor".equals(gpmlTag) || "Color".equals(gpmlTag))
+			val = "#" + val;
+		return fxml + ":" + val + "; ";
+	}
+
+	private AttributeMap getAttributeMap() {
+		return modelNode().getAttributeMap();
+	}
+
+	public HBox addTitleBar(String title)
 	{		
-		HBox titleBar = new HBox(50);
+		HBox titleBar = new HBox();
 	    titleBar.setMaxHeight(25);
 	    Label idLabel = new Label(getId());
 	    idLabel.setMinWidth(50);
-	    getChildren().addAll(titleBar);
 	    StackPane.setAlignment(titleBar, Pos.TOP_CENTER);
 	    Label titleLabel = new Label(title);
 		titleBar.getChildren().addAll(idLabel, titleLabel);
 	    titleBar.setMouseTransparent(true);
+	    return titleBar;
 	}
 	
 	// **-------------------------------------------------------------------------------
@@ -560,6 +724,7 @@ public class VNode extends ResizableBox {		//StackPane
 		webView.setZoom(0.4);
 		webView.getEngine().load(url);
 		getChildren().add(webView);
+		addTitleBar(url);
 	}
 	
 	// **-------------------------------------------------------------------------------
@@ -586,7 +751,7 @@ public class VNode extends ResizableBox {		//StackPane
 	    imgView.fitHeightProperty().bind(Bindings.subtract(heightProperty(), 40));
 	    imgView.setTranslateY(-10);
 		readGeometry(attrMap, imgView);
-		getChildren().add(imgView);
+		getChildren().add(new VBox(addTitleBar(filepath), imgView));
 	}
 	
 	// **-------------------------------------------------------------------------------
@@ -607,7 +772,7 @@ public class VNode extends ResizableBox {		//StackPane
 					s = s.substring(idx1, idx2);
 				svg.setContent(s);
 				readGeometry(attrMap, svg);
-				getChildren().add(svg);
+				getChildren().add(new VBox(addTitleBar(path), svg));
 			}
 		}
 	}
@@ -619,11 +784,12 @@ public class VNode extends ResizableBox {		//StackPane
 		TableView<ObservableList<StringProperty>> table = new TableView<ObservableList<StringProperty>>();
 		if (attrMap.getId() == null)
 			attrMap.put("GraphId", gensym("T"));
-		CSVTableData data = FileUtil.openCSVfile(attrMap.get("file"), table);		// TODO THIS CURRENTLY ASSUMES ALL INTS!!
-		attrMap.put("name", attrMap.get("file"));
+		String filename = attrMap.get("file");
+		CSVTableData data = FileUtil.openCSVfile(filename, table);		// TODO THIS CURRENTLY ASSUMES ALL INTS!!
+		attrMap.put("name", filename);
 		if (data == null) return;
 		readGeometry(attrMap, table);
-		getChildren().add(table);
+	    getChildren().addAll(new VBox(addTitleBar(filename), table));
 	}
 	// **-------------------------------------------------------------------------------
 	public void makeTextArea()
@@ -694,11 +860,10 @@ public class VNode extends ResizableBox {		//StackPane
 	}
 
 	public List<MenuItem> getMenuItems(MouseEvent event) {
-			
 		ObservableList<MenuItem> list = FXCollections.observableArrayList();
 		//System.out.println("ContextMenu");
 		int nKids = getChildren().size();
-		Controller controller = pasteboard.getController();
+		Controller controller = getController();
 		if (nKids > 0)
 		{
 			Node content = getChildren().get(0);
@@ -712,9 +877,10 @@ public class VNode extends ResizableBox {		//StackPane
 		}
 		MenuItem toFront = makeItem("Bring To Front", e -> {   	controller.toFront();   });
 		MenuItem toBack = 	makeItem("Send To Back", e -> {   	controller.toBack();   });
+		Menu toLayer = 	makeLayerMenu();
 		MenuItem dup = 		makeItem("Duplicate", a -> 	{		controller.duplicateSelection();	});
 		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
-		list.addAll(toFront, toBack, dup, del);   
+		list.addAll(toFront, toBack, toLayer, dup, del);   
 
 //		Selection selection = pasteboard.getSelectionMgr();
 		if (selection.isGroupable())	list.add(makeItem("Group", e ->  	{	controller.group();    }));   
@@ -729,4 +895,56 @@ public class VNode extends ResizableBox {		//StackPane
 		item.setOnAction(foo);
 		return item;
 	}
+
+	private Menu makeLayerMenu() {
+		Menu menu = new Menu("Move To Layer");
+		for (LayerRecord layer : getController().getLayers())
+		{
+			MenuItem item = new MenuItem(layer.getName());
+			menu.getItems().add(item);
+			item.setOnAction(e -> 	
+			{ 	
+				getController().moveSelectionToLayer(layer.getName());  
+			});
+		}
+		return menu;
+	}
+	
+	// **-------------------------------------------------------------------------------
+	public void setBounds(BoundingBox bounds) {
+		setLayoutX(bounds.getMinX());
+		setLayoutY(bounds.getMinY());
+		setWidth(bounds.getWidth());
+		setHeight(bounds.getHeight());
+	}
+	// **-------------------------------------------------------------------------------
+	public LayerRecord getLayer()
+	{
+		String layername = getAttributes().get("Layer");
+		if (layername == null) return null;
+		return getController().getLayerRecord(layername);
+	}
+	
+	// **-------------------------------------------------------------------------------
+	public void setLayer(String layername) {
+		LayerRecord myLayer = getLayer();
+		if (myLayer != null)
+			myLayer.getLayer().remove(this);
+		getAttributes().put("Layer", layername);
+		LayerRecord active = getController().getLayerRecord(layername);
+		active.getLayer().add(this);
+		setVisible(active.getVis());
+		setMouseTransparent(active.getLock());
+	}
+
+	// **-------------------------------------------------------------------------------
+	@Override
+	public int compareTo(VNode other ) {
+		double a = getAttributes().getDouble("ZOrder",0);
+		double b = ((VNode)other).getAttributes().getDouble("ZOrder",0);
+		return a == b ? 0 : (a > b ? 1 : -1);
+	}
+
+
+
 }

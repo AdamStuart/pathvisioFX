@@ -4,10 +4,10 @@ import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.UndoStack;
 import javafx.event.EventHandler;
-import javafx.event.EventTarget;
 import javafx.event.EventType;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import util.RectangleUtil;
@@ -41,6 +41,7 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 		else if (type == MouseEvent.MOUSE_RELEASED)		doMouseReleased(event);	
 		else if (type ==  MouseEvent.MOUSE_CLICKED)		doMouseClicked(event);	
 		else if (type ==  MouseEvent.MOUSE_DRAGGED)		doMouseDragged(event);	
+//		else if (type ==  DragEvent.DRAG_DROPPED)		doDragReleased(event);	
 	}
 	// **-------------------------------------------------------------------------------
 	protected void doMouseClicked(final MouseEvent event)
@@ -136,12 +137,13 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 	}
 
 	// **-------------------------------------------------------------------------------
-
+    
 	public void doMouseReleased(final MouseEvent event)
 	{
 		startPoint = null;
 		resizing = dragging = false;
 		pasteboard.requestFocus();	 // needed for the key event handler to receive events
+		pasteboard.getSelectionMgr().extract();
 		event.consume();
 	}
 }
