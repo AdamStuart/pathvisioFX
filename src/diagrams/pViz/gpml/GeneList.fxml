@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.input.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Menu?>
@@ -14,7 +18,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<BorderPane fx:id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.GeneListController">
+<BorderPane fx:id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.GeneListController">
    <top>
       <HBox>
          <children>
@@ -49,6 +53,7 @@
                         <MenuItem fx:id="selectAll" mnemonicParsing="false" onAction="#selectAll" text="Select All" />
                         <MenuItem fx:id="showAllColumns" mnemonicParsing="false" onAction="#showAllColumns" text="Show All Columns" />
                         <MenuItem fx:id="editColumns" mnemonicParsing="false" onAction="#editColumns" text="Edit Columns" />
+                        <MenuItem fx:id="invert" mnemonicParsing="false" onAction="#invert" text="Invert Selection" />
                      </items>
                   </Menu>
                 <Menu mnemonicParsing="false" text="Gene">

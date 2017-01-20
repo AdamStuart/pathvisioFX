@@ -8,6 +8,7 @@ import java.util.List;
 import javafx.collections.FXCollections;
 import javafx.print.PrinterJob;
 import javafx.stage.FileChooser;
+import model.TableType;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
 import model.bio.Species;
@@ -19,8 +20,8 @@ import util.StringUtil;
 public class Document
 {
 	
-	Controller controller;
-	File file = null;
+	private Controller controller;
+	private File file = null;
 	private int verbose = 0;
 	
 	public Document(Controller inDC)
@@ -48,7 +49,9 @@ public class Document
 	{
 		try
 		{
-			boolean cdt = FileUtil.isCDT(f);
+			TableType type = TableType.TXT;
+			if ( FileUtil.isCDT(f)) type = TableType.CDT;
+			if ( FileUtil.isTXT(f)) type = TableType.TXT;
 			List<Gene> geneList = FXCollections.observableArrayList();
 			GeneListRecord record = new GeneListRecord(f.getName());
 			record.setSpecies(species.common());
@@ -56,16 +59,13 @@ public class Document
 			List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
 			if (lines.size() > 0)
 			{
-				record.setHeader1(lines.get(0));
-				if (cdt)
-					record.setHeader2(lines.get(1));
-				int skip = cdt ? 2 : 1;
+				for (int i=0; i< type.getNHeaderRows(); i++)
+					record.addHeader(lines.get(i));
+				int skip = type.getNHeaderRows();
 				for (String line : lines)
 				{
 					if (skip>0) { skip--;  continue; }
-					Gene g = new Gene(record, "");
-					if (cdt) 	g.setData(line);
-					else 		g.setData2(line);
+					Gene g = new Gene(record, type, line);
 //					Gene existing = Model.findInList(geneList, g.getName());		// slow?
 //					if (existing == null)
 						geneList.add(g);
@@ -82,6 +82,7 @@ public class Document
 		return null;
 
 	}
+	
 	public void open(File f)		
 	{ 	
 		try

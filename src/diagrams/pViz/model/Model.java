@@ -52,6 +52,7 @@ public class Model
 	private Map<String, MNode> resourceMap = FXCollections.observableHashMap();
 	private int nodeCounter = 0;
 	public Collection<MNode> getNodes()			{ return resourceMap.values();	}
+	public Map<String, MNode> getResourceMap() {		return resourceMap;	}
 
 	private List<Edge> edgeList = FXCollections.observableArrayList();
 	public List<Edge> getEdgeList()			{ return edgeList;	}
@@ -67,7 +68,6 @@ public class Model
 	public Map<String, Shape> getShapes()	{ return shapes; }
 	public Shape findShape(String s ) 		{ return shapes.get(s);	}
 
-	public Map<String, MNode> getResourceMap() {		return resourceMap;	}
 
 	private String title = "PathVisio Mockup";
 	public void setTitle(String val) {		title = val;		}
@@ -100,13 +100,14 @@ public class Model
 		serializeNodes(saver);
 		serializeEdges(saver);
 		serializeReferences(saver);
+		saver.append("</Pathway>\n");
 		return saver.toString();
 	}
 	String[] pathwayAttributes = {"Name", "Organism", "License"};
 	private static String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \n";
 	private static String namespace = "xmlns=\"http://pathvisio.org/GPML/2013a\"\n";
 	
-	private String docHeader() {		return xmlHeader +  "<Pathway ";	}
+	private String docHeader() {		return xmlHeader +  "<Pathway >";	}
 	
 	private void serializeComments(StringBuilder saver) {
 		for (CommentRecord rec : getComments())
@@ -117,7 +118,7 @@ public class Model
 			saver.append(rec.toGPML());
 	}
 	private void serializeNodes(StringBuilder saver) {
-		for (MNode node : getResourceMap().values())
+		for (MNode node : getNodes())
 			saver.append(node.toGPML());
 		}
 	private void serializeEdges(StringBuilder saver) {
@@ -155,6 +156,8 @@ public class Model
 	GeneListRecord geneListRecord = null;
 	public GeneListRecord getGeneList() {	return	geneListRecord ; }
 	public void setGeneList(GeneListRecord rec, List<Gene> gs) {		genes = gs;	geneListRecord = rec; }
+	public void addGeneList(GeneListRecord rec) 				{		genes.addAll(rec.getGeneList()); 	}
+	
 	public int getNGenes() 				{	return	genes.size();	}
 	public void addGene(Gene g) 		{	genes.add(g);	}
 	public void clearGenes() 			{	genes.clear();	}
@@ -178,10 +181,10 @@ public class Model
 		return false;
 	}
 	
-	public boolean add(GeneListRecord g)
+	public boolean add(GeneListRecord geneRec)
 	{
 		boolean anyTrue = false;
-		for (Gene gene : g.getGeneList())
+		for (Gene gene : geneRec.getGeneList())
 			anyTrue |= add(gene);
 		return anyTrue;
 	}

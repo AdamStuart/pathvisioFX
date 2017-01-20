@@ -287,13 +287,14 @@ public class Pasteboard extends Pane
 					else if (FileUtil.isGPML(f))		controller.open(f);				// gpml files are parsed 
 					else if (FileUtil.isCSS(f))			controller.addStylesheet(f);	// css files are added to the Scene
 					else if (FileUtil.isDataFile(f))	controller.assignDataFile(f);	// data files are applied to the nodes
+					else if (FileUtil.isTextFile(f))	controller.addGeneList(f, e.getX()+offset, e.getY()+offset);	
 					else
 					{
-						offset += 20;
 						StackPane stack = handleFileDrop(f, e.getX()+offset, e.getY()+offset);
 						if (stack != null)
 							controller.add(stack);
 					}
+					offset += 20;
 				}
 			}
 		}

@@ -72,6 +72,7 @@ import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
+import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
@@ -701,7 +702,10 @@ public class Controller implements Initializable, IController
 		if (n.isLabel()) return;
 		Object prop  = modelNode.getAttributeMap().get("TextLabel");
 		if (prop != null && model.findGene(""+prop) == null)
+		{
 			model.addGene(new Gene(model.getGeneList(), ""+prop));
+			model.addResource(modelNode);
+		}
 	}
 	public void add(int index, VNode n)		 {	 pasteboard.add(index, n); 	}
 	public void addAll(List<VNode> n)	{		pasteboard.addAllVNodes(n);	}
@@ -813,4 +817,44 @@ public class Controller implements Initializable, IController
 		model.fillIdlist();
 	}
 	public void setActiveLayer(String s) {		pasteboard.setActiveLayer(s);	}
+	public void addGeneList(File f, double dropX, double dropY) {
+		GeneListRecord rec = new GeneListRecord(f);
+		geneListTable.getItems().addAll(rec.getGeneList());			// ADD UNIQUE
+		
+		double COLWID = 90;
+		double ROWHGHT = 40;
+		int NCOLS = (int) Math.ceil(Math.sqrt(rec.getRowCount()));
+		
+		for (int i=0; i< rec.getGeneList().size(); i++)
+		{
+			Gene g = rec.getGeneList().get(i);
+			AttributeMap attrs = new AttributeMap(g);
+			attrs.put("CenterX", "" + (dropX + (i % NCOLS) * COLWID));
+			attrs.put("CenterY", "" + (dropY + (i / NCOLS) * ROWHGHT));
+			attrs.put("Width", "80");
+			attrs.put("Height", "30");
+			attrs.put("TextLabel", g.getName());
+			MNode node = new MNode(attrs, getModel());
+			add(node.getStack());			
+		}
+
+	}
+	// **-------------------------------------------------------------------------------
+	boolean isGeneList(File f)
+	{
+		List<String> strs = FileUtil.readFileIntoStringList(f.getAbsolutePath());
+		int sz = strs.size();
+		if (sz < 10) return false;
+		String DELIM = "\t";
+		String firstRow = strs.get(0);
+		int nCols = firstRow.split(DELIM).length;
+		for (int i = 1; i< sz; i++)
+		{
+			String row = strs.get(i);
+			if (row.split(DELIM).length != nCols)
+				return false;
+		}
+		return true;
+	}
+
 }

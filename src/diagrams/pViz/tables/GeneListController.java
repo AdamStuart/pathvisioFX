@@ -17,6 +17,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.DataFormat;
@@ -72,16 +73,16 @@ public class GeneListController  extends TableController  {
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		super.initialize(location, resources);
-		allColumns.add(geneNameColumn);
-		allColumns.add(termsColumn);
+		geneNameColumn.setUserData("T");	allColumns.add(geneNameColumn);
+		termsColumn.setUserData("T");		allColumns.add(termsColumn);
 		
 		makeSeparatorColumn();
-		allColumns.add(dataColumn);
-		allColumns.add(locationColumn);
-		allColumns.add(geneIdColumn);
-		allColumns.add(urlColumn);
-		allColumns.add(databaseColumn);
-		allColumns.add(dbidColumn);
+		dataColumn.setUserData("N");		allColumns.add(dataColumn);
+		locationColumn.setUserData("T");	allColumns.add(locationColumn);
+		geneIdColumn.setUserData("T");		allColumns.add(geneIdColumn);
+		urlColumn.setUserData("U");			allColumns.add(urlColumn);
+		databaseColumn.setUserData("D");	allColumns.add(databaseColumn);
+		dbidColumn.setUserData("T");		allColumns.add(dbidColumn);
 
 		//-------
 //		geneTable = (GeneListTable) theTable;
@@ -141,6 +142,17 @@ public class GeneListController  extends TableController  {
 	private GeneListRecord getGeneList() {		return geneListRecord;	}
 	@FXML private void newGeneList()	{		App.doNewGeneList(null);	}
 	@FXML private void getInfo()		{		System.out.println("getInfo");	}
+	@FXML private void invert()		
+	{		
+		TableViewSelectionModel<Gene> sel = theTable.getSelectionModel();
+		for (int i=0; i< geneListRecord.getRowCount(); i++)
+		{
+			if (sel.isSelected(i))
+				sel.clearSelection(i);
+			else sel.select(i);
+		}
+		System.out.println("invert");	
+	}
 	
 	@FXML private void drillDown()		
 	{		
@@ -155,8 +167,7 @@ public class GeneListController  extends TableController  {
 		GeneListRecord subset = new GeneListRecord(geneListRecord);
 		List<Gene> sel = FXCollections.observableArrayList();
 		List<Gene> genes = (List<Gene>) theTable.getSelectionModel().getSelectedItems();
-		for (Gene gene : genes)
-			sel.add(gene);
+		sel.addAll(genes);
 		subset.setGeneList(sel);
 		return subset;
 	}
@@ -168,8 +179,11 @@ public class GeneListController  extends TableController  {
 		if (setAllGenes)
 			allGenes = geneListRecord.getGeneList();
 		theTable.getItems().addAll(geneListRecord.getGeneList());
+//		allColumns = geneListRecord.getAllColumns();
+		resetTableColumns();
+//		columnTable.getItems().addAll(geneListRecord.getAllColumns());
 	}
-	@FXML private void selectAll()		{		showAll();	}
+	@FXML private void selectAll()			{		showAll();	}
 	@FXML private void showAllColumns()		{		showAll();	}
 	@FXML private void editColumns()		{		showAll();	}
 	@FXML private void doOpen()		{		}
@@ -185,12 +199,22 @@ public class GeneListController  extends TableController  {
 	@FXML private void doAddColumn() 	 
 	{ 
 		System.out.println("doAddColumn"); 	
-//		buildMapRequest();
+		TableColumn extant =geneListRecord.findByText(allColumns, "All IDs");
+		if (extant != null) return;
+		
+		GeneListRecord rec = getGeneList();
+		rec.fillIdlist();
+		TableColumn<Gene, String> mapCol = new TableColumn("All IDs");
+		mapCol.setCellValueFactory(new PropertyValueFactory<Gene, String>("idlist"));
+		allColumns.add(mapCol);
+		//FORCE REFRESH   TODO
 	}
+	
 	@FXML private void filterSelectedGenes() { System.out.println("filterSelectedGenes"); }
 	@FXML private void browsePathways()		{		App.browsePathways(null);	}
 	@FXML private void other()	 { 	System.out.println(""); }
 	//------------------------------------------------------
+
 	@FXML private void doChart()	
 	{
 		long start = System.currentTimeMillis();
@@ -200,7 +224,7 @@ public class GeneListController  extends TableController  {
 			System.err.println("doChart failed");
 			return;
 		}
-		String[] headers = geneListRecord.getHeader1().split("\t");
+		String[] headers = geneListRecord.getHeader(0).split("\t");
 		List<String> hdrList = new ArrayList<String>();
 		for (int i=4; i<headers.length; i++)
 			hdrList.add(headers[i]);

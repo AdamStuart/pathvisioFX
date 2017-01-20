@@ -187,13 +187,13 @@ public class ReferenceController extends TableController<BiopaxRecord> implement
 	{
 //		System.out.println("setupReferenceTable");
 
-		allColumns.add(refCol);
-		allColumns.add(dbidCol);
-		allColumns.add(dbCol);
-		allColumns.add(authorCol);
-		allColumns.add(titleCol);
-		allColumns.add(sourceCol);
-		allColumns.add(yearCol);
+		refCol.setUserData("T");		allColumns.add(refCol);
+		dbidCol.setUserData("T");		allColumns.add(dbidCol);
+		dbCol.setUserData("T");			allColumns.add(dbCol);
+		authorCol.setUserData("L");		allColumns.add(authorCol);
+		titleCol.setUserData("T");		allColumns.add(titleCol);
+		sourceCol.setUserData("T");		allColumns.add(sourceCol);
+		yearCol.setUserData("T");		allColumns.add(yearCol);
 		makeSeparatorColumn();
 		columnTable.getItems().addAll(allColumns);
 		

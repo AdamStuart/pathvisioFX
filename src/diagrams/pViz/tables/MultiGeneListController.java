@@ -143,7 +143,7 @@ public class MultiGeneListController  implements Initializable  {
 			for (File file : files)
 			{
 				GeneListRecord rec = null;
-				if (FileUtil.isCDT(file))
+				if (FileUtil.isCDT(file) || FileUtil.isTextFile(file))
 					rec = Document.readCDT(file, getSpecies());
 				else if (FileUtil.isGPML(file))
 					rec = GPML.readGeneList(file, getSpecies());
