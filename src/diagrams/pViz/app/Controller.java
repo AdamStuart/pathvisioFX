@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
-import diagrams.pViz.app.Action.ActionType;
+import diagrams.pViz.app.Controller.DrawActionCell;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
@@ -18,15 +18,17 @@ import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.GeneListTable;
 import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
-import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
 import diagrams.pViz.view.LayerRecord;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
+import gui.Action;
+import gui.Action.ActionType;
 import gui.Borders;
 import gui.DropUtil;
+import gui.UndoStack;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
@@ -73,10 +75,12 @@ import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
 import model.AttributeMap;
+import model.IController;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
 import model.bio.Species;
+import table.referenceList.ReferenceController;
 import util.FileUtil;
 import util.StringUtil;
 
@@ -485,11 +489,6 @@ public class Controller implements Initializable, IController
 		b.setId(t.name());
 	}
 	
-	static public void setGraphic(Button b, GlyphIcons i)
-	{
-		b.setGraphic(GlyphsDude.createIcon(i, GlyphIcon.DEFAULT_ICON_SIZE));
-		b.setText("");
-	}
 	// **-------------------------------------------------------------------------------
 	
 	private ToggleGroup paletteGroup;
@@ -508,11 +507,11 @@ public class Controller implements Initializable, IController
 		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.HEART);
 //		setGraphic(shape2, Tool.Brace, FontAwesomeIcons.BARCODE);
 	
-		setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
-		setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
-		setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
+		IController.setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
+		IController.setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
+		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
 //		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
-		setGraphic(toggleGridButton, FontAwesomeIcons.TH);
+		IController.setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
 	Tool curTool = Tool.Arrow;
 	public Tool getTool() {		return curTool;	}

@@ -4,9 +4,9 @@ import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
 
-import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
+import gui.Action.ActionType;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphsDude;
@@ -35,7 +35,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
-import table.binder.tablecellHelpers.BadgeTableCell;
 
 public class Inspector extends HBox implements Initializable {
 	Pasteboard pasteboard;

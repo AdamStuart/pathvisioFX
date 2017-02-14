@@ -7,6 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.MouseEvent;
+import model.IController;
 
 public class LoaderController implements IController, Initializable {
 

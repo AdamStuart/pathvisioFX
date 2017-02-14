@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
+import gui.Log;
 //import edu.stanford.nlp.util.ArrayUtils;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -83,7 +84,7 @@ import util.FileUtil;
 		    }
 
 		    Stage loaderStage = new Stage();
-			loaderStage.setTitle("CyteGeist");
+			loaderStage.setTitle("Cytoscape Tools");
 			FXMLLoader fxmlLoader = new FXMLLoader();
 		    fxmlLoader.setLocation(url);
 		    BorderPane appPane =  fxmlLoader.load();
@@ -115,7 +116,7 @@ import util.FileUtil;
 			stage = new Stage();
 		try 
 		{
-		    stage.setTitle("A PathVisio Mockup");
+		    stage.setTitle("Cytoscape Pathway Editor");
 			FXMLLoader fxmlLoader = new FXMLLoader();
 			String fullname = "Visio.fxml";
 		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
@@ -198,18 +199,18 @@ import util.FileUtil;
 			geneList = new GeneListRecord("Empty");
 		try
 		{
-			Pair<FXMLLoader, Stage> pair = buildStage("Gene List Window", GENELIST, 800, 650)	;
+			Pair<FXMLLoader, Stage> pair = buildStage("Cytoscape Gene List", GENELIST, 800, 650)	;
 			if (pair == null) return;
 			GeneListController glc = (GeneListController) pair.getKey().getController();   
 			Stage s =  pair.getValue();
 		    registerWindow(s);
-			s.show();
 		    glc.loadTables(geneList, true);
+			s.show();
 		}
 		catch (Exception e) { e.printStackTrace();	}
 	}
 	//---------------------------------------------------------------------------------------
-	static final String RESOURCE = "../tables/ReferenceList.fxml";
+	static final String RESOURCE = "ReferenceList.fxml";
     static final String STYLE = "genelistStyles.css";
 	static  public Pair<FXMLLoader, Stage>  openReferenceList() {
 		try
@@ -228,7 +229,9 @@ import util.FileUtil;
 			stage.show();
 			return (new Pair<FXMLLoader, Stage>(referenceLoader, stage));
 		}
-		catch (Exception e) { e.printStackTrace();	}
+		catch (Exception e) { 
+			System.err.println(RESOURCE + " failed to load");
+			e.printStackTrace();	}
 		return null;
 	}
  	
@@ -244,7 +247,7 @@ import util.FileUtil;
 		    FXMLLoader geneListLoader = new FXMLLoader(res);
 	        Scene scene = new Scene(geneListLoader.load());
 			scene.getStylesheets().add(getInstance().getClass().getResource(MG_STYLE).toExternalForm());
-	        stage.setTitle("Multi Gene List Window");
+	        stage.setTitle("Multi Gene List");
 	        stage.setX(20);
 			stage.setWidth(800);
 			stage.setHeight(650);

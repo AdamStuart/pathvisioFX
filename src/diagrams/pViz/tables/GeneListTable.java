@@ -2,6 +2,7 @@ package diagrams.pViz.tables;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -9,10 +10,9 @@ import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Document;
 import diagrams.pViz.model.Model;
+import gui.DraggableTableRow;
 import gui.DropUtil;
-import javafx.event.EventHandler;
 import javafx.scene.control.Button;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableColumn.SortType;
 import javafx.scene.control.TableRow;
@@ -23,14 +23,14 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.Dragboard;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.util.Pair;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
+import util.FileUtil;
 import util.StringUtil;
 
 public class GeneListTable extends TableView<Gene> {
@@ -83,6 +83,7 @@ public class GeneListTable extends TableView<Gene> {
 //		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
 		
 	}
+	String delimiter = "\t";
 	public void doDrag(DragEvent e)
 	{
 		Dragboard db = e.getDragboard();
@@ -90,11 +91,22 @@ public class GeneListTable extends TableView<Gene> {
 		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
 		 for (File f : db.getFiles())
 		 {
-			 GeneListRecord genes = Document.readCDT(f, controller.getSpecies());
-			 addGeneList(genes);
+			 GeneListRecord genes = Document.readTabularText(f, controller.getSpecies());
+			 if (genes != null)
+				 addGeneList(genes);
 		 }
-		 
 		 e.consume();
+	}
+	void addColumn(String colName)
+	{
+		
+	}
+	public TableColumn findColumn(String fld)
+	{
+		for (TableColumn col : getColumns())
+			if (col.getText().equals(fld))
+				return col;
+		return null;
 	}
 	static boolean ENSEMBL_REQD = false;
 	public void populateTable(Model m, List<Gene> genes)

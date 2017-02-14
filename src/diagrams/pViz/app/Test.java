@@ -1,9 +1,9 @@
 package diagrams.pViz.app;
 
-import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
+import gui.Action.ActionType;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;

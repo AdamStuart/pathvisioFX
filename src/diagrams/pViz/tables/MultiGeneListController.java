@@ -9,6 +9,7 @@ import animation.BorderPaneAnimator;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Document;
 import diagrams.pViz.gpml.GPML;
+import gui.DraggableTableRow;
 import gui.DropUtil;
 import icon.FontAwesomeIcons;
 import javafx.event.EventTarget;
@@ -31,6 +32,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import model.IController;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
 import model.bio.Species;
@@ -71,7 +73,7 @@ public class MultiGeneListController  implements Initializable  {
 	public static String tooltip = "GENELIST TOOLTIP";
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
-		Controller.setGraphic(westSidebar, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
+		IController.setGraphic(westSidebar, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		new BorderPaneAnimator(borderpane, westSidebar, Side.LEFT, false, 120);
 		westSidebar.fire();		// start with columns hidden
 		//-------
@@ -144,7 +146,7 @@ public class MultiGeneListController  implements Initializable  {
 			{
 				GeneListRecord rec = null;
 				if (FileUtil.isCDT(file) || FileUtil.isTextFile(file))
-					rec = Document.readCDT(file, getSpecies());
+					rec = Document.readTabularText(file, getSpecies());
 				else if (FileUtil.isGPML(file))
 					rec = GPML.readGeneList(file, getSpecies());
 

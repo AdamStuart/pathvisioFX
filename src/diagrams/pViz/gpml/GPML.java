@@ -23,6 +23,7 @@ import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
+import model.bio.ReferenceListRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -68,30 +69,7 @@ public class GPML {
 		return record;
 	}
 
-	public static ReferenceListRecord readReferenceList(File file)
-	{
-		org.w3c.dom.Document doc = FileUtil.openXML(file);
-		if (doc == null) return null;
-		List<BiopaxRecord> list = FXCollections.observableArrayList();
-		ReferenceListRecord record = new ReferenceListRecord(file.getName());
-		
-		NodeList nodes = doc.getElementsByTagName("Biopax");
-		int len = nodes.getLength();
-		for (int i=0; i<len; i++)
-		{
-			org.w3c.dom.Node domNode = nodes.item(i);
-			int childLen = domNode.getChildNodes().getLength();
-			for (int j=0; j<childLen; j++)
-			{
-				org.w3c.dom.Node gchild = domNode.getChildNodes().item(j);
-				String jname = gchild.getNodeName();
-				if ("bp:PublicationXref".equals(jname))
-					list.add(new BiopaxRecord(gchild));
-			}
-		}
-		record.addReferences(list);
-		return record;
-	}
+
 
 	public void read(org.w3c.dom.Document doc)
 	{

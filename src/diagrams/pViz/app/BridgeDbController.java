@@ -14,8 +14,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import chart.usMap.ColorUtil;
-import diagrams.pViz.tables.DraggableTableRow;
 import gui.Backgrounds;
+import gui.DraggableTableRow;
 import gui.DropUtil;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;

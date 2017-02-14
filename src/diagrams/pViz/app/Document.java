@@ -3,15 +3,20 @@ package diagrams.pViz.app;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javafx.collections.FXCollections;
 import javafx.print.PrinterJob;
+import javafx.scene.control.TableColumn;
 import javafx.stage.FileChooser;
+import javafx.util.Pair;
 import model.TableType;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
 import model.bio.Species;
+import table.referenceList.TableController;
 import util.FileUtil;
 import util.StringUtil;
 /*
@@ -19,7 +24,6 @@ import util.StringUtil;
  */
 public class Document
 {
-	
 	private Controller controller;
 	private File file = null;
 	private int verbose = 0;
@@ -45,30 +49,93 @@ public class Document
 		else System.err.println("open expected xml: " + s.substring(40));
 	}
 	// **-------------------------------------------------------------------------------
-	public static GeneListRecord readCDT(File f, Species species)
+	public static GeneListRecord readTabularText(File f, Species species)
+	{
+		List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath(), 100000);
+		TableType type = TableType.TXT;
+		if ( FileUtil.isCDT(f)) type = TableType.CDT;
+		if ( FileUtil.isTXT(f)) type = TableType.TXT;
+		return readTable(f.getName(), type, lines, species);
+	}
+	
+	public static boolean isMappingFile(File f)
+	{
+		List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath(), 5);
+		Pair<Integer, Integer> dims = inferSizes(lines);
+		int nHeaders = dims.getValue();
+		int nColumns = dims.getKey();
+		return (nHeaders == 1 && nColumns == 2);
+	}
+	
+	public static Map<String, String> readMappingFile(File f, TableController<?> table)
+	{
+		HashMap<String, String> map = new HashMap<String, String>();
+		List<String> lines = FileUtil.readFileIntoStringList(f);
+		Pair<Integer, Integer> dims = Document.inferSizes(lines);
+		int match = 0;
+		int skip = dims.getValue();
+		int keyIndex = 0;
+		String keyName = "";
+		String valueName = "";
+		if (dims.getKey() != 2) return map;
+		
+		String[] flds = lines.get(0).split("\t");
+		table.dumpColumns();
+		for (int i=0; i < 2; i++)
+		{
+			String fld = flds[i];
+			if (table.findColumn(fld) != null)
+			{
+				keyIndex = i;
+				keyName = fld;
+				valueName = flds[1-i];
+				map.put("\tkey", keyName);
+				map.put("\tvalue", valueName);
+				match++;
+			 }
+		}
+		if (match == 1)
+		{
+			for (String line : lines)
+			{
+				if (--skip >= 0) continue;
+				String[] fld = line.split("\t");
+				if (fld.length < 2) continue;
+				if (StringUtil.isEmpty(fld[0]) || StringUtil.isEmpty(fld[1])) continue;
+				map.put(fld[keyIndex], fld[1-keyIndex]);
+			}
+		}
+		System.out.println(map.size() + " / " + lines.size() + " unique entries in the map");
+		return map;
+	}
+	
+
+	public static GeneListRecord readTable(String name, TableType type, List<String> lines, Species species)
 	{
 		try
 		{
-			TableType type = TableType.TXT;
-			if ( FileUtil.isCDT(f)) type = TableType.CDT;
-			if ( FileUtil.isTXT(f)) type = TableType.TXT;
+			String delimiter = "\t";
+			Pair<Integer, Integer> dims = inferSizes(lines);
+			int nHeaders = dims.getValue();
+			int nColumns = dims.getKey();
+			if (nHeaders == 1 && nColumns == 2)
+				return null;
+				
 			List<Gene> geneList = FXCollections.observableArrayList();
-			GeneListRecord record = new GeneListRecord(f.getName());
+			GeneListRecord record = new GeneListRecord(name);
 			record.setSpecies(species.common());
-			record.setName(f.getName());
-			List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
+
 			if (lines.size() > 0)
 			{
-				for (int i=0; i< type.getNHeaderRows(); i++)
+				
+				for (int i=0; i< nHeaders; i++)
 					record.addHeader(lines.get(i));
-				int skip = type.getNHeaderRows();
+				int skip = nHeaders;
 				for (String line : lines)
 				{
 					if (skip>0) { skip--;  continue; }
-					Gene g = new Gene(record, type, line);
-//					Gene existing = Model.findInList(geneList, g.getName());		// slow?
-//					if (existing == null)
-						geneList.add(g);
+					Gene g = new Gene(record, type, line.split(delimiter));
+					geneList.add(g);
 				}
 			}
 			record.setColumnList();
@@ -83,12 +150,45 @@ public class Document
 
 	}
 	
+	public static Pair<Integer, Integer> inferSizes(List<String> lines) {
+		int nHeaderLines = 0;
+		int nColumns = 0;
+		if (lines.size() > 2)
+		{
+			String first = lines.get(0);
+			String[] cells0 = first.split("\t");
+			String[] cells1 = lines.get(1).split("\t");
+			String[] cells2 = lines.get(2).split("\t");
+			String[] cells3 = lines.get(3).split("\t");
+
+			nColumns = cells0.length;
+
+			boolean anyNumbers0 = StringUtil.anyNumbers(cells0);
+			boolean anyNumbers1 = StringUtil.anyNumbers(cells1);
+			boolean anyNumbers2 = StringUtil.anyNumbers(cells2);
+			boolean anyNumbers3 = StringUtil.anyNumbers(cells3);
+			
+			if (anyNumbers3)
+			{
+				if (anyNumbers2)
+				{
+					if (anyNumbers1)
+						nHeaderLines = (anyNumbers0) ? 0 : 1;
+					else nHeaderLines = 2;
+				}
+				else nHeaderLines = 3;
+			}
+			else nHeaderLines = 1;
+		}
+		return new Pair<Integer, Integer>(nColumns, nHeaderLines);
+		
+	}
 	public void open(File f)		
 	{ 	
 		try
 		{
 			if (FileUtil.isCDT(f))
-				controller.setGeneList(readCDT(f, controller.getSpecies()));
+				controller.setGeneList(readTabularText(f, controller.getSpecies()));
 			else if (FileUtil.isGPML(f) || FileUtil.isXML(f))
 			{
 				org.w3c.dom.Document doc = FileUtil.openXML(f);

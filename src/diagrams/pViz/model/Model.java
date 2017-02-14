@@ -259,7 +259,7 @@ public class Model
 				for (Gene g : genes)
 				{
 					if (!g.getName().equals(name)) continue;
-					System.out.println("setting ids for " + name );	
+//					System.out.println("setting ids for " + name );	
 					g.setIdlist(allrefs);
 					g.setEnsembl(BridgeDbIdMapper.getEnsembl(allrefs));
 				}

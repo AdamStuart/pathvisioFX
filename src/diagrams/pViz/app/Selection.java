@@ -3,7 +3,6 @@ package diagrams.pViz.app;
 import java.util.ArrayList;
 import java.util.List;
 
-import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.GroupMouseHandler;
@@ -11,6 +10,8 @@ import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.Shape1;
 import diagrams.pViz.view.VNode;
+import gui.Action.ActionType;
+import gui.UndoStack;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;

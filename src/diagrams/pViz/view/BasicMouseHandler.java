@@ -1,13 +1,12 @@
 package diagrams.pViz.view;
 
-import diagrams.pViz.app.Action.ActionType;
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.app.UndoStack;
+import gui.Action.ActionType;
+import gui.UndoStack;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Point2D;
 import javafx.scene.control.ContextMenu;
-import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import util.RectangleUtil;

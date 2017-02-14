@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.input.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
@@ -17,8 +15,9 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.GeneListController">
+<BorderPane fx:id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="460.0" prefWidth="776.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.GeneListController">
    <top>
       <HBox>
          <children>
@@ -40,6 +39,16 @@
                         <MenuItem fx:id="open" mnemonicParsing="false" onAction="#doOpen" text="Open" />
                         <MenuItem mnemonicParsing="false" text="Open Recent" />
                         <MenuItem fx:id="filter" mnemonicParsing="false" onAction="#filterSelectedGenes" text="Filter Selected" />
+                        <MenuItem fx:id="save" mnemonicParsing="false" onAction="#save" text="Save">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="saveAs" mnemonicParsing="false" onAction="#saveAs" text="Save As...">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
                         <MenuItem fx:id="close" mnemonicParsing="false" onAction="#doClose" text="Close" />
                     </items>
                   </Menu>
@@ -68,6 +77,22 @@
                 </Menu>
               </menus>
             </MenuBar>
+            <Label fx:id="select" maxWidth="150.0" minWidth="36.0" prefWidth="36.0" textAlignment="RIGHT">
+               <font>
+                  <Font name="System Bold" size="11.0" />
+               </font>
+               <HBox.margin>
+                  <Insets top="6.0" />
+               </HBox.margin>
+            </Label>
+            <Label fx:id="size" maxWidth="150.0" minWidth="50.0" prefWidth="50.0">
+               <font>
+                  <Font name="System Bold" size="11.0" />
+               </font>
+               <HBox.margin>
+                  <Insets top="6.0" />
+               </HBox.margin>
+            </Label>
             <ChoiceBox fx:id="species" prefWidth="150.0" />
             <Button fx:id="search" mnemonicParsing="false" onAction="#doSearch" prefHeight="27.0" prefWidth="40.0" text="F" />
             <TextField fx:id="searchBox" />
@@ -75,7 +100,7 @@
       </HBox>
    </top>
    <center>
-      <TableView fx:id="theTable" BorderPane.alignment="CENTER">
+      <TableView fx:id="theTable" prefHeight="371.0" prefWidth="425.0" BorderPane.alignment="CENTER">
         <columns>
             <TableColumn fx:id="geneNameColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Name" />
           <TableColumn fx:id="geneIdColumn" editable="false" maxWidth="250.0" minWidth="50.0" text="Id" />
@@ -95,7 +120,7 @@
               <columns>
                 <TableColumn fx:id="typeColumn" prefWidth="41.0" text="Type" />
                 <TableColumn fx:id="colNameColumn" prefWidth="134.0" text="Name" />
-                  <TableColumn fx:id="widthColumn" prefWidth="43.0" text="Width" />
+                  <TableColumn fx:id="widthColumn" maxWidth="120.0" prefWidth="60.0" text="Width" />
               </columns>
             </TableView>
          </children>

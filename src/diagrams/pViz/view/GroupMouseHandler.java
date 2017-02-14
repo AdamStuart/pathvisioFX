@@ -1,6 +1,6 @@
 package diagrams.pViz.view;
 
-import diagrams.pViz.app.Action.ActionType;
+import gui.Action.ActionType;
 import javafx.event.EventTarget;
 import javafx.geometry.Point2D;
 import javafx.scene.input.MouseEvent;
