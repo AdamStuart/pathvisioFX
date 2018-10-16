@@ -26,6 +26,7 @@ public class LoaderController implements IController, Initializable {
 	public void resetTableColumns() {}
 	@Override public void reorderColumns(int a, int b) {	}
 	
+	@FXML private void newEditor()		{ 	App.getInstance().doNew();	}
 	@FXML private void newGeneList()	{ 	App.doNewGeneList(null);	}
 	@FXML private void newPathwayList()	{ 	App.browsePathways(null);	}
 	@FXML private void newReferenceList(){ 	App.openReferenceList();	}

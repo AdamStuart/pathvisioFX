@@ -18,6 +18,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.TableColumn;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -82,7 +83,7 @@ public class Model
 	private Species species;
 	public Species getSpecies() {
 		if (species == null) 
-			species = Species.Human;
+			species = Species.Unspecified;
 		return species;
 	}
 	public void setSpecies(Species s) {			species = s;	}
@@ -154,7 +155,18 @@ public class Model
 	// **-------------------------------------------------------------------------------
 	List<Gene> genes = FXCollections.observableArrayList();
 	GeneListRecord geneListRecord = null;
-	public GeneListRecord getGeneList() {	return	geneListRecord ; }
+	public GeneListRecord getGeneList() 
+	{	
+		if (geneListRecord == null)
+		{
+			geneListRecord = new GeneListRecord("GeneList");
+			geneListRecord.setGeneList(genes);
+			List<TableColumn<Gene, ?>>	allColumns = geneListRecord.getAllColumns();
+
+//			List<TableColumn<Gene, ?>> parentColumns = parent.getAllColumns();
+		}
+		return	geneListRecord ;
+	}
 	public void setGeneList(GeneListRecord rec, List<Gene> gs) {		genes = gs;	geneListRecord = rec; }
 	public void addGeneList(GeneListRecord rec) 				{		genes.addAll(rec.getGeneList()); 	}
 	
@@ -239,7 +251,7 @@ public class Model
 	public void fillIdlist()
 	{
 		if (species == null) 
-			species = Species.Human;
+			species = Species.Unspecified;
 		StringBuilder str = new StringBuilder();
 		for (Gene g : genes)
 		{
@@ -396,16 +408,34 @@ public class Model
 		{
 			VNode start = selection.get(i);
 			if (start.getShape() instanceof Line) continue;
-			for (int j=i+1; j < selection.size(); j++)
+			for (int j=0; j < selection.size(); j++)
 			{
+				if (i == j) continue;
 				VNode end = selection.get(j);
 				if (end.getShape() instanceof Line) continue;		//TODO add anchor
-				edges.add(new Edge(this, start, end, null, null, null));
+				
+				if (downRightAndClose(start, end))
+					edges.add(new Edge(this, start, end, null, null, null));
 			}
 		}
 		return edges;
 	}
+	private boolean downRightAndClose(VNode start, VNode end) {
+		double startX = start.getLayoutX();
+		double startY = start.getLayoutY();
+		double endX = end.getLayoutX();
+		double endY = end.getLayoutY();
+
+		double SLOP = 20;
+		if (endY < startY - SLOP) return false;
+		if (endX < startX - SLOP) return false;
+		if (endY - startY > 2 * start.getHeight()) return false;
+		if (endX - startX > 2 * start.getWidth()) return false;
+
+		return true;
+	}
 	public void removeEdge(Edge edge)			{  		edgeList.remove(edge);	}
+	
 	public void connectAllEdges() {
 		for (int z = edgeList.size()-1; z >= 0; z--)
 		{

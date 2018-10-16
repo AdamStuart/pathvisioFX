@@ -7,7 +7,7 @@ import util.FileUtil;
 public enum Tool {
 
 	Arrow,
-	Rectangle, RoundedRectangle, Circle, Polygon, Polyline, Line, Brace, Shape1,   // Shapes
+	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1,   // Shapes
 	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,			// Controls
@@ -38,14 +38,15 @@ public enum Tool {
 	}
 	public static boolean contains(String[] vals, String s)
 	{
+		if ("{".equals(s)) s = Brace.name();
 		for (String t : vals)
 			if (s.equals(t))
 				return true;
 		return false;
 	}
-	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
+	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi", "Brace"};
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
-	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Polygon, Polyline, Line, Brace, Shape1 };
+	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1 };
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
@@ -62,13 +63,13 @@ public enum Tool {
 		if (type == null) return Circle;
 		if ("Pentagon".equals(type)) 	return RoundedRectangle;
 		if ("None".equals(type)) 		return Rectangle;
-		if ("Oval".equals(type)) 		return Circle;
+		if ("Oval".equals(type)) 		return Oval;
 		
 		if ("Brace".equals(type)) 		return Brace;
 		if ("Mitochondria".equals(type)) return Mitochondria;
 		if ("Protein".equals(type)) 	return Protein;
 		if ("Pathway".equals(type)) 	return Pathway;
-		if ("GeneProduct".equals(type)) return Rectangle;
+		if ("GeneProduct".equals(type)) return GeneProduct;
 		if ("Metabolite".equals(type)) 	return Metabolite;
 		if ("Rna".equals(type)) 		return Rna;
 		if ("ER".equals(type)) 			return ER;

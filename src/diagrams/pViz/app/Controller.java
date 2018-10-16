@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
-import diagrams.pViz.app.Controller.DrawActionCell;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
@@ -41,6 +40,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
+import javafx.geometry.Orientation;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -51,6 +51,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
@@ -61,6 +62,7 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -106,10 +108,15 @@ public class Controller implements Initializable, IController
 	@FXML private ScrollPane scrollPane;
 	@FXML private ListView<Action> undoview = null;
 	private GeneListTable geneListTable = null;
+	private AnchorPane propertyPanel = null;
 	private PathwayController pathwayController = null;
 	@FXML private BorderPane container;			// root of fxml	
 	@FXML private Button tableOptions;
-	@FXML private Button gene;		// something to drag in the Genelist window
+	@FXML private ToggleButton gene;	
+	@FXML private ToggleButton metabolite;	
+	@FXML private ToggleButton protein;		
+	@FXML private ToggleButton pathway;		
+	@FXML private ToggleButton rna;	
 
 	@FXML private Button bottomSideBarButton;
 	@FXML private Button leftSideBarButton;
@@ -124,6 +131,8 @@ public class Controller implements Initializable, IController
 	@FXML private MenuItem browsePathways;
 	@FXML private MenuItem tofront;
 	@FXML private MenuItem toback;
+	@FXML private MenuItem zoomIn;
+	@FXML private MenuItem zoomOut;
 	@FXML private MenuItem group;
 	@FXML private MenuItem ungroup;
 	@FXML private MenuItem delete;
@@ -160,8 +169,10 @@ public class Controller implements Initializable, IController
 	        db.setContent(cc);
 		}
 	}
+	
 	@FXML private void selectProtein()	{ 	pasteboard.selectByType("Protein");	}
-	@FXML private void selectGene()		{ pasteboard.selectByType("Gene");		}
+	@FXML private void selectPathway()	{ 	pasteboard.selectByType("Pathway");	}
+	@FXML private void selectGene()		{ 	pasteboard.selectByType("GeneProduct");		}
 	@FXML private void selectMetabolite(){ 	pasteboard.selectByType("Metabolite");		}
 	@FXML private void selectRna()		{ 	pasteboard.selectByType("Rna");		}
 	@FXML private void selectLabels()	{ 	pasteboard.selectByType("Label");		}
@@ -223,11 +234,14 @@ public class Controller implements Initializable, IController
 	@FXML private void dumpEdgeTable()	{		model.dumpEdgeTable();	}
 	@FXML private void dumpViewHierarchy()	{	model.dumpViewHierarchy();	}
 	@FXML private void dumpNodeTable()	{		model.dumpNodeTable();	}
+	@FXML private void showNodeList()	{ 		}
 	// **-------------------------------------------------------------------------------
 	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup();  }
 	@FXML public  void ungroup()		{ 	undoStack.push(ActionType.Ungroup);	getSelectionManager().ungroup(); }
 	@FXML public  void toFront()		{	undoStack.push(ActionType.Reorder);	getSelectionManager().toFront(); 	}
 	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.restoreBackgroundOrder();  	}
+	@FXML public  void zoomIn()			{	undoStack.push(ActionType.Zoom);	pasteboard.zoomIn(); 	}
+	@FXML public  void zoomOut()		{	undoStack.push(ActionType.Zoom);	pasteboard.zoomOut();  pasteboard.restoreBackgroundOrder();  	}
 	@FXML public  void toLayer()		
 	{	
 //		String layername = "Content";
@@ -267,16 +281,63 @@ public class Controller implements Initializable, IController
 	
 	//@formatter:on
 	// **-------------------------------------------------------------------------------
-
+	@FXML private void setStraight()
+	{
+		System.out.println("setStraight");
+	}
+	@FXML private void setCurved()
+	{
+		System.out.println("setCurved");
+	
+	}
+	@FXML private void setElbowed()
+	{
+		System.out.println("setElbowed");
+	}
+	@FXML private void setArrow1()
+	{
+		System.out.println("setArrow1");
+	}
+	@FXML private void  setArrow2()
+	{
+		System.out.println("setArrow2");
+	}
+	@FXML private void  setArrow3()
+	{
+		System.out.println("setArrow3");
+}
+	@FXML private void  setArrow4()
+	{
+		System.out.println("setArrow4");
+	}
+	@FXML private void  setArrow5()
+	{
+		System.out.println("setArrow5");
+}
+	@FXML private void  setArrow6()
+	{
+		System.out.println("setArrow6");
+	}
 	@FXML private MenuItem connect;			// TODO bind enableProperty to selection size > 2
 	@FXML private void addEdges()		
 	{ 	
 		if (getSelection().size() >= 2)		
 		{
 			List<Edge> edges = getDrawModel().connectSelectedNodes();
-			for (Edge e: edges)
-				add(0, e, getActiveLayerName());
+			if (edges.size() > 0)
+			{
+				addEdges(edges);
+				pasteboard.resetGrid();
+				for (Edge e : edges)
+					e.connect();
+			}
 		}
+	}
+	
+	void addEdges(List<Edge> edges)
+	{
+		for (Edge e: edges)
+			add(0, e, getActiveLayerName());
 	}
 	
 	static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
@@ -288,6 +349,7 @@ public class Controller implements Initializable, IController
 	public Selection getSelectionManager() 		{ 	return pasteboard.getSelectionMgr();  }
 	public ObservableList<VNode> getSelection() { 	return getSelectionManager().getAll();  }
 	private Stage stage;
+	public AnchorPane getProperties() { return propertyPanel;	}
 	private Inspector inspector;
 	public Inspector getInspector() { return inspector;	}
 	@FXML private void showInspector() {
@@ -320,9 +382,18 @@ public class Controller implements Initializable, IController
 			west.setBorder(Borders.lineBorder);
 		if (east != null)
 		{
+//			propertyPanel = new PropertyPanel(this);
+			URL url = getClass().getResource("Properties.fxml");
+			try {
+				propertyPanel  = (AnchorPane) FXMLLoader.load(url);
+			}
+			catch (Exception e) { e.printStackTrace(); } 
 			geneListTable = new GeneListTable(this);
 			DropUtil.makeFileDropPane(geneListTable, e -> { geneListTable.doDrag(e); });
-			east.getChildren().add(geneListTable);
+			SplitPane split = new SplitPane(propertyPanel, geneListTable);
+			split.setOrientation(Orientation.VERTICAL) ;
+			east.getChildren().add(split);
+			
 		}
 		setupPalette();
 		setupListviews();
@@ -368,7 +439,7 @@ public class Controller implements Initializable, IController
 
 	}
 
-	public void doNewGeneList()	{		App.doNewGeneList(null);	}
+	public void doNewGeneList()	{		App.doNewGeneList(model.getGeneList());	}
 	
 	
 	public void getInfo(DataFormat mimeType, String idx, String colname, MouseEvent ev) {
@@ -465,22 +536,38 @@ public class Controller implements Initializable, IController
 	// Tool palette
 	 @FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
 	@FXML private void setRectangle()	{ pasteboard.setTool(Tool.Rectangle);}	// TODO capture double click for stickiness
+	@FXML private void setText()		{ pasteboard.setTool(Tool.Text);}
 	@FXML private void setOval()		{ pasteboard.setTool(Tool.Circle);		}
 	@FXML private void setPolygon()		{ pasteboard.setTool(Tool.Polygon);	}
 	@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
 	@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
 	@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
 	@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
+	@FXML private void setGene()		{ pasteboard.setTool(Tool.GeneProduct);	}
+	@FXML private void setMetabolite()	{ pasteboard.setTool(Tool.Metabolite);	}
+	@FXML private void setProtein()		{ pasteboard.setTool(Tool.Protein);	}
+	@FXML private void setRNA()			{ pasteboard.setTool(Tool.Rna);	}
+	@FXML private void setPathway()		{ pasteboard.setTool(Tool.Pathway);	}
 
 	@FXML private ToggleButton arrow;
 	@FXML private ToggleButton rectangle;
 	@FXML private ToggleButton circle;
+	@FXML private ToggleButton text;
 	@FXML private ToggleButton polygon;
 	@FXML private ToggleButton polyline;
 	@FXML private ToggleButton line;
 	@FXML private ToggleButton shape1;
 //		@FXML private ToggleButton shape2;
+	@FXML private ToggleButton straight;
+	@FXML private ToggleButton curved;
+	@FXML private ToggleButton elbowed;
 		
+	@FXML private ToggleButton arrow1;
+	@FXML private ToggleButton arrow2;
+	@FXML private ToggleButton arrow3;
+	@FXML private ToggleButton arrow4;
+	@FXML private ToggleButton arrow5;
+	@FXML private ToggleButton arrow6;
 
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
@@ -492,12 +579,23 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	
 	private ToggleGroup paletteGroup;
+	private ToggleGroup lineTypeGroup;
+	private ToggleGroup arrowGroup;
 	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
+	public ToggleGroup getArrowGroup()			{ 	return arrowGroup;	}
+	public ToggleGroup getLineTypeGroup()		{ 	return lineTypeGroup;	}
 
 	private void setupPalette()	
 	{
 		paletteGroup = new ToggleGroup();
-		paletteGroup.getToggles().addAll(arrow, rectangle, circle, polygon, polyline, line);
+		paletteGroup.getToggles().addAll(arrow, rectangle, circle, text, polygon, polyline, line, gene, metabolite, pathway, protein, rna);
+		lineTypeGroup = new ToggleGroup();
+		lineTypeGroup.getToggles().addAll(straight, curved, elbowed);
+		straight.setSelected(true);
+		arrowGroup = new ToggleGroup();
+		arrowGroup.getToggles().addAll(arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
+		arrow1.setSelected(true);
+		
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
 		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
@@ -510,7 +608,6 @@ public class Controller implements Initializable, IController
 		IController.setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		IController.setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
 		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
-//		setGraphic(toggleRulerButton, FontAwesomeIcons.BARS);
 		IController.setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
 	Tool curTool = Tool.Arrow;
@@ -706,9 +803,9 @@ public class Controller implements Initializable, IController
 			model.addResource(modelNode);
 		}
 	}
-	public void add(int index, VNode n)		 {	 pasteboard.add(index, n); 	}
-	public void addAll(List<VNode> n)	{		pasteboard.addAllVNodes(n);	}
-	public void addAll(VNode... n)		{		pasteboard.addAllVNodes(n);	}
+	public void add(int index, VNode n)	{	pasteboard.add(index, n); 	}
+	public void addAll(List<VNode> n)	{	pasteboard.addAllVNodes(n);	}
+	public void addAll(VNode... n)		{	pasteboard.addAllVNodes(n);	}
 	
 	public void remove(Node n)						
 	{		
@@ -717,7 +814,8 @@ public class Controller implements Initializable, IController
 	public void remove(VNode n)						
 	{		
 		getDrawModel().removeNode(n);
-		pasteboard.getChildren().remove(n);	
+		Layer content = pasteboard.getContentLayer();			// TODO -- layering naive
+		content.remove(n);	
 	}
 	// **-------------------------------------------------------------------------------
 	public String getState()					{ 	return model.saveState();  }
@@ -832,7 +930,9 @@ public class Controller implements Initializable, IController
 			attrs.put("CenterY", "" + (dropY + (i / NCOLS) * ROWHGHT));
 			attrs.put("Width", "80");
 			attrs.put("Height", "30");
-			attrs.put("TextLabel", g.getName());
+			String name = g.getId();
+			attrs.put("TextLabel", name);
+			attrs.put("Type", "GeneProduct");
 			MNode node = new MNode(attrs, getModel());
 			add(node.getStack());			
 		}
@@ -854,6 +954,10 @@ public class Controller implements Initializable, IController
 				return false;
 		}
 		return true;
+	}
+	public void resynch() {
+		getInspector().syncInspector();
+//		getProperties().syncProperties();
 	}
 
 }

@@ -97,7 +97,7 @@ import util.FileUtil;
 	}
 	 
 		//---------------------------------------------------------------------------------------
-	 public void doNew()		{		doNew(new Stage(), null);	}
+	public void doNew()		{	doNew(new Stage(), null);	}
 	public void doNew(String xml)
 	{
 		try
@@ -191,7 +191,7 @@ import util.FileUtil;
 			e.printStackTrace();
 		}
 	}
-	//---------------------------------------------------------------------------------------
+	   //---------------------------------------------------------------------------------------
 	static final String GENELIST = "../gpml/GeneList.fxml";
    static public  void doNewGeneList(GeneListRecord geneList) 
 	{

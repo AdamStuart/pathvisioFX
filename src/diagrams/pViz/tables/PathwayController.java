@@ -227,7 +227,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		{
 			int idx = StringUtil.toInteger(a);
 			PathwayRecord rec = pathwayTable.getItems().get(idx);
-			boolean edit = ev.isShiftDown();
+			boolean edit = !ev.isShiftDown();
 			viewPathway(rec, edit);
 		}
 	}

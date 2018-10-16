@@ -1,5 +1,7 @@
 package diagrams.pViz.gpml;
 
+import java.awt.Paint;
+
 import diagrams.pViz.app.Tool;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.CubicCurveTo;
@@ -14,6 +16,7 @@ public class CellShapeFactory {
 	
 	static public Shape makeCustomShape(String s)
 	{
+		if ("{".equals(s))	 	  		return getBracePath();
 		if ("Brace".equals(s))	  		return getBracePath();
 		if ("Mitochondria".equals(s))	return getMitochondrialPath();
 		if ("SR".equals(s))	  			return getSarcoplasmicReticulumPath();
@@ -26,14 +29,15 @@ public class CellShapeFactory {
 	static private Path getBracePath()
 	{
 		Path path = new Path();
-		MoveTo moveTo = new MoveTo(0,40);
-		QuadCurveTo quadCurveTo1 = new QuadCurveTo(0,20,30,20);
-		QuadCurveTo quadCurveTo2 = new QuadCurveTo(60,20,60,0);
-		QuadCurveTo quadCurveTo3 = new QuadCurveTo(60,20,90,20);
-		QuadCurveTo quadCurveTo4 = new QuadCurveTo(120,20,120,40);
+		MoveTo moveTo = new MoveTo(40,0);
+		QuadCurveTo quadCurveTo1 = new QuadCurveTo(20,0,20,30);
+		QuadCurveTo quadCurveTo2 = new QuadCurveTo(20,60,0,60);
+		QuadCurveTo quadCurveTo3 = new QuadCurveTo(20,60,20,90);
+		QuadCurveTo quadCurveTo4 = new QuadCurveTo(20,120,40,120);
 		path.getElements().addAll(moveTo, quadCurveTo1, quadCurveTo2, quadCurveTo3, quadCurveTo4);
 		path.setStroke(Color.RED);
 		path.setStrokeWidth(5);
+		path.setFill(Color.YELLOW);
 		return path;
 	}
 	static private Path getMitochondrialPath()

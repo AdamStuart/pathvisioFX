@@ -20,6 +20,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -50,6 +51,7 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
+import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.Scale;
 import javafx.stage.Screen;
 import model.AttributeMap;
@@ -226,6 +228,7 @@ public class Pasteboard extends Pane
 		setOnDragDropped(e ->	{ 	handlePasteboardDrop(e);					e.consume();  	});
 	}	
 
+	private void push(ActionType a, String s)	{		controller.getUndoStack().push(a, s);	}
 	private void highlightPasteboard(boolean isHighlighted)
 	{
 		InnerShadow shadow = null;
@@ -277,7 +280,7 @@ public class Pasteboard extends Pane
 			List<File> files = db.getFiles();
 			if (files != null)
 			{
-				controller.getUndoStack().push(ActionType.Add, " file");
+				push(ActionType.Add, " file");
 				int offset = 0;
 				for (File f : files)
 				{
@@ -311,6 +314,18 @@ public class Pasteboard extends Pane
 				attrMap.put("CenterY", "" + e.getY());
 				attrMap.put("Width", "80");
 				attrMap.put("Height", "30");
+				
+				if ("Nucleus".equals(text))
+				{
+					attrMap.put("Width", "350");
+					attrMap.put("Height", "150");
+				}
+				if ("Cell".equals(text))
+				{
+					attrMap.put("Width", "500");
+					attrMap.put("Height", "300");
+				}
+				
 				attrMap.put("ShapeType", text);
 				attrMap.put("TextLabel", text);
 				MNode node = new MNode(attrMap, getModel());
@@ -461,17 +476,25 @@ public class Pasteboard extends Pane
 //	private Point2D offset = null;			// distance from startPoint to the origin of the target
 	private Point2D curPoint = null;		// mouse location in current event
 	private Line dragLine = null;			// a polyline edge
+	private VNode dragLineSource = null;			// the node where the dragLine starts
+	private Pos dragLinePosition = null;			// the port of the node where the dragLine starts
+public Line getDragLine() { return dragLine;	}
 
 	static boolean verbose = false;
 
 //
-	public void startDragLine(double x, double y) {
+	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
 		if (dragLine == null)
 		{
 			dragLine = new Line();
 			add(dragLine);	
 		}
-		x -= 90;			// TODO  HACK  difference between scene and pasteboard coords
+		dragLineSource = source;
+		dragLinePosition = srcPosition;
+		StrokeType st;
+		dragLine.setStroke(Color.AQUA);
+		dragLine.setStrokeWidth(7);
+		x -= 130;			// TODO  HACK  difference between scene and pasteboard coords
 		y -= 30;
 		dragLine.setStartX(x);
 		dragLine.setStartY(y);
@@ -483,6 +506,8 @@ public class Pasteboard extends Pane
 		{
 			remove(dragLine);	
 			dragLine = null;
+			dragLinePosition = null;
+			dragLineSource = null;
 		}
 	}
 //	public void setLastClick(double x, double y) {
@@ -503,20 +528,26 @@ public class Pasteboard extends Pane
 				event.consume();
 				return;	
 			}
-			if (getTool() == Tool.Polyline)
+			Tool tool = getTool();
+			if (tool == Tool.Polyline)
 			{
 				startPolyline(event);
 				return;
-			}
+			}	
+			if (dragLine != null)				// TODO -- tool depenedent?
+				removeDragLine();
+			
 			Shape activeShape = getActiveShape();
-			startPoint = new Point2D(event.getX(), event.getY());
+			double x = event.getX(), y = event.getY();
+			
+			startPoint = new Point2D(x, y);
 			if (activeShape instanceof Polyline)
 			{
 				if (verbose) System.out.println("MousePressedHandler, Polygon: " );
 				Polyline p = getPolyline();
 				if (event.getClickCount() > 1)							activeStack = null;
 				else if (LineUtil.onVertex(startPoint, p) >= 0)			activeStack = null;
-				else p.getPoints().addAll(event.getX(), event.getY());
+				else p.getPoints().addAll(x, y);
 				event.consume();
 				return;
 			}
@@ -527,13 +558,17 @@ public class Pasteboard extends Pane
 				event.consume();
 				return;
 			}
-//			controller.getUndoStack().push(ActionType.Select);
+		
+			List<VNode> prevSelection = null;
+			if (event.isAltDown())
+				prevSelection = getSelectionMgr().getAll();
+			
 			getSelectionMgr().clear();  
 	
-			if (!getTool().isArrow())
+			if (!tool.isArrow())
 			{
 				AttributeMap map = new AttributeMap("ShapeType", getTool().name());
-				map.addPoint(event.getX(), event.getY());
+				map.addPoint(x, y);
 				map.put("Layer",  activeLayerName);
 				MNode mNode = new MNode(map, getController());
 				activeStack = mNode.getStack();	
@@ -543,25 +578,25 @@ public class Pasteboard extends Pane
 			if (activeShape instanceof Polygon)
 			{
 				Polygon p = (Polygon) activeShape;
-				p.getPoints().addAll(event.getX(), event.getY());
+				p.getPoints().addAll(x, y);
 			}
 			if (activeShape instanceof Polyline)
 			{
 				Polyline p = (Polyline) activeShape;
-				p.getPoints().addAll(event.getX(), event.getY());
+				p.getPoints().addAll(x, y);
 			}
 			if (activeShape instanceof Line)
 			{
 				Line p = (Line) activeShape;
-				p.setStartX(event.getX());
-				p.setStartY(event.getY());
-				p.setEndX(event.getX());
-				p.setEndY(event.getY());
+				p.setStartX(x);
+				p.setStartY(y);
+				p.setEndX(x);
+				p.setEndY(y);
 			}
 			if (activeShape == null) 
 			{
 				activeShape = marquee;
-				RectangleUtil.setRect(marquee, event.getX(), event.getY(), 8,8);
+				RectangleUtil.setRect(marquee, x, y, 8,8);
 				marquee.setVisible(true);
 				if (marquee.getParent() == null)
 					controller.add(marquee);
@@ -572,12 +607,12 @@ public class Pasteboard extends Pane
 			}
 			else
 			{
-				controller.getUndoStack().push(ActionType.New, " " + getTool().name());
+				push(ActionType.New, " " + getTool().name());
 				add(activeStack);
 				getSelectionMgr().select(activeStack);
 			}
 			
-//			factory.setStartPoint(new Point2D(event.getX(), event.getY()));
+//			factory.setStartPoint(new Point2D(x, y));
 			event.consume();
 		}
 
@@ -603,7 +638,7 @@ public class Pasteboard extends Pane
 				removeDragLine();
 			}
 			else p.getPoints().addAll(event.getX(), event.getY());
-			startDragLine(event.getX(), event.getY());
+			startDragLine(null, Pos.CENTER, event.getX(), event.getY());
 			p.setFill(null);
 			event.consume();		}
 
@@ -785,7 +820,7 @@ public class Pasteboard extends Pane
 
  			KeyCode key = event.getCode();
  			
- 			if (key.isArrowKey())	getSelectionMgr().translate(key);
+ 			if (key.isArrowKey())	 { getSelectionMgr().translate(key); event.consume(); } 
 			else if (KeyCode.DELETE.equals(key)) 		getSelectionMgr().deleteSelection();		// create an undoable action
 			else if (KeyCode.BACK_SPACE.equals(key)) 	getSelectionMgr().deleteSelection();
 			
@@ -797,7 +832,8 @@ public class Pasteboard extends Pane
 			
 //			else if (KeyCode.X.equals(key)) 	setTool(Tool.Xhair);
 			else if (KeyCode.ESCAPE.equals(key)) {		terminatePoly();  	removeDragLine(); }
-			else if (KeyCode.SPACE.equals(key)) {		terminatePoly();	removeDragLine(); }
+			else if (KeyCode.SPACE.equals(key))
+				controller.getSelectionManager().connect();
 		}
 
 		private void terminatePoly() {
@@ -875,8 +911,8 @@ public class Pasteboard extends Pane
 		activeStack = null;
 		if (sticky) return;
 		if (isPoly(getTool())) 	return;
-		if (dragLine != null) 
-			removeDragLine();
+//		if (dragLine != null) 
+//			removeDragLine();
 		controller.setTool(Tool.Arrow);	
 	}
 	public void resetPoly()		
@@ -906,6 +942,14 @@ public class Pasteboard extends Pane
 //		setScaleY(scale);
 //		setTranslateX(0);
 //		setTranslateY(0);
+	}
+	public void zoomIn() {
+		
+		setZoom(2.0);		
+	}
+	public void zoomOut() {
+		
+		setZoom(0.25);		
 	}
 	//---------------------------------------------------------------------------
 	public void resetLayerVisibility(String layername, boolean vis) {

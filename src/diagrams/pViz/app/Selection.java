@@ -46,7 +46,8 @@ public class Selection
 	{
 		root = layer;
 		items = FXCollections.observableArrayList(); 
-		items.addListener( (ListChangeListener<Node>)c -> { root.getController().getInspector().syncInspector();	});
+		items.addListener( (ListChangeListener<Node>)c -> 
+				{ root.getController().resynch();	 });
 	}
 	private Model getModel()	{ return getController().getModel();  } 
 	private Controller getController() { return root.getController();	}
@@ -108,8 +109,8 @@ public class Selection
 	
 	public void selectAll()		{		selectAll(null); 	}
 	public void selectAll(List<Node> kids)	
-	{	
-		if (kids == null) kids = root.getChildrenUnmodifiable();
+	{			
+		if (kids == null) kids = root.getContentLayer().getNodes(); // root.getChildrenUnmodifiable();
 		for (Node n : kids) 
 		{	
 			if ("grid".equals(n.getId())) continue;
@@ -126,10 +127,21 @@ public class Selection
 		for (int i= items.size()-1; i>= 0; i--)
 		{
 			VNode node = items.get(i);
-			if ("grid".equals(node.getId())) continue;
-			items.remove(node);
+			if (isGrid(node)) continue;
 			getController().remove(node);
+			items.remove(node);
 		}
+	}
+	//--------------------------------------------------------------------------
+	boolean isGrid(VNode node) { return node != null && node.getId() != null && node.getId().contains("grid"); }
+
+	public void duplicateSelection()	
+	{
+		List<VNode> duplicats = new ArrayList<VNode>();
+		for (VNode n : items)
+			if (!isGrid(n)) 
+				duplicats.add(n.clone());
+		getController().addAll(duplicats);
 	}
 	//--------------------------------------------------------------------------
 	public void deleteAll()	
@@ -175,6 +187,17 @@ public class Selection
 		getController().add(group);
 		group.setTranslateX(10);
 	}
+	//--------------------------------------------------------------------------
+	public void connect()
+	{
+		getModel().connectSelectedNodes();
+	}
+	
+	public void connect(VNode a, VNode b)
+	{
+//		getModel().co
+	}
+	
 	private UndoStack getUndoStack() {		return getController().getUndoStack();	}
 	//--------------------------------------------------------------------------
 	public void applyStyle(String styleSettings)
@@ -230,13 +253,15 @@ public class Selection
 		else if (key == KeyCode.DOWN)	dy = -amount;
 		translate(dx, dy);
 	}	
+	public void translate(double dx, double dy)	{	translate(dx,dy, null);	}	
 	
-	public void translate(double dx, double dy)		
+	public void translate(double dx, double dy, VNode except)		
 	{		
 		getUndoStack().push(ActionType.Move);	
 		for (Node n : items)
 		{
-			if (n.getParent() instanceof Group)
+			if (n == except) continue;
+			if (n.getParent() instanceof Group && !(n.getParent() instanceof Layer))
 				n = n.getParent();
 			if (n instanceof Rectangle)
 			{
@@ -301,6 +326,7 @@ public class Selection
 			if (n instanceof StackPane)
 			{
 				StackPane r = (StackPane) n;
+//				r.tra
 //				double width = r.getWidth();
 //				double height = r.getHeight();
 				double x = r.getLayoutX() - dx;

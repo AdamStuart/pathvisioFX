@@ -104,7 +104,8 @@
         <columns>
             <TableColumn fx:id="geneNameColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Name" />
           <TableColumn fx:id="geneIdColumn" editable="false" maxWidth="250.0" minWidth="50.0" text="Id" />
-            <TableColumn fx:id="termsColumn" editable="false" maxWidth="500.0" minWidth="50.0" prefWidth="150.0" text="Terms" />
+            <TableColumn fx:id="geneTypeColumn" editable="false" maxWidth="250.0" minWidth="50.0" prefWidth="84.0" text="Type" />
+            <TableColumn fx:id="termsColumn" editable="false" maxWidth="500.0" minWidth="50.0" prefWidth="146.0" text="Terms" />
             <TableColumn fx:id="dataColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Data" />
             <TableColumn fx:id="locationColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Location" />
             <TableColumn fx:id="databaseColumn" editable="false" maxWidth="200.0" minWidth="50.0" text="Database" />

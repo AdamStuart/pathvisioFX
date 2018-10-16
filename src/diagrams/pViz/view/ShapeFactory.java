@@ -30,7 +30,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
+import javafx.scene.shape.Path;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
@@ -72,13 +74,18 @@ public class ShapeFactory {
 //		attrMap.put("stroke-width", "3");  	
 		switch (tool)
 		{
-			case Circle:			newShape = new Circle();	break;
+			case Cell:				newShape = new Rectangle();	break;
+			case Nucleus:			newShape = new Ellipse();	break;
+			case Metabolite:		newShape = new Rectangle();	break;
+			case Protein:			newShape = new Rectangle();	break;
+			case Pathway:			newShape = new Rectangle();	break;
 			case Rectangle:			newShape = new Rectangle();	break;
 			case RoundedRectangle:	newShape = new Rectangle();	break;
 			case Polygon:			newShape = new Polygon();	break;
 			case Polyline:			newShape = new Polyline();	break;
 			case Line:				newShape = new Line();		break;
 			case Shape1:			newShape = Shape1.getHeartPath();	break;
+			case Oval:				newShape = new Ellipse();	break;
 			default:	 
 				if (Tool.contains(Tool.customShapes,s))
 					newShape = CellShapeFactory.makeCustomShape(s); 
@@ -115,84 +122,112 @@ public class ShapeFactory {
 	public static void setAttributes(Shape shape, AttributeMap map) {
 		// if (verbose>0) System.out.println(map.toString());		if (shape == null)	return;
 		
-		if (shape instanceof Rectangle && "RoundedRectangle".equals(map.get("ShapeType")))
-		{	
-			((Rectangle)shape).setArcWidth(10);
-			((Rectangle)shape).setArcHeight(10);
-		
-		}
- 		for (String k : map.keySet()) 
+		String shapeType = map.get("ShapeType");
+		if ("{".equals(shapeType))
 		{
-			String val = map.get(k);
-			k = k.toLowerCase();
-			if (k.equals("graphid"))   			shape.setId(val);
-
-//			if (k.equals("textlabel"))   
-//				setText(val);
-			if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
-			if (k.equals("fontweight"))			;// TODO	k = "-fx-font-size"??;
-			if (k.equals("valign"))				;// TODO	
-			if (k.equals("zorder"))				;// TODO	
-			if (k.equals("stroke"))				k = "-fx-stroke";
-			if (k.equals("strokewidth"))		k = "-fx-stroke-weight";
-			if (k.equals("graphid"))			shape.setId(val);
-			double d = StringUtil.toDouble(val); // exception safe: comes back
-													// NaN if val is not a
-													// number
-			if (shape instanceof Rectangle) {
-				Rectangle r = (Rectangle) shape;
-//				if (Double.isNaN(d)) break;
-				if (k.equals("centerx"))		r.setX(d+MARGIN);	
-				else if (k.equals("centery"))	r.setY(d+MARGIN);
-				else if (k.equals("x"))			r.setX(d+MARGIN);
-				else if (k.equals("y"))			r.setY(d+MARGIN); 
-				else if (k.equals("width"))		r.setWidth(d+MARGIN2);
-				else if (k.equals("height"))	r.setHeight(d+MARGIN2);
-			}
-			if (shape instanceof Circle) {
-				Circle circ = (Circle) shape;
-				if (k.equals("centerx"))		circ.setCenterX(d);
-				else if (k.equals("centery"))	circ.setCenterY(d);
-				else if (k.equals("x"))			circ.setCenterX(d);
-				else if (k.equals("y"))			circ.setCenterY(d);
-				else if (k.equals("width"))		circ.setRadius(d/2);
-				else if (k.equals("radius"))	circ.setRadius(d);
-			}
-			if (shape instanceof Polygon) {
-				Polygon poly = (Polygon) shape;
-				if (k.equals("points"))			parsePolygonPoints(poly, map.get(k));
-			}
-			if (shape instanceof Polyline) {
-				Polyline poly = (Polyline) shape;
-				if (k.equals("points"))			parsePolylinePoints(poly, map.get(k));
-			}
-			if (shape instanceof Line) {
-				Line line = (Line) shape;
-				if (k.equals("points"))			parseLinePoints(line, map.get(k));
-				if (k.equals("stroke-width"))	line.setStrokeWidth(d);
-				
-			}
-			try {
-				Shape sh = shape;   
-				if (k.equals("fill") || k.equals("-fx-fill") || k.equals("fillcolor")) 
-					sh.setFill(Color.web(val));
-				else if (k.equals("-fx-stroke") || k.equals("color"))	
-					sh.setStroke(Color.web(val));
-				else if (k.equals("-fx-stroke-weight") || k.equals("linethickness"))
-					sh.setStrokeWidth(d);
-			} 
-			catch (Exception e) {		System.err.println("Parse errors: " + k);	}
+			map.put("ShapeType", "Brace");
+			map.put("Fill", "None");
+			map.put("TextLabel", "");
 		}
-//		if (shape instanceof Rectangle) 
-//		{
-//			String lookforCenter = map.get("CenterX");
-//			if (lookforCenter != null)
-//			{
-//				Rectangle r = (Rectangle) shape;
-//				r.setX(r.getX() - r.getWidth() / 2.);
-//				r.setY(r.getY() - r.getHeight() / 2.);
-//			}
-//		}
+		if (shape instanceof Rectangle)
+		{
+			Rectangle r = ((Rectangle)shape);
+			if ( "RoundedRectangle".equals(shapeType))
+			{	
+				r.setArcWidth(10);
+				r.setArcHeight(10);
+			}
+			if (shape instanceof Rectangle && "Cell".equals(shapeType))
+			{	
+				r.setArcWidth(100);
+				r.setArcHeight(100);
+				r.setStroke(Color.GOLD);
+				r.setStrokeWidth(8.0);
+			}
+			if (shape instanceof Rectangle && "Pathway".equals(shapeType))
+			{	
+				r.setStroke(Color.AQUAMARINE);
+				r.setStrokeWidth(5.0);
+				r.setWidth(120);
+				r.setHeight(45);
+			}
+			if (shape instanceof Rectangle && "Gene".equals(shapeType))
+			{	
+				r.setStrokeWidth(1.0);
+				r.setWidth(80);
+				r.setHeight(30);
+			}
+	
+			if (shape instanceof Rectangle && "Metabolite".equals(shapeType))
+			{	
+				r.setStroke(Color.NAVY);
+				r.setStrokeWidth(2.0);
+				r.setWidth(120);
+				r.setHeight(20);
+			}
+			
+			for (String k : map.keySet()) 
+			{
+				String val = map.get(k);
+				k = k.toLowerCase();
+				if (k.equals("graphid"))   			shape.setId(val);
+	
+	//			if (k.equals("textlabel"))   
+	//				setText(val);
+				if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
+				if (k.equals("fontweight"))			;// TODO	k = "-fx-font-size"??;
+				if (k.equals("valign"))				;// TODO	
+				if (k.equals("zorder"))				;// TODO	
+				if (k.equals("stroke"))				k = "-fx-stroke";
+				if (k.equals("strokewidth"))		k = "-fx-stroke-weight";
+				if (k.equals("linethickness"))		k = "-fx-stroke-weight";
+				if (k.equals("graphid"))			shape.setId(val);
+				double d = StringUtil.toDouble(val); // exception safe: comes back
+														// NaN if val is not a
+														// number
+				if (shape instanceof Rectangle) {
+					if (k.equals("centerx"))		r.setX(d+MARGIN);	
+					else if (k.equals("centery"))	r.setY(d+MARGIN);
+					else if (k.equals("x"))			r.setX(d+MARGIN);
+					else if (k.equals("y"))			r.setY(d+MARGIN); 
+					else if (k.equals("width"))		r.setWidth(d+MARGIN2);
+					else if (k.equals("height"))	r.setHeight(d+MARGIN2);
+				}
+				if (shape instanceof Circle) {
+					Circle circ = (Circle) shape;
+					if (k.equals("centerx"))		circ.setCenterX(d);
+					else if (k.equals("centery"))	circ.setCenterY(d);
+					else if (k.equals("x"))			circ.setCenterX(d);
+					else if (k.equals("y"))			circ.setCenterY(d);
+					else if (k.equals("width"))		circ.setRadius(d/2);
+					else if (k.equals("radius"))	circ.setRadius(d);
+				}
+				if (shape instanceof Polygon) {
+					Polygon poly = (Polygon) shape;
+					if (k.equals("points"))			parsePolygonPoints(poly, map.get(k));
+				}
+				if (shape instanceof Polyline) {
+					Polyline poly = (Polyline) shape;
+					if (k.equals("points"))			parsePolylinePoints(poly, map.get(k));
+				}
+				if (shape instanceof Line) {
+					Line line = (Line) shape;
+					if (k.equals("points"))			parseLinePoints(line, map.get(k));
+					if (k.equals("stroke-width"))	line.setStrokeWidth(d);
+					
+				}
+				try {
+					Shape sh = shape;   
+					if (k.equals("fill") || k.equals("-fx-fill") || k.equals("fillcolor")) 
+						sh.setFill(Color.web(val));
+					else if (k.equals("-fx-stroke") || k.equals("color"))	
+						sh.setStroke(Color.web(val));
+					else if (k.equals("-fx-stroke-weight") || k.equals("linethickness"))
+						sh.setStrokeWidth(d);
+				} 
+				catch (Exception e) {		System.err.println("Parse errors: " + k);	}
+			}
+		}
 	}
 
 	private static void parsePolygonPoints(Polygon poly, String string) {	parsePoints(poly.getPoints(), string);	}
@@ -230,7 +265,7 @@ public class ShapeFactory {
 		else if (s instanceof Shape)		new ShapeMouseHandler((Shape) s, drawLayer);
 //		if (s instanceof Shape2)		new ShapeMouseHandler((Shape2) s, drawLayer);
 
-		s.setOnDragEntered(e -> {	s.setEffect(Effects.sepia);			e.consume();		});
+		s.setOnDragEntered(e -> {	s.setEffect(null);			e.consume();		});  // Effects.sepia
 		s.setOnDragExited(e -> 	{	s.setEffect(null);					e.consume();		});
 		s.setOnDragOver(e -> 	{	e.acceptTransferModes(TransferMode.ANY); 	e.consume();	});
 		s.setOnDragDropped(e -> { 	e.acceptTransferModes(TransferMode.ANY); 	handleDrop(s, e);	e.consume();	});
@@ -297,6 +332,8 @@ public class ShapeFactory {
 			r.addEventHandler(MouseEvent.MOUSE_PRESSED, this);
 			r.addEventHandler(MouseEvent.MOUSE_DRAGGED, this);
 			r.addEventHandler(MouseEvent.MOUSE_MOVED, this);
+			r.addEventHandler(MouseEvent.MOUSE_ENTERED, this);
+			r.addEventHandler(MouseEvent.MOUSE_EXITED, this);
 			r.addEventHandler(MouseEvent.MOUSE_RELEASED, this);
 		}
 
@@ -358,6 +395,7 @@ public class ShapeFactory {
 				r.setCursor(RectangleUtil.inCorner(currentPoint, r) ? Cursor.H_RESIZE : Cursor.HAND);
 			}
 		}
+
 	}
 	// **-------------------------------------------------------------------------------
 
@@ -712,7 +750,7 @@ public class ShapeFactory {
 		protected void handleMousePressed(MouseEvent event) {
 			if (verbose >= 3)
 				System.out.println("NodeMousePressedHandler, Target: " + event.getTarget());
-			if (drawLayer.getTool() == Tool.Arrow)
+			if (drawLayer.getTool().isArrow())
 			{
 				resizing = false;
 				prevPoint = currentPoint;
@@ -802,6 +840,13 @@ public class ShapeFactory {
 //			drawLayer.getController().refreshZoomPane();
 		}
 	}
+		protected void handleMouseEntered(MouseEvent event) 
+		{
+		}
+	
+		protected void handleMouseExited(MouseEvent event) 
+		{
+		}
 
 }
 

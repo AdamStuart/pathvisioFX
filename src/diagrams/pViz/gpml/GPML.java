@@ -56,7 +56,8 @@ public class GPML {
 			org.w3c.dom.Node domNode = nodes.item(i);
 			NamedNodeMap nodemap = domNode.getAttributes();
 			org.w3c.dom.Node type = nodemap.getNamedItem("Type");
-			if ("GeneProduct".equals(type.getNodeValue()) || "Protein".equals(type.getNodeValue()))
+			String val = type.getNodeValue();
+			if ("GeneProduct".equals(val) || "Protein".equals(val))
 			{
 				String textLabel = nodemap.getNamedItem("TextLabel").getNodeValue();
 				Gene existing = Model.findInList(list, textLabel);
@@ -133,7 +134,7 @@ public class GPML {
 		{
 			org.w3c.dom.Node child = nodes.item(i);
 			MNode node = parseGPML(child, model, activeLayer);
-			model.addResource(node.getId(), node);
+			model.addResource(node.getGraphId(), node);
 			getController().add(node.getStack());
 			System.out.println("adding: " + node);
 		}
@@ -176,11 +177,13 @@ public class GPML {
 		for (Edge e : model.getEdgeList())
 			e.connect();
 	}
-	
+	boolean verbose = true;
 	private void parseShapes(NodeList shapes) {
 		for (int i=0; i<shapes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = shapes.item(i);
+			if (verbose)
+				System.out.println("");
 			MNode node = parseGPML(child, model, activeLayer);
 			
 			if (node != null)
@@ -194,9 +197,17 @@ public class GPML {
 	 */
 	public MNode parseGPML(org.w3c.dom.Node datanode, Model m, String activeLayer) {
 //		Model m = ctrl.getModel();
-		AttributeMap attrMap = new AttributeMap();
+if (verbose)
+	System.out.println(datanode.getAttributes());
+
+	AttributeMap attrMap = new AttributeMap();
 		attrMap.put("Layer", activeLayer);
 		attrMap.add(datanode.getAttributes());
+		String id = attrMap.get("GraphId");
+		attrMap.add(datanode.getAttributes());
+		if (id != null)
+			attrMap.put("id", id);
+		
 		NodeList elems = datanode.getChildNodes();
 		for (int i=0; i<elems.getLength(); i++)
 		{
@@ -212,7 +223,9 @@ public class GPML {
 			attrMap.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
 		}
-		attrMap.put("Resizable", "false");
+		String type = attrMap.get("Type");
+		if ("GeneProduct".equals(type))
+			attrMap.put("Resizable", "false");
 		return  new MNode(attrMap, m);
 	}
 		//----------------------------------------------------------------------------
@@ -255,7 +268,8 @@ public class GPML {
 		int z = points.size();
 		if (z > 1)
 		{
-			startId = points.get(0).getGraphRef();
+			GPMLPoint startPt = points.get(0);
+			startId = startPt.getGraphRef();
 			startNode = m.getResource(startId);
 			attrMap.put("start", startId);
 			GPMLPoint lastPt = points.get(z-1);
@@ -264,8 +278,9 @@ public class GPML {
 			endNode = m.getResource(endId);
 			if (startNode != null && endNode != null) 
 				return new Edge(m, startNode.getStack(), endNode.getStack(), attrMap, points, anchors);	
-			System.err.println("no end node found: " + endId);
-		}
+			else if (startPt != null && lastPt != null) 
+				return new Edge(startPt, lastPt);		
+			}
 		return new Edge(attrMap, m);
 	}
 	catch(Exception e)

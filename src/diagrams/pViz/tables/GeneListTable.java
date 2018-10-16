@@ -47,6 +47,7 @@ public class GeneListTable extends TableView<Gene> {
 		VBox.setVgrow(this, Priority.ALWAYS);
 	}
 	private TableColumn<Gene, String> idColumn = new TableColumn<Gene, String>("ID");
+	private TableColumn<Gene, String> typeColumn = new TableColumn<Gene, String>("Type");
 	private TableColumn<Gene, String> nameColumn = new TableColumn<Gene, String>("Name");
 	private TableColumn<Gene, String> urlColumn = new TableColumn<Gene, String>("URL");
 	private TableColumn<Gene, String> speciesColumn = new TableColumn<Gene, String>("Species");
@@ -60,11 +61,13 @@ public class GeneListTable extends TableView<Gene> {
 	private void setupGeneListTable()
 	{
 //		System.out.println("setupPathwayTable");
-		getColumns().addAll(nameColumn, idColumn, termsColumn, urlColumn, speciesColumn);
+		getColumns().addAll(nameColumn, idColumn, termsColumn, typeColumn, urlColumn, speciesColumn);
 		idColumn.setPrefWidth(200);
+		typeColumn.setPrefWidth(28);
 		nameColumn.setPrefWidth(100);
 		speciesColumn.setMaxWidth(100);
 		idColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("ensembl"));
+		typeColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("type"));
 		urlColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("url"));
 		nameColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
 		speciesColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("species"));

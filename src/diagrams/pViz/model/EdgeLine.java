@@ -87,6 +87,12 @@ public class EdgeLine extends Group {
 	public EdgeType getEdgeType()	{ return type;	}
 	public void setEdgeType(EdgeType t)	{ type = t;	}
 
+	double relX = 0;		// center + this * width/2  1= right, -1= left
+	double relY = 0;
+	public double getRelX()		{ return relX;	}
+	public double getRelY()		{ return relY;	}
+	public void setRelX(double x)		{  relX = x;	}
+	public void setRelY(double y)		{  relY = y;	}
 	public List<GPMLPoint> getPoints() 	{ 	return points;	}
 	public List<Anchor> getAnchors() 	{ 	return anchors;	}
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
@@ -123,6 +129,10 @@ public class EdgeLine extends Group {
 	public void setStrokeDashArray(Double[] vals)
 	{
 		strokeDashArray = vals;
+	}
+	public void addPoint(Point2D a)
+	{
+		points.add(new GPMLPoint(a));
 	}
 	public void setStartPoint(Point2D startPt) {
 		if (points.size() < 1)
@@ -228,13 +238,13 @@ public class EdgeLine extends Group {
 	//----------------------------------------------------------------------
 	public String startGraphId()
 	{
-		if (points == null || points.size() == 0) return "";
+		if (points.size() == 0) return "";
 		GPMLPoint pt = points.get(0);
 		return pt.getGraphRef();
 	}
 	public String endGraphId()
 	{
-		if (points == null || points.size() == 0) return "";
+		if (points.size() == 0) return "";
 		GPMLPoint pt = points.get(points.size()-1);
 		return pt.getGraphRef();
 	}
@@ -245,39 +255,39 @@ public class EdgeLine extends Group {
 
 	public Point2D firstPoint()
 	{ 
-		if (points == null || points.size() == 0) return null;
+		if (points.size() == 0) return null;
 		return points.get(0).getPoint(); 
 		}
 	public GPMLPoint firstGPMLPoint()
 	{ 
-		if (points == null || points.size() == 0) return null;
+		if (points.size() == 0) return null;
 		return points.get(0); 
 		}
 	public Point2D forelastPoint()
 	{ 
-		if (points == null || points.size() < 2) return firstPoint();
+		if (points.size() < 2) return firstPoint();
 		return points.get(points.size()-2).getPoint(); 
 	}
 	public Point2D lastPoint()
 	{ 
-		if (points == null || points.size() == 0) return null;
+		if (points.size() == 0) return null;
 		return points.get(points.size()-1).getPoint(); 
 	}
 	public GPMLPoint lastGPMLPoint()
 	{ 
-		if (points == null || points.size() == 0) return null;
+		if (points.size() == 0) return null;
 		return points.get(points.size()-1); 
 	}
 	public void setLastPoint(Point2D pt)
 	{ 
-		if (points == null || points.size() == 0) return;
+		if (points.size() == 0) return;
 		points.set(points.size()-1, new GPMLPoint(pt)); 
 	}
 	double length()		// TODO assumes straight edges
 	{ 
 		int sz = points.size();
 		double len = 0;
-		if (points == null || sz < 2) return 0;
+		if (sz < 2) return 0;
 		for (int i=0; i<sz-1; i++)
 			len += LineUtil.distance(points.get(i).getPoint(), points.get(i+i).getPoint());
 		return len;
@@ -334,7 +344,7 @@ boolean BADPOINT(Point2D pt)
 		setArrowPt(end);
 		LineUtil.set(getLine(), start, end);
 		getLine().setStroke(edge.getColor());
-		getLine().setStrokeWidth(edge.getStrokeWidth());
+		getLine().setStrokeWidth(3); // edge.getStrokeWidth());
 		if (strokeDashArray != null)
 		{
 			getLine().getStrokeDashArray().setAll(strokeDashArray);

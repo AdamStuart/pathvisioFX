@@ -16,26 +16,40 @@ import util.StringUtil;
  */
 public class MNode {
 
+	String id;
 	AttributeMap attributes;
-	VNode stack;
-	Model model;
+	protected VNode stack;
+	protected Model model;
 	public MNode(AttributeMap am, Controller c)
 	{
 		this(am,c.getModel());
 	}	
-	
+	static int counter = 4000;
+	static String getNextId()	{ return "id" + counter++; }
 	public MNode(AttributeMap am, Model m)
 	{
+		id = am.get("GraphId");
+		if (id == null) id = am.get("id");
+		if (id == null) id = getNextId();
 		attributes = am;
 		model = m;
 		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
+	public MNode(MNode orig)
+	{
+		id = getNextId();
+		attributes = new AttributeMap(orig.getAttributeMap());
+		model = orig.model;
+		stack = new VNode(this, model.getController().getPasteboard());
+	}
+
 	public VNode getStack()					{		return stack;	}
 	public Model getModel()					{		return model;	}
 	public Object getResource(String id) 	{		return model.getResource(id);	}
-	public String getId() 					{		return attributes.get("GraphId");	}
+	public String getId() 					{		return id;  }   //attributes.get("GraphId");	}
 	public Shape getShape() 				{		return getStack().getFigure();	}
+	public String getGraphId() 				{		return attributes.get("GraphId");	}
 	public String getShapeType() 			{		return attributes.get("ShapeType");	}
 	public String getType() 				{		return attributes.get("Type");	}
 	public String getLabel() 				{		return attributes.get("TextLabel");	}

@@ -1,0 +1,103 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  SIGSEGV (0xb) at pc=0x000000010e048f78, pid=11535, tid=0x0000000000004203
+#
+# JRE version: Java(TM) SE Runtime Environment (8.0_92-b14) (build 1.8.0_92-b14)
+# Java VM: Java HotSpot(TM) 64-Bit Server VM (25.92-b14 mixed mode bsd-amd64 compressed oops)
+# Problematic frame:
+# V  [libjvm.dylib+0x448f78]  Method::checked_resolve_jmethod_id(_jmethodID*)+0xe
+#
+# Failed to write core dump. Core dumps have been disabled. To enable core dumping, try "ulimit -c unlimited" before starting Java again
+#
+# If you would like to submit a bug report, please visit:
+#   http://bugreport.java.com/bugreport/crash.jsp
+#
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007f896000c000):  JavaThread "JDWP Transport Listener: dt_socket" daemon [_thread_in_vm, id=16899, stack(0x0000700000d0b000,0x0000700000e0b000)]
+
+siginfo: si_signo: 11 (SIGSEGV), si_code: 0 (unknown), si_addr: 0x0000000000000000
+
+Registers:
+RAX=0x0000000000000001, RBX=0x0000700000e0aa8b, RCX=0x000000010e41a360, RDX=0x0000700000e0aa8b
+RSP=0x0000700000e0a9d0, RBP=0x0000700000e0a9e0, RSI=0x00007f896000c000, RDI=0x3b79726f74636146
+R8 =0x0000000000000000, R9 =0x00007f895e6abc40, R10=0x0000000000000001, R11=0x0000000000000001
+R12=0x00007f896000c000, R13=0x3b79726f74636146, R14=0x3b79726f74636146, R15=0x00007f895e410480
+RIP=0x000000010e048f78, EFLAGS=0x0000000000010202, ERR=0x0000000000000000
+  TRAPNO=0x000000000000000d
+
+Top of Stack: (sp=0x0000700000e0a9d0)
+0x0000700000e0a9d0:   0000700000e0aa8b 0000700000e0aa8b
+0x0000700000e0a9e0:   0000700000e0aa40 000000010df57e66
+0x0000700000e0a9f0:   00007f896000c000 0000000000000000
+0x0000700000e0aa00:   0000000000000000 0000000000000000
+0x0000700000e0aa10:   00007f896000c000 00007f896000c000
+0x0000700000e0aa20:   0000700000e0aa8b 0000700000e0aa90
+0x0000700000e0aa30:   3b79726f74636146 000000000000000c
+0x0000700000e0aa40:   0000700000e0aa60 000000010d356780
+0x0000700000e0aa50:   0000000000000001 0000700000e0ab08
+0x0000700000e0aa60:   0000700000e0aad0 000000010d33b1f3
+0x0000700000e0aa70:   0000700000e0aaa0 00007f8963467a20
+0x0000700000e0aa80:   0000001a00000032 0000000200e0ab08
+0x0000700000e0aa90:   0000000000000000 0000000000000000
+0x0000700000e0aaa0:   0000000000000000 0000700000e0ac90
+0x0000700000e0aab0:   000000010d35de7a 00007f8960c15750
+0x0000700000e0aac0:   0000700000e0ab08 000000010d369598
+0x0000700000e0aad0:   0000700000e0aae0 000000010d33b2ec
+0x0000700000e0aae0:   0000700000e0ad00 000000010d344898
+0x0000700000e0aaf0:   0000ae6100000013 00000000000f0200
+0x0000700000e0ab00:   00007f8960c23af0 00007f8963467c2d
+0x0000700000e0ab10:   00007f890000011b 00007f896340b550
+0x0000700000e0ab20:   00007f890000012c 0000700000e0ab58
+0x0000700000e0ab30:   00007f896340b550 0000000000000000
+0x0000700000e0ab40:   0000ae610000001c 00007f890000ba80
+0x0000700000e0ab50:   0000700000e0ab58 897f00001a000000
+0x0000700000e0ab60:   080000007066b360 3e74696e696c633c
+0x0000700000e0ab70:   0056292803000000 0008000000000000
+0x0000700000e0ab80:   006866b360897f00 74696e693c060000
+0x0000700000e0ab90:   562928030000003e 0100000000000000
+0x0000700000e0aba0:   7866b360897f0000 74696e690a000000
+0x0000700000e0abb0:   0000657a696c6169 6176616a4c282b00
+0x0000700000e0abc0:   4c52552f74656e2f 752f6176616a4c3b 
+
+Instructions: (pc=0x000000010e048f78)
+0x000000010e048f58:   40 48 48 85 c0 75 e0 30 c0 0f b6 c0 5d c3 31 c0
+0x000000010e048f68:   5d c3 55 48 89 e5 53 48 83 ec 08 48 85 ff 74 24
+0x000000010e048f78:   48 8b 1f 48 85 db 74 1c 48 83 fb 37 74 16 48 8b
+0x000000010e048f88:   03 48 89 df ff 50 10 84 c0 b8 00 00 00 00 48 0f 
+
+Register to memory mapping:
+
+RAX=0x0000000000000001 is an unknown value
+RBX=0x0000700000e0aa8b is pointing into the stack for thread: 0x00007f896000c000
+RCX=0x000000010e41a360: UseMembar+0 in /Library/Java/JavaVirtualMachines/jdk1.8.0_92.jdk/Contents/Home/jre/lib/server/libjvm.dylib at 0x000000010dc00000
+RDX=0x0000700000e0aa8b is pointing into the stack for thread: 0x00007f896000c000
+RSP=0x0000700000e0a9d0 is pointing into the stack for thread: 0x00007f896000c000
+RBP=0x0000700000e0a9e0 is pointing into the stack for thread: 0x00007f896000c000
+RSI=0x00007f896000c000 is a thread
+RDI=0x3b79726f74636146 is an unknown value
+R8 =0x0000000000000000 is an unknown value
+R9 =0x00007f895e6abc40 is an unknown value
+R10=0x0000000000000001 is an unknown value
+R11=0x0000000000000001 is an unknown value
+R12=0x00007f896000c000 is a thread
+R13=0x3b79726f74636146 is an unknown value
+R14=0x3b79726f74636146 is an unknown value
+R15=0x00007f895e410480 is an unknown value
+
+
+Stack: [0x0000700000d0b000,0x0000700000e0b000],  sp=0x0000700000e0a9d0,  free space=1022k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.dylib+0x448f78]  Method::checked_resolve_jmethod_id(_jmethodID*)+0xe
+V  [libjvm.dylib+0x357e66]  jvmti_IsMethodSynthetic+0xb2
+C  [libjdwp.dylib+0x20780]  isMethodSynthetic+0x63
+C  [libjdwp.dylib+0x51f3]  methods1+0x10b
+C  [libjdwp.dylib+0x52ec]  methodsWithGeneric+0xe
+C  [libjdwp.dylib+0xe898]  debugLoop_run+0x1ce
+C  [libjdwp.dylib+0x1f6ba]  attachThread+0x4d
+V  [libjvm.dylib+0x3991cc]  JvmtiAgentThread::call_start_function()+0x38
+V  [libjvm.dylib+0x564c57]  JavaThread::thread_main_inner()+0x9b
+V  [libjvm.dylib+0x566344]  JavaThread::run()+0x1c2
+V  [libjvm.dylib+0x485bbe]

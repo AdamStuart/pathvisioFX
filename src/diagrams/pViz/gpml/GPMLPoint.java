@@ -54,12 +54,13 @@ public class GPMLPoint {
 		{
 			org.w3c.dom.Node child = node.getAttributes().item(i);
 			String name = child.getNodeName();
-			if ("X".equals(name))  x = StringUtil.toDouble(child.getNodeValue());
-			else if ("Y".equals(name))  y = StringUtil.toDouble(child.getNodeValue());
-			else if ("RelX".equals(name))  relX = StringUtil.toDouble(child.getNodeValue());
-			else if ("RelY".equals(name))  relY = StringUtil.toDouble(child.getNodeValue());
-			else if ("GraphRef".equals(name))  graphRef = child.getNodeValue();
-			else if ("ArrowHead".equals(name))  head = ArrowType.lookup(child.getNodeValue());
+			String val = child.getNodeValue();
+			if ("X".equals(name))  x = StringUtil.toDouble(val);
+			else if ("Y".equals(name))  y = StringUtil.toDouble(val);
+			else if ("RelX".equals(name))  relX = StringUtil.toDouble(val);
+			else if ("RelY".equals(name))  relY = StringUtil.toDouble(val);
+			else if ("GraphRef".equals(name))  graphRef = val;
+			else if ("ArrowHead".equals(name))  head = ArrowType.lookup(val);
 		}
 //		System.out.println("(" + x + ", " + y + ")"); 
 	}

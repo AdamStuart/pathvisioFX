@@ -55,6 +55,7 @@ public class GeneListController  extends TableController  {
 	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
 	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
 
+	@FXML private TableColumn<Gene, String> geneTypeColumn;
 	@FXML private TableColumn<Gene, String> geneNameColumn;
 	@FXML private TableColumn<Gene, String> locationColumn;
 	@FXML private TableColumn<Gene, String> geneIdColumn;
@@ -63,6 +64,7 @@ public class GeneListController  extends TableController  {
 	@FXML private TableColumn<Gene, String> dbidColumn;
 	@FXML private TableColumn<Gene, String> dataColumn;
 	@FXML private TableColumn<Gene, String> termsColumn;
+	
 	@FXML private Label select;
 	@FXML private Label size;
 
@@ -86,22 +88,24 @@ public class GeneListController  extends TableController  {
 	
 	protected void createTableRecord()
 	{
-		tableRecord = geneListRecord = new GeneListRecord("GeneList");	
+
+		tableRecord = geneListRecord = new GeneListRecord("GeneList", allColumns);	
 	}
 	public static String tooltip = "Text or expressions can be entered here";
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		super.initialize(location, resources);
-//		geneNameColumn.setUserData("T");	allColumns.add(geneNameColumn);
-//		termsColumn.setUserData("T");		allColumns.add(termsColumn);
+		geneNameColumn.setUserData("T");	allColumns.add(geneNameColumn);
+		termsColumn.setUserData("T");		allColumns.add(termsColumn);
+		geneTypeColumn.setUserData("T");		allColumns.add(geneTypeColumn);
 		
-//		makeSeparatorColumn();
-//		dataColumn.setUserData("N");		allColumns.add(dataColumn);
-//		locationColumn.setUserData("T");	allColumns.add(locationColumn);
-//		geneIdColumn.setUserData("T");		allColumns.add(geneIdColumn);
-//		urlColumn.setUserData("U");			allColumns.add(urlColumn);
-//		databaseColumn.setUserData("D");	allColumns.add(databaseColumn);
-//		dbidColumn.setUserData("T");		allColumns.add(dbidColumn);
+		makeSeparatorColumn();
+		dataColumn.setUserData("N");		allColumns.add(dataColumn);
+		locationColumn.setUserData("T");	allColumns.add(locationColumn);
+		geneIdColumn.setUserData("T");		allColumns.add(geneIdColumn);
+		urlColumn.setUserData("U");			allColumns.add(urlColumn);
+		databaseColumn.setUserData("D");	allColumns.add(databaseColumn);
+		dbidColumn.setUserData("T");		allColumns.add(dbidColumn);
 
 		//-------
 //		geneTable = (GeneListTable) theTable;
@@ -158,8 +162,8 @@ public class GeneListController  extends TableController  {
 	
 	@Override public void reorderColumns(int a, int b) 
 	{	
-		TableColumn col = (TableColumn) allColumns.remove(a);
-		allColumns.add(b, col);
+//		TableColumn col = (TableColumn) allColumns.remove(a);
+//		allColumns.add(b, col);
 	}
 
 	protected GeneListRecord readTabularText(File f)
@@ -335,12 +339,12 @@ public class GeneListController  extends TableController  {
 	// TODO used for both new lists and unioning lists
 	public void loadTables(GeneListRecord geneList, boolean setAllGenes) {
 		geneListRecord = geneList;
-		allColumns = geneListRecord.getAllColumns();
+//		allColumns = geneListRecord.getAllColumns();
 		dumpColumns();
 		resetTableColumns();
-		if (setAllGenes)
+		if (setAllGenes && true)
 			allGenes = geneListRecord.getGeneList();
-		theTable.getItems().addAll(geneListRecord.getGeneList());
+		theTable.getItems().addAll(allGenes);
 		
 //		columnTable.getItems().addAll(geneListRecord.getAllColumns());
 	}
@@ -354,6 +358,15 @@ public class GeneListController  extends TableController  {
 	{
 		theTable.getItems().clear();
 		theTable.getItems().addAll(allGenes);
+		theTable.getColumns().add(geneNameColumn);
+		theTable.getColumns().add(geneTypeColumn);
+		theTable.getColumns().add(termsColumn);
+		theTable.getColumns().add(databaseColumn);
+		theTable.getColumns().add(dbidColumn);
+		theTable.getColumns().add(urlColumn);
+		theTable.getColumns().add(locationColumn);
+		theTable.getColumns().add(geneIdColumn);
+		
 	}
 
 	public static String FIND_PATHWAYS_BASE = "http://webservice.wikipathways.org/findPathwaysByText?";
@@ -381,7 +394,7 @@ public class GeneListController  extends TableController  {
 	{
 		long start = System.currentTimeMillis();
 		GeneListRecord rec = getGeneList();
-		if (rec == null) 
+		if (rec == null || !geneListRecord.hasHeaders()) 
 		{
 			System.err.println("doChart failed");
 			return;

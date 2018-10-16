@@ -91,6 +91,17 @@ public class Edge  {
 		init();
       }
  
+    public Edge(GPMLPoint startPt, GPMLPoint endPt) 
+    {
+		model = null;
+    	endNode = startNode = null;
+		attributes = new AttributeMap();
+		edgeLine = new EdgeLine(this, null, null);
+		edgeLine.addPoint(startPt.getPoint());
+		edgeLine.addPoint(endPt.getPoint());
+		init();
+      }
+ 
 	//------------------------------------------------------------------------------------------
    private void init()
     {
@@ -290,7 +301,7 @@ public class Edge  {
 		}
 		if (endNode == null){
 			String endId = getAttributes().get("end");
-			if (endId != null)
+			if (endId != null && getModel() != null)
 			{
 				MNode mnode = getModel().getResource(endId);
 				if (mnode != null)
@@ -332,6 +343,7 @@ public class Edge  {
 		b.append("<Graphics ");
 		b.append(attributeList(new String[]{"ConnectorType", "ZOrder","LineStyle","LineThickness"}));
 		b.append (" >\n");
+		
 		b.append (getPointsStr());
 		b.append (getAnchorsStr());
 		b.append("</Graphics>\n");
@@ -348,9 +360,13 @@ public class Edge  {
 	{
 		List<GPMLPoint> pts = edgeLine.getPoints();
 		StringBuilder builder = new StringBuilder();
+		String startId = startNode == null ? "" : startNode.getId();
+		String endId = endNode == null ? "" : endNode.getId();
+		builder.append("<Point GraphRef=\""+ startId + "\"/>\n");
 		if (pts != null)
 			for (GPMLPoint pt : pts)
 				builder.append(pt.toString());
+		builder.append("<Point GraphRef=\""+ endId + "\"/>\n");
 		return builder.toString();
 	}
     
