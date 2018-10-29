@@ -10,6 +10,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
@@ -23,7 +24,6 @@ import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
-import model.bio.ReferenceListRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -159,20 +159,21 @@ public class GPML {
 	
 	
 	
-	private void parseEdges(NodeList edges) {
-		System.err.println("-------------------------------------");
-		System.out.println("Edges: "+ edges.getLength());
-		String layerName = activeLayer; 
+	private void parseEdges(NodeList edges) 
+	{
+//		System.err.println("-------------------------------------");
+//		System.out.println("Edges: "+ edges.getLength());
 		for (int i=0; i<edges.getLength(); i++)
 		{
-			org.w3c.dom.Node child = edges.item(i);
-			String name = child.getNodeName();
-			System.out.println(name + " " + child.getAttributes().getNamedItem("GraphId"));
+			org.w3c.dom.Node interaction = edges.item(i);
+			String name = interaction.getNodeName();
+//			System.out.println(name + " " + child.getAttributes().getNamedItem("GraphId"));
 			
-			Edge edge = parseGPMLEdge(child, model, activeLayer);
-			System.out.println(edge);
+			Edge edge = parseGPMLEdge(interaction, model);
+			if (edge.getStartNode() == null)
+				System.err.println(edge);
 			if (edge != null)
-				getController().add(0, edge, layerName);
+				getController().add(edge);
 		}
 		for (Edge e : model.getEdgeList())
 			e.connect();
@@ -184,7 +185,7 @@ public class GPML {
 			org.w3c.dom.Node child = shapes.item(i);
 			if (verbose)
 				System.out.println("");
-			MNode node = parseGPML(child, model, activeLayer);
+			MNode node = parseGPML(child, model, "Background");
 			
 			if (node != null)
 				getController().add(0, node.getStack());
@@ -224,16 +225,16 @@ if (verbose)
 //			System.out.println(name);
 		}
 		String type = attrMap.get("Type");
-		if ("GeneProduct".equals(type))
-			attrMap.put("Resizable", "false");
+		if ("GeneProduct".equals(type))		attrMap.put("Resizable", "false");
+		if ("Metabolite".equals(type))		attrMap.put("Resizable", "false");
 		return  new MNode(attrMap, m);
 	}
 		//----------------------------------------------------------------------------
-	public Edge parseGPMLEdge(org.w3c.dom.Node edgeML, Model m, String activeLayer) {
+	public Edge parseGPMLEdge(org.w3c.dom.Node edgeML, Model m) {
 	try
 	{
 		AttributeMap attrMap = new AttributeMap();
-		attrMap.put("Layer", activeLayer);
+//		attrMap.put("Layer", activeLayer);
 		attrMap.add(edgeML.getAttributes());
 		List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 		List<Anchor> anchors = new ArrayList<Anchor>();
@@ -248,11 +249,21 @@ if (verbose)
 			{
 				attrMap.add(n.getAttributes());
 				NodeList pts = n.getChildNodes();
+				boolean sourceAssigned = false;
 				for (int j=0; j<pts.getLength(); j++)
 				{
 					org.w3c.dom.Node pt = pts.item(j);
 					if ("Point".equals(pt.getNodeName()))
-						points.add(new GPMLPoint(pt));
+					{
+						GPMLPoint gpt = new GPMLPoint(pt);
+						points.add(gpt);
+						String key = sourceAssigned ? "targetid" : "sourceid";
+						sourceAssigned = true;
+						attrMap.put(key, gpt.getGraphRef());
+						ArrowType type = gpt.getArrowType();
+						if (type != null)
+							attrMap.put("ArrowHead", type.toString());
+					}
 					if ("Anchor".equals(pt.getNodeName()))
 					{
 						Anchor gpt = new Anchor(pt, m);
@@ -276,11 +287,17 @@ if (verbose)
 			endId = lastPt.getGraphRef();
 			attrMap.put("end", endId);
 			endNode = m.getResource(endId);
+			double thickness = attrMap.getDouble("LineThickness");
 			if (startNode != null && endNode != null) 
 				return new Edge(m, startNode.getStack(), endNode.getStack(), attrMap, points, anchors);	
 			else if (startPt != null && lastPt != null) 
-				return new Edge(startPt, lastPt);		
+				return new Edge(startPt, lastPt, thickness, model);		// Group
 			}
+		else
+		{
+			System.err.println("z = " + z);;
+			return null;
+		}
 		return new Edge(attrMap, m);
 	}
 	catch(Exception e)

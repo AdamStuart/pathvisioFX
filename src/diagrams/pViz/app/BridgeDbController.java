@@ -13,7 +13,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import chart.usMap.ColorUtil;
+import diagrams.pViz.tables.tablecellHelpers.NumberColConverter;
+import diagrams.pViz.util.ColorUtil;
 import gui.Backgrounds;
 import gui.DraggableTableRow;
 import gui.DropUtil;
@@ -55,7 +56,6 @@ import model.bio.Species;
 import model.dao.ResultsRecord;
 import services.bridgedb.BridgeDbIdMapper;
 import services.bridgedb.MappingSource;
-import table.binder.tablecellHelpers.NumberColConverter;
 import util.FileUtil;
 import util.StringUtil;
 

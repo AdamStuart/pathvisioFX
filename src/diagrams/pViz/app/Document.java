@@ -7,16 +7,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import diagrams.pViz.tables.TableController;
 import javafx.collections.FXCollections;
 import javafx.print.PrinterJob;
-import javafx.scene.control.TableColumn;
 import javafx.stage.FileChooser;
 import javafx.util.Pair;
 import model.TableType;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
 import model.bio.Species;
-import table.referenceList.TableController;
 import util.FileUtil;
 import util.StringUtil;
 /*

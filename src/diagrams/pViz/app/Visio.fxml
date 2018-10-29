@@ -10,6 +10,8 @@
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.input.KeyCodeCombination?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
@@ -17,7 +19,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<SplitPane fx:id="splitter" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
    <items>
       <BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0">
          <top>
@@ -403,9 +405,9 @@
          <left>
             <VBox fx:id="west" prefHeight="591.0" prefWidth="126.0" spacing="2.0" BorderPane.alignment="CENTER">
                <children>
-                  <ToolBar orientation="VERTICAL" prefHeight="166.0" prefWidth="122.0">
+                  <ToolBar orientation="VERTICAL" prefHeight="179.0" prefWidth="122.0">
                      <items>
-                        <VBox>
+                        <VBox spacing="4.0">
                            <children>
                               <HBox>
                                  <children>
@@ -415,30 +417,24 @@
                                     <ToggleButton fx:id="text" layoutX="46.0" layoutY="10.0" mnemonicParsing="false" onAction="#setText" text="T" />
                                  </children>
                               </HBox>
-                              <ToggleButton fx:id="gene" mnemonicParsing="false" onAction="#setGene" text="Gene">
+                              <ToggleButton fx:id="gene" mnemonicParsing="false" onAction="#setGene" prefWidth="107.0" text="Gene">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font></ToggleButton>
-                              <ToggleButton fx:id="metabolite" mnemonicParsing="false" onAction="#setMetabolite" text="Metabolite">
+                              <ToggleButton fx:id="metabolite" mnemonicParsing="false" onAction="#setMetabolite" prefWidth="107.0" text="Metabolite">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font></ToggleButton>
-                              <ToggleButton fx:id="protein" mnemonicParsing="false" onAction="#setProtein" text="Protein">
+                              <ToggleButton fx:id="protein" mnemonicParsing="false" onAction="#setProtein" prefWidth="107.0" text="Protein">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font></ToggleButton>
-                              <ToggleButton fx:id="pathway" layoutX="10.0" layoutY="91.0" mnemonicParsing="false" onAction="#setPathway" text="Pathway">
+                              <ToggleButton fx:id="pathway" layoutX="10.0" layoutY="91.0" mnemonicParsing="false" onAction="#setPathway" prefWidth="107.0" text="Pathway">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
                               </ToggleButton>
-                              <HBox spacing="4.0">
-                                 <children>
-                                    <VBox spacing="4.0" />
-                                    <VBox spacing="4.0" />
-                                 </children>
-                              </HBox>
-                              <ToggleButton fx:id="rna" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setRNA" text="RNA">
+                              <ToggleButton fx:id="rna" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setRNA" prefWidth="107.0" text="RNA">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
@@ -466,7 +462,7 @@
                         <Font size="9.0" />
                      </font>
                   </Button>
-                  <HBox>
+                  <HBox spacing="2.0">
                      <children>
                         <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
                            <font>
@@ -490,60 +486,123 @@
                         </Button>
                      </children>
                   </HBox>
-                  <ToolBar layoutX="14.0" layoutY="14.0" orientation="VERTICAL" prefHeight="302.0" prefWidth="122.0">
+                  <ToolBar layoutX="14.0" layoutY="14.0" orientation="VERTICAL" prefHeight="310.0" prefWidth="122.0">
                      <items>
                         <VBox spacing="20.0">
                            <children>
                               <VBox spacing="4.0">
                                  <children>
-                                    <ToggleButton fx:id="arrow1" mnemonicParsing="false" onAction="#setArrow" prefHeight="27.0" prefWidth="95.0" text="Activates">
+                                    <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" prefHeight="27.0" prefWidth="107.0" text="Activates">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/transports.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="arrow2" mnemonicParsing="false" onAction="#setArrow2" prefHeight="27.0" prefWidth="95.0" text="Inhibits">
+                                    <ToggleButton fx:id="arrow2" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow2" prefHeight="27.0" prefWidth="107.0" text="Inhibits">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/inhibits.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="arrow3" mnemonicParsing="false" onAction="#setArrow3" prefHeight="27.0" prefWidth="95.0" text="Converts">
+                                    <ToggleButton fx:id="arrow3" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow3" prefHeight="27.0" prefWidth="107.0" text="Converts">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/activates.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="arrow4" mnemonicParsing="false" onAction="#setArrow4" prefHeight="27.0" prefWidth="95.0" text="Catalyzes">
+                                    <ToggleButton fx:id="arrow4" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow4" prefHeight="27.0" prefWidth="107.0" text="Catalyzes">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/catalyzes.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="arrow5" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" prefHeight="27.0" prefWidth="95.0" text="Transports">
+                                    <ToggleButton fx:id="arrow5" contentDisplay="RIGHT" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" prefHeight="27.0" prefWidth="107.0" text="Transports">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/converts.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="arrow6" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" prefHeight="27.0" prefWidth="95.0" text="Regulates">
+                                    <ToggleButton fx:id="arrow6" contentDisplay="RIGHT" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" prefHeight="27.0" prefWidth="107.0" text="Regulates">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/stimulates.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
                                  </children>
                               </VBox>
                               <VBox>
                                  <children>
-                                    <ToggleButton fx:id="straight" mnemonicParsing="false" onAction="#setStraight" prefHeight="27.0" prefWidth="95.0" text="Straight">
+                                    <ToggleButton fx:id="straight" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setStraight" prefHeight="27.0" prefWidth="107.0" text="Straight">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/straight.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="curved" mnemonicParsing="false" onAction="#setCurved" prefHeight="27.0" prefWidth="95.0" text="Curved">
+                                    <ToggleButton fx:id="curved" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setCurved" prefHeight="27.0" prefWidth="107.0" text="Curved">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/curve.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
-                                    <ToggleButton fx:id="elbowed" mnemonicParsing="false" onAction="#setElbowed" prefHeight="27.0" prefWidth="95.0" text="Elbowed">
+                                    <ToggleButton fx:id="elbowed" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setElbowed" prefHeight="27.0" prefWidth="107.0" text="Elbowed">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
                                        </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/elbow.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
                                     </ToggleButton>
                                  </children>
                               </VBox>
@@ -569,7 +628,7 @@
             <VBox fx:id="south" BorderPane.alignment="CENTER" />
          </bottom>
          <center>
-            <ScrollPane fx:id="scrollPane" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <ScrollPane fx:id="scrollPane" prefHeight="621.0" prefWidth="612.0" BorderPane.alignment="CENTER">
               <content>
                 <AnchorPane fx:id="drawPane" />
               </content>

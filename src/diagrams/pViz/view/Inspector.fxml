@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
@@ -59,34 +56,10 @@
             <CheckBox fx:id="resizable" mnemonicParsing="false" onAction="#setResizable" text="Resizable" />
             <CheckBox fx:id="movable" layoutX="10.0" layoutY="33.0" mnemonicParsing="false" onAction="#setMovable" text="Movable" />
             <CheckBox fx:id="editable" layoutX="10.0" layoutY="57.0" mnemonicParsing="false" onAction="#setEditable" text="Editable" />
+            <CheckBox fx:id="connectable" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setConnectable" text="Connectable" />
          </children>
       </VBox>
-      <VBox fx:id="keyFramePalette1" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="141.0" prefWidth="306.0">
-         <children>
-            <TableView fx:id="keyFramesTable" prefHeight="141.0" prefWidth="277.0">
-               <columns>
-                  <TableColumn fx:id="keyFrameNameColumn" minWidth="50.0" prefWidth="167.0" text="Name" />
-                  <TableColumn fx:id="keyFrameHoldColumn" maxWidth="90.0" minWidth="50.0" prefWidth="70.0" text="Hold" />
-                  <TableColumn fx:id="keyFrameMoveColumn" minWidth="50.0" prefWidth="63.0" text="Move" />
-               </columns>
-            </TableView>
-         </children>
-      </VBox>
-      <VBox fx:id="keyFramePalette" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity">
-         <children>
-            <HBox>
-               <children>
-                  <VBox>
-                     <children>
-                        <Button fx:id="addKeyFrame" mnemonicParsing="false" onAction="#addKeyFrame" text="Add" />
-                        <Button fx:id="removeKeyFrame" mnemonicParsing="false" onAction="#removeKeyFrame" text="Remove" />
-                     </children>
-                  </VBox>
-               </children>
-            </HBox>
-         </children>
-      </VBox>
-   </children>
+       </children>
    <padding>
       <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
    </padding>

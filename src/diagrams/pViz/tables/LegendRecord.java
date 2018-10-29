@@ -189,7 +189,7 @@ public class LegendRecord implements GPMLRecord {
 				Edge legendEntry = edgeTypeMap.get(mim);
 				LegendRecord rec = new LegendRecord();
 				rec.setType(mim.getDescription());
-				rec.setName(legendEntry.getGraphId());
+//				rec.setName(legendEntry.getGraphId());
 				
 				Label spacer = new Label();	spacer.setMinWidth(12); spacer.prefWidth(12);
 				Label label1 = new Label();

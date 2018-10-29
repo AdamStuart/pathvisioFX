@@ -4,13 +4,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import diagrams.grapheditor.utils.ResizableBox;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.MNode;
+import diagrams.pViz.tables.ReferenceController;
+import diagrams.pViz.util.ResizableBox;
 import gui.Action.ActionType;
 import gui.Backgrounds;
 import javafx.beans.binding.Bindings;
@@ -37,6 +38,14 @@ import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.Tooltip;
+import javafx.scene.effect.InnerShadow;
+// 
+/*
+ * VNode: the view node 
+ * Created by the constructor of "model" the corresponding MNode
+ * It inherits from ResizableBox > DragbleBox > StackPane > Pane > Region etc.
+ * 
+ */
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -63,19 +72,10 @@ import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.dao.CSVTableData;
-import table.referenceList.ReferenceController;
 import util.FileUtil;
 import util.MacUtil;
 // a VNode can be a shape or a control or a container
 import util.StringUtil;
-import javafx.scene.effect.InnerShadow;
-// 
-/*
- * VNode: the view node 
- * Created by the constructor of "model" the corresponding MNode
- * It inherits from ResizableBox > DragbleBox > StackPane > Pane > Region etc.
- * 
- */
 
 public class VNode extends ResizableBox implements Comparable<VNode> {		//StackPane
 
@@ -86,6 +86,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	private boolean movable;
 	private boolean resizable;
 	private boolean editable;
+	private boolean connectable;
 //	private TooltipBehavior myTTB = new TooltipBehavior(
 //	        new Duration(1000), new Duration(5000), new Duration(200), false);
 	
@@ -95,6 +96,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public VNode clone()
 	{
 		return new VNode(this);
+	}
+	public void setScale(double x)
+	{
+		setScaleX(x);
+		setScaleY(x);
 	}
 	public VNode(MNode modelNode, Pasteboard p)
 	{
@@ -126,15 +132,15 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         attributes.putBool("Resizable", resizable);
         editable = attributes.getBool("Editable", true);
         attributes.putBool("Editable", editable);
+        connectable = attributes.getBool("Connectable", true);
+        attributes.putBool("Connectable", connectable);
          Tooltip tooltip = new Tooltip();
          tooltip.setOnShowing(v -> { tooltip.setText(attributes.getSortedAttributes());});
          Tooltip.install(this,  tooltip);
  		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
      }
 
-	public VNode(VNode orig) {
-		 this(orig.modelNode(), orig.pasteboard);
-	}
+	public VNode(VNode orig) {		 this(orig.modelNode(), orig.pasteboard);	}
 	public void setText(String s)		{ 	text.setText(s);	}
 	public String getText()				
 	{ 	
@@ -153,8 +159,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public MNode modelNode()			{	return model;	}
 	private String gensym(String s)		{	return model.getModel().gensym(s);	}
 	public AttributeMap getAttributes() {	return model.getAttributeMap();	}
-//	public void setAttributes(AttributeMap attrs){	model.getAttributeMap().addAll(attrs);	}
-//	public void disableResize()	{ setResizeBorderTolerance(0);	}
 	// **-------------------------------------------------------------------------------
 	public boolean canResize()	{	return resizable;	}
 	public void handleResize(MouseEvent event)
@@ -203,13 +207,14 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void setMovable(boolean b)	{ movable = b;	}
 	public boolean isEditable()	{	return editable;}
 	public void setEditable(boolean b)	{ editable = b;	}
+	public boolean isConnectable()	{	return connectable;}
+	public void setConnectable(boolean b)	{ connectable = b;	}
 	// **-------------------------------------------------------------------------------
-	public void applyLocks(boolean mov, boolean resiz, boolean edit) {
+	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
 		setMovable(mov);
 		setResize(resiz);
 		setEditable(edit);
 	}
-	
 	// **-------------------------------------------------------------------------------
 	public Point2D boundsCenter()	{
 		Bounds b = getBoundsInParent();
@@ -254,7 +259,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return FXCollections.emptyObservableList();	
 	}			// TODO
 	
-	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
+//	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
 
 	@Override
 	protected void handleMouseDragged(final MouseEvent event) {
@@ -513,32 +518,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //		setBorder(Borders.greenBorder);
 	}
 
-//	private void mousePressedOnText(MouseEvent e) {
-////		System.out.println("mousePressedOnText");
-//		if (e.getClickCount() > 1) 
-//		{ 
-//			text.setMouseTransparent(false);
-//			text.setEditable(true);
-//			text.requestFocus();
-//			text.selectAll();
-//		}	
-//		else handleMousePressed(e);
-//	}
-//	private void mouseDraggedOnText(MouseEvent e) {
-////		System.out.println("mousePressedOnText");
-//		if (!text.isEditable())
-//			handleMouseDragged(e);
-//	}
-//
-//
-//	private void keyPressedOnText(KeyEvent e) {
-//		KeyCode key = e.getCode();
-//		if (key == KeyCode.ENTER || key == KeyCode.CANCEL|| key == KeyCode.TAB)
-//		{
-//			getAttributes().put("TextLabel", text.getText());
-//			text.setEditable(false);
-//		}
-//	}
 
   	List<Shape> ports = new ArrayList<Shape>();
 	public void addPorts()
@@ -546,10 +525,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		for (int i=0; i< 9 ; i++)
 		{
 			if (i == 4) continue;			//skip center
-			if (i % 2 == 0) continue;
+//			if (i % 2 == 0) continue;
 			Pos pos = Pos.values()[i];
 			final Circle port = new Circle(6);
-			port.setFill(Color.ANTIQUEWHITE);
+			port.setFill(portFillColor(EState.STANDBY));
 			port.setStroke(Color.MEDIUMAQUAMARINE);
 			addPortHandlers(port);
 			setAlignment(port, pos);
@@ -562,7 +541,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	
 	public void showPorts(boolean vis)
 	{
-		if (getWidth() < 70 || getHeight() < 40)
+		if (getWidth() < 40 || getHeight() < 18)
 			vis = false;
 		for (Shape p : ports)
 			p.setVisible(vis);
@@ -583,31 +562,39 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	{		
 		port.addEventHandler(MouseEvent.MOUSE_MOVED, e -> { if (pasteboard.getDragLine() != null) return; 	port.setFill(portFillColor( EState.ACTIVE)); });
 		port.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {	port.setFill(portFillColor( EState.OFF)); } );
-		port.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {  	port.setFill(portFillColor( EState.STANDBY));  	} );
-		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> 
-		{  
-			System.out.println("Port");
-//			if (pasteboard.getTool() == Tool.Line)
-			{
-				port.setFill(Color.AQUAMARINE); 
-				
-				Pos pos = Pos.CENTER;
-				String id = getId();
-				if (StringUtil.isInteger(id))
-				{
-					int i = StringUtil.toInteger(id);
-					if (i < Pos.values().length)
-						pos = Pos.values()[i];
-				}
-
-				pasteboard.startDragLine(this, pos, e.getSceneX(), e.getSceneY());
-				e.consume();
-			}
-			e.consume();
-		} );
-	
+		port.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {  	port.setFill(portFillColor( EState.STANDBY));  	 finishDragLine(port, this); });
+		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> { startPortDrag(e, port);} );
 	}
 
+	private void startPortDrag(MouseEvent e, Shape port) 
+	{
+		if (pasteboard.getDragLine()!= null)
+		{
+			pasteboard.connectTo(this, port);
+			port.setFill(portFillColor(EState.FILLED)); 
+			return;
+		}
+		port.setFill(Color.AQUAMARINE); 
+		String id = getId();
+		Pos pos = idToPosition(id);
+		pasteboard.startDragLine(this, pos, e.getSceneX(), e.getSceneY());
+		e.consume();
+	}
+	
+	public static Pos idToPosition(String id)
+	{
+		if (StringUtil.isInteger(id))
+		{
+			int i = StringUtil.toInteger(id);
+			if (i < Pos.values().length)
+				return Pos.values()[i];
+		}
+		return Pos.CENTER;
+	}
+	private void finishDragLine(Shape port, VNode target)
+	{
+		pasteboard.connectTo(target, port);
+	}
 	// **-------------------------------------------------------------------------------
 	  /**
      * Handles mouse events.
@@ -625,8 +612,22 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		System.out.println("exit");
 		showPorts(false);
 	}
-   protected void handleMouseReleased(final MouseEvent event) {
-    	getController().getUndoStack().push(ActionType.Move);
+
+	protected void handleMouseReleased(final MouseEvent event) {
+		if (pasteboard.getDragLine() != null && isConnectable()) {
+			VNode starter = pasteboard.getDragSource();
+			if (starter != this)
+			{	
+				getController().getUndoStack().push(ActionType.AddEdge);
+				getController().addEdge(starter, this);
+				pasteboard.removeDragLine();
+		
+			}
+			event.consume();
+			return;
+		}
+
+		getController().getUndoStack().push(ActionType.Move);
 		pasteboard.getSelectionMgr().extract();
 		super.handleMouseReleased(event);
     }
@@ -647,8 +648,18 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			   event.consume();
 			   return;
 		   }
+		   if (pasteboard.getDragLine() != null)
+		   {
+			   finishDragLine(null, this);
+				event.consume();
+				return;
+		   }
+
 		   Tool curTool = pasteboard.getTool();
 		   if (curTool != null && !curTool.isArrow()) return;
+		   
+		   if (event.isAltDown())
+			   selection.duplicateSelection();
 		   
 		   prevMouseX = event.getSceneX();
 		   prevMouseY = event.getSceneY();
@@ -687,8 +698,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			   a.setResizable(true);
 			   a.showAndWait();
 		   }		
-		System.out.println(s);		
-		// get as HTML and Open in Browser
+		System.out.println(s);		 	// get as HTML and Open in Browser
 	}
 	// **------------------------------------------------------------------------------
 	public void rememberPositionEtc() 		{		rememberPositionEtc(0);		}
@@ -702,6 +712,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		attributes.putDouble("Height",   bounds.getHeight());
 		attributes.putDouble("ZOrder",   pasteboard.getChildren().indexOf(this));
 		Shape shape = getShape();
+		if (shape == null) shape = getFigure();
 		if (shape != null)
 		{
 			attributes.putColor("Fill",   (Color) shape.getFill());	
@@ -716,18 +727,15 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double y = attrMap.getDouble("Y");
 		double centerx = attrMap.getDouble("CenterX");
 		double centery = attrMap.getDouble("CenterY");
-		double w = attrMap.getDouble("Width", 200) ;
+		double w = attrMap.getDouble("Width", 100) ;
 		String type = attrMap.get("ShapeType");
 		double h = attrMap.getDouble("Height", 150);
 		if ("GeneProduct".equals(type)) h = 50;
 		
-//		double h = attrMap.getDouble("Height", 150);
 		String title = attrMap.get("TextLabel");
 		if (Double.isNaN(x)) {	x = centerx - w / 2;	attrMap.putDouble("X", x);  }
 		if (Double.isNaN(y)) { y = centery - h / 2;		attrMap.putDouble("Y", y);  }
 		fill( x,  y,  w,  h,  title,  id);
-//		if (content != null)
-//			getChildren().add(content);
 	}
 
 	public void fill(double x, double y, double w, double h, String title, String id)
@@ -779,7 +787,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (colorTag != null)
 			bldr.append("-fx-border-color:#" + colorTag + "; ");
 		bldr.append(makeStyleString("FillColor"));
-		bldr.append(makeStyleString("Opacity"));
+//		bldr.append(makeStyleString("Opacity"));
 		bldr.append(makeStyleString("LineThickness"));
 		str = bldr.toString();
 		System.out.println(str);
@@ -799,9 +807,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return fxml + ":" + val + "; ";
 	}
 
-	private AttributeMap getAttributeMap() {
-		return modelNode().getAttributeMap();
-	}
+	private AttributeMap getAttributeMap() {	return modelNode().getAttributeMap();	}
 
 	public HBox addTitleBar(String title)
 	{		
@@ -852,8 +858,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		imgView.prefWidth(200); 	imgView.prefHeight(200);
 		imgView.setFitWidth(200); 	imgView.setFitHeight(200);
 		attrMap.put("name", filepath);
-//		Label imgView = new Label("TODO FIXME");
-		
 	    imgView.setMouseTransparent(true);
 	    imgView.fitWidthProperty().bind(Bindings.subtract(widthProperty(), 20));
 	    imgView.fitHeightProperty().bind(Bindings.subtract(heightProperty(), 40));
@@ -893,7 +897,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (attrMap.getId() == null)
 			attrMap.put("GraphId", gensym("T"));
 		String filename = attrMap.get("file");
-		CSVTableData data = FileUtil.openCSVfile(filename, table);		// TODO THIS CURRENTLY ASSUMES ALL INTS!!
+		CSVTableData data = CSVTableData.readCSVfile(filename);	
 		attrMap.put("name", filename);
 		if (data == null) return;
 		readGeometry(attrMap, table);
@@ -928,8 +932,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	//--------------------------------------------------------
 	public String asGPML()
 	{
-//		if (node instanceof Edge) 
-//			return edgeToGPML((Edge) node);
 		ObservableMap<Object, Object> pro = getProperties();
 		Object o = pro.get("TextLabel");
 		String textLabel = o == null ? "" : o.toString();
@@ -940,12 +942,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 		String[] tokens = toString().split(" ");
 		String shape = tokens.length > 1 ? tokens[1] : "Error";
-//		basic = StringUtil.chopLast(basic);		// chop off "]"
-//		int idx = basic.indexOf("[");
-//		if (idx <= 0) return "";
-			
-//		String shape = basic.substring(0, idx);
-//		basic = basic.replaceAll(",", "");		// strip commas
 		double w = getLayoutBounds().getWidth();
 		double h = getLayoutBounds().getHeight();
 		double cx = getLayoutX() + w / 2;
@@ -1057,7 +1053,4 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double b = ((VNode)other).getAttributes().getDouble("ZOrder",0);
 		return a == b ? 0 : (a > b ? 1 : -1);
 	}
-
-
-
 }

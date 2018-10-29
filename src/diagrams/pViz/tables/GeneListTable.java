@@ -30,6 +30,7 @@ import javafx.scene.layout.VBox;
 import javafx.util.Pair;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
+import model.bio.PathwayRecord;
 import util.FileUtil;
 import util.StringUtil;
 
@@ -54,7 +55,8 @@ public class GeneListTable extends TableView<Gene> {
 	private TableColumn<Gene, String> dbColumn = new TableColumn<Gene, String>("Database");
 	private TableColumn<Gene, String> dbidColumn = new TableColumn<Gene, String>("DatabaseId");
 	private TableColumn<Gene, String> termsColumn = new TableColumn<Gene, String>("Terms");
-	
+//	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
+
 	private Button draggable;
 	
 		

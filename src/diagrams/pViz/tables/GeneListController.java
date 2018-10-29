@@ -5,15 +5,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
+import animation.BorderPaneAnimator;
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Document;
 import diagrams.pViz.gpml.GPML;
+import diagrams.pViz.model.Edge;
 import gui.DraggableTableRow;
+import icon.FontAwesomeIcons;
+import icon.GlyphsDude;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -22,6 +25,8 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
+import javafx.geometry.Side;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
@@ -32,20 +37,22 @@ import javafx.scene.control.TableColumn.CellDataFeatures;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.control.Tooltip;
-import javafx.scene.control.TreeItem;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Callback;
+import model.IController;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
-import table.referenceList.TableController;
 import util.FileUtil;
 import util.StringUtil;
 
@@ -54,21 +61,46 @@ public class GeneListController  extends TableController  {
 	
 	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
 	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
-
+	@FXML private Button draggable;
 	@FXML private TableColumn<Gene, String> geneTypeColumn;
 	@FXML private TableColumn<Gene, String> geneNameColumn;
-	@FXML private TableColumn<Gene, String> locationColumn;
+	@FXML private TableColumn<Gene, String> graphidColumn;
 	@FXML private TableColumn<Gene, String> geneIdColumn;
-	@FXML private TableColumn<Gene, String> urlColumn;
 	@FXML private TableColumn<Gene, String> databaseColumn;
 	@FXML private TableColumn<Gene, String> dbidColumn;
 	@FXML private TableColumn<Gene, String> dataColumn;
+	@FXML private TableColumn<Gene, String> ensemblColumn;
+	@FXML private TableColumn<Gene, String> urlColumn;
 	@FXML private TableColumn<Gene, String> termsColumn;
+	@FXML private TableColumn<Gene, String> locationColumn;
+	@FXML private TableColumn<Gene, String> logger;
+	@FXML private TableColumn<Gene, String> pvalue;
+	@FXML private TableColumn<Gene, String> fdr;
 	
+	protected List<TableColumn<Edge, ?>> edgeColumns = new ArrayList<TableColumn<Edge, ?>>();
+
+	@FXML protected TableView<Edge> edgeTable;
+	@FXML private TableColumn<Edge, String> source;
+	@FXML private TableColumn<Edge, String> sourceid;
+	@FXML private TableColumn<Edge, String> interaction;
+	@FXML private TableColumn<Edge, String> target;
+	@FXML private TableColumn<Edge, String> targetid;
+	@FXML private TableColumn<Edge, String> edgeid;
+	@FXML private TableColumn<Edge, String> database;
+	@FXML private TableColumn<Edge, String> dbid;
+	@FXML private TableColumn<Edge, String> graphid;
+
+	
+	@FXML private Button bottomSideBarButton;
 	@FXML private Label select;
 	@FXML private Label size;
 
+	@FXML private Label eselect;
+	@FXML private Label esize;
+
 	@FXML private MenuBar menubar;
+	@FXML private MenuItem showAsList;
+	@FXML private MenuItem showAsTable;
 	@FXML private MenuItem info;
 	@FXML private MenuItem save;
 	@FXML private MenuItem saveAs;
@@ -81,44 +113,64 @@ public class GeneListController  extends TableController  {
 	public void setState(String s) 	{ 	state = s; }
 	public String getState()	 	{ 	return state; 	}
 	//------------------------------------------------------
+	private boolean windowstate;		// true if its in list-state
+	public void setWindowState(boolean s) 	{ 	windowstate = s; }
+	public boolean getWindowState()	 	{ 	return windowstate; 	}
+	//------------------------------------------------------
 
 	private GeneListRecord geneListRecord;		// the model
 	private List<Gene> allGenes = new ArrayList<Gene>();
+	private List<Edge> allInteractions = new ArrayList<Edge>();
 //	GeneListTable geneTable;
 	
 	protected void createTableRecord()
 	{
-
 		tableRecord = geneListRecord = new GeneListRecord("GeneList", allColumns);	
 	}
 	public static String tooltip = "Text or expressions can be entered here";
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		super.initialize(location, resources);
-		geneNameColumn.setUserData("T");	allColumns.add(geneNameColumn);
-		termsColumn.setUserData("T");		allColumns.add(termsColumn);
-		geneTypeColumn.setUserData("T");		allColumns.add(geneTypeColumn);
+		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
+		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 150);
 		
-		makeSeparatorColumn();
-		dataColumn.setUserData("N");		allColumns.add(dataColumn);
-		locationColumn.setUserData("T");	allColumns.add(locationColumn);
+		geneTypeColumn.setUserData("T");	allColumns.add(geneTypeColumn);
+		geneNameColumn.setUserData("T");	allColumns.add(geneNameColumn);
+		graphidColumn.setUserData("T");		allColumns.add(graphidColumn);
 		geneIdColumn.setUserData("T");		allColumns.add(geneIdColumn);
-		urlColumn.setUserData("U");			allColumns.add(urlColumn);
 		databaseColumn.setUserData("D");	allColumns.add(databaseColumn);
 		dbidColumn.setUserData("T");		allColumns.add(dbidColumn);
+		dataColumn.setUserData("N");		allColumns.add(dataColumn);
+		ensemblColumn.setUserData("T");		allColumns.add(ensemblColumn);
+		urlColumn.setUserData("U");			allColumns.add(urlColumn);
+		termsColumn.setUserData("T");		allColumns.add(termsColumn);
+		locationColumn.setUserData("T");	allColumns.add(locationColumn);
+		
+		makeSeparatorColumn();
 
+		geneTypeColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("type"));
+		graphidColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("graphid"));
+		urlColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("url"));
+		typeColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("type"));
+		geneNameColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
+		databaseColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("database"));
+		dbidColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("dbid"));
+		termsColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("goFunction"));
+		locationColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("chromosome"));
+
+		logger.setCellValueFactory(new PropertyValueFactory<Gene, String>("logger"));
+		pvalue.setCellValueFactory(new PropertyValueFactory<Gene, String>("pvalue"));
+		fdr.setCellValueFactory(new PropertyValueFactory<Gene, String>("fdr"));
+
+		source.setCellValueFactory(new PropertyValueFactory<Edge, String>("source"));
+		target.setCellValueFactory(new PropertyValueFactory<Edge, String>("target"));
+		sourceid.setCellValueFactory(new PropertyValueFactory<Edge, String>("sourceid"));
+		targetid.setCellValueFactory(new PropertyValueFactory<Edge, String>("targetid"));
+		interaction.setCellValueFactory(new PropertyValueFactory<Edge, String>("interaction"));
+		database.setCellValueFactory(new PropertyValueFactory<Edge, String>("database"));
+		dbid.setCellValueFactory(new PropertyValueFactory<Edge, String>("dbid"));
 		//-------
-//		geneTable = (GeneListTable) theTable;
 		theTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-//		geneNameColumn.setText("Label");
-//		geneNameColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
-//		geneIdColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("ensembl"));
-//		urlColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("url"));
-//		locationColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("location"));
-//		databaseColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("database"));
-//		dbidColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("dbid"));
-//		dataColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("data"));
-//		termsColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("termSummary"));
 
 		theTable.setRowFactory((a) -> {
 		       return new DraggableTableRow<Gene>(theTable, GENE_MIME_TYPE, this, geneListRecord);
@@ -156,19 +208,153 @@ public class GeneListController  extends TableController  {
 		searchBox.setTooltip(new Tooltip(tooltip));
 		
 		resetTableColumns();
+
+		edgeid.setUserData("T");		edgeColumns.add(edgeid);
+		source.setUserData("T");		edgeColumns.add(source);
+		sourceid.setUserData("T");		edgeColumns.add(sourceid);
+		interaction.setUserData("T");	edgeColumns.add(interaction);
+		target.setUserData("T");		edgeColumns.add(target);
+		targetid.setUserData("T");		edgeColumns.add(targetid);
+		database.setUserData("T");		edgeColumns.add(database);
+		dbid.setUserData("T");			edgeColumns.add(dbid);
+//		graphid.setUserData("T");		edgeColumns.add(graphid);
+		edgeid.setCellValueFactory(new PropertyValueFactory<Edge, String>("edgeid"));
+
+	//		graphid.setCellValueFactory(new PropertyValueFactory<Edge, String>("graphid"));
+		edgeTable.getSelectionModel().getSelectedIndices().addListener(new ListChangeListener<Integer>()
+		{
+			@Override public void onChanged(Change<? extends Integer> change) 
+			{ 
+				eselect.setText("" + edgeTable.getSelectionModel().getSelectedIndices().size() + "/ " + edgeTable.getItems().size());  
+			}
+		});
 		
+	}
+
+	// TODO used for both new lists and unioning lists
+	public void loadTables(GeneListRecord geneList, List<Edge> edgeList, boolean setAllGenes) {
+		geneListRecord = geneList;
+//		allColumns = geneListRecord.getAllColumns();
+		dumpColumns();
+		resetTableColumns();
+		if (setAllGenes && true)
+			allGenes = geneListRecord.getGeneList();
+		theTable.getItems().addAll(allGenes);
+		locationColumn.setPrefWidth(200);
+		geneTypeColumn.setPrefWidth(28);
+		geneNameColumn.setPrefWidth(100);
+		dataColumn.setMaxWidth(100);
+
+		if (edgeList != null) 
+			edgeTable.getItems().addAll(edgeList);
+
+		
+		draggable.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.HAND_ALT_UP, "12"));
+		draggable.setText("");
+	    draggable.setOnDragDetected(e -> {
+	                Dragboard db = draggable.startDragAndDrop(TransferMode.MOVE);
+	                db.setDragView(draggable.snapshot(null, null));
+
+	                // The DragView wont be displayed unless we set the content of the dragboard as well. 
+	                // Here you probably want to do more meaningful stuff than adding an empty String to the content.
+	                ClipboardContent content = new ClipboardContent();
+	                content.put(GENE_MIME_TYPE, "");
+	                db.setContent(content);
+
+	                e.consume();
+	            });
+//	    draggable.setOnMouseClicked(new EventHandler<MouseEvent>() {
+//            @Override
+//            public void handle(MouseEvent mouseEvent) {
+////                if (mouseEvent.getButton().equals(MouseButton.PRIMARY)) {
+////                    if (mouseEvent.getClickCount() == 2) {
+////                        label.setText("Double Click Fire... " + i);
+////                        i = i + 1;
+////                    }
+////                }
+//            }
+//        });
 //		theTable.addKeyListener();
 	}
-	
 	@Override public void reorderColumns(int a, int b) 
 	{	
 //		TableColumn col = (TableColumn) allColumns.remove(a);
 //		allColumns.add(b, col);
 	}
-
-	protected GeneListRecord readTabularText(File f)
+	
+	
+	
+	
+	@FXML private void showTranscripts()		
+	{	 
+		System.out.println("showTranscripts");	
+		showCols(urlColumn, locationColumn);
+	}
+	
+	boolean columnIn(TableColumn<?, ?> col, TableColumn<?, ?>[] cols)
 	{
-		return Document.readTabularText(f, getSpecies());
+		for (TableColumn<?, ?> c : cols)
+			if (c == col) return true;
+		return false;
+	}
+	@FXML private void showCols(TableColumn<Gene, String>... cols)		
+	{	
+		theTable.getColumns().clear();
+		theTable.getColumns().addAll(cols);
+		columnTable.getItems().clear();
+		columnTable.getItems().addAll(cols);
+//		columnTable.getItems().addAll(separatorColumn);
+		for (Object o : allColumns)
+		{
+			TableColumn<?, ?> c = (TableColumn<?, ?>) o;
+			if (!columnIn(c, cols))
+				columnTable.getItems().add(c);
+		}
+	}
+	
+	
+	@FXML private void showCategories()			
+	{	 System.out.println("showCategories");	
+		theTable.getColumns().clear();
+		theTable.getColumns().addAll(geneNameColumn, geneTypeColumn, databaseColumn, dbidColumn);
+		columnTable.getItems().clear();
+		columnTable.getItems().addAll(geneNameColumn, geneTypeColumn, databaseColumn, dbidColumn);
+	}
+	@FXML private void showDifferences()		
+	{	 System.out.println("showDifferences");	
+		theTable.getColumns().clear();
+		theTable.getColumns().addAll(dataColumn);
+		columnTable.getItems().clear();
+		columnTable.getItems().addAll(dataColumn);
+	
+	}
+
+	public void showAll()
+	{
+		theTable.getItems().clear();
+		theTable.getColumns().clear();
+		theTable.getItems().addAll(allGenes);
+		theTable.getColumns().addAll(geneNameColumn, geneTypeColumn, termsColumn, databaseColumn, dbidColumn);
+		theTable.getColumns().addAll(urlColumn, locationColumn, geneIdColumn, ensemblColumn);		
+		
+		columnTable.getItems().addAll(geneNameColumn, geneTypeColumn, termsColumn, databaseColumn, dbidColumn, urlColumn, locationColumn, geneIdColumn, ensemblColumn);		
+	}
+	private void setWindowWidthToList(boolean b) {
+		Stage win = (Stage) theTable.getScene().getWindow();
+		win.setMaxWidth(b ? 100 : 6000);
+		win.setMinWidth(100);
+		if (!b)	
+		{
+			win.setWidth(700);
+			win.setMinWidth(700);
+			win.setMinWidth(100);
+		}
+	}
+	@FXML private  void showAsTable()
+	{
+		resetTableColumns();
+		setWindowWidthToList(false);
+//		setButtonsToWindowState(false);
 	}
 
 	File file = null;
@@ -232,6 +418,7 @@ public class GeneListController  extends TableController  {
 		s = StringUtil.chopLast(s) + NL;
 		return s;
 	}
+	
 	protected void processFile(File f)
 	{
 		if (Document.isMappingFile(f))
@@ -239,7 +426,9 @@ public class GeneListController  extends TableController  {
 			doMapping(f);
 			return;
 		}
-		 if (FileUtil.isCDT(f) || FileUtil.isTXT(f))
+		if (FileUtil.isCSV(f))
+			open(f);
+		else if (FileUtil.isCDT(f) || FileUtil.isTXT(f))
 			 geneListRecord = readTabularText(f);
 		 else if (FileUtil.isGPML(f))
 			 geneListRecord = GPML.readGeneList(f, getSpecies());
@@ -252,6 +441,10 @@ public class GeneListController  extends TableController  {
 			 resetTableColumns();
 			 theTable.getItems().addAll(geneListRecord.getGeneList());
 		 }
+	}
+	protected GeneListRecord readTabularText(File f)
+	{
+		return Document.readTabularText(f, getSpecies());
 	}
 	//------------------------------------------------------
 	private void doMapping(File f) {
@@ -301,7 +494,7 @@ public class GeneListController  extends TableController  {
 	//------------------------------------------------------
 
 	private GeneListRecord getGeneList() {		return geneListRecord;	}
-	@FXML private void newGeneList()	{		App.doNewGeneList(null);	}
+	@FXML private void newGeneList()	{		App.doNewGeneList(null, null);	}
 	@FXML private void getInfo()		{		System.out.println("getInfo");	}
 	@FXML private void saveAs()			{		file = null; 	save();	 }
 	@FXML private void invert()		
@@ -320,8 +513,8 @@ public class GeneListController  extends TableController  {
 	@FXML private void drillDown()		
 	{		
 		GeneListRecord subset = getSelectedGeneList();
-		System.out.println("drillDown");	
-		App.doNewGeneList(subset);
+		subset.setWindowState(geneListRecord.getWindowState());
+		App.doNewGeneList(subset,null);
 	}
 	
 	//------------------------------------------------------
@@ -335,39 +528,66 @@ public class GeneListController  extends TableController  {
 		return subset;
 	}
 
-
-	// TODO used for both new lists and unioning lists
-	public void loadTables(GeneListRecord geneList, boolean setAllGenes) {
-		geneListRecord = geneList;
-//		allColumns = geneListRecord.getAllColumns();
-		dumpColumns();
-		resetTableColumns();
-		if (setAllGenes && true)
-			allGenes = geneListRecord.getGeneList();
-		theTable.getItems().addAll(allGenes);
-		
-//		columnTable.getItems().addAll(geneListRecord.getAllColumns());
-	}
+//
+//	// TODO used for both new lists and unioning lists
+//	public void loadTables(GeneListRecord geneList, List<Edge> edgeList, boolean setAllGenes) {
+//		geneListRecord = geneList;
+////		allColumns = geneListRecord.getAllColumns();
+//		dumpColumns();
+//		resetTableColumns();
+//		if (setAllGenes && true)
+//			allGenes = geneListRecord.getGeneList();
+//		theTable.getItems().addAll(allGenes);
+//		if (edgeList != null) 
+//			edgeTable.getItems().addAll(edgeList);
+//		
+////		columnTable.getItems().addAll(geneListRecord.getAllColumns());
+//	}
 	@FXML private void selectAll()			{		showAll();	}
 	@FXML private void showAllColumns()		{		showAll();	}
 	@FXML private void editColumns()		{		showAll();	}
-	@FXML private void doOpen()		{		}
-	@FXML private void doClose()		{	 	}
+	@FXML private void doOpen()		
+	{	
+		FileChooser chooser = new FileChooser();	
+		chooser.setTitle("Open Drawing");
+		file = chooser.showOpenDialog(App.getInstance().getStage());
+		if (file != null)				// dialog wasn't canceled
+			open(file);			
 	
-	public void showAll()
-	{
-		theTable.getItems().clear();
-		theTable.getItems().addAll(allGenes);
-		theTable.getColumns().add(geneNameColumn);
-		theTable.getColumns().add(geneTypeColumn);
-		theTable.getColumns().add(termsColumn);
-		theTable.getColumns().add(databaseColumn);
-		theTable.getColumns().add(dbidColumn);
-		theTable.getColumns().add(urlColumn);
-		theTable.getColumns().add(locationColumn);
-		theTable.getColumns().add(geneIdColumn);
 		
 	}
+	
+	private void open(File f)
+	{
+		List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath(), 30000);
+//		StringUtil.removeEmptyLines(lines);
+		GeneListRecord record = new GeneListRecord(f);
+
+//		 if (theTable.getItems().isEmpty())
+//			 allColumns.clear();
+//		 allColumns.addAll(record.getAllColumns());
+//		 allColumns.add(geneNameColumn);
+		 resetTableColumns();
+		 List<Gene> genes = record.getGeneList();
+		 theTable.getItems().addAll(genes);
+	}
+	@FXML private void doClose()		{	 	}
+	
+//	public void showAll()
+//	{
+//		theTable.getItems().clear();
+//		theTable.getItems().addAll(allGenes);
+//		List<TableColumn<Gene,?>> cols = theTable.getColumns();
+//		cols.add(geneNameColumn);
+//		cols.add(geneTypeColumn);
+//		cols.add(termsColumn);
+//		cols.add(databaseColumn);
+//		cols.add(dbidColumn);
+//		cols.add(urlColumn);
+//		cols.add(locationColumn);
+//		cols.add(geneIdColumn);
+//		
+//	}
 
 	public static String FIND_PATHWAYS_BASE = "http://webservice.wikipathways.org/findPathwaysByText?";
 	@FXML private void doAddColumn() 	 
@@ -421,8 +641,8 @@ public class GeneListController  extends TableController  {
 			return;
 		}
 		List<String> headerList = new ArrayList<String>();
-		List<TableColumn<?,?>> cols = theTable.getColumns();
-		for (TableColumn<?,?> col : cols )
+		List<TableColumn<Gene,?>> cols = theTable.getColumns();
+		for (TableColumn<Gene,?> col : cols )
 		{
 			if (col.getProperties().get("Numeric") != null)
 				headerList.add(col.getText());
@@ -518,6 +738,7 @@ public class GeneListController  extends TableController  {
 		Object col = findColumnContains(str);
 		return col != null;
 	}
+	
 	private Double getNumericValue(String str, Gene g)
 	{
 		if (StringUtil.isNumber(str)) 
@@ -551,6 +772,20 @@ public class GeneListController  extends TableController  {
 	@Override
 	public void getInfo(DataFormat fmt, String a, String colname, MouseEvent event) {
 		// TODO Auto-generated method stub
+		
+	}
+	public void doShowAsList() {
+		showAsList();
+		
+	}
+	@FXML private  void showAsList()
+	{
+		resetTableColumns();
+		setWindowWidthToList(true);
+		setButtonsToWindowState(false);
+	}
+	private void setButtonsToWindowState(boolean b) {
+		westSidebar.setVisible(!b);
 		
 	}
 }

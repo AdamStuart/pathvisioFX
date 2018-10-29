@@ -6,9 +6,6 @@ import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 
 import animation.Transitions;
-import chart.scatter.SynthFileStream;
-import chart.scatter.SynthGenMetaFileStream;
-import chart.scatter.SynthGenRecord;
 import diagrams.pViz.tables.GeneListController;
 import gui.Borders;
 import gui.Cursors;
@@ -238,23 +235,23 @@ public class DrillDownChart extends VBox
 	}
 	//------------------------------------------------------------------------------
 	public static String summaryFileName = "syntheticDefinitions";
-	public void addData(ObservableList<SynthGenRecord> observableList)
+	public void addData(ObservableList<Integer> observableList)  //SynthGenRecord
 	{
-		if (observableList == null)
-		{
-			SynthGenMetaFileStream input = new SynthGenMetaFileStream(this);
-			observableList = input.readDefFile(summaryFileName);
-		}
-		for (SynthGenRecord rec : observableList)
-		{
-			XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
-			for (int i = 0; i < rec.getCount(); i++)
-			{
-				Point2D randPt = SynthFileStream.randomNormal(rec);
-				series.getData().add(new XYChart.Data<Number, Number>(randPt.getX(), randPt.getY()));
-			}
-			scatter.getData().add(series);
-		}
+//		if (observableList == null)
+//		{
+//			SynthGenMetaFileStream input = new SynthGenMetaFileStream(this);
+//			observableList = input.readDefFile(summaryFileName);
+//		}
+//		for (SynthGenRecord rec : observableList)
+//		{
+//			XYChart.Series<Number, Number> series = new XYChart.Series<Number, Number>();
+//			for (int i = 0; i < rec.getCount(); i++)
+//			{
+//				Point2D randPt = SynthFileStream.randomNormal(rec);
+//				series.getData().add(new XYChart.Data<Number, Number>(randPt.getX(), randPt.getY()));
+//			}
+//			scatter.getData().add(series);
+//		}
 	}
 
 	//------------------------------------------------------------------------------

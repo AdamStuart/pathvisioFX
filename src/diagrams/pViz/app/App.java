@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import diagrams.pViz.model.Edge;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
 import gui.Log;
@@ -84,7 +85,7 @@ import util.FileUtil;
 		    }
 
 		    Stage loaderStage = new Stage();
-			loaderStage.setTitle("Cytoscape Tools");
+			loaderStage.setTitle("Tools");
 			FXMLLoader fxmlLoader = new FXMLLoader();
 		    fxmlLoader.setLocation(url);
 		    BorderPane appPane =  fxmlLoader.load();
@@ -116,7 +117,7 @@ import util.FileUtil;
 			stage = new Stage();
 		try 
 		{
-		    stage.setTitle("Cytoscape Pathway Editor");
+		    stage.setTitle("Pathway Editor");
 			FXMLLoader fxmlLoader = new FXMLLoader();
 			String fullname = "Visio.fxml";
 		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
@@ -193,18 +194,18 @@ import util.FileUtil;
 	}
 	   //---------------------------------------------------------------------------------------
 	static final String GENELIST = "../gpml/GeneList.fxml";
-   static public  void doNewGeneList(GeneListRecord geneList) 
+   static public  void doNewGeneList(GeneListRecord geneList, List<Edge>  edgeList) 
 	{
 		if (geneList == null)
 			geneList = new GeneListRecord("Empty");
 		try
 		{
-			Pair<FXMLLoader, Stage> pair = buildStage("Cytoscape Gene List", GENELIST, 800, 650)	;
+			Pair<FXMLLoader, Stage> pair = buildStage("Gene List", GENELIST, 800, 650)	;
 			if (pair == null) return;
 			GeneListController glc = (GeneListController) pair.getKey().getController();   
 			Stage s =  pair.getValue();
 		    registerWindow(s);
-		    glc.loadTables(geneList, true);
+		    glc.loadTables(geneList, edgeList, true);
 			s.show();
 		}
 		catch (Exception e) { e.printStackTrace();	}

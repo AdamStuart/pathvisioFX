@@ -9,6 +9,7 @@ import animation.NodeVisAnimator;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
+import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.tables.GeneListController;
@@ -117,8 +118,8 @@ public class Pasteboard extends Pane
 	 * @param pane
 	 *            the pane on which the selection rectangle will be drawn.
 	 */
-	static public int CANVAS_WIDTH = 2000;
-	static public int CANVAS_HEIGHT = 2000;
+	static public int CANVAS_WIDTH = 5000;
+	static public int CANVAS_HEIGHT = 5000;
 	public Pasteboard(Controller ctrl) 
 	{
 //		drawPane = pane;
@@ -127,24 +128,14 @@ public class Pasteboard extends Pane
 		setHeight(CANVAS_HEIGHT);
 		setId("root");
 		controller = ctrl;
-//		factory = new NodeFactory(this);
-//		edgeFactory = new EdgeFactory(this);
-//		shapeFactory = factory.getShapeFactory();
 		makeMarquee();
 		createBackground();
 		getChildren().addAll(getBackgroundLayer(), getGridLayer(), getContentLayer());
 		activeLayerName = "Content";
 		selectionMgr = new Selection(this);
-//		pane.getChildren().add(marquee);
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
-//		infoLabel = new Label("");
-//		infoLabel.setId(INFO_LABEL_ID);
-//		add(infoLabel);
-//		StackPane.setAlignment(infoLabel, Pos.TOP_RIGHT);
-//		infoLabel.setVisible(false);
 		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
-//		turnOnClipping();
 	}
 	
 	private void createBackground() {
@@ -156,14 +147,13 @@ public class Pasteboard extends Pane
 		backgroundLayer.add(r);
 	}
 	
-	
 	private Layer getLayer(String string) {
+		if ("Background".equals(string)) 		return getBackgroundLayer();
+		if ("Grid".equals(string))				return getGridLayer();
 		LayerRecord rec = controller.getLayerRecord(string);
-		return rec == null ? null : rec.getLayer();
-//		if ("Background".equals(string)) return getBackgroundLayer();
-//		if ("Grid".equals(string)) return getGridLayer();
-//		return getContentLayer();		// TODO support user named layers
+		return rec == null ? getContentLayer() : rec.getLayer();
 	}
+	
 	public void makeMarquee() {
 		marquee = new Rectangle();
 		marquee.setId("Marquee");
@@ -181,7 +171,9 @@ public class Pasteboard extends Pane
 
 	public void clear()						{ 	getActiveLayer().clear();	}
 	public void clearLayer()				{ 	getActiveLayer().clear();	}
-	public void add(VNode vnode)			{	vnode.setLayerName(activeLayerName); 	getActiveLayer().add(vnode);	}
+	
+	public void add(VNode vnode, String layer)	{	vnode.setLayerName(layer); 	getLayer(layer).add(vnode);	}
+	public void add(VNode vnode)			{	add(vnode, activeLayerName); 	}
 	public void add(int idx, Node node)		{	node.getProperties().put("Layer", activeLayerName); 	getActiveLayer().add(idx, node);	}
 	public void add(int idx, VNode vnode)	
 	{	
@@ -189,13 +181,13 @@ public class Pasteboard extends Pane
 		getContentLayer().add(idx, vnode);	
 	}
 	
-	public void addAll(Node[] n) 	{	for (Node node : n )
-											node.getProperties().put("Layer", activeLayerName); 
-										getChildren().addAll(n);
-									}
-//	public void addAll(ObservableList<Node> n) {	for (Node node : n )
-//			node.getProperties().put("Layer", activeLayerName); 
-//										getChildren().addAll(n);	}
+	public void addAll(Node[] n) 	
+	{	
+		for (Node node : n )
+			node.getProperties().put("Layer", activeLayerName); 
+		getChildren().addAll(n);
+	}
+	
 	public void addAllVNodes(VNode[] n) 	{	for (VNode node : n) add(node);	}
 	public void addAllVNodes(List<VNode> n) {	for (VNode node : n) add(node);	}
 	
@@ -266,11 +258,8 @@ public class Pasteboard extends Pane
 				id = id.substring(0, id.indexOf(":"));
 				if (verbose) System.out.println(id);
 				List<PathwayRecord> results = PathwayController.getPathways(id);
-				for (PathwayRecord rec : results)
-				{
-					if (verbose) System.out.println(rec);
-
-				}
+				if (verbose) 
+					for (PathwayRecord rec : results)   System.out.println(rec);
 			}
 			if (verbose) System.out.println(o.toString());
 		}
@@ -302,7 +291,6 @@ public class Pasteboard extends Pane
 		else
 		{
 			Object content = db.getContent(DataFormat.PLAIN_TEXT);
-					
 			if (content != null)
 			{
 				String text = content.toString();
@@ -314,6 +302,7 @@ public class Pasteboard extends Pane
 				attrMap.put("CenterY", "" + e.getY());
 				attrMap.put("Width", "80");
 				attrMap.put("Height", "30");
+				attrMap.put("Layer", "Background");
 				
 				if ("Nucleus".equals(text))
 				{
@@ -325,11 +314,10 @@ public class Pasteboard extends Pane
 					attrMap.put("Width", "500");
 					attrMap.put("Height", "300");
 				}
-				
 				attrMap.put("ShapeType", text);
 				attrMap.put("TextLabel", text);
 				MNode node = new MNode(attrMap, getModel());
-				add(node.getStack());
+				add(node.getStack(), "Background");
 			}
 		}
 			
@@ -357,7 +345,6 @@ public class Pasteboard extends Pane
 		map.put("stroke", defaultStroke.toString());
 		return map.makeElementString(ELEMENT_NAME);
 	}
-	
 	//-------------------------------------------------------------------------------
 	public void setState(String s)		
 	{
@@ -443,42 +430,24 @@ public class Pasteboard extends Pane
 		addEventHandler(MouseEvent.MOUSE_MOVED, new MouseMovedHandler());
 		addEventHandler(MouseEvent.MOUSE_DRAGGED, new MouseDraggedHandler());
 		addEventHandler(MouseEvent.MOUSE_RELEASED, new MouseReleasedHandler());
-//		addEventHandler(MouseWheelEvent.WHEEL_UNIT_SCROLL, new MouseWheelHandler());
 		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
         setOnScroll((ScrollEvent event) -> {
-            // Adjust the zoom factor as per your requirement
-//            boolean shiftDown = event.isShiftDown();
-//            boolean controlDown = event.isControlDown();
-//        	double x = event.getSceneX();
-//            double y = event.getSceneX();
             double deltaY = event.getDeltaY();
         	double zoomFactor = 1.05 * deltaY;
-//            double deltaX = shiftDown ? 0 : event.getDeltaY();
             if (deltaY < 0)
                 zoomFactor = 1 / zoomFactor;
-//            double saveX = getTranslateX(); 
-//            double saveY = getTranslateY(); 
-////           setTranslateX(x);
-//           setTranslateY(y);
-//           setScaleX(getScaleX() * zoomFactor);
-//           setScaleY(getScaleY() * zoomFactor);
-//           setTranslateX(saveX-deltaX);
-//           setTranslateY(saveY-deltaY);
-//           
-//        Scale scale = new Scale(zoomFactor, zoomFactor, 0, x, y, 0);
-//       	getTransforms().clear();
-//    	getTransforms().add(scale);
         });
 		
 	}
 
 	private Point2D startPoint = null;		// remember where the mouse was pressed
-//	private Point2D offset = null;			// distance from startPoint to the origin of the target
 	private Point2D curPoint = null;		// mouse location in current event
 	private Line dragLine = null;			// a polyline edge
-	private VNode dragLineSource = null;			// the node where the dragLine starts
-	private Pos dragLinePosition = null;			// the port of the node where the dragLine starts
-public Line getDragLine() { return dragLine;	}
+	private VNode dragLineSource = null;	// the node where the dragLine starts
+	private Pos dragLinePosition = null;	// the port of the node where the dragLine starts
+	
+	public Line getDragLine() { return dragLine;	}
+	public VNode getDragSource() { return dragLineSource;	}
 
 	static boolean verbose = false;
 
@@ -501,6 +470,7 @@ public Line getDragLine() { return dragLine;	}
 		dragLine.setEndX(x);
 		dragLine.setEndY(y);
 	}
+	
 	public void removeDragLine() {
 		if (dragLine != null)
 		{
@@ -510,11 +480,18 @@ public Line getDragLine() { return dragLine;	}
 			dragLineSource = null;
 		}
 	}
-//	public void setLastClick(double x, double y) {
-//		dragLine.setEndX(x);
-//		dragLine.setEndY(y);
-//	}
-//-----------------------------------------------------------------------------------------------------------
+	
+	private void setDragLine(MouseEvent event) {
+		if (dragLine != null)
+		{
+			double extra = 50;
+			if (dragLineSource != null && dragLineSource.getLayoutX() < event.getY())
+				extra = -50;
+			dragLine.setEndX(event.getX());
+			dragLine.setEndY(event.getY() + extra);
+		}			
+	}
+	//-----------------------------------------------------------------------------------------------------------
 	private final class MousePressedHandler implements EventHandler<MouseEvent> 
 	{
 		@Override public void handle(final MouseEvent event) 
@@ -570,6 +547,8 @@ public Line getDragLine() { return dragLine;	}
 				AttributeMap map = new AttributeMap("ShapeType", getTool().name());
 				map.addPoint(x, y);
 				map.put("Layer",  activeLayerName);
+				if (lockResizable(getTool().name()))
+					map.put("Resizable", "false");
 				MNode mNode = new MNode(map, getController());
 				activeStack = mNode.getStack();	
 			}
@@ -616,6 +595,14 @@ public Line getDragLine() { return dragLine;	}
 			event.consume();
 		}
 
+		private boolean lockResizable(String name) {
+			String[] fixedSizes = {"GeneProduct", "Protein", "Metabolite"};		
+			for (String s: fixedSizes)
+				if (s.equals(name)) return true;
+			return false;
+		}
+
+		//-----------------------------------------------------------------------------------------------------------
 		private void startPolyline(MouseEvent event) {
 			if (verbose) System.out.println("MousePressedHandler, Polyline: " );
 			if (activeStack == null)
@@ -650,6 +637,7 @@ public Line getDragLine() { return dragLine;	}
 		}
 	}
 
+	//-----------------------------------------------------------------------------------------------------------
 	/** 
 	 *  MouseDraggedHandler
 	 */
@@ -798,12 +786,10 @@ public Line getDragLine() { return dragLine;	}
 	{
 		@Override public void handle(final MouseEvent event) 
 		{			
-			if (dragLine != null)
-			{
-				dragLine.setEndX(event.getX());
-				dragLine.setEndY(event.getY());
-			}
+			setDragLine(event);
 		}
+
+
 	}
 	//---------------------------------------------------------------------------
 	/** 
@@ -911,8 +897,6 @@ public Line getDragLine() { return dragLine;	}
 		activeStack = null;
 		if (sticky) return;
 		if (isPoly(getTool())) 	return;
-//		if (dragLine != null) 
-//			removeDragLine();
 		controller.setTool(Tool.Arrow);	
 	}
 	public void resetPoly()		
@@ -928,28 +912,29 @@ public Line getDragLine() { return dragLine;	}
 	//---------------------------------------------------------------------------
 	Paint defaultStroke = Color.BLACK;			// TODO  pref
 	Paint defaultFill = Color.WHITESMOKE;
-	@Override public String toString()	{ return String.format("Pasteboard: %d %s", getChildren().size(), infoLabel.getText());	}
-	public Paint getDefaultFill()			{		return 	defaultFill;	}
-	public Paint getDefaultStroke()			{		return defaultStroke;	}
-	public void setDefaultFill(Paint p)		{		defaultFill = p;	}
-	public void setDefaultStroke(Paint p)	{		defaultStroke = p;	}
+	@Override public String toString()		{ 	return String.format("Pasteboard: %d %s", getChildren().size(), infoLabel.getText());	}
+	public Paint getDefaultFill()			{	return 	defaultFill;	}
+	public Paint getDefaultStroke()			{	return defaultStroke;	}
+	public void setDefaultFill(Paint p)		{	defaultFill = p;	}
+	public void setDefaultStroke(Paint p)	{	defaultStroke = p;	}
+	
+	double currentZoom = 1.0;
 	public void setZoom(double value) {
 		double scale = Math.pow(2.0, value);
 		Scale sc = new Scale(scale, scale, 1, 500, 500, 0);
 		getTransforms().clear();		
-		getTransforms().add(sc);		
-//				setScaleX(scale);
-//		setScaleY(scale);
-//		setTranslateX(0);
-//		setTranslateY(0);
+		getTransforms().add(sc);
+		currentZoom = value;
 	}
 	public void zoomIn() {
 		
-		setZoom(2.0);		
+		if (currentZoom < 4)
+			setZoom(currentZoom * 2);		
 	}
 	public void zoomOut() {
 		
-		setZoom(0.25);		
+		if (currentZoom > 0.125)
+			setZoom(currentZoom / 2);		
 	}
 	//---------------------------------------------------------------------------
 	public void resetLayerVisibility(String layername, boolean vis) {
@@ -1010,6 +995,13 @@ public Line getDragLine() { return dragLine;	}
 		System.out.println("selectByType " + s); 
 //		for (VNode)
 		
+	}
+	public void connectTo(VNode vNode, Shape port) {
+		if (dragLine != null)
+		{
+			VNode src = getDragSource();
+			controller.add(new Edge(getModel(), src, vNode, null, null, null ));
+		}
 	}
 }
 

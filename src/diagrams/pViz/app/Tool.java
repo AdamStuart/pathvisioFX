@@ -44,6 +44,13 @@ public enum Tool {
 				return true;
 		return false;
 	}
+	public boolean resizableNodes()
+	{
+		if (this == GeneProduct) return false;
+		if (this == Metabolite) return false;
+		if (this == Protein) return false;
+		return true;
+	}
 	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi", "Brace"};
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
 	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1 };

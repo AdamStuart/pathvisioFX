@@ -8,6 +8,7 @@ import java.util.Map;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.GPMLGroup;
+import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
@@ -323,7 +324,20 @@ public class Model
 		return edge;
 	}
 	
-	public void addEdge(Edge e)			{  edgeList.add(e);	}
+	public Edge addEdge(VNode start, VNode end)		
+	{  
+		if (start == null || end == null) return null;
+		AttributeMap attributes = new AttributeMap();
+		attributes.put("Color", Color.RED.toString());
+		attributes.put("Layer", start.getLayerName());
+		List<GPMLPoint> pts = new ArrayList<GPMLPoint>();
+		pts.add(new GPMLPoint(start.center()));
+		pts.add(new GPMLPoint(end.center()));
+		Edge edge = new Edge(this, start, end, attributes, null, null);
+		addEdge(edge);
+		return edge;
+	}
+	
 	public void setAnchorVisibility(boolean visible)			
 	{ 
 		for (Edge e : edgeList)
@@ -414,7 +428,7 @@ public class Model
 				VNode end = selection.get(j);
 				if (end.getShape() instanceof Line) continue;		//TODO add anchor
 				
-				if (downRightAndClose(start, end))
+				if (downRightAndClose(start, end) || selection.size() == 2)
 					edges.add(new Edge(this, start, end, null, null, null));
 			}
 		}
@@ -434,6 +448,30 @@ public class Model
 
 		return true;
 	}
+	// **-------------------------------------------------------------------------------
+	public boolean containsEdge(Edge e) {
+		for (Edge ed : edgeList)
+			if (e == ed) return true;
+		return false;
+	}
+
+	public Edge addEdge(MNode start, MNode end)		
+	{  
+		AttributeMap attributes = new AttributeMap();
+		String activeLayer = start.getStack().getLayerName();
+		attributes.put("Layer", activeLayer);
+		String linetype = controller.getActiveLineType();
+		String arrow = controller.getActiveArrowType();
+		attributes.put("ArrowType", arrow);
+		attributes.put("LineType", linetype);
+		Edge edge = new Edge(this, start.getStack(), end.getStack(), attributes, null, null);
+		controller.add(edge);
+		edge.connect();
+		return edge;
+	}
+	
+	public void addEdge(Edge e)			{  edgeList.add(e);	}
+	// **-------------------------------------------------------------------------------
 	public void removeEdge(Edge edge)			{  		edgeList.remove(edge);	}
 	
 	public void connectAllEdges() {

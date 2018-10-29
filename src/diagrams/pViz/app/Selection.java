@@ -443,10 +443,10 @@ public class Selection
 	
 	//--------------------------------------------------------------------------
 	@Override	public String toString()	{		return items.size() + " selected";	}
-	public void applyLocks(boolean movable, boolean resizable, boolean editable) {
+	public void applyLocks(boolean movable, boolean resizable, boolean editable, boolean connectable) {
 		for (Node n : items)
 			if (n instanceof VNode)
-				((VNode)n).applyLocks(movable, resizable, editable);
+				((VNode)n).applyLocks(movable, resizable, editable,connectable);
 	}
 	public void setMovable(boolean b)	{ 
 		for (Node n : items)

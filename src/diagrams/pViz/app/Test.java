@@ -33,8 +33,8 @@ public class Test {
 		MNode n3 = new MNode(attrMap, model);	//, "Fristcut"
 		c.add(n3.getStack());
 		
-		Edge line1 = model.addEdge(circ, n3, "Content");		c.add(0, line1, "Content");
-		Edge line2 = model.addEdge(circ, n1, "Content");		c.add(0, line2, "Content");
+		Edge line1 = model.addEdge(circ, n3, "Content");		c.add(line1);
+		Edge line2 = model.addEdge(circ, n1, "Content");		c.add(line2);
 		
 		Rectangle r1 = new Rectangle(290, 230, 60, 60);
 		attrMap.setTool(Tool.Rectangle.toString());

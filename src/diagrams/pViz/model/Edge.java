@@ -6,6 +6,8 @@ import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.view.VNode;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
@@ -40,15 +42,22 @@ public class Edge  {
 	private int zOrder;
 	public int getz() 				{	return zOrder;	}
 	public void setz(int i) 		{	zOrder = i;	}
-	public double getStrokeWidth() {	return attributes.getDouble("LineThickness");	}
+	
+	
+	public double getStrokeWidth() 
+	{	String s =  attributes.get("LineThickness"); 
+		if (s == null) return 1.4;
+		if (StringUtil.isNumber(s)) return StringUtil.toDouble(s);	
+		return 1.4;
+	}
 	public String getLayer()		{ 	return getAttributes().get("Layer");	}
 	private Color color = Color.BLACK;
 	public Color getColor() 		{	return color;	}
 	public void setColor(Color c) 	{	color = c;	}
 //	public Model getModel()			{ 	return getStartNode().getModel().getModel();	}
-	private String graphId;
-	public String getGraphId()		{ return graphId;	}
-	public String getDatabase() 	{ 	return attributes.get("Database");	}
+//	private String graphId;
+//	public String getGraphId()		{ return graphId;	}
+//	public String getDatabase() 	{ 	return attributes.get("Database");	}
 	public String getDbId() 		{ 	return attributes.get("ID");	}
 	public MIM getInteractionType()			// TODO
 	{ 	
@@ -62,6 +71,47 @@ public class Edge  {
 		}
 		return MIM.MIM_STIMULATION;
 	}
+	
+	private SimpleStringProperty source = new SimpleStringProperty();
+	public StringProperty  sourceProperty()  { return source;}
+	public String getSource()  { return source.get();}
+	public void setSource(String s)  { source.set(s);}
+
+	private SimpleStringProperty target = new SimpleStringProperty();	
+	public StringProperty  targetProperty()  { return target;}
+	public String getTarget()  { return target.get();}
+	public void setTarget(String s)  { target.set(s);}
+	
+	private SimpleStringProperty sourceid = new SimpleStringProperty();	
+	public StringProperty  sourceidProperty()  { return sourceid;}
+	public String getSourceid()  { return sourceid.get();}
+	public void setSourceid(String s)  { sourceid.set(s);}
+	
+	private SimpleStringProperty targetid = new SimpleStringProperty();	
+	public StringProperty  targetidProperty()  { return targetid;}
+	public String getTargetid()  { return targetid.get();}
+	public void setTargetid(String s)  { targetid.set(s);}
+	
+	private SimpleStringProperty interaction = new SimpleStringProperty();	
+	public StringProperty  interactionProperty()  { return interaction;}
+	public String getInteraction()  { return interaction.get();}
+	public void setInteraction(String s)  { interaction.set(s);}
+	
+	private SimpleStringProperty database = new SimpleStringProperty();	
+	public StringProperty databaseProperty()  { return database;}
+	public String getDatabase()  { return database.get();}
+	public void setDatabase(String s)  { database.set(s);}
+	
+	private SimpleStringProperty dbid = new SimpleStringProperty();		
+	public StringProperty  nameProperty()  { return dbid;}
+	public String getName()  { return dbid.get();}
+	public void setName(String s)  { dbid.set(s);}
+
+	private SimpleStringProperty graphid = new SimpleStringProperty();		
+	public StringProperty  graphIdProperty()  { return graphid;}
+	public String getGraphid()  { return graphid.get();}
+	public void setGraphid(String s)  { graphid.set(s);}
+
 	//----------------------------------------------------------------------
 //	public Edge(VNode start, VNode end) 
 //    {
@@ -70,11 +120,21 @@ public class Edge  {
 //	
 	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
 	{
-    	startNode = start;
-    	endNode = end;
-		edgeLine = new EdgeLine(this, pts, anchors);
+    	if (attr == null) attr = new AttributeMap();
+    	startNode = start;  
+    	attr.put("source", start.modelNode().getLabel());
+    	attr.put("sourceid", start.modelNode().getGraphId());
+    	setSource(start.modelNode().getLabel()); 
+    	setSourceid(start.modelNode().getGraphId());
+    	
+    	endNode = end;	
+    	attr.put("target", end.modelNode().getLabel());
+    	attr.put("targetid", end.modelNode().getGraphId());
+    	setTarget(endNode.modelNode().getLabel()); 
+    	setTargetid(endNode.modelNode().getGraphId());
 		model = inModel;
 		if (attr != null) attributes.addAll(attr);
+		edgeLine = new EdgeLine(this, pts, anchors);
 		init();
     }
     public Edge(AttributeMap attr, Model inModel) 
@@ -82,23 +142,33 @@ public class Edge  {
 		model = inModel;
 		MNode start = model.getResource(attr.get("start"));
     	if (start != null) 
+    	{
     		startNode = start.getStack();
+        	setSource(start.getLabel()); 
+        	setSourceid(start.getGraphId());
+    	}
     	MNode target = model.getResource(attr.get("end"));
     	if (target != null) 
+    	{
     		endNode = target.getStack();
+    		setTarget(target.getLabel()); 
+    		setTargetid(target.getGraphId());
+    	}
 		edgeLine = new EdgeLine(this, null, null);
 		attributes = attr;
+		setInteraction(attributes.get("ArrowHead"));
 		init();
       }
  
-    public Edge(GPMLPoint startPt, GPMLPoint endPt) 
+    public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
     {
-		model = null;
+		model = inModel;
     	endNode = startNode = null;
 		attributes = new AttributeMap();
 		edgeLine = new EdgeLine(this, null, null);
-		edgeLine.addPoint(startPt.getPoint());
-		edgeLine.addPoint(endPt.getPoint());
+		edgeLine.addPoint(startPt);
+		edgeLine.addPoint(endPt);
+		model.addEdge(this);
 		init();
       }
  
@@ -174,6 +244,7 @@ public class Edge  {
 //		for (Anchor a : edgeLine.getAnchors()) {  happens in edgeLIne.connect
 //			a.resetPosition(this);
 //		}
+		String layer = startNode.getLayerName();
 		edgeLine.connect();
 		if (verbose)
 		{
@@ -347,8 +418,8 @@ public class Edge  {
 		b.append (getPointsStr());
 		b.append (getAnchorsStr());
 		b.append("</Graphics>\n");
-		String db = attributes.get("Database");
-		String dbid =  attributes.get("ID");
+		String db = attributes.get("database");
+		String dbid =  attributes.get("dbid");
 		if (db != null && dbid != null)
 			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
 		b.append("</Interaction>\n");

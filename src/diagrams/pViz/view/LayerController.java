@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.tables.tablecellHelpers.BadgeTableCell;
 import gui.DraggableTableRow;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
@@ -24,7 +25,6 @@ import javafx.scene.input.DataFormat;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import model.IController;
-import table.binder.tablecellHelpers.BadgeTableCell;
 import util.StringUtil;
 
 public class LayerController implements IController, Initializable {

@@ -21,12 +21,7 @@
    <top>
       <HBox>
          <children>
-            <Button fx:id="westSidebar" layoutX="10.0" layoutY="10.0" minWidth="31.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="31.0" text="West" />
-            <Button fx:id="draggable" minWidth="34.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="34.0" text="All">
-               <font>
-                  <Font size="11.0" />
-               </font>
-            </Button>
+            <Button fx:id="westSidebar" layoutX="10.0" layoutY="10.0" minWidth="60.0" mnemonicParsing="false" text="West" />
             <MenuBar fx:id="menubar" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
               <menus>
                   <Menu mnemonicParsing="false" text="File">
@@ -67,9 +62,6 @@
                         <MenuItem fx:id="showAllColumns" mnemonicParsing="false" onAction="#showAllColumns" text="Show All Columns" />
                         <MenuItem fx:id="editColumns" mnemonicParsing="false" onAction="#editColumns" text="Edit Columns" />
                         <MenuItem fx:id="invert" mnemonicParsing="false" onAction="#invert" text="Invert Selection" />
-                        <MenuItem fx:id="selectAll1" mnemonicParsing="false" onAction="#selectAll" text="Select All" />
-                        <MenuItem fx:id="showAsList" mnemonicParsing="false" onAction="#showAsList" text="Show As List" />
-                        <MenuItem fx:id="showAsTable" mnemonicParsing="false" onAction="#showAsTable" text="Show As Table" />
                      </items>
                   </Menu>
                 <Menu mnemonicParsing="false" text="Gene">
@@ -133,6 +125,11 @@
                      </font>
                   </Button>
                   <Button fx:id="showDifferences" mnemonicParsing="false" onAction="#showDifferences" text="Differences">
+                     <font>
+                        <Font size="11.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="draggable" minWidth="60.0" mnemonicParsing="false" text="All">
                      <font>
                         <Font size="11.0" />
                      </font>

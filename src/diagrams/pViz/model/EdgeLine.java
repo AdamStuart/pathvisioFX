@@ -20,7 +20,6 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
-import model.bio.MIM;
 import util.LineUtil;
 
 /* 
@@ -66,6 +65,7 @@ public class EdgeLine extends Group {
 			line  = new Line();
 			line.setStyle("");		// TODO setStyleClass
 			getChildren().add(line);
+			line.setOnMouseClicked(e -> { edge.getEdgeLine().select(true); });
 		}
 		return line;	
 	}
@@ -98,6 +98,19 @@ public class EdgeLine extends Group {
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
 	public void removeAnchor(Anchor a) 	{ 	anchors.remove(a);	}
 	public String getLayer()			{ 	return edge.getLayer();	}
+	public boolean getSelected()		{ 	return selected;	}
+	public void select(boolean b)		
+	{ 	
+		selected = b;	
+		if (line != null) line.setStroke(lineColor(selected));
+	}
+	
+	Color lineColor(boolean selected)
+	{
+		return selected ? Color.RED : Color.BLACK; 
+	}
+	
+	boolean selected;
 	 //----------------------------------------------------------------------
 	public EdgeLine(Edge container, List<GPMLPoint> pts, List<Anchor> anchorList) 
 	{
@@ -130,9 +143,14 @@ public class EdgeLine extends Group {
 	{
 		strokeDashArray = vals;
 	}
+
 	public void addPoint(Point2D a)
 	{
-		points.add(new GPMLPoint(a));
+		addPoint(new GPMLPoint(a));
+	}
+	public void addPoint(GPMLPoint a)
+	{
+		points.add(a);
 	}
 	public void setStartPoint(Point2D startPt) {
 		if (points.size() < 1)
@@ -226,7 +244,7 @@ public class EdgeLine extends Group {
 				curveConnect(); 	
 				if (curve != null) 	getChildren().add(curve);
 				break;
-			default: 		linearConnect();
+			default: 		 linearConnect();
 		}
 		
 		if (head != null) 	getChildren().remove(head);
@@ -344,7 +362,8 @@ boolean BADPOINT(Point2D pt)
 		setArrowPt(end);
 		LineUtil.set(getLine(), start, end);
 		getLine().setStroke(edge.getColor());
-		getLine().setStrokeWidth(3); // edge.getStrokeWidth());
+		double width = edge.getStrokeWidth();
+		getLine().setStrokeWidth(width);
 		if (strokeDashArray != null)
 		{
 			getLine().getStrokeDashArray().setAll(strokeDashArray);

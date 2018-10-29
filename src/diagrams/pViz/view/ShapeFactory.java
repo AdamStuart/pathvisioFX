@@ -47,19 +47,17 @@ public class ShapeFactory {
 	public static final double MARGIN = 8;
 	public static final double MARGIN2 = 16;
 	private Pasteboard drawLayer;
+	boolean verbose = true;
 
 	/*
 	 * The ShapeFactory is responsible for creating new nodes that are shapes.
 	 * Largely this is about defining the mouse event and drop handlers for the
 	 * shapes.
 	 * 
-	 * makeMarquee creates the selection rectangle that is added on canvas
-	 * drags.
+	 * makeMarquee creates the selection rectangle that is added on canvas drags.
 	 */
 	public ShapeFactory(Pasteboard l, UndoStack u) {
 		drawLayer = l;
-//		undoStack = u;
-//		model = drawLayer.getController().getDrawModel();
 	}
 
 	/*
@@ -148,22 +146,19 @@ public class ShapeFactory {
 			{	
 				r.setStroke(Color.AQUAMARINE);
 				r.setStrokeWidth(5.0);
-				r.setWidth(120);
-				r.setHeight(45);
+				r.setWidth(120); 	r.setHeight(45);
 			}
 			if (shape instanceof Rectangle && "Gene".equals(shapeType))
 			{	
 				r.setStrokeWidth(1.0);
-				r.setWidth(80);
-				r.setHeight(30);
+				r.setWidth(80); 	r.setHeight(30);
 			}
 	
 			if (shape instanceof Rectangle && "Metabolite".equals(shapeType))
 			{	
 				r.setStroke(Color.NAVY);
 				r.setStrokeWidth(2.0);
-				r.setWidth(120);
-				r.setHeight(20);
+				r.setWidth(120); 	r.setHeight(20);
 			}
 			
 			for (String k : map.keySet()) 
@@ -270,7 +265,6 @@ public class ShapeFactory {
 		s.setOnDragOver(e -> 	{	e.acceptTransferModes(TransferMode.ANY); 	e.consume();	});
 		s.setOnDragDropped(e -> { 	e.acceptTransferModes(TransferMode.ANY); 	handleDrop(s, e);	e.consume();	});
 	}
-
 	// **-------------------------------------------------------------------------------
 	private void handleDrop(Shape s, DragEvent e) {
 		Dragboard db = e.getDragboard();
@@ -286,7 +280,7 @@ public class ShapeFactory {
 				if (sel.isSelected(shape))
 					sel.setAttributes(attrMap);
 			}
-			System.out.println(q);
+//			if (verbose) System.out.println(q);
 		}
 
 		if (db.hasFiles()) {
@@ -296,14 +290,13 @@ public class ShapeFactory {
 //				int offset = 0;
 				for (File f : files) {
 //					offset += 20;
-					System.out.println("File: " + f.getAbsolutePath());
+					if (verbose) System.out.println("File: " + f.getAbsolutePath());
 					if (FileUtil.isCSS(f)) {
 						StringBuilder buff = new StringBuilder();
 						FileUtil.readFileIntoBuffer(f, buff);
 						String styl = buff.toString();
 						shape.getStyleClass().add(styl);
-						System.out.println("S: " + styl);
-
+						if (verbose) System.out.println("S: " + styl);
 					}
 				}
 			}

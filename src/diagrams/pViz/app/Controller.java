@@ -17,6 +17,7 @@ import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.GeneListTable;
 import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
@@ -82,7 +83,6 @@ import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneListRecord;
 import model.bio.Species;
-import table.referenceList.ReferenceController;
 import util.FileUtil;
 import util.StringUtil;
 
@@ -99,6 +99,7 @@ public class Controller implements Initializable, IController
 	private UndoStack undoStack;
 	public UndoStack getUndoStack()		{		return undoStack;	}
 	private Document doc;
+	private String species = "Unspecified";
 
 	int verbose = 0;
 	
@@ -179,7 +180,7 @@ public class Controller implements Initializable, IController
 	@FXML private void selectShapes()	{ 	pasteboard.selectByType("Shape");		}
 	@FXML private void selectEdges()	{ 	pasteboard.selectByType("Edge");		}
 	@FXML private void moveToLayer()	{ 	System.err.println("moveToLayer called, not its subitem");		}
-	@FXML private void addKeyFrame()	{ 	inspector.addKeyFrame();	}
+//	@FXML private void addKeyFrame()	{ 	inspector.addKeyFrame();	}
 
 	@FXML private void undo()			{ 	undoStack.undo();	}
 	@FXML private void redo()			{ 	undoStack.redo();		}	
@@ -227,7 +228,7 @@ public class Controller implements Initializable, IController
 	@FXML private  void clearUndo()		{	undoStack.clear(); 	}
 	@FXML private void selectAll()		{ 	undoStack.push(ActionType.Select); getSelectionManager().selectAll(); 		}
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
-	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(7); 	}
+	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(0); 	}
 	@FXML public void clear()			{ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
 	
 	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
@@ -278,46 +279,24 @@ public class Controller implements Initializable, IController
 	}
 
 	public Species getSpecies()	{ return model.getSpecies();	}
-	
+	public String getActiveArrowType() {	return activeArrowType;	}
+	public String getActiveLineType() {		return activeLineType;	}
+
+	String activeLineType = "Straight";
+	String activeArrowType = "Arrow1";
 	//@formatter:on
 	// **-------------------------------------------------------------------------------
-	@FXML private void setStraight()
-	{
-		System.out.println("setStraight");
-	}
-	@FXML private void setCurved()
-	{
-		System.out.println("setCurved");
+	@FXML private void setStraight()	{		activeLineType = "Straight";	}
+	@FXML private void setCurved()		{		activeLineType = "Curved";	}
+	@FXML private void setElbowed()		{		activeLineType = "Elbowed";	}
 	
-	}
-	@FXML private void setElbowed()
-	{
-		System.out.println("setElbowed");
-	}
-	@FXML private void setArrow1()
-	{
-		System.out.println("setArrow1");
-	}
-	@FXML private void  setArrow2()
-	{
-		System.out.println("setArrow2");
-	}
-	@FXML private void  setArrow3()
-	{
-		System.out.println("setArrow3");
-}
-	@FXML private void  setArrow4()
-	{
-		System.out.println("setArrow4");
-	}
-	@FXML private void  setArrow5()
-	{
-		System.out.println("setArrow5");
-}
-	@FXML private void  setArrow6()
-	{
-		System.out.println("setArrow6");
-	}
+	@FXML private void setArrow1()		{		activeArrowType = "Arrow1";	}
+	@FXML private void setArrow2()		{		activeArrowType = "Arrow2";	}
+	@FXML private void setArrow3()		{		activeArrowType = "Arrow3";	}
+	@FXML private void setArrow4()		{		activeArrowType = "Arrow4";	}
+	@FXML private void setArrow5()		{		activeArrowType = "Arrow5";	}
+	@FXML private void setArrow6()		{		activeArrowType = "Arrow6";	}
+	
 	@FXML private MenuItem connect;			// TODO bind enableProperty to selection size > 2
 	@FXML private void addEdges()		
 	{ 	
@@ -337,7 +316,7 @@ public class Controller implements Initializable, IController
 	void addEdges(List<Edge> edges)
 	{
 		for (Edge e: edges)
-			add(0, e, getActiveLayerName());
+			add(e);
 	}
 	
 	static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
@@ -435,13 +414,15 @@ public class Controller implements Initializable, IController
 		   container.setBottom(inspector);
 	   }
 	   catch (Exception e) 
-	   { System.err.println("Inspector failed to load");}
+	   { System.err.println("Inspector failed to load");
+	   e.printStackTrace();}
 
 	}
 
-	public void doNewGeneList()	{		App.doNewGeneList(model.getGeneList());	}
+	public void doNewGeneList()	{		App.doNewGeneList(model.getGeneList(), model.getEdgeList());	}
 	
-	
+	public void addEdge(VNode starter, VNode end) {		model.addEdge(starter, end);	}
+
 	public void getInfo(DataFormat mimeType, String idx, String colname, MouseEvent ev) {
 		try 
 		{
@@ -496,10 +477,20 @@ public class Controller implements Initializable, IController
 	@FXML private void doNewMultiGeneList()  { 	App.doNewMultiGeneList(); 	}
 	
 	//-----------------------------------------------------------------------
+	@FXML private void addLegendDlog()
+	{
+		LegendDialog dlog = new LegendDialog();
+		Optional<String> value = dlog.showAndWait();
+		if (value.isPresent())
+			LegendRecord.makeLegend(dlog.resultProperty(), model, this);
+	}
+
+	//-----------------------------------------------------------------------
 	@FXML private void addLegend()
 	{
 		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);
 	}
+	
 	LayerController layerController;
 	@FXML private void showLayers()
 	{
@@ -507,10 +498,8 @@ public class Controller implements Initializable, IController
 			layerController.getStage().hide();
 		else layerController.getStage().show();
 	}
-	public LayerRecord getLayerRecord(String name)
-	{
-		return layerController.getLayer(name);
-	}
+	//-----------------------------------------------------------------------
+	public LayerRecord getLayerRecord(String name)	{		return layerController.getLayer(name);	}
 	@FXML private void addLayer()
 	{
 		if (layerController != null)
@@ -520,13 +509,6 @@ public class Controller implements Initializable, IController
 	{
 		if (layerController != null)
 			layerController.removeLayer();
-	}
-	@FXML private void addLegendDlog()
-	{
-		LegendDialog dlog = new LegendDialog();
-		Optional<String> value = dlog.showAndWait();
-		if (value.isPresent())
-			LegendRecord.makeLegend(dlog.resultProperty(), model, this);
 	}
 	@FXML private void test1()	{		Test.test1(this);	}
 	 @FXML private void test2()	{		Test.test2(this);	}
@@ -595,7 +577,7 @@ public class Controller implements Initializable, IController
 		arrowGroup = new ToggleGroup();
 		arrowGroup.getToggles().addAll(arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
 		arrow1.setSelected(true);
-		
+
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
 		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
@@ -773,12 +755,18 @@ public class Controller implements Initializable, IController
 		pasteboard.getChildren().add(n);	
 		if ("Marquee".equals(n.getId())) 	return;
 	}
-	public void add(int idx, Edge e, String layername)							
+	public void add(Edge e)							
 	{		
 		if (e == null) return;
+		if (model.containsEdge(e)) return;
+		if (e.getStartNode() == null)
+		{
+			return;
+		}
+		String layername = e.getStartNode().getLayerName();
 		e.getAttributes().put("Layer", layername);
 		model.addEdge(e);
-		pasteboard.add(idx, e.getEdgeLine());
+		pasteboard.add(0, e.getEdgeLine());
 		for (Anchor anchor : e.getEdgeLine().getAnchors())
 		{
 			VNode anchorStack = anchor.getStack();
@@ -787,19 +775,35 @@ public class Controller implements Initializable, IController
 				System.out.println(String.format("(%.2f, %.2f)", ((Circle)shap).getCenterX(), ((Circle)shap).getCenterY()));
 			pasteboard.add(anchorStack);
 		}
-//		e.connect();
 	}
-//	public void add(Edge e)		{	pasteboard.add(0,e);	}
+
+	
 	public void add(VNode n)							
 	{		
 		pasteboard.add(n);	
 		MNode modelNode = n.modelNode();
 		if (n.isAnchor()) return;
 		if (n.isLabel()) return;
-		Object prop  = modelNode.getAttributeMap().get("TextLabel");
+		AttributeMap map = modelNode.getAttributeMap();
+		Object prop  = map.get("TextLabel");
 		if (prop != null && model.findGene(""+prop) == null)
 		{
-			model.addGene(new Gene(model.getGeneList(), ""+prop));
+			
+			String name =  ""+prop;
+			String type = map.get("Type");
+			String db = map.get("Database");
+			String dbid = map.get("ID");
+			String graphid = map.get("GraphId");
+			String ensmbl = "";
+			String link = map.get("Value");
+			
+			Gene genie = new Gene(model.getGeneList(), name, ensmbl, species, link);
+			genie.setType(map.get("Type"));
+//			genie.setId(map.get("GraphId"));
+			
+			genie.setDatabase(map.get("Database"));
+			genie.setDbid(map.get("ID"));
+			model.addGene(genie);
 			model.addResource(modelNode);
 		}
 	}
@@ -807,6 +811,7 @@ public class Controller implements Initializable, IController
 	public void addAll(List<VNode> n)	{	pasteboard.addAllVNodes(n);	}
 	public void addAll(VNode... n)		{	pasteboard.addAllVNodes(n);	}
 	
+	// **-------------------------------------------------------------------------------
 	public void remove(Node n)						
 	{		
 		pasteboard.getChildren().remove(n);	
@@ -955,7 +960,9 @@ public class Controller implements Initializable, IController
 		}
 		return true;
 	}
+	// **-------------------------------------------------------------------------------
 	public void resynch() {
+		if (getInspector() != null)
 		getInspector().syncInspector();
 //		getProperties().syncProperties();
 	}
