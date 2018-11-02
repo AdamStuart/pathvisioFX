@@ -1,10 +1,13 @@
 package diagrams.pViz.app;
 
 import java.net.URL;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import diagrams.pViz.model.Edge;
+import diagrams.pViz.model.GeneModel;
+import diagrams.pViz.model.Interaction;
+import diagrams.pViz.model.Model;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
 import gui.Log;
@@ -25,7 +28,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import model.bio.GeneListRecord;
+import model.bio.GeneSetRecord;
 import util.FileUtil;
 
 //---------------------------------------------------------------------------------------
@@ -90,7 +93,7 @@ import util.FileUtil;
 		    fxmlLoader.setLocation(url);
 		    BorderPane appPane =  fxmlLoader.load();
 		    loaderStage.setScene(new Scene(appPane, 360, 130));
-		    loaderStage.show();
+//		    loaderStage.show();
 			return new Pair<FXMLLoader, Stage>(fxmlLoader, loaderStage);
 		}
 		catch (Exception e) { e.printStackTrace();}
@@ -119,7 +122,7 @@ import util.FileUtil;
 		{
 		    stage.setTitle("Pathway Editor");
 			FXMLLoader fxmlLoader = new FXMLLoader();
-			String fullname = "Visio.fxml";
+			String fullname = "PViz.fxml";
 		    URL url = getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
 		    if (url == null)
 		    {
@@ -194,10 +197,17 @@ import util.FileUtil;
 	}
 	   //---------------------------------------------------------------------------------------
 	static final String GENELIST = "../gpml/GeneList.fxml";
-   static public  void doNewGeneList(GeneListRecord geneList, List<Edge>  edgeList) 
+	   static public  void doNewGeneList(Model model, GeneModel geneModel) 
+		{
+		   GeneSetRecord geneList =   geneModel.getGeneList();
+		   Collection<Interaction>  edgeList =    model.getEdges();
+		   doNewGeneList( geneList,  edgeList, true); 
+		}
+	   
+		   static public  void doNewGeneList(GeneSetRecord geneList, Collection<Interaction>  edgeList, boolean extra) 
 	{
 		if (geneList == null)
-			geneList = new GeneListRecord("Empty");
+			geneList = new GeneSetRecord("Empty");
 		try
 		{
 			Pair<FXMLLoader, Stage> pair = buildStage("Gene List", GENELIST, 800, 650)	;

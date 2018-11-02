@@ -2,14 +2,13 @@ package diagrams.pViz.tables;
 
 import java.io.File;
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Document;
-import diagrams.pViz.model.Model;
+import diagrams.pViz.model.GeneModel;
 import gui.DraggableTableRow;
 import gui.DropUtil;
 import javafx.scene.control.Button;
@@ -27,11 +26,8 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.util.Pair;
 import model.bio.Gene;
-import model.bio.GeneListRecord;
-import model.bio.PathwayRecord;
-import util.FileUtil;
+import model.bio.GeneSetRecord;
 import util.StringUtil;
 
 public class GeneListTable extends TableView<Gene> {
@@ -42,7 +38,7 @@ public class GeneListTable extends TableView<Gene> {
 	public GeneListTable(Controller c) {
 		controller = c;
 		setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(this, GeneListController.GENE_MIME_TYPE, controller, controller.getModel().getGeneList());
+		       return new DraggableTableRow<Gene>(this, Controller.GENE_MIME_TYPE, controller, controller.getGeneModel().getGeneList());
 			    });
 		setupGeneListTable();
 		VBox.setVgrow(this, Priority.ALWAYS);
@@ -96,7 +92,7 @@ public class GeneListTable extends TableView<Gene> {
 		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
 		 for (File f : db.getFiles())
 		 {
-			 GeneListRecord genes = Document.readTabularText(f, controller.getSpecies());
+			 GeneSetRecord genes = Document.readTabularText(f, controller.getSpecies());
 			 if (genes != null)
 				 addGeneList(genes);
 		 }
@@ -114,7 +110,7 @@ public class GeneListTable extends TableView<Gene> {
 		return null;
 	}
 	static boolean ENSEMBL_REQD = false;
-	public void populateTable(Model m, List<Gene> genes)
+	public void populateTable(GeneModel m, List<Gene> genes)
 	{
 		m.fillIdlist();
 		if (genes != null) 
@@ -159,9 +155,9 @@ public class GeneListTable extends TableView<Gene> {
 	}
 
 	
-	private void addGeneList(GeneListRecord genes) {
+	private void addGeneList(GeneSetRecord genes) {
 		 if (genes == null) return;
-		controller.getModel().add(genes);
+		controller.getGeneModel().add(genes);
 		
 	}
 

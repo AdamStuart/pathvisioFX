@@ -14,6 +14,7 @@ import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
@@ -36,7 +37,7 @@ import javafx.scene.text.Text;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
-import model.bio.GeneListRecord;
+import model.bio.GeneSetRecord;
 import model.bio.Species;
 import services.bridgedb.BridgeDbIdMapper;
 import services.bridgedb.MappingSource;
@@ -51,17 +52,34 @@ public class Model
  */
 	private Controller controller;
 	public Controller getController() { return controller; } 
-	private Map<String, MNode> resourceMap = FXCollections.observableHashMap();
+	private Map<String, DataNode> dataNodeMap = FXCollections.observableHashMap();
 	private int nodeCounter = 0;
-	public Collection<MNode> getNodes()			{ return resourceMap.values();	}
-	public Map<String, MNode> getResourceMap() {		return resourceMap;	}
+	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
+	public Map<String, DataNode> getDataNodeMap() {		return dataNodeMap;	}
 
-	private List<Edge> edgeList = FXCollections.observableArrayList();
-	public List<Edge> getEdgeList()			{ return edgeList;	}
-	public List<Edge> getEdgeList(String nodeId)			
+//	private Map<String, DataNodeState> stateMap = FXCollections.observableHashMap();
+//	public Collection<DataNodeState> getStates()			{ return stateMap.values();	}
+//	public Map<String, DataNodeState> getStatesNodeMap() {		return stateMap;	}
+
+	private Map<String, DataNodeGroup> groupMap = FXCollections.observableHashMap();
+	public Collection<DataNodeGroup> getGroups()			{ return groupMap.values();	}
+	public Map<String, DataNodeGroup> getGroupMap() {		return groupMap;	}
+
+	private Map<String, DataNodeState> stateMap = FXCollections.observableHashMap();
+	public Collection<DataNodeState> getStates()			{ return stateMap.values();	}
+	public Map<String, DataNodeState> getStateMap() {		return stateMap;	}
+	public void addState(String graphRef, DataNodeState statenode) {
+		stateMap.put(graphRef, statenode);
+		
+	}
+
+	public Collection<Interaction> getEdges()			{ return interactionList.values();	}
+	private Map<String, Interaction> interactionList = FXCollections.observableHashMap();
+	public Map<String, Interaction> getInteractions()			{ return interactionList;	}
+	public List<Interaction> getInteractionList(String nodeId)			
 	{ 
-		List<Edge> hits = new ArrayList<Edge>();
-		for (Edge e : edgeList)
+		List<Interaction> hits = new ArrayList<Interaction>();
+		for (Interaction e : interactionList.values())
 			if (e.touches(nodeId))
 					hits.add(e);
 		return hits;	
@@ -69,6 +87,11 @@ public class Model
 	private Map<String, Shape> shapes = new HashMap<String,Shape>();
 	public Map<String, Shape> getShapes()	{ return shapes; }
 	public Shape findShape(String s ) 		{ return shapes.get(s);	}
+
+	private Map<String, DataNode> labels = new HashMap<String,DataNode>();
+	public Map<String, DataNode> getLabels()	{ return labels; }
+	public DataNode findLabel(String s ) 		{ return labels.get(s);	}
+	public void addLabel(DataNode d)		{ labels.put(d.getGraphId(),  d); }
 
 
 	private String title = "PathVisio Mockup";
@@ -81,18 +104,13 @@ public class Model
 		controller = ct;
 	}
 	//-------------------------------------------------------------------------
-	private Species species;
+	private Species species = Species.Unspecified;
 	public Species getSpecies() {
 		if (species == null) 
 			species = Species.Unspecified;
 		return species;
 	}
 	public void setSpecies(Species s) {			species = s;	}
-	public void addGenes(List<Gene> inList) {
-		for (Gene g: inList)
-			if (null == findInList(genes, g.getName()))
-				genes.add(g);
-	}
 	// **-------------------------------------------------------------------------------
 	public String saveState()
 	{
@@ -120,17 +138,17 @@ public class Model
 			saver.append(rec.toGPML());
 	}
 	private void serializeNodes(StringBuilder saver) {
-		for (MNode node : getNodes())
+		for (DataNode node : getNodes())
 			saver.append(node.toGPML());
 		}
 	private void serializeEdges(StringBuilder saver) {
-		for (Edge edge : getEdgeList())
+		for (Interaction edge : getEdges())
 			saver.append(edge.toGPML());
 	}
 	public void serializeGroups(StringBuilder bldr)
 	{
-		for (GPMLGroup g : getGroups())
-			bldr.append(g.toGPML());
+		for (String key : groupMap.keySet())
+			bldr.append(groupMap.get(key).toGPML());
 	}
 	//---------------------------------------------------------
 	public void setState(String s)
@@ -153,136 +171,7 @@ public class Model
 	}
 	public List<CommentRecord> getComments() {		return comments;	}
 
-	// **-------------------------------------------------------------------------------
-	List<Gene> genes = FXCollections.observableArrayList();
-	GeneListRecord geneListRecord = null;
-	public GeneListRecord getGeneList() 
-	{	
-		if (geneListRecord == null)
-		{
-			geneListRecord = new GeneListRecord("GeneList");
-			geneListRecord.setGeneList(genes);
-			List<TableColumn<Gene, ?>>	allColumns = geneListRecord.getAllColumns();
-
-//			List<TableColumn<Gene, ?>> parentColumns = parent.getAllColumns();
-		}
-		return	geneListRecord ;
-	}
-	public void setGeneList(GeneListRecord rec, List<Gene> gs) {		genes = gs;	geneListRecord = rec; }
-	public void addGeneList(GeneListRecord rec) 				{		genes.addAll(rec.getGeneList()); 	}
-	
-	public int getNGenes() 				{	return	genes.size();	}
-	public void addGene(Gene g) 		{	genes.add(g);	}
-	public void clearGenes() 			{	genes.clear();	}
-	public List<Gene> getGenes() 		{	return genes;	}
-//	public List<Gene> getGeneList() 		{		return new GeneList(genes, getSpecies());	}
-	public Gene findGene(String string) {
-		if (StringUtil.isEmpty(string)) return null;
-		for (Gene g : getGenes())
-			if (string.equals(g.getName()))
-				return g;
-		return null;
-	}
-	public Gene findGene(Gene other) {
-		if (other == null) return null;
-		return findGene(other.getName());
-	}
-	public boolean add(Gene g)
-	{
-		if ( find(g.getName()) == null) 
-			return genes.add(g);
-		return false;
-	}
-	
-	public boolean add(GeneListRecord geneRec)
-	{
-		boolean anyTrue = false;
-		for (Gene gene : geneRec.getGeneList())
-			anyTrue |= add(gene);
-		return anyTrue;
-	}
-	
-	public List<Gene> intersection(List<Gene> other)
-	{
-		List<Gene> intersection = FXCollections.observableArrayList();
-		for (Gene g : genes)
-			if (findInList(other, g.getName()) == null)
-				intersection.add(g);
-		return intersection;
-	}
-	
-	public List<Gene> union(List<Gene> other)
-	{
-		List<Gene> union = FXCollections.observableArrayList();
-		union.addAll(genes);
-		for (Gene g : other)
-			if (findInList(genes, g.getName()) == null)
-				union.add(g);
-		return union;
-	}
-	static public Gene findInList(List<Gene> list, String nameOrId)
-	{
-		if (nameOrId == null) return null;
-		String name = nameOrId.trim();
-		for (Gene g : list)
-		{
-			if (name.equals(g.getName())) return g;			//IgnoreCase
-//			if (name.equalsIgnoreCase(g.getId())) return g;
-		}
-		return null;
-	}
-	public Gene find(String nameOrId)
-	{
-		if (nameOrId == null) return null;
-		String name = nameOrId.trim();
-		for (Gene g : genes)
-		{
-			if (name.equalsIgnoreCase(g.getName())) return g;
-			if (name.equalsIgnoreCase(g.getId())) return g;
-		}
-		return null;
-	}
-	public Gene find(Gene g)	{		return find(g.getName());	}
-
 	//--------------------------------------------------------------------
-
-	static String TAB = "\t";
-	static String NL = "\n";
-	public static String BDB = "http://webservice.bridgedb.org/";
-	public void fillIdlist()
-	{
-		if (species == null) 
-			species = Species.Unspecified;
-		StringBuilder str = new StringBuilder();
-		for (Gene g : genes)
-		{
-			if (StringUtil.hasText(g.getIdlist())) continue;
-			String name = g.getName();
-			MappingSource sys = MappingSource.guessSource(species, name);
-			str.append(name + TAB + sys.system() + NL);
-		}
-		try
-		{
-			List<String> output = BridgeDbIdMapper.post(BDB, species.common(), "xrefsBatch", "", str.toString());
-			for (String line : output)
-			{
-				String [] flds = line.split("\t");
-				String name = flds[0];
-				String allrefs = flds[2];
-				for (Gene g : genes)
-				{
-					if (!g.getName().equals(name)) continue;
-//					System.out.println("setting ids for " + name );	
-					g.setIdlist(allrefs);
-					g.setEnsembl(BridgeDbIdMapper.getEnsembl(allrefs));
-				}
-			}
-		}
-		catch(Exception ex) 
-		{ 
-			System.err.println(ex.getMessage());	
-		}
-	}
 	//--------------------------------------------------------------------
 	ObservableList<BiopaxRecord> references = FXCollections.observableArrayList();
 	public void addRef(BiopaxRecord ref) 	{	if (!refExists(ref.getId()))	references.add(ref);		}
@@ -301,30 +190,42 @@ public class Model
 	private void readReferences(String state) {
 	}
 	// **-------------------------------------------------------------------------------
-	public void addResource(MNode mnode)		
+		public void addResource(DataNode mnode)		
 	{  
 		if (mnode != null) 
-			addResource(mnode.getId(), mnode);
+			addResource(mnode.get("GraphId"), mnode);
 	}
-	public void addResource(String key, MNode n)		
+	public void addResource(String key, DataNode n)		
 	{  
-		if (resourceMap.get(key) == null)
-			resourceMap.put(key, n);
+		if (key == null) System.err.println("NULL KEY");
+		if (dataNodeMap.get(key) == null)
+			dataNodeMap.put(key, n);
 	}
 
 	private void readNodes(String state) {
 	}
+	public DataNode findDataNode(String nameOrId)
+	{
+		if (nameOrId == null) return null;
+		String name = nameOrId.trim();
+		for (DataNode g : getNodes())
+		{
+			if (name.equalsIgnoreCase(g.getName())) return g;
+			if (name.equalsIgnoreCase(g.getGraphId())) return g;
+		}
+		return null;
+	}
 	// **-------------------------------------------------------------------------------
-	public Edge addEdge(MNode start, MNode end, String activeLayer)		
+	public Interaction addInteraction(DataNode start, DataNode end, String activeLayer)		
 	{  
 		AttributeMap attributes = new AttributeMap();
 		attributes.put("Layer", activeLayer);
-		Edge edge = new Edge(this, start.getStack(), end.getStack(), attributes, null, null);
+		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes, null, null);
 		addEdge(edge);
 		return edge;
 	}
-	
-	public Edge addEdge(VNode start, VNode end)		
+	// comes from user dragging / connecting
+	public Interaction addIteraction(VNode start, VNode end)		
 	{  
 		if (start == null || end == null) return null;
 		AttributeMap attributes = new AttributeMap();
@@ -333,32 +234,56 @@ public class Model
 		List<GPMLPoint> pts = new ArrayList<GPMLPoint>();
 		pts.add(new GPMLPoint(start.center()));
 		pts.add(new GPMLPoint(end.center()));
-		Edge edge = new Edge(this, start, end, attributes, null, null);
+		Interaction edge = new Interaction(this, start, end, attributes, null, null);
 		addEdge(edge);
 		return edge;
 	}
 	
 	public void setAnchorVisibility(boolean visible)			
 	{ 
-		for (Edge e : edgeList)
+		for (Edge e : getEdges())
 			e.getEdgeLine().setAnchorVis(visible);	
 	}
 	private void readEdges(String state) {
 	}
 	// **-------------------------------------------------------------------------------
 	
-//	EventListener connector = 
-//	
-	public void removeEdges(Node node)		
+	public Interaction findInteractionById(String graphId)
+	{
+		for (Interaction inter : interactionList.values())
+			if (graphId.equals(inter.getGraphId()))
+					return inter;
+		return null;
+	}
+	
+	
+	public List< Interaction> findInteractionsByNode(DataNode node)
+	{
+		List< Interaction> hits = new ArrayList<Interaction>();
+		for (Interaction inter : interactionList.values())
+			if (inter.isStart(node) || inter.isEnd(node))
+				hits.add(inter);
+		return hits;
+	}
+	
+	public List< Interaction> findInteractionsByNodes(DataNode src, DataNode target)
+	{
+		List< Interaction> hits = new ArrayList<Interaction>();
+		for (Interaction inter : interactionList.values())
+			if (inter.isStart(src) || inter.isEnd(target))
+				hits.add(inter);
+		return hits;
+	}
+	public void removeEdges(DataNode node)		
 	{  
-		for (int z = edgeList.size()-1; z >= 0; z--)
+		for (int z = interactionList.size()-1; z >= 0; z--)
 		{
-			Edge e = edgeList.get(z);
-			if (e.isStart(node) || e.isEnd(node))
+			Edge e = interactionList.get(z);
+			if (e != null && e.isStart(node) || e.isEnd(node))
 			{
 				e.removeListeners();
 				e.getEdgeLine().dispose();
-				edgeList.remove(e);
+				interactionList.remove(e);
 			}
 		}
 //		List<Edge> okEdges = edgeTable.stream().filter(new TouchingNodeFilter(node)).collect(Collectors.toList());
@@ -370,30 +295,33 @@ public class Model
 	public void removeNode(VNode node)		
 	{  
 		if (node != null && ! "Marquee".equals(node.getId()))
-			removeEdges(node);
+		{
+			removeEdges(node.modelNode());
+			dataNodeMap.remove(node.modelNode().getGraphId());
+		}
 	}
 
-	public MNode getResourceByKey(String key)				
+	public DataNode getResourceByKey(String key)				
 	{
 		 if (key == null) return null;
-		 for (MNode n : resourceMap.values())
+		 for (DataNode n : dataNodeMap.values())
 		 {
-			 String name = "" +n.getAttributeMap().get("TextLabel");
+			 String name = "" +n.get("TextLabel");
 			if (name.equals(key)) return n;
 		 }
-		 MNode n = resourceMap.get(key);	
+		 DataNode n = dataNodeMap.get(key);	
 		 return n;
 	}
 
-	public MNode getResource(String key)				
+	public DataNode getDataNode(String key)				
 	{
 		 if (key == null) return null;
-		 if (key.startsWith("\""))  
+		 if (key.startsWith("\""))  // if its in quotes, strip them
 		 {
 			 int len = key.length();
 			 key = key.substring(1,len-1);
 		 }
-		 MNode n = resourceMap.get(key);	
+		 DataNode n = dataNodeMap.get(key);	
 		 return n;
 	}
 	
@@ -402,21 +330,17 @@ public class Model
 		return gensym(oldId.substring(0,1));
 	}
 	//------------------------------------------------------------------------- GROUPS
-	Map<String, GPMLGroup> groups = new HashMap<String, GPMLGroup>();
-	
-	public void addGroup(String groupId, String graphId) {
-		AttributeMap attr = new AttributeMap();
-		attr.put("LineStyle", "Broken");
-		attr.put("GraphId", graphId);
-		attr.put("GroupId", groupId);
-		groups.put(groupId, new GPMLGroup(attr, getController()));
+//	Map<String, GPMLGroup> groups = new HashMap<String, GPMLGroup>();
+	// move to GPML
+	public void addGroup(DataNodeGroup grp) {
+		groupMap.put(grp.getGraphId(),grp);
 	}
-	public Collection<GPMLGroup> getGroups() { return groups.values();	}
+//	public Collection<GPMLGroup> getGroups() { return groups.values();	}
 	
 	// **-------------------------------------------------------------------------------
-	public List<Edge> connectSelectedNodes()		
+	public List<Interaction> connectSelectedNodes()		
 	{  
-		List<Edge> edges = new ArrayList<Edge>();
+		List<Interaction> edges = new ArrayList<Interaction>();
 		List<VNode> selection = controller.getSelection();
 		for (int i=0; i<selection.size()-1; i++)
 		{
@@ -429,7 +353,7 @@ public class Model
 				if (end.getShape() instanceof Line) continue;		//TODO add anchor
 				
 				if (downRightAndClose(start, end) || selection.size() == 2)
-					edges.add(new Edge(this, start, end, null, null, null));
+					edges.add(new Interaction(this, start, end, null, null, null));
 			}
 		}
 		return edges;
@@ -449,13 +373,18 @@ public class Model
 		return true;
 	}
 	// **-------------------------------------------------------------------------------
-	public boolean containsEdge(Edge e) {
-		for (Edge ed : edgeList)
-			if (e == ed) return true;
+	public boolean containsEdge(Edge a) {
+		for (Edge ed : getEdges())
+		{
+			if (a == ed) return true;
+			if (a.getSourceid().equals(ed.getSourceid()))
+				if (a.getTargetid().equals(ed.getTargetid()))
+					return true;
+		}
 		return false;
 	}
 
-	public Edge addEdge(MNode start, MNode end)		
+	public Edge addEdge(DataNode start, DataNode end)		
 	{  
 		AttributeMap attributes = new AttributeMap();
 		String activeLayer = start.getStack().getLayerName();
@@ -464,20 +393,20 @@ public class Model
 		String arrow = controller.getActiveArrowType();
 		attributes.put("ArrowType", arrow);
 		attributes.put("LineType", linetype);
-		Edge edge = new Edge(this, start.getStack(), end.getStack(), attributes, null, null);
-		controller.add(edge);
+		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes, null, null);
+		controller.addInteraction(edge);
 		edge.connect();
 		return edge;
 	}
 	
-	public void addEdge(Edge e)			{  edgeList.add(e);	}
+	public void addEdge(Interaction e)			{  interactionList.put(e.getGraphId(), e);	}
 	// **-------------------------------------------------------------------------------
-	public void removeEdge(Edge edge)			{  		edgeList.remove(edge);	}
+	public void removeEdge(Edge edge)			{  		interactionList.remove(edge);	}
 	
 	public void connectAllEdges() {
-		for (int z = edgeList.size()-1; z >= 0; z--)
+		for (int z = interactionList.size()-1; z >= 0; z--)
 		{
-			Edge e = edgeList.get(z);
+			Edge e = interactionList.get(z);
 			e.connect(true);
 			e.connect(false);
 		}
@@ -502,7 +431,7 @@ public class Model
 
 		buff.append(String.format(GraphicsHEAD,	width, height));
 		traverse(buff, root, 0);
-		for (Edge e : edgeList)
+		for (Edge e : getEdges())
 			buff.append(e.toString() + "\n");
 		buff.append("</Pathway>\n");
 		return buff;
@@ -532,7 +461,7 @@ public class Model
 			}
 	}
 	// **-------------------------------------------------------------------------------
-	static public String describe(MNode node)	{	return node.toGPML();	}
+	static public String describe(DataNode node)	{	return node.toGPML();	}
 	static public String describe(Layer node)	{	return node.getName();	}
 	static public String describe(Node node)	{	return node.getClass().getSimpleName() + ": " + node.getId() + " " +
 				StringUtil.asString(node.getBoundsInParent());	}
@@ -616,7 +545,46 @@ public class Model
 			catch (Exception e) { System.err.println("Parse errors: " + k); }
 		}	
 	}
-	// **-------------------------------------------------------------------------------
+
+	
+	public void setColorByValue() {
+//		clearColors();
+		for (DataNode node : getDataNodeMap().values())
+		{
+			Object val = node.get("value");
+			if (val != null)
+			{
+				double d = StringUtil.toDouble("" + val);
+				if (!Double.isNaN(d) && 0 <= d && 1 >= d)
+				{
+					Color gray = new Color(d,d,d, 1);
+					Shape shape = node.getStack().getFigure();
+					if (shape != null)
+					{
+						shape.setFill(gray);			// TODO set the attribute
+						if (gray.getRed() < 0.4 || gray.getBlue() < 0.4 || gray.getGreen() < 0.4)
+						{
+							node.getStack().getTextField().setStyle("-fx-text-fill: white");
+						}
+					}
+				}
+			}
+		}
+	}	
+	public void clearColors() {
+			
+		for (DataNode node : getDataNodeMap().values())
+		{
+			node.remove("value");
+			Shape shape = node.getStack().getFigure();
+			if (shape != null)
+			{	
+				shape.setFill(Color.WHITE);
+				node.getStack().getTextField().setStyle("-fx-text-fill: black");
+			}
+		}
+	}
+		// **-------------------------------------------------------------------------------
 	// Polygons and polylines are stored the same, but have different base types
 	private void parsePolygonPoints(Polygon poly, String string)
 	{
@@ -636,17 +604,17 @@ public class Model
 	}
 	//-------------------------------------------------------------------------
 	public void dumpNodeTable() {
-		System.out.println(resourceMap.keySet().size());
-		for (String key : resourceMap.keySet())
+		System.out.println(dataNodeMap.keySet().size());
+		for (String key : dataNodeMap.keySet())
 		{
 			String s;
-			MNode node = resourceMap.get(key);
+			DataNode node = dataNodeMap.get(key);
 			if (node != null)
 			{
-				s=  String.format("%s \t(%4.1f, %4.1f) \t %s ", node.getId(), 
-						node.getAttributeMap().getDouble("CenterX"),
-						node.getAttributeMap().getDouble("CenterY"),
-						node.getAttributeMap().get("TextLabel"));
+				s=  String.format("%s \t(%4.1f, %4.1f) \t %s ", node.getGraphId(), 
+						node.getDouble("CenterX"),
+						node.getDouble("CenterY"),
+						node.get("TextLabel"));
 				}
 			else s = key;
 			System.out.println(s);
@@ -661,9 +629,9 @@ public class Model
 //			if (node != null)
 //			{
 //				s=  String.format("%s \t(%4.1f, %4.1f) \t %s ", node.getId(), 
-//						node.getAttributeMap().getDouble("CenterX"),
-//						node.getAttributeMap().getDouble("CenterY"),
-//						node.getAttributeMap().get("TextLabel"));
+//						node.getDouble("CenterX"),
+//						node.getDouble("CenterY"),
+//						node.get("TextLabel"));
 //				}
 //			else s = key;
 //			System.out.println(s);
@@ -672,65 +640,52 @@ public class Model
 
 	public void resetEdgeTable()
 	{
-		System.out.println("resetEdgeTable: " + edgeList.size());
-		for (Edge e : edgeList)
+		System.out.println("resetEdgeTable: " + getEdges().size());
+		for (Interaction inter : getEdges())
 		{
-			VNode start = e.getStartNode();
-			if (start == null) 
-			{
-				String startId = e.getAttributes().get("start");
-				if (startId != null)
-				{
-					MNode startMNode = getResource("start");
-					start = (startMNode == null) ? null : startMNode.getStack();
-				}
-			}
-			EdgeLine edgeline = e.getEdgeLine();
-			VNode end = e.getEndNode();
-			if (end == null) 
-			{
-				String endId = e.getAttributes().get("end");
-				if (endId != null)
-				{
-					MNode endMNode = getResource("end");
-					end = (endMNode == null) ? null : endMNode.getStack();
-				}
-			}
-			if (edgeline == null) continue;
-			e.connect();
-//			e.addListeners();
-//			Line line = edgeline.getLine();
-//			line.setStartX(startPt.getX());
-//			line.setStartY(startPt.getY());
-//			line.setEndX(endPt.getX());
-//			line.setEndY(endPt.getY());
+			inter.dump();
+			inter.connect();		
 		}
 	}
+//	assert(inter != null);
+//			DataNode origin = inter.getStartNode();
+//			if (origin == null)
+//				origin = getDataNodeMap().get(inter.getSourceid());
+//			VNode start = (origin != null) ? origin.getStack() : null;
+//			EdgeLine edgeline = inter.getEdgeLine();
+//			DataNode targ = inter.getEndNode();
+//			if (targ == null)
+//				targ = getDataNodeMap().get(inter.getTargetid());
+//			VNode end = (targ != null) ? targ.getStack() : null;
+//			if (end == null) 
+//			{
+//				String endId = inter.get("end");
+//				if (endId != null)
+//				{
+//					DataNode endMNode = getDataNode("end");
+//					end = (endMNode == null) ? null : endMNode.getStack();
+//				}
+//			}
+//			if (edgeline == null) continue;
+//			inter.connect();
+////			e.addListeners();
+////			Line line = edgeline.getLine();
+////			line.setStartX(startPt.getX());
+////			line.setStartY(startPt.getY());
+////			line.setEndX(endPt.getX());
+////			line.setEndY(endPt.getY());
+//		}
+//	}
 	public void dumpViewHierarchy() {
 		String out = "\n" + traverseSceneGraph( getController().getPasteboard());
 		System.out.println(out);
 	}
 	public void dumpEdgeTable() {
-		System.out.println("\n" + edgeList.size());
-		for (Edge e : edgeList)
+		System.out.println("\n" + interactionList.size());
+		for (Edge e : getEdges())
 			System.out.println(e);
 		}
-	
-	public void applyState(String state, AttributeMap attrMap) {
-		
-		for (MNode node : resourceMap.values())
-		{
-			if (node.getId().equals(state))
-				for (String key : attrMap.keySet())
-					node.attributes.put("State" + key, attrMap.get(key));
-		}
-		for (Edge edge : edgeList)
-		{
-			if (edge.references(state))
-				for (String key : attrMap.keySet())
-					edge.getAttributes().put("State" + key, attrMap.get(key));
-		}
-	}
+
 	
 }
 

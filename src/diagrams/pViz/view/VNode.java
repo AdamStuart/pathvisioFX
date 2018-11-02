@@ -9,7 +9,9 @@ import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
-import diagrams.pViz.model.MNode;
+import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.DataNodeGroup;
+import diagrams.pViz.model.DataNodeState;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.ResizableBox;
 import gui.Action.ActionType;
@@ -60,6 +62,7 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.PathElement;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.shape.Shape;
@@ -79,9 +82,11 @@ import util.StringUtil;
 
 public class VNode extends ResizableBox implements Comparable<VNode> {		//StackPane
 
-	private MNode model;
+	private DataNode model;
 	private Shape figure;
 	private Label text;
+	private Label graphIdLabel;
+	private Label zOrderLabel;
 	private String title;
 	private boolean movable;
 	private boolean resizable;
@@ -92,7 +97,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	
 	private Pasteboard pasteboard = null;
 	private Selection selection = null;
-	
+
 	public VNode clone()
 	{
 		return new VNode(this);
@@ -102,44 +107,84 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setScaleX(x);
 		setScaleY(x);
 	}
-	public VNode(MNode modelNode, Pasteboard p)
+	public VNode(DataNode modelNode, Pasteboard p)
 	{
 		super();
 		assert(modelNode != null && p != null);
 		model = modelNode;
+		model.setStack(this);
 		pasteboard = p;
 		selection = pasteboard.getSelectionMgr();
-		AttributeMap attributes = modelNode.getAttributeMap();
-		
-		createFigure(attributes.getPosition());
-		setId(modelNode.getId());
-		title = attributes.get("TextLabel");
+//		AttributeMap attributes = modelNode;
+		if (modelNode instanceof DataNodeGroup)
+		{
+			System.out.println("GROUP");
+		}
+		createFigure(modelNode.getPosition());
+		setId(modelNode.getGraphId());
+		title = modelNode.get("TextLabel");
 		if (title == null) title = "";
-		String biopaxRef = attributes.get("BiopaxRef");
+		String biopaxRef = modelNode.get("BiopaxRef");
 		if (biopaxRef != null)
 			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT);
 
 //		String type = attributes.get("ShapeType");
 		addText(title);//   + "\n" + modelNode.getId()
-		System.out.println(title);
+//		System.out.println(title);
+		addGraphIdDisplay();
+		addZOrderDisplay();
+		setZOrder();
 		addPorts();
 
-        readGeometry(attributes, this);
-        movable = attributes.getBool("Movable", true);
-        attributes.putBool("Movable", movable);
-        resizable = attributes.getBool("Resizable", true);
+        readGeometry(modelNode, this);
+        movable = modelNode.getBool("Movable", true);
+        resizable = modelNode.getBool("Resizable", true);
         setResize(resizable);
-        attributes.putBool("Resizable", resizable);
-        editable = attributes.getBool("Editable", true);
-        attributes.putBool("Editable", editable);
-        connectable = attributes.getBool("Connectable", true);
-        attributes.putBool("Connectable", connectable);
+        editable = modelNode.getBool("Editable", true);
+        connectable = modelNode.getBool("Connectable", true);
          Tooltip tooltip = new Tooltip();
-         tooltip.setOnShowing(v -> { tooltip.setText(attributes.getSortedAttributes());});
+         tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
          Tooltip.install(this,  tooltip);
- 		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
-     }
+  		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
+ 		pasteboard.add(this);
+	}
 
+	public void addGraphIdDisplay()
+	{
+		graphIdLabel = new Label(getGraphId());
+		graphIdLabel.setPrefWidth(100);
+		graphIdLabel.setTextFill(Color.RED);
+		graphIdLabel.setPrefHeight(20);
+		graphIdLabel.setMouseTransparent(true);
+		graphIdLabel.setBackground(Backgrounds.transparent());   
+		graphIdLabel.setFont(new Font(9));
+		graphIdLabel.setAlignment(Pos.TOP_LEFT);
+		graphIdLabel.setTranslateY(-20);
+		graphIdLabel.visibleProperty().bind(getController().graphIdsVisibleProperty());
+		getChildren().add(graphIdLabel);
+	
+	}	
+	public void setZOrder()
+	{
+		zOrderLabel.setText(model.get("ZOrder"));
+	}
+	public void addZOrderDisplay()
+	{
+		zOrderLabel = new Label("Z");
+		zOrderLabel.setPrefWidth(100);
+		zOrderLabel.setTextFill(Color.BROWN);
+		zOrderLabel.setPrefHeight(20);
+		zOrderLabel.setMouseTransparent(true);
+		zOrderLabel.setBackground(Backgrounds.transparent());   
+		zOrderLabel.setFont(new Font(9));
+		zOrderLabel.setAlignment(Pos.TOP_RIGHT);
+		zOrderLabel.setTranslateY(-20);
+		zOrderLabel.visibleProperty().bind(getController().zOrderVisibleProperty());
+		getChildren().add(zOrderLabel);
+	
+	}	
+	
+	
 	public VNode(VNode orig) {		 this(orig.modelNode(), orig.pasteboard);	}
 	public void setText(String s)		{ 	text.setText(s);	}
 	public String getText()				
@@ -147,18 +192,20 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		String s = text.getText();	
 		if (StringUtil.isEmpty(s))
 		{
-			if (isAnchor()) return "Anchor (" + modelNode().getId() + ")";
+			if (isAnchor()) return "Anchor (" + getGraphId() + ")";
 			return getId();
 		}
 		return s;
 	}
+	
+	public String getGraphId()			{ 	return model.getGraphId();	}
 	private Controller getController()  { 	return pasteboard.getController();   	}
 	public Label getTextField()			{ 	return text;	}
 	public Shape getFigure()			{	return figure;	}
 	public void setFigure(Shape s)		{	figure = s;	}
-	public MNode modelNode()			{	return model;	}
+	public DataNode modelNode()			{	return model;	}
 	private String gensym(String s)		{	return model.getModel().gensym(s);	}
-	public AttributeMap getAttributes() {	return model.getAttributeMap();	}
+	public AttributeMap getAttributes() {	return model;	}
 	// **-------------------------------------------------------------------------------
 	public boolean canResize()	{	return resizable;	}
 	public void handleResize(MouseEvent event)
@@ -245,6 +292,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		tag.setFill(color);
 		getChildren().add(tag);
 		StackPane.setAlignment(tag, position);
+		
+        Tooltip tooltip = new Tooltip();
+        tooltip.setOnShowing(v -> { tooltip.setText("BioPax Reference");});
+        Tooltip.install(this,  tooltip);
 	
 	}
 	// **-------------------------------------------------------------------------------
@@ -263,10 +314,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 	@Override
 	protected void handleMouseDragged(final MouseEvent event) {
-        double pX = 100; // TODO  HACK -- assumes palette is open
-        double pY = 20; // pasteboard.getParent().getLayoutY();
-        double evX = event.getSceneX() - pX;
-        double evY = event.getSceneY() - pY;
+//        double pX = 100; // TODO  HACK -- assumes palette is open
+//        double pY = 20; // pasteboard.getParent().getLayoutY();
+//        double evX = event.getSceneX() - pX;
+//        double evY = event.getSceneY() - pY;
 //        if (isAnchor()) 
 // 	   {
 //            Anchor anchor = (Anchor) modelNode();
@@ -281,7 +332,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //            event.consume();
 //	   }
 //        else 
-        	
         super.handleMouseDragged(event);
        
         if (isSelected())
@@ -297,6 +347,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         	}
         	
         	selection.translate(dx,dy, null);
+        	selection.extract();
         	localLastMouseX = event.getSceneX();
         	localLastMouseY = event.getSceneY();
         }
@@ -331,7 +382,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         	c.setCenterY(center.getY());
         	if (isAnchor())
         	{
-        		setStyle("-fx-border-color: transparent; -fx-border-width: 0; -fx-background-color: transparent; -fx-opacity: 1.0;");	    
+        		setStyle("-fx-border-color: blue; -fx-border-width: 3; -fx-background-color: green; -fx-opacity: 1.0;");	    
         		setResizeBorderTolerance(-2);
         	}
         }
@@ -343,7 +394,21 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	        r.setLayoutX(center.getX() - w /2 ); 
 	        r.setLayoutY(center.getY() - h /2 ); 
         }
-        else if (figure instanceof Path)
+        else if (figure instanceof Polygon)
+        {
+        	Polygon p = (Polygon) figure;
+        	double x0 = center.getX() - w /2;
+        	double x1 = x0 + (w / 3);
+        	double x2 = x0 + (2 * w / 3);
+        	double x3 = x0 + w;
+           	double y0 = center.getY() -h /2;
+        	double y1 = y0 + (h / 3);
+        	double y2 = y0 + (2 * h / 3);
+        	double y3 = y0 + h;
+        	p.getPoints().clear();
+        	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
+         }
+       else if (figure instanceof Path)
         {
 //			Path p = (Path) figure;
 //			p.scaleXProperty().bind(widthProperty());
@@ -353,11 +418,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
  	// **-------------------------------------------------------------------------------
 
 	private double getCenterX() {
-		return modelNode().getAttributeMap().getDouble("CenterX");
+		return modelNode().getDouble("CenterX");
 	}
 
 	private double getCenterY() {
-		return modelNode().getAttributeMap().getDouble("CenterY");
+		return modelNode().getDouble("CenterY");
 	}
 
 	public Point2D center() {
@@ -402,6 +467,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		getAttributes().putDouble("CenterY", (b.getMinY() + b.getMaxY()) / 2);
 		getAttributes().putDouble("Width",b.getWidth());
 		getAttributes().putDouble("Height",b.getHeight());
+		getController().redrawEdgesToMe(this);
 	}
 	
 	public String getTitle() 		{ 	return "getTitle"; }
@@ -456,7 +522,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		}
 	}
 	// **-------------------------------------------------------------------------------
-	private void addNewNode(Tool type, MNode model)
+	private void addNewNode(Tool type, DataNode model)
 	{
 		switch (type)
 		{
@@ -518,16 +584,42 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //		setBorder(Borders.greenBorder);
 	}
 
-
+public void addBadge(String letter)
+{
+	final Circle badge = new Circle(6);
+	badge.setTranslateX(getWidth() / 2.);
+	badge.setTranslateY(getHeight() / -2.);
+	badge.setFill(Color.BLUEVIOLET);
+	getChildren().add(badge);
+	
+}
   	List<Shape> ports = new ArrayList<Shape>();
-	public void addPorts()
+
+  	public void addPorts()
 	{
-		for (int i=0; i< 9 ; i++)
+//		for (int i=0; i< 9 ; i++)
+//		{
+//			if (i == 4) continue;			//skip center
+////			if (i % 2 == 0) continue;
+//			Pos pos = Pos.values()[i];
+//			final Circle port = new Circle(3);
+//			port.setFill(portFillColor(EState.STANDBY));
+//			port.setStroke(Color.MEDIUMAQUAMARINE);
+//			addPortHandlers(port);
+//			setAlignment(port, pos);
+//			getChildren().add(port);
+//			ports.add(port);
+//			port.setVisible(false);
+//			port.setId(""+i);
+//		}
+
+		for (int i=0; i< 2 ; i++)
 		{
 			if (i == 4) continue;			//skip center
 //			if (i % 2 == 0) continue;
-			Pos pos = Pos.values()[i];
-			final Circle port = new Circle(6);
+			Pos pos = (i==0) ? Pos.CENTER_LEFT : Pos.CENTER_RIGHT;
+			
+			final Circle port = new Circle(4.8);
 			port.setFill(portFillColor(EState.STANDBY));
 			port.setStroke(Color.MEDIUMAQUAMARINE);
 			addPortHandlers(port);
@@ -537,6 +629,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			port.setVisible(false);
 			port.setId(""+i);
 		}
+
 	}
 	
 	public void showPorts(boolean vis)
@@ -568,7 +661,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 	private void startPortDrag(MouseEvent e, Shape port) 
 	{
-		if (pasteboard.getDragLine()!= null)
+		if (pasteboard.getDragLine()!= null)  // finish an ongoing drag
 		{
 			pasteboard.connectTo(this, port);
 			port.setFill(portFillColor(EState.FILLED)); 
@@ -578,6 +671,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		String id = getId();
 		Pos pos = idToPosition(id);
 		pasteboard.startDragLine(this, pos, e.getSceneX(), e.getSceneY());
+		pasteboard.getDragLine().setEndPoint(new Point2D(e.getSceneX(), e.getSceneY()));  // FUDGE to keep line out of target box
 		e.consume();
 	}
 	
@@ -619,7 +713,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			if (starter != this)
 			{	
 				getController().getUndoStack().push(ActionType.AddEdge);
-				getController().addEdge(starter, this);
+				getController().addInteraction(starter, this);
 				pasteboard.removeDragLine();
 		
 			}
@@ -683,12 +777,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 				return;
 			}
 		}
-		Gene gene =  modelNode().getModel().findGene(name);
-		if (gene != null)
-		{	
-			gene.getInfo();
-			return;
-		}
+//		Gene gene =  modelNode().getModel().findGene(name);
+//		if (gene != null)
+//		{	
+//			gene.getInfo();
+//			return;
+//		}
 		String s = modelNode().getInfoStr();
 		   if (StringUtil.hasText(s))
 		   {  
@@ -722,7 +816,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 	public void readGeometry(AttributeMap attrMap, Node content)
 	{
-		String id = attrMap.getId();
+		String id = attrMap.get("GraphId");
 		double x = attrMap.getDouble("X");
 		double y = attrMap.getDouble("Y");
 		double centerx = attrMap.getDouble("CenterX");
@@ -749,7 +843,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setWidth(w);	prefWidth(w);	setMinWidth(w);  
 		setHeight(h);	prefHeight(h);	setMinHeight(h); 
 		System.out.println(String.format("[@%3.1f, %3.1f; %3.1f x %3.1f ]", x, y, w, h));
-		AttributeMap attr = modelNode().getAttributeMap();
+		AttributeMap attr = modelNode();
 		StringBuilder bldr = new StringBuilder();
 
 //		double fontsize = attr.getDouble("FontSize");
@@ -773,24 +867,24 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 		
 		
-		String colorTag = getAttributeMap().get("Color");
+		String colorTag = model.get("Color");
 		if (colorTag != null)
 			bldr.append("-fx-text-fill:#" + colorTag + "; ");
 		bldr.append(makeStyleString("FontSize"));
 		String str = bldr.toString();
 		if (getTextField() != null) getTextField().setStyle(str);
-		System.out.println(str);
+//		System.out.println(str);
 		setStyle(str);
 		if (text != null) text.setFont(Font.font("times", wt, posture, size)); 
 		bldr = new StringBuilder();		// start over with Shape
-		colorTag = getAttributeMap().get("Color");
+		colorTag = model.get("Color");
 		if (colorTag != null)
 			bldr.append("-fx-border-color:#" + colorTag + "; ");
 		bldr.append(makeStyleString("FillColor"));
 //		bldr.append(makeStyleString("Opacity"));
 		bldr.append(makeStyleString("LineThickness"));
 		str = bldr.toString();
-		System.out.println(str);
+//		System.out.println(str);
 //		setStyle(str);	    
 		if (getFigure()!= null)
 			getFigure().setStyle(str);	    
@@ -798,7 +892,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 	
 	private String makeStyleString(String gpmlTag) {
-		String val = getAttributeMap().get(gpmlTag);
+		String val = model.get(gpmlTag);
 		if (val == null) return "";
 		String fxml = GPML.asFxml(gpmlTag);
 		if (fxml == null) return "";
@@ -807,13 +901,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return fxml + ":" + val + "; ";
 	}
 
-	private AttributeMap getAttributeMap() {	return modelNode().getAttributeMap();	}
-
 	public HBox addTitleBar(String title)
 	{		
 		HBox titleBar = new HBox();
 	    titleBar.setMaxHeight(25);
-	    Label idLabel = new Label(getId());
+	    Label idLabel = new Label(getGraphId());
 	    idLabel.setMinWidth(50);
 	    StackPane.setAlignment(titleBar, Pos.TOP_CENTER);
 	    Label titleLabel = new Label(title);
@@ -825,7 +917,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	private void makeBrowser()
 	{
-		AttributeMap attrMap = model.getAttributeMap();
+		AttributeMap attrMap = model;
 		attrMap.put("ShapeType","Browser");
 		String url = attrMap.get("url");
 		if (url == null) 
@@ -844,31 +936,30 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	private void makeImageView()
 	{
-		AttributeMap attrMap = model.getAttributeMap();
-		attrMap.put("ShapeType","Image");
-		String filepath = attrMap.get("file");		// f.getAbsolutePath()
+		model.put("ShapeType","Image");
+		String filepath = model.get("file");		// f.getAbsolutePath()
 		if (filepath == null) return;
 		Image img = new Image("file:" + filepath);
 		if (img.isError())
 			System.out.println("makeImageView error");
 		ImageView imgView = new ImageView(img);
-		if (attrMap.getId() == null) 
-			attrMap.put("GraphId", gensym("I"));
+		if (model.get("GraphId") == null) 
+			model.put("GraphId", gensym("I"));
 		
 		imgView.prefWidth(200); 	imgView.prefHeight(200);
 		imgView.setFitWidth(200); 	imgView.setFitHeight(200);
-		attrMap.put("name", filepath);
+		model.put("name", filepath);
 	    imgView.setMouseTransparent(true);
 	    imgView.fitWidthProperty().bind(Bindings.subtract(widthProperty(), 20));
 	    imgView.fitHeightProperty().bind(Bindings.subtract(heightProperty(), 40));
 	    imgView.setTranslateY(-10);
-		readGeometry(attrMap, imgView);
+		readGeometry(model, imgView);
 		getChildren().add(new VBox(addTitleBar(filepath), imgView));
 	}
 	
 	// **-------------------------------------------------------------------------------
 	private void makeSVGPath() {
-		AttributeMap attrMap = model.getAttributeMap();
+		AttributeMap attrMap = model;
 		attrMap.put("ShapeType","SVGPath");
 
 		String path = attrMap.get("file");
@@ -891,10 +982,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	private void makeTableView()
 	{
-		AttributeMap attrMap = model.getAttributeMap();
+		AttributeMap attrMap = model;
 		attrMap.put("ShapeType","Table");
 		TableView<ObservableList<StringProperty>> table = new TableView<ObservableList<StringProperty>>();
-		if (attrMap.getId() == null)
+		if (attrMap.get("GraphId") == null)
 			attrMap.put("GraphId", gensym("T"));
 		String filename = attrMap.get("file");
 		CSVTableData data = CSVTableData.readCSVfile(filename);	
@@ -906,7 +997,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	public void makeTextArea()
 	{
-		AttributeMap attrMap = model.getAttributeMap();
+		AttributeMap attrMap = model;
 		attrMap.put("ShapeType","Text");
 		String text = attrMap.get("text");
 		if (text == null)
@@ -938,7 +1029,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		o = pro.get("Type");
 		String type = o == null ? "" : o.toString();
 		String header = "<DataNode TextLabel=\"%s\" GraphId=\"%s\" Type=\"%s\" >\n";
-		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, getId(), type));
+		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, getGraphId(), type));
 
 		String[] tokens = toString().split(" ");
 		String shape = tokens.length > 1 ? tokens[1] : "Error";
@@ -1052,5 +1143,9 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double a = getAttributes().getDouble("ZOrder",0);
 		double b = ((VNode)other).getAttributes().getDouble("ZOrder",0);
 		return a == b ? 0 : (a > b ? 1 : -1);
+	}
+	public void addState(DataNodeState statenode) {
+		String label = statenode.get("TextLabel");		// getName includes "State:"
+		addBadge(label);
 	}
 }

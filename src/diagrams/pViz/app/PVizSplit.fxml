@@ -1,0 +1,711 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.input.KeyCodeCombination?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+   <items>
+      <BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0">
+         <top>
+            <HBox BorderPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="leftSideBarButton" mnemonicParsing="false" text="East" />
+                  <MenuBar BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
+                     <menus>
+                        <Menu mnemonicParsing="false" text="File">
+                           <items>
+                              <MenuItem mnemonicParsing="false" onAction="#doNew" text="New">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="N" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#open" text="Open">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="O" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#close" text="Close">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="W" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem mnemonicParsing="false" onAction="#save" text="Save">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#saveas" text="Save As">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem mnemonicParsing="false" text="Share" />
+                              <MenuItem mnemonicParsing="false" onAction="#saveas" text="Submit to WikiPathways...">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#print" text="Print">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="P" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Edit">
+                           <items>
+                              <MenuItem fx:id="undo" mnemonicParsing="false" onAction="#undo" text="Undo">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Z" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="redo" mnemonicParsing="false" onAction="#redo" text="Redo">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Z" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="clearundo" mnemonicParsing="false" onAction="#clearUndo" text="Clear Undo Stack">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem mnemonicParsing="false" onAction="#cut" text="Cut">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="X" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#copy" text="Copy">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="C" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#paste" text="Paste">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="V" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem mnemonicParsing="false" onAction="#duplicateSelection" text="Duplicate">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="D" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#selectAll" text="Select All">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="A" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#clear" text="Clear">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="BACK_SPACE" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem mnemonicParsing="false" onAction="#deleteSelection" text="Delete" />
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="View">
+                           <items>
+                              <MenuItem fx:id="group1" mnemonicParsing="false" onAction="#group" text="Show Info">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="ungroup1" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="tofront1" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="toback1" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <Menu mnemonicParsing="false" text="Select By Type">
+                                 <items>
+                                    <MenuItem fx:id="proteinMenuItem1" mnemonicParsing="false" onAction="#selectProtein" text="Protein" />
+                                    <MenuItem fx:id="geneMenuItem1" mnemonicParsing="false" onAction="#selectGene" text="Gene">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="metaboliteMenuItem1" mnemonicParsing="false" onAction="#selectMetabolite" text="Metabolite">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="rnaMenuItem1" mnemonicParsing="false" onAction="#selectRna" text="RNA">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="selectLabels1" mnemonicParsing="false" onAction="#selectLabels" text="Labels">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="selectShapes1" mnemonicParsing="false" onAction="#selectShapes" text="Shapes">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="selectEdges1" mnemonicParsing="false" onAction="#selectEdges" text="Edges">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                 </items>
+                              </Menu>
+                              <Menu mnemonicParsing="false" text="Move To Layer">
+                                 <items>
+                                    <MenuItem fx:id="background1" mnemonicParsing="false" onAction="#moveToLayer" text="Background" />
+                                    <MenuItem fx:id="grid1" mnemonicParsing="false" onAction="#moveToLayer" text="Grid">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                 </items>
+                              </Menu>
+                              <MenuItem fx:id="connect1" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="zoomIn" mnemonicParsing="false" onAction="#zoomIn" text="Zoom In">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="PLUS" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="zoomOut" mnemonicParsing="false" onAction="#zoomOut" text="Zoom Out">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="MINUS" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Select">
+                           <items>
+                           <MenuItem fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="tofront" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="toback" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <Menu mnemonicParsing="false" text="Select By Type">
+                                <items>
+                                  <MenuItem fx:id="proteinMenuItem" mnemonicParsing="false" onAction="#selectProtein" text="Protein" />
+                                    <MenuItem fx:id="geneMenuItem" mnemonicParsing="false" onAction="#selectGene" text="Gene">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="metaboliteMenuItem" mnemonicParsing="false" onAction="#selectMetabolite" text="Metabolite">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="rnaMenuItem" mnemonicParsing="false" onAction="#selectRna" text="RNA">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="selectLabels" mnemonicParsing="false" onAction="#selectLabels" text="Labels">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="selectShapes" mnemonicParsing="false" onAction="#selectShapes" text="Shapes">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                    <MenuItem fx:id="selectEdges" mnemonicParsing="false" onAction="#selectEdges" text="Edges">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                </items>
+                              </Menu>
+                              <Menu mnemonicParsing="false" text="Move To Layer">
+                                <items>
+                                  <MenuItem fx:id="background" mnemonicParsing="false" onAction="#moveToLayer" text="Background" />
+                                    <MenuItem fx:id="grid" mnemonicParsing="false" onAction="#moveToLayer" text="Grid">
+                                       <accelerator>
+                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                       </accelerator>
+                                    </MenuItem>
+                                </items>
+                              </Menu>
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Nodes">
+                           <items>
+                              <MenuItem fx:id="group2" mnemonicParsing="false" onAction="#group" text="Select Neighbors">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="doAbout1" mnemonicParsing="false" text="Align To Grid" />
+                              <MenuItem fx:id="dumpNodeTable1" mnemonicParsing="false" onAction="#dumpNodeTable" text="Create Complex" />
+                              <MenuItem fx:id="showNodeList" mnemonicParsing="false" onAction="#showNodeList" text="Show Node List">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Edges">
+                           <items>
+                              <MenuItem fx:id="connect" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="resetEdgeTable1" mnemonicParsing="false" onAction="#resetEdgeTable" text="Select Edges" />
+                              <MenuItem mnemonicParsing="false" text="Add Midpoint" />
+                              <MenuItem fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="hideAnchors" mnemonicParsing="false" onAction="#hideAnchors" text="Hide Anchors" />
+                              <MenuItem fx:id="clearColors" mnemonicParsing="false" onAction="#clearColors" text="Clear Data Coloring">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="test1" mnemonicParsing="false" onAction="#test1" text="Test set 1">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="DIGIT1" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="test2" mnemonicParsing="false" onAction="#test2" text="Test set 2">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="DIGIT2" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="test3" mnemonicParsing="false" onAction="#test3" text="Test set 3">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="resetEdgeTable" mnemonicParsing="false" onAction="#resetEdgeTable" text="Reset Edge Table" />
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Pathways">
+                           <items>
+                              <MenuItem fx:id="addLegend" mnemonicParsing="false" onAction="#addLegend" text="Add Legend" />
+                              <MenuItem fx:id="addLegendDlog" mnemonicParsing="false" onAction="#addLegendDlog" text="Add Legend..." />
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways..." />
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="showJupyter" mnemonicParsing="false" onAction="#showJupyter" text="Show Jupyter Notebook" />
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Tools">
+                           <items>
+                              <MenuItem fx:id="showInspector" mnemonicParsing="false" onAction="#showInspector" text="Show Inspector">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="showLayers" mnemonicParsing="false" onAction="#showLayers" text="Show Layer Palette">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="L" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="browseGenes" mnemonicParsing="false" onAction="#doNewGeneList" text="New Gene List">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="multiGeneList" mnemonicParsing="false" onAction="#doNewMultiGeneList" text="Multi Gene List">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="M" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                           </items>
+                        </Menu>
+                        <Menu mnemonicParsing="false" text="Help">
+                           <items>
+                              <MenuItem fx:id="doAbout" mnemonicParsing="false" text="About" />
+                              <MenuItem fx:id="dumpNodeTable" mnemonicParsing="false" onAction="#dumpNodeTable" text="Dump Node Table" />
+                              <MenuItem fx:id="dumpEdges" mnemonicParsing="false" onAction="#dumpEdgeTable" text="Dump Edge Table" />
+                              <MenuItem fx:id="dumpViewHierarchy" mnemonicParsing="false" onAction="#dumpViewHierarchy" text="Dump View Hierarchy" />
+                              <MenuItem fx:id="dumpEdges1" mnemonicParsing="false" onAction="#dumpEdgeTable" text="Show GPML" />
+                           </items>
+                        </Menu>
+                     </menus>
+                  </MenuBar>
+                  <Button fx:id="toggleGridButton" layoutX="779.0" layoutY="10.0" mnemonicParsing="false" text="Grid" />
+                  <Button fx:id="rightSideBarButton" mnemonicParsing="false" text="West" />
+                  <Button fx:id="bottomSideBarButton" layoutX="706.0" layoutY="10.0" mnemonicParsing="false" text="South" />
+               </children>
+            </HBox>
+         </top>
+         <right>
+            <VBox fx:id="east" style="-fx-border-width: 1;" BorderPane.alignment="TOP_LEFT">
+               <BorderPane.margin>
+                  <Insets bottom="4.0" left="4.0" right="4.0" top="4.0" />
+               </BorderPane.margin>
+            </VBox>
+         </right>
+         <bottom>
+           </bottom>
+         <left>
+            <VBox fx:id="west" prefHeight="591.0" prefWidth="126.0" spacing="2.0" BorderPane.alignment="CENTER">
+               <children>
+                  <ToolBar orientation="VERTICAL" prefHeight="179.0" prefWidth="122.0">
+                     <items>
+                        <VBox spacing="4.0">
+                           <children>
+                              <HBox>
+                                 <children>
+                                    <ToggleButton fx:id="arrow" mnemonicParsing="false" onAction="#setArrow" />
+                                    <ToggleButton fx:id="rectangle" mnemonicParsing="false" onAction="#setRectangle" />
+                                    <ToggleButton fx:id="circle" mnemonicParsing="false" onAction="#setOval" />
+                                    <ToggleButton fx:id="text" layoutX="46.0" layoutY="10.0" mnemonicParsing="false" onAction="#setText" text="T" />
+                                 </children>
+                              </HBox>
+                              <ToggleButton fx:id="gene" mnemonicParsing="false" onAction="#setGene" prefWidth="107.0" text="Gene">
+                                 <font>
+                                    <Font name="Baskerville Bold" size="12.0" />
+                                 </font></ToggleButton>
+                              <ToggleButton fx:id="metabolite" mnemonicParsing="false" onAction="#setMetabolite" prefWidth="107.0" text="Metabolite">
+                                 <font>
+                                    <Font name="Baskerville Bold" size="12.0" />
+                                 </font></ToggleButton>
+                              <ToggleButton fx:id="protein" mnemonicParsing="false" onAction="#setProtein" prefWidth="107.0" text="Protein">
+                                 <font>
+                                    <Font name="Baskerville Bold" size="12.0" />
+                                 </font></ToggleButton>
+                              <ToggleButton fx:id="pathway" layoutX="10.0" layoutY="91.0" mnemonicParsing="false" onAction="#setPathway" prefWidth="107.0" text="Pathway">
+                                 <font>
+                                    <Font name="Baskerville Bold" size="12.0" />
+                                 </font>
+                              </ToggleButton>
+                              <ToggleButton fx:id="rna" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setRNA" prefWidth="107.0" text="RNA">
+                                 <font>
+                                    <Font name="Baskerville Bold" size="12.0" />
+                                 </font>
+                              </ToggleButton>
+                           </children>
+                        </VBox>
+                     </items>
+                  </ToolBar>
+                  <HBox>
+                     <children>
+                        <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="mitochondria11" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+                  <Button fx:id="mitochondria" layoutX="14.0" layoutY="90.0" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
+                     <font>
+                        <Font size="9.0" />
+                     </font>
+                  </Button>
+                  <HBox spacing="2.0">
+                     <children>
+                        <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+                  <ToolBar layoutX="14.0" layoutY="14.0" orientation="VERTICAL" prefHeight="310.0" prefWidth="122.0">
+                     <items>
+                        <VBox spacing="20.0">
+                           <children>
+                              <VBox spacing="4.0">
+                                 <children>
+                                    <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" prefHeight="27.0" prefWidth="107.0" text="Activates">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/transports.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="arrow2" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow2" prefHeight="27.0" prefWidth="107.0" text="Inhibits">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/inhibits.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="arrow3" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow3" prefHeight="27.0" prefWidth="107.0" text="Converts">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/activates.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="arrow4" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow4" prefHeight="27.0" prefWidth="107.0" text="Catalyzes">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/catalyzes.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="arrow5" contentDisplay="RIGHT" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" prefHeight="27.0" prefWidth="107.0" text="Transports">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/converts.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="arrow6" contentDisplay="RIGHT" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" prefHeight="27.0" prefWidth="107.0" text="Regulates">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/stimulates.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                 </children>
+                              </VBox>
+                              <VBox>
+                                 <children>
+                                    <ToggleButton fx:id="straight" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setStraight" prefHeight="27.0" prefWidth="107.0" text="Straight">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/straight.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="curved" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setCurved" prefHeight="27.0" prefWidth="107.0" text="Curved">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/curve.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                    <ToggleButton fx:id="elbowed" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setElbowed" prefHeight="27.0" prefWidth="107.0" text="Elbowed">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/elbow.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
+                                 </children>
+                              </VBox>
+                           </children>
+                        </VBox>
+                     </items>
+                  </ToolBar>
+                  <HBox>
+                     <children>
+                        <ToggleButton fx:id="polygon" mnemonicParsing="false" onAction="#setPolygon" />
+                        <ToggleButton fx:id="shape1" mnemonicParsing="false" onAction="#setShape1" />
+                        <ToggleButton fx:id="line" mnemonicParsing="false" onAction="#setLine" />
+                        <ToggleButton fx:id="polyline" mnemonicParsing="false" onAction="#setPolyline" />
+                     </children>
+                  </HBox>
+               </children>
+               <padding>
+                  <Insets left="4.0" top="4.0" />
+               </padding>
+            </VBox>
+         </left>
+         <bottom>
+            <VBox fx:id="south" BorderPane.alignment="CENTER" />
+         </bottom>
+         <center>
+            <SplitPane fx:id="hsplitter" dividerPositions="0.5459016393442623" BorderPane.alignment="CENTER">
+               <items>
+                  <ScrollPane fx:id="scrollPane" prefHeight="621.0" prefWidth="612.0">
+                    <content>
+                      <AnchorPane fx:id="drawPane" />
+                    </content>
+                  </ScrollPane>
+                  <SplitPane fx:id="vsplitter" dividerPositions="0.8" orientation="VERTICAL">
+                    <items>
+                        <VBox>
+                           <children>
+                              <HBox>
+                                 <children>
+                                    <Label fx:id="select" textAlignment="RIGHT">
+                                       <font>
+                                          <Font name="System Bold" size="11.0" />
+                                       </font>
+                                    </Label>
+                                    <Label fx:id="size" maxWidth="150.0" prefWidth="50.0">
+                                       <font>
+                                          <Font name="System Bold" size="11.0" />
+                                       </font>
+                                    </Label>
+                                    <Label fx:id="eselect" maxWidth="150.0" prefHeight="22.0" prefWidth="52.0" textAlignment="RIGHT">
+                                       <font>
+                                          <Font name="System Bold" size="11.0" />
+                                       </font>
+                                    </Label>
+                                    <Label fx:id="esize" maxWidth="150.0" prefHeight="24.0" prefWidth="27.0">
+                                       <font>
+                                          <Font name="System Bold" size="11.0" />
+                                       </font>
+                                    </Label>
+                                 </children>
+                              </HBox>
+                              <TableView fx:id="nodeTable" editable="true">
+                                 <columns>
+                                    <TableColumn fx:id="geneNameColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Name" />
+                                    <TableColumn fx:id="geneIdColumn" editable="false" maxWidth="250.0" minWidth="50.0" text="Id" />
+                                    <TableColumn fx:id="geneTypeColumn" editable="false" maxWidth="250.0" minWidth="50.0" prefWidth="84.0" text="Type" />
+                                    <TableColumn fx:id="termsColumn" editable="false" maxWidth="500.0" minWidth="50.0" prefWidth="146.0" text="Terms" />
+                                    <TableColumn fx:id="dataColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Data">
+                                       <columns>
+                                          <TableColumn fx:id="logger" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="logGER" />
+                                          <TableColumn fx:id="pvalue" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="pValue" />
+                                          <TableColumn fx:id="fdr" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="FDR" />
+                                       </columns>
+                                    </TableColumn>
+                                    <TableColumn fx:id="locationColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Location" />
+                                    <TableColumn fx:id="databaseColumn" editable="false" maxWidth="200.0" minWidth="50.0" text="Database" />
+                                    <TableColumn fx:id="dbidColumn" editable="false" maxWidth="500.0" minWidth="20.0" prefWidth="100.0" text="dbID" />
+                                    <TableColumn fx:id="urlColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="URL" />
+                                    <TableColumn fx:id="ensemblColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Ensembl" />
+                                    <TableColumn fx:id="graphidColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Graph Reference" />
+                                 </columns>
+                              </TableView>
+                           </children>
+                        </VBox>
+                        <TableView fx:id="edgeTable">
+                           <columns>
+                              <TableColumn fx:id="source" text="Source" />
+                              <TableColumn fx:id="interaction" prefWidth="109.0" text="Interaction" />
+                              <TableColumn fx:id="target" prefWidth="94.0" text="Target" />
+                              <TableColumn fx:id="sourceid" prefWidth="70.0" text="Source ID" />
+                              <TableColumn fx:id="targetid" minWidth="3.0" prefWidth="132.0" text="Target ID" />
+                              <TableColumn fx:id="edgeid" minWidth="3.0" prefWidth="113.0" text="GraphID" />
+                              <TableColumn fx:id="database" minWidth="3.0" prefWidth="76.0" text="Database" />
+                              <TableColumn fx:id="dbid" minWidth="3.0" prefWidth="95.0" text="DB ID" />
+                           </columns>
+                        </TableView>
+                    </items>
+                  </SplitPane>
+               </items>
+            </SplitPane>
+         </center>
+      </BorderPane>
+   </items>
+</SplitPane>

@@ -5,15 +5,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
 import diagrams.pViz.app.App;
+import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Document;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.Edge;
+import diagrams.pViz.model.Interaction;
 import gui.DraggableTableRow;
 import icon.FontAwesomeIcons;
 import icon.GlyphsDude;
@@ -52,15 +55,15 @@ import javafx.stage.Window;
 import javafx.util.Callback;
 import model.IController;
 import model.bio.Gene;
-import model.bio.GeneListRecord;
+import model.bio.GeneSetRecord;
 import util.FileUtil;
 import util.StringUtil;
 
 
 public class GeneListController  extends TableController  {
 	
-	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
-	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
+//	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
+//	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
 	@FXML private Button draggable;
 	@FXML private TableColumn<Gene, String> geneTypeColumn;
 	@FXML private TableColumn<Gene, String> geneNameColumn;
@@ -118,14 +121,14 @@ public class GeneListController  extends TableController  {
 	public boolean getWindowState()	 	{ 	return windowstate; 	}
 	//------------------------------------------------------
 
-	private GeneListRecord geneListRecord;		// the model
+	private GeneSetRecord geneListRecord;		// the model
 	private List<Gene> allGenes = new ArrayList<Gene>();
 	private List<Edge> allInteractions = new ArrayList<Edge>();
 //	GeneListTable geneTable;
 	
 	protected void createTableRecord()
 	{
-		tableRecord = geneListRecord = new GeneListRecord("GeneList", allColumns);	
+		tableRecord = geneListRecord = new GeneSetRecord("GeneList", allColumns);	
 	}
 	public static String tooltip = "Text or expressions can be entered here";
 	@Override public void initialize(URL location, ResourceBundle resources)
@@ -173,7 +176,7 @@ public class GeneListController  extends TableController  {
 		theTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
 		theTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(theTable, GENE_MIME_TYPE, this, geneListRecord);
+		       return new DraggableTableRow<Gene>(theTable, Controller.GENE_MIME_TYPE, this, geneListRecord);
 			});
 		
 		// bind two labels:  select and size to the number selected and number of rows, e.g.: (32 / 2092)
@@ -232,13 +235,13 @@ public class GeneListController  extends TableController  {
 	}
 
 	// TODO used for both new lists and unioning lists
-	public void loadTables(GeneListRecord geneList, List<Edge> edgeList, boolean setAllGenes) {
+	public void loadTables(GeneSetRecord geneList, Collection<Interaction> edgeList, boolean setAllGenes) {
 		geneListRecord = geneList;
 //		allColumns = geneListRecord.getAllColumns();
 		dumpColumns();
 		resetTableColumns();
 		if (setAllGenes && true)
-			allGenes = geneListRecord.getGeneList();
+			allGenes = geneListRecord.getGeneSet();
 		theTable.getItems().addAll(allGenes);
 		locationColumn.setPrefWidth(200);
 		geneTypeColumn.setPrefWidth(28);
@@ -258,7 +261,7 @@ public class GeneListController  extends TableController  {
 	                // The DragView wont be displayed unless we set the content of the dragboard as well. 
 	                // Here you probably want to do more meaningful stuff than adding an empty String to the content.
 	                ClipboardContent content = new ClipboardContent();
-	                content.put(GENE_MIME_TYPE, "");
+	                content.put(Controller.GENE_MIME_TYPE, "");  // TODO add payload
 	                db.setContent(content);
 
 	                e.consume();
@@ -439,10 +442,10 @@ public class GeneListController  extends TableController  {
 				 allColumns.clear();
 			 allColumns.addAll(geneListRecord.getAllColumns());
 			 resetTableColumns();
-			 theTable.getItems().addAll(geneListRecord.getGeneList());
+			 theTable.getItems().addAll(geneListRecord.getGeneSet());
 		 }
 	}
-	protected GeneListRecord readTabularText(File f)
+	protected GeneSetRecord readTabularText(File f)
 	{
 		return Document.readTabularText(f, getSpecies());
 	}
@@ -477,7 +480,7 @@ public class GeneListController  extends TableController  {
 //		newCol.setCellValueFactory(new PropertyValueFactory<Gene, String>(value));
 
 		long startMapTime = System.currentTimeMillis();
-		for (Gene gene : geneListRecord.getGeneList())
+		for (Gene gene : geneListRecord.getGeneSet())
 		{
 			String source = gene.getValue(key);
 			if (StringUtil.isEmpty(source)) continue;
@@ -493,7 +496,7 @@ public class GeneListController  extends TableController  {
 	}
 	//------------------------------------------------------
 
-	private GeneListRecord getGeneList() {		return geneListRecord;	}
+	private GeneSetRecord getGeneList() {		return geneListRecord;	}
 	@FXML private void newGeneList()	{		App.doNewGeneList(null, null);	}
 	@FXML private void getInfo()		{		System.out.println("getInfo");	}
 	@FXML private void saveAs()			{		file = null; 	save();	 }
@@ -512,19 +515,19 @@ public class GeneListController  extends TableController  {
 	
 	@FXML private void drillDown()		
 	{		
-		GeneListRecord subset = getSelectedGeneList();
+		GeneSetRecord subset = getSelectedGeneList();
 		subset.setWindowState(geneListRecord.getWindowState());
-		App.doNewGeneList(subset,null);
+		App.doNewGeneList(subset, null, true);
 	}
 	
 	//------------------------------------------------------
-	private GeneListRecord getSelectedGeneList() {
+	private GeneSetRecord getSelectedGeneList() {
 		
-		GeneListRecord subset = new GeneListRecord(geneListRecord);
+		GeneSetRecord subset = new GeneSetRecord(geneListRecord);
 		List<Gene> sel = FXCollections.observableArrayList();
 		List<Gene> genes = (List<Gene>) theTable.getSelectionModel().getSelectedItems();
 		sel.addAll(genes);
-		subset.setGeneList(sel);
+		subset.setGeneSet(sel);
 		return subset;
 	}
 
@@ -561,14 +564,14 @@ public class GeneListController  extends TableController  {
 	{
 		List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath(), 30000);
 //		StringUtil.removeEmptyLines(lines);
-		GeneListRecord record = new GeneListRecord(f);
+		GeneSetRecord record = new GeneSetRecord(f);
 
 //		 if (theTable.getItems().isEmpty())
 //			 allColumns.clear();
 //		 allColumns.addAll(record.getAllColumns());
 //		 allColumns.add(geneNameColumn);
 		 resetTableColumns();
-		 List<Gene> genes = record.getGeneList();
+		 List<Gene> genes = record.getGeneSet();
 		 theTable.getItems().addAll(genes);
 	}
 	@FXML private void doClose()		{	 	}
@@ -596,7 +599,7 @@ public class GeneListController  extends TableController  {
 		TableColumn extant =geneListRecord.findByText(allColumns, "All IDs");
 		if (extant != null) return;
 		
-		GeneListRecord rec = getGeneList();
+		GeneSetRecord rec = getGeneList();
 		rec.fillIdlist();
 		TableColumn<Gene, String> mapCol = new TableColumn("All IDs");
 		mapCol.setPrefWidth(300);
@@ -613,7 +616,7 @@ public class GeneListController  extends TableController  {
 	@FXML private void doChart()	
 	{
 		long start = System.currentTimeMillis();
-		GeneListRecord rec = getGeneList();
+		GeneSetRecord rec = getGeneList();
 		if (rec == null || !geneListRecord.hasHeaders()) 
 		{
 			System.err.println("doChart failed");
@@ -634,7 +637,7 @@ public class GeneListController  extends TableController  {
 	@FXML private void doChartVisible()	
 	{
 		long start = System.currentTimeMillis();
-		GeneListRecord rec = getGeneList();
+		GeneSetRecord rec = getGeneList();
 		if (rec == null) 
 		{
 			System.err.println("doChart failed");
@@ -764,7 +767,7 @@ public class GeneListController  extends TableController  {
 	public void openByReference(String ref) {
 		for (Object rec : theTable.getItems())
 		{
-			if (ref.equals(((Gene)rec).getId()))
+			if (ref.equals(((Gene)rec).getGraphId()))
 				System.out.println("openByReference " + ref);
 		}
 	}

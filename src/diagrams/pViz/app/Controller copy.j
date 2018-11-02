@@ -2,8 +2,8 @@ package diagrams.pViz.app;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -11,19 +11,14 @@ import animation.BorderPaneAnimator;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.DataNodeGroup;
-import diagrams.pViz.model.DataNodeState;
 import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.EdgeLine;
-import diagrams.pViz.model.EdgeType;
-import diagrams.pViz.model.GeneModel;
-import diagrams.pViz.model.Interaction;
+import diagrams.pViz.model.MNode;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.tables.GeneListController;
+import diagrams.pViz.tables.GeneListTable;
 import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
-import diagrams.pViz.util.WebUtil;
 import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
@@ -33,31 +28,32 @@ import diagrams.pViz.view.VNode;
 import gui.Action;
 import gui.Action.ActionType;
 import gui.Borders;
-import gui.DraggableTreeTableRow;
+import gui.DraggableTableRow;
+import gui.DropUtil;
 import gui.UndoStack;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyStringWrapper;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.ListChangeListener.Change;
+import javafx.concurrent.Worker;
+import javafx.event.ActionEvent;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
+import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -67,16 +63,13 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableView;
-import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.ComboBoxTreeTableCell;
-import javafx.scene.control.cell.TextFieldTreeTableCell;
+import javafx.scene.control.Tooltip;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
@@ -91,8 +84,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 import javafx.util.Pair;
@@ -100,15 +96,11 @@ import model.AttributeMap;
 import model.IController;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
-import model.bio.GeneSetRecord;
+import model.bio.GeneListRecord;
 import model.bio.Species;
-import model.bio.TableRecord;
-import model.bio.XRefable;
-import model.bio.XRefableSection;
 import util.FileUtil;
 import util.StringUtil;
 
-//https://dzone.com/articles/editable-tables-in-javafx
 
 public class Controller implements Initializable, IController 
 {
@@ -117,8 +109,6 @@ public class Controller implements Initializable, IController
 	private Model model;
 	public Model getDrawModel()   		{ 		return model;  }
 	public Model getModel() 			{		return model;	}	
-	private GeneModel geneModel;
-	public GeneModel getGeneModel()   		{ 		return geneModel;  }
 	private Pasteboard pasteboard;
 	public Pasteboard getPasteboard()   { 		return pasteboard;  }
 	private UndoStack undoStack;
@@ -126,7 +116,7 @@ public class Controller implements Initializable, IController
 	private Document doc;
 	private String species = "Unspecified";
 
-	int verbose = 1;
+	int verbose = 0;
 	
 //	@FXML private VBox east;
 	@FXML private VBox south;
@@ -143,21 +133,7 @@ public class Controller implements Initializable, IController
 	@FXML private ToggleButton protein;		
 	@FXML private ToggleButton pathway;		
 	@FXML private ToggleButton rna;	
-	@FXML private CheckBox showGraphId;	
-	@FXML private CheckBox snapToGrid;	
-	@FXML private CheckBox showZOrder;	
-	@FXML private void	showZOrder()
-	{
-		zOrderVisible.set(showZOrder.isSelected());
-	}
-	@FXML private void	setSnapToGrid()
-	{
-//		snapper.set(snapToGrid.isSelected());
-	}
-	@FXML private void	showGraphId()
-	{
-		graphIdsVisible.set(showGraphId.isSelected());
-	}
+
 	@FXML private Button bottomSideBarButton;
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
@@ -167,15 +143,15 @@ public class Controller implements Initializable, IController
 	@FXML private MenuItem redo;
 	@FXML private MenuItem clearundo;
 	
-//	@FXML private MenuItem clearColors;
-//	@FXML private MenuItem browsePathways;
-//	@FXML private MenuItem tofront;
-//	@FXML private MenuItem toback;
-//	@FXML private MenuItem zoomIn;
-//	@FXML private MenuItem zoomOut;
-//	@FXML private MenuItem group;
-//	@FXML private MenuItem ungroup;
-//	@FXML private MenuItem delete;
+	@FXML private MenuItem clearColors;
+	@FXML private MenuItem browsePathways;
+	@FXML private MenuItem tofront;
+	@FXML private MenuItem toback;
+	@FXML private MenuItem zoomIn;
+	@FXML private MenuItem zoomOut;
+	@FXML private MenuItem group;
+	@FXML private MenuItem ungroup;
+	@FXML private MenuItem delete;
 	@FXML private VBox west;
 	@FXML private HBox bottomPadding;
 	@FXML private BorderPane 	loadContainer;
@@ -184,12 +160,25 @@ public class Controller implements Initializable, IController
 	//------------------------------------------
 	@Override public void resetTableColumns() {	}
 	@Override public void reorderColumns(int a, int b) {	}
-	private GeneSetRecord geneSetRecord;		// the model
-	@FXML protected TreeTableView<XRefable> nodeTable;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> nodeColumn;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> graphid;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> xrefdb;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> xrefid;
+	@FXML private TableColumn<Gene, String> geneTypeColumn;
+	@FXML private TableColumn<Gene, String> geneNameColumn;
+	@FXML private TableColumn<Gene, String> graphidColumn;
+	@FXML private TableColumn<Gene, String> geneIdColumn;
+	@FXML private TableColumn<Gene, String> databaseColumn;
+	@FXML private TableColumn<Gene, String> dbidColumn;
+	@FXML private TableColumn<Gene, String> dataColumn;
+	@FXML private TableColumn<Gene, String> ensemblColumn;
+	@FXML private TableColumn<Gene, String> urlColumn;
+	@FXML private TableColumn<Gene, String> termsColumn;
+	@FXML private TableColumn<Gene, String> locationColumn;
+	@FXML private TableColumn<Gene, String> logger;
+	@FXML private TableColumn<Gene, String> pvalue;
+	@FXML private TableColumn<Gene, String> fdr;
+	private GeneListRecord geneListRecord;		// the model
+
+	protected List<TableColumn<Edge, ?>> edgeColumns = new ArrayList<TableColumn<Edge, ?>>();
+	protected List<TableColumn<Gene, String>> allColumns = new ArrayList<TableColumn<Gene, String>>();
+	@FXML protected TableView<Gene> nodeTable;
 	@FXML private Label select;
 	@FXML private Label size;
 	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
@@ -255,7 +244,22 @@ public class Controller implements Initializable, IController
 		}
 	}
 	static String jupy = "https://nbviewer.jupyter.org/github/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC3.ipynb";
-	@FXML private void showJupyter()	{ 	WebUtil.showURL(jupy);	}
+	@FXML private void showJupyter()	
+	{ 	
+		try 
+		{
+			Stage browser = new Stage();
+		    WebView webview = new WebView();
+		    browser.setScene(new Scene(webview, 800, 1200));
+			final WebEngine webEngine = webview.getEngine();
+			webEngine.getLoadWorker().stateProperty().addListener((x,y,newState) -> {
+			     if (newState == Worker.State.SUCCEEDED) 
+			         browser.setTitle(webEngine.getLocation());   }  );
+			 webEngine.load(jupy);
+			 browser.show();
+		}
+		catch(Exception e) { e.printStackTrace();	}
+	}
 	@FXML private void print()			{ 	doc.print();			}
 	@FXML private void quit()			{ 	Platform.exit();			}
 //	@FXML private void clickDrawPane()	{ 	System.out.println("clicked");			}
@@ -283,6 +287,10 @@ public class Controller implements Initializable, IController
 	@FXML public  void zoomOut()		{	undoStack.push(ActionType.Zoom);	pasteboard.zoomOut();  pasteboard.restoreBackgroundOrder();  	}
 	@FXML public  void toLayer()		
 	{	
+//		String layername = "Content";
+//		undoStack.push(ActionType.Reorder);	  
+//		getSelectionManager().setLayer(layername);
+//		pasteboard.restoreBackgroundOrder();  	
 	}
 	public List<LayerRecord> getLayers()	{	return layerController.getLayers();	}
 	public void moveSelectionToLayer(String layername)
@@ -294,7 +302,6 @@ public class Controller implements Initializable, IController
 	@FXML private void hideAnchors()	{ 	model.setAnchorVisibility(false);	}
 	@FXML private void showAnchors()	{ 	model.setAnchorVisibility(true);	}
 	@FXML public  void browsePathways()		{	App.browsePathways(this);	}	
-	@FXML	private void clearColors() { model.clearColors();}
 	// **-------------------------------------------------------------------------------
 	public  void buildStage(String title, VBox contents)		
 	{
@@ -317,8 +324,8 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	@FXML private void setStraight()	{		activeLineType = "Straight";	}
 	@FXML private void setCurved()		{		activeLineType = "Curved";	}
-	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
-	public EdgeType getCurrentLineBend() { return EdgeType.lookup(activeLineType);		}
+	@FXML private void setElbowed()		{		activeLineType = "Elbowed";	}
+	
 	@FXML private void setArrow1()		{		activeArrowType = "Arrow1";	}
 	@FXML private void setArrow2()		{		activeArrowType = "Arrow2";	}
 	@FXML private void setArrow3()		{		activeArrowType = "Arrow3";	}
@@ -333,7 +340,7 @@ public class Controller implements Initializable, IController
 	{ 	
 		if (getSelection().size() >= 2)		
 		{
-			List<Interaction> edges = getDrawModel().connectSelectedNodes();
+			List<Edge> edges = getDrawModel().connectSelectedNodes();
 			if (edges.size() > 0)
 			{
 				addEdges(edges);
@@ -344,13 +351,13 @@ public class Controller implements Initializable, IController
 		}
 	}
 	
-	void addEdges(List<Interaction> edges)
+	void addEdges(List<Edge> edges)
 	{
-		for (Interaction e: edges)
-			addInteraction(e);
+		for (Edge e: edges)
+			add(e);
 	}
 	
-	public static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
+	static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
 	static String CSS_cellBackground(boolean undone) 	{		return "-fx-background-color: " + (undone ? "GREY; " : "BEIGE; ");	}
 	static String ctrlStr = "fx:id=\"%s\" was not injected: check your FXML file '%s'.";
 	static String missing(String s)	{		return String.format(ctrlStr, s, "AttributeValueFXML.fxml");	}
@@ -365,21 +372,15 @@ public class Controller implements Initializable, IController
 	@FXML private void showInspector() {
 		bottomSideBarButton.fire();
 	}
-	SimpleBooleanProperty graphIdsVisible = new SimpleBooleanProperty(true);
-	public SimpleBooleanProperty graphIdsVisibleProperty() { return graphIdsVisible; }
-	SimpleBooleanProperty zOrderVisible = new SimpleBooleanProperty(true);
-	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
 	// **-------------------------------------------------------------------------------
-	GPMLTreeTableView nodeTreeTable;
-	public GPMLTreeTableView getTreeTableView() { return nodeTreeTable; }
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		undoStack = new UndoStack(this, null);
 		assert(drawPane != null);
 		model = new Model(this);
-		geneModel = new GeneModel(this);
 		pasteboard = new Pasteboard(this);
 		drawPane.getChildren().add(pasteboard);
+		
 		doc = new Document(this);
 		setupInspector();		
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
@@ -394,18 +395,34 @@ public class Controller implements Initializable, IController
 		if (bottomPadding!= null)
 			bottomPadding.setPadding(new Insets(3,3,4,4));
 
-		if (west != null) 		west.setBorder(Borders.lineBorder);
+		if (west != null)
+			west.setBorder(Borders.lineBorder);
+//		if (east != null)
+//		{
+////			propertyPanel = new PropertyPanel(this);
+//			URL url = getClass().getResource("Properties.fxml");
+//			try {
+//				propertyPanel  = (AnchorPane) FXMLLoader.load(url);
+//			}
+//			catch (Exception e) { e.printStackTrace(); } 
+//			geneListTable = new GeneListTable(this);
+//			DropUtil.makeFileDropPane(geneListTable, e -> { geneListTable.doDrag(e); });
+//			SplitPane split = new SplitPane(propertyPanel, geneListTable);
+//			split.setOrientation(Orientation.VERTICAL) ;
+//			east.getChildren().add(split);
+//			
+//		}
 		setupPalette();
 		setupListviews();
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
+//		new BorderPaneAnimator(container, rightSideBarButton, Side.RIGHT, false, 300);
 		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 150);
 		rightSideBarButton.setOnAction(event -> {	toggleHSplitter();	});
-		rightSideBarButton.fire();
+//		rightSideBarButton.fire();
 		bottomSideBarButton.fire();
-		rightSideBarButton.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.LOCATION_ARROW, GlyphIcon.DEFAULT_ICON_SIZE));
-		rightSideBarButton.setText("");
-
-		pasteboard.makeGrid(toggleGridButton, scrollPane);	
+		
+		pasteboard.makeGrid(toggleGridButton, scrollPane);
+		
 		Pair<FXMLLoader, Stage> loader = App.getInstance().makeLoader();
 		
 		Pair<FXMLLoader, Stage> pair = App.buildStage("Layers", "../view/Layers.fxml", 250, 300);
@@ -421,15 +438,110 @@ public class Controller implements Initializable, IController
 		boolean startWithShapes = false;
 		if (startWithShapes) test1();
 		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
-		nodeTreeTable = new GPMLTreeTableView(nodeTable, this);
-		nodeTreeTable.setup(size,select);
+		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 150);
+		
+		geneTypeColumn.setUserData("T");	allColumns.add(geneTypeColumn);
+		geneNameColumn.setUserData("T");	allColumns.add(geneNameColumn);
+		graphidColumn.setUserData("T");		allColumns.add(graphidColumn);
+		geneIdColumn.setUserData("T");		allColumns.add(geneIdColumn);
+		databaseColumn.setUserData("D");	allColumns.add(databaseColumn);
+		dbidColumn.setUserData("T");		allColumns.add(dbidColumn);
+		dataColumn.setUserData("N");		allColumns.add(dataColumn);
+		ensemblColumn.setUserData("T");		allColumns.add(ensemblColumn);
+		urlColumn.setUserData("U");			allColumns.add(urlColumn);
+		termsColumn.setUserData("T");		allColumns.add(termsColumn);
+		locationColumn.setUserData("T");	allColumns.add(locationColumn);
+		
+//		makeSeparatorColumn();
+
+		geneTypeColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("type"));
+		graphidColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("graphid"));
+		urlColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("url"));
+//		typeColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("type"));
+		geneNameColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("name"));
+		databaseColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("database"));
+		dbidColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("dbid"));
+		termsColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("goFunction"));
+		locationColumn.setCellValueFactory(new PropertyValueFactory<Gene, String>("chromosome"));
+
+		logger.setCellValueFactory(new PropertyValueFactory<Gene, String>("logger"));
+		pvalue.setCellValueFactory(new PropertyValueFactory<Gene, String>("pvalue"));
+		fdr.setCellValueFactory(new PropertyValueFactory<Gene, String>("fdr"));
+
+		source.setCellValueFactory(new PropertyValueFactory<Edge, String>("source"));
+		target.setCellValueFactory(new PropertyValueFactory<Edge, String>("target"));
+		sourceid.setCellValueFactory(new PropertyValueFactory<Edge, String>("sourceid"));
+		targetid.setCellValueFactory(new PropertyValueFactory<Edge, String>("targetid"));
+		interaction.setCellValueFactory(new PropertyValueFactory<Edge, String>("interaction"));
+		database.setCellValueFactory(new PropertyValueFactory<Edge, String>("database"));
+		dbid.setCellValueFactory(new PropertyValueFactory<Edge, String>("dbid"));
+		//-------
+		nodeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+
+		nodeTable.setRowFactory((a) -> {
+		       return new DraggableTableRow<Gene>(nodeTable, GENE_MIME_TYPE, this, geneListRecord);
+			});
+		
+		// bind two labels:  select and size to the number selected and number of rows, e.g.: (32 / 2092)
+		select.setAlignment(Pos.CENTER_RIGHT);
+		select.setText("0");
+		size.setText("0");
+		nodeTable.getSelectionModel().getSelectedIndices().addListener(new ListChangeListener<Integer>()
+		{
+			@Override public void onChanged(Change<? extends Integer> change) 
+			{ 
+				select.setText("" + nodeTable.getSelectionModel().getSelectedIndices().size()); 
+			}
+		});
+		nodeTable.getItems().addListener(new ListChangeListener<Gene>()
+		{
+			@Override public void onChanged(Change<? extends Gene> change) { size.setText("/ " + nodeTable.getItems().size()); }
+		});
+		nodeTable.setOnKeyPressed( new EventHandler<KeyEvent>()
+		{
+			@Override
+			public void handle(final KeyEvent keyEvent) {
+				if (keyEvent.getCode().equals(KeyCode.DELETE) || keyEvent.getCode().equals(KeyCode.BACK_SPACE)) {
+					List<Integer> ids = nodeTable.getSelectionModel().getSelectedIndices();
+					int sz = ids.size();
+					for (int i = sz - 1; i >= 0; i--)
+						nodeTable.getItems().remove(i);
+					nodeTable.getSelectionModel().clearSelection();
+				}
+			}
+		});
+//		search.setTooltip(new Tooltip(tooltip));
+//		searchBox.setTooltip(new Tooltip(tooltip));
+		
 		resetTableColumns();
+
+		edgeid.setUserData("T");		edgeColumns.add(edgeid);
+		source.setUserData("T");		edgeColumns.add(source);
+		sourceid.setUserData("T");		edgeColumns.add(sourceid);
+		interaction.setUserData("T");	edgeColumns.add(interaction);
+		target.setUserData("T");		edgeColumns.add(target);
+		targetid.setUserData("T");		edgeColumns.add(targetid);
+		database.setUserData("T");		edgeColumns.add(database);
+		dbid.setUserData("T");			edgeColumns.add(dbid);
+//		graphid.setUserData("T");		edgeColumns.add(graphid);
+		edgeid.setCellValueFactory(new PropertyValueFactory<Edge, String>("edgeid"));
+
+	//		graphid.setCellValueFactory(new PropertyValueFactory<Edge, String>("graphid"));
+		edgeTable.getSelectionModel().getSelectedIndices().addListener(new ListChangeListener<Integer>()
+		{
+			@Override public void onChanged(Change<? extends Integer> change) 
+			{ 
+				eselect.setText("" + edgeTable.getSelectionModel().getSelectedIndices().size() + "/ " + edgeTable.getItems().size());  
+			}
+		});
+		
+		
         Thread postponed =  new Thread(() -> Platform.runLater(() -> {  loader.getValue().toFront();	} )  );
         postponed.start();
 	}
 	boolean open = true;
 	private void toggleHSplitter() {
-			if (hsplitter != null) hsplitter.setDividerPosition(0, open ? 0.5 : 1.0);
+			hsplitter.setDividerPosition(0, open ? 0.5 : 1.0);
 			open = !open;
 	}
 
@@ -449,8 +561,9 @@ public class Controller implements Initializable, IController
 
 	}
 
-	public void doNewGeneList()	{		App.doNewGeneList(model, geneModel);	}
+	public void doNewGeneList()	{		App.doNewGeneList(model.getGeneList(), model.getEdgeList());	}
 	
+	public void addEdge(VNode starter, VNode end) {		model.addEdge(starter, end);	}
 
 	public void getInfo(DataFormat mimeType, String idx, String colname, MouseEvent ev) {
 		try 
@@ -459,8 +572,8 @@ public class Controller implements Initializable, IController
 			if (mimeType == Controller.GENE_MIME_TYPE)
 			 {
 			   String rowName = "";
-			   if (index >=0 && model.getDataNodeMap().size() > index)
-				   	rowName = model.getDataNodeMap().get(index).getGraphId();
+			   if (index >=0 && model.getNGenes() > index)
+				   	rowName = model.getGenes().get(index).getId();
 //			   showGeneInfo(rowName);
 			   return;
 		  }
@@ -472,10 +585,13 @@ public class Controller implements Initializable, IController
 				   return;
 			   }
 			}
+		  
 		  System.out.println("getInfo wasn't matched: " + mimeType.toString());					//TODO
+		  //
 		}
 		catch (Exception e) { e.printStackTrace();}
 	}
+
 	// ------------------------------------------------------
 	final ContextMenu tableColumnOptions = new ContextMenu();
 	String[] colnames = new String[] { "Id", "Reference", "Database", "Authors", "Title", "Source", "Year" };
@@ -500,8 +616,9 @@ public class Controller implements Initializable, IController
 //		dlog.showAndWait();
 	}
 	//-----------------------------------------------------------------------
-	@FXML private void addLegend() {		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);	}
 	@FXML private void doNewMultiGeneList()  { 	App.doNewMultiGeneList(); 	}
+	
+	//-----------------------------------------------------------------------
 	@FXML private void addLegendDlog()
 	{
 		LegendDialog dlog = new LegendDialog();
@@ -509,8 +626,13 @@ public class Controller implements Initializable, IController
 		if (value.isPresent())
 			LegendRecord.makeLegend(dlog.resultProperty(), model, this);
 	}
-	
+
 	//-----------------------------------------------------------------------
+	@FXML private void addLegend()
+	{
+		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);
+	}
+	
 	LayerController layerController;
 	@FXML private void showLayers()
 	{
@@ -518,6 +640,7 @@ public class Controller implements Initializable, IController
 			layerController.getStage().hide();
 		else layerController.getStage().show();
 	}
+	//-----------------------------------------------------------------------
 	public LayerRecord getLayerRecord(String name)	{		return layerController.getLayer(name);	}
 	@FXML private void addLayer()
 	{
@@ -529,14 +652,13 @@ public class Controller implements Initializable, IController
 		if (layerController != null)
 			layerController.removeLayer();
 	}
-	//-----------------------------------------------------------------------
 	@FXML private void test1()	{		Test.test1(this);	}
 	 @FXML private void test2()	{		Test.test2(this);	}
 	 @FXML private void test3()	{		Test.test3(this);	}
 
 // **-------------------------------------------------------------------------------
 	// Tool palette
-	@FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
+	 @FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
 	@FXML private void setRectangle()	{ pasteboard.setTool(Tool.Rectangle);}	// TODO capture double click for stickiness
 	@FXML private void setText()		{ pasteboard.setTool(Tool.Text);}
 	@FXML private void setOval()		{ pasteboard.setTool(Tool.Circle);		}
@@ -577,6 +699,7 @@ public class Controller implements Initializable, IController
 		b.setGraphic(GlyphsDude.createIcon(i, GlyphIcon.DEFAULT_ICON_SIZE));
 		b.setId(t.name());
 	}
+	
 	// **-------------------------------------------------------------------------------
 	
 	private ToggleGroup paletteGroup;
@@ -607,6 +730,7 @@ public class Controller implements Initializable, IController
 //		setGraphic(shape2, Tool.Brace, FontAwesomeIcons.BARCODE);
 	
 		IController.setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
+//		IController.setGraphic(rightSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_LEFT);
 		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
 		IController.setGraphic(toggleGridButton, FontAwesomeIcons.TH);
 	}
@@ -641,20 +765,52 @@ public class Controller implements Initializable, IController
 	public void addXMLDoc(org.w3c.dom.Document doc)
 	{
 		new GPML(model, getActiveLayerName()).read(doc);
-		getPasteboard().restoreBackgroundOrder();
-		assignDataNodesToGroups();
-		resetEdgeTable();
-		nodeTreeTable.updateTables();
-      Thread postponed =  new Thread(() -> Platform.runLater(() -> { redrawAllEdges();	} )  );
-    postponed.start();  
+		updateTables();
+//		Window window = refTable.getScene().getWindow();
+//        if (window instanceof Stage) 
+//        	((Stage) window).setTitle(model.getTitle());	
+        Thread postponed =  new Thread(() -> Platform.runLater(() -> {  getModel().resetEdgeTable();	} )  );
+        postponed.start();  
+        hideAnchors();
+
+//		addModelToPasteboard();
+
 	}
 			
 	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}
 	public String getActiveLayerName() 	{		return pasteboard.activeLayerName();	}
+	public void updateTables() {
+//		refTable.getItems().addAll(model.getReferences());
+//		geneListTable.populateTable(model, model.getGenes());
+	}
 
 	//-----------------------------------------------------------------------------
-	public void doPaste()// TODO 
-	{	}
+	
+//		
+//	public void addState(String s)			// used in undo restore
+//	{
+//		Scanner scan = new Scanner(s);
+//		while (scan.hasNextLine())
+//		{
+//			String line = scan.nextLine();
+//			Node node = getNodeFactory().parseNode(line, true);
+//			if (node != null)
+//			{
+//				if (verbose > 0) System.out.print(", adding " + node.getId());
+//				add(node);
+//			}
+//			if (verbose > 0) System.out.println();
+//		} 
+//		scan.close();
+//		refreshZoomPane();
+//	}
+	//-----------------------------------------------------------------------------
+	public void doPaste()
+	{
+		// TODO Auto-generated method stub
+		
+	}
+//	void addGenes(List<Gene> inList) 	{ 	model.addGenes(inList); }
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
 	{
@@ -663,9 +819,28 @@ public class Controller implements Initializable, IController
 			undoview.setCellFactory(list -> {  return new DrawActionCell();  });	
 			undoview.setStyle(CSS_Gray2);
 		}
+		
+		//setupGeneList() 
+		if (nodeTable != null)
+		{
+			nodeTable.getItems().addAll(model.getGenes());
+//			nodeTable.setCellFactory(list ->  { return new GeneCell();   });
+			nodeTable.setStyle(CSS_Gray2);
+		}
+		
+//		attributeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE); //  multiple selection
+//		attributeTable.setItems(RandomAttributeValueData.getRandomAttributeValueData()); // set Dummy Data for the TableView
+//		attributeTable.getSelectionModel().setCellSelectionEnabled(false);
+
+//		setRowFactory();				// set the Row Factory of attributeValue table
+		
+//		attributeTable.setStyle(CSS_Gray2);
+//		attributeCol.setCellValueFactory(new PropertyValueFactory<>("attribute"));
+//		valueCol.setCellValueFactory(new PropertyValueFactory<>("value"));
 	}
 	
 	//---------------------------------------------------------------------------------
+	  
 	  static class DrawActionCell extends ListCell<Action> {
 		    @Override
 		    public void updateItem(Action item, boolean empty) {
@@ -689,25 +864,92 @@ public class Controller implements Initializable, IController
 		    }
 		  }
 	// **-------------------------------------------------------------------------------
+//	
+//	public static String getStyle(Shape n)
+//	{
+//		DecimalFormat fmt = new DecimalFormat("0.00");
+//		StringBuilder buff = new StringBuilder();
+//		Paint fill = n.getFill();
+//		String fillStr = fill.toString();
+//		Paint stroke = n.getStroke();
+//		String strokeStr = stroke.toString();
+//		double wt = n.getStrokeWidth();
+//		String wtStr = fmt.format(wt);
+//		double opac = n.getOpacity();
+//		String opacStr = fmt.format(opac);
+//		buff.append("-fx-fill: #").append(fillStr).append(";\n");
+//		buff.append("-fx-stroke: #").append(strokeStr).append(";\n");
+//		buff.append("-fx-stroke-width: ").append(wtStr).append(";\n");
+//		buff.append("-fx-opacity: ").append(opacStr).append(";\n");
+//		return buff.toString();
+//	}
+	
+	// **-------------------------------------------------------------------------------
+
 	// **-------------------------------------------------------------------------------
 	public void selectAll(List<Node> n)	{		getSelectionManager().selectAll(n);	}
+
+//	public void setStatus(String s)					{ 		status1.setText(s);	}
 	// **-------------------------------------------------------------------------------
-	public void addExternalNode(Node n)							
+	public void add(Node n)							
 	{		
 		if (n == null) return;
 		pasteboard.getChildren().add(n);	
 		if ("Marquee".equals(n.getId())) 	return;
 	}
+	public void add(Edge e)							
+	{		
+		if (e == null) return;
+		if (model.containsEdge(e)) return;
+		if (e.getStartNode() == null)
+		{
+			return;
+		}
+		String layername = e.getStartNode().getLayerName();
+		e.getAttributes().put("Layer", layername);
+		model.addEdge(e);
+		pasteboard.add(0, e.getEdgeLine());
+		for (Anchor anchor : e.getEdgeLine().getAnchors())
+		{
+			VNode anchorStack = anchor.getStack();
+			Shape shap = anchorStack.getFigure();
+			if (shap instanceof Circle)
+				System.out.println(String.format("(%.2f, %.2f)", ((Circle)shap).getCenterX(), ((Circle)shap).getCenterY()));
+			pasteboard.add(anchorStack);
+		}
+	}
 
+	
 	public void add(VNode n)							
 	{		
 		pasteboard.add(n);	
-		DataNode modelNode = n.modelNode();
+		MNode modelNode = n.modelNode();
 		if (n.isAnchor()) return;
 		if (n.isLabel()) return;
-		AttributeMap map = modelNode;
+		AttributeMap map = modelNode.getAttributeMap();
 		Object prop  = map.get("TextLabel");
+		if (prop != null && model.findGene(""+prop) == null)
+		{
+			
+			String name =  ""+prop;
+			String type = map.get("Type");
+			String db = map.get("Database");
+			String dbid = map.get("ID");
+			String graphid = map.get("GraphId");
+			String ensmbl = "";
+			String link = map.get("Value");
+			
+			Gene genie = new Gene(model.getGeneList(), name, ensmbl, species, link);
+			genie.setType(map.get("Type"));
+//			genie.setId(map.get("GraphId"));
+			
+			genie.setDatabase(map.get("Database"));
+			genie.setDbid(map.get("ID"));
+			model.addGene(genie);
+			model.addResource(modelNode);
+		}
 	}
+	public void add(int index, VNode n)	{	pasteboard.add(index, n); 	}
 	public void addAll(List<VNode> n)	{	pasteboard.addAllVNodes(n);	}
 	public void addAll(VNode... n)		{	pasteboard.addAllVNodes(n);	}
 	
@@ -718,15 +960,16 @@ public class Controller implements Initializable, IController
 	}
 	public void remove(VNode n)						
 	{		
-		getModel().removeNode(n);
-		String layer = n.getLayerName();
-		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
-		content.remove(n);
-		nodeTreeTable.rebuildNodeTable();		// TODO redundant?
+		getDrawModel().removeNode(n);
+		Layer content = pasteboard.getContentLayer();			// TODO -- layering naive
+		content.remove(n);	
 	}
 	// **-------------------------------------------------------------------------------
 	public String getState()					{ 	return model.saveState();  }
 	public void reportStatus(String string)	 {}	 //		status1.setText(string);	
+	
+//	public void setStatus2(String status)	{	status2.setText(status);	}
+//	public void setStatus3(String status)	{	status3.setText(status);	}
 	// **-------------------------------------------------------------------------------
 	public void addStylesheet(File f)
 	{
@@ -737,7 +980,9 @@ public class Controller implements Initializable, IController
 	}
 	// **-------------------------------------------------------------------------------
 	// TODO add charts
+	
 	public void scatter(TableView content)	{}
+
 	public void timeseries(TableView content)	{	}
 	public void hiliteByReference(String ref) {
 //		for (BiopaxRecord biopax : model.getReferences())
@@ -761,186 +1006,107 @@ public class Controller implements Initializable, IController
 				String[] parts = s.split("\t");
 				if (parts.length == 2)
 				{
-					DataNode node = model.getResourceByKey(parts[0]);
+					MNode node = model.getResourceByKey(parts[0]);
 					if (node != null)
-						node.put("value", parts[1]);
+						node.getAttributeMap().put("value", parts[1]);
 				}
 			}
-			model.setColorByValue();
+			setColorByValue();
 	}
 	
-	public void setActiveLayer(String s) {		pasteboard.setActiveLayer(s);	}
-	// **-------------------------------------------------------------------------------
-	public void resynch(ObservableList<VNode> selectedItems) {
-		if (getInspector() != null)
-		getInspector().syncInspector();
-		if (selectedItems.size() == 0) return;		// don't deselect without selecting
-		copySelectionToNodeTable(selectedItems);
-	}
-	private void copySelectionToNodeTable(ObservableList<VNode> selectedItems) {
-		nodeTable.getSelectionModel().clearSelection();
-		for (VNode v : selectedItems)
+	
+	private void setColorByValue() {
+//		clearColors();
+		for (MNode node : model.getResourceMap().values())
 		{
-			TreeItem<XRefable> item = nodeTreeTable.findNode(v.getGraphId());
-			if (item != null)
-				nodeTable.getSelectionModel().select(item);
-		}		
-	}
-	
-	public void redrawEdgesToMe(VNode vNode) {
-		DataNode data = vNode.modelNode();
-		List<Interaction> edges = model.findInteractionsByNode(data);
-		for (Interaction edge : edges)
-			edge.connect();
-	}
-	public void redrawAllEdges() {
-		for (Interaction edge : model.getEdges())
-			edge.connect();
-	}
-	
-	public void assignDataNodesToGroups() {
-		Map<String, DataNodeGroup> groupMap = model.getGroupMap();
-		Map<String, DataNode> nodes = model.getDataNodeMap();
-		for (String key : groupMap.keySet())
-		{
-			DataNodeGroup group = groupMap.get(key);
-			String groupId = group.get("GroupId");
-			if (groupId == null) 		return;		//ERROR
-			group.getChildren().clear();
-			for (String nodeKey : nodes.keySet())
+			Object val = node.getAttributeMap().get("value");
+			if (val != null)
 			{
-				DataNode nod = nodes.get(nodeKey);
-				String groupRef = nod.get("GroupRef");
-				if (groupId.equals(groupRef))
-					group.addToGroup(nod);
+				double d = StringUtil.toDouble("" + val);
+				if (!Double.isNaN(d) && 0 <= d && 1 >= d)
+				{
+					Color gray = new Color(d,d,d, 1);
+					Shape shape = node.getStack().getFigure();
+					if (shape != null)
+					{
+						shape.setFill(gray);			// TODO set the attribute
+						if (gray.getRed() < 0.4 || gray.getBlue() < 0.4 || gray.getGreen() < 0.4)
+						{
+							node.getStack().getTextField().setStyle("-fx-text-fill: white");
+						}
+					}
+				}
 			}
-			group.calcBounds();
 		}
-		// DEBUG
-		for (String key : groupMap.keySet())
+	}	
+	@FXML	private void clearColors() {
+			
+		for (MNode node : model.getResourceMap().values())
 		{
-			DataNodeGroup group = groupMap.get(key);
-			System.out.print(group.getGraphId() + " contains ");
-			for (DataNode dn : group.getChildren())
-				System.out.print(dn + " ");
-			System.out.println(". ");
-
+			node.getAttributeMap().remove("value");
+			Shape shape = node.getStack().getFigure();
+			if (shape != null)
+			{	
+				shape.setFill(Color.WHITE);
+				node.getStack().getTextField().setStyle("-fx-text-fill: black");
+			}
 		}
-	}
-
-	// **-------------------------------------------------------------------------------
-	public void addDataNode(DataNode node) {
-		 node.setName( node.get("TextLabel"));
-		if (node.getStack() == null)
-			new VNode(node, pasteboard);
-		model.addResource(node.getGraphId(), node);
-//		nodeTreeTable.addBranch(node);
-	}
-
-	public void addShape(DataNode shape) {
-	pasteboard.setActiveLayer("Background");	
-		shape.setType("Shape");
-		shape.put("Type", "Shape");
-		shape.setName(shape.get("ShapeType"));
-		new VNode(shape, pasteboard);
-		model.addResource(shape);
-//		nodeTreeTable.addBranch(shape);
-		
-	}
-	public void addLabel(DataNode label) {
-		label.setType("Label");
-		label.put("Type", "Label");
-		new VNode(label, pasteboard);
-		model.addResource(label);
-//		nodeTreeTable.addBranch(label);
-	}
-
-	public void addInteraction(VNode starter, VNode end) {		
-		Interaction i = model.addIteraction(starter, end);
-		i.rebind();
-	}
-
-	public void addInteraction(Interaction e)							
-	{	
-		if (e == null) return;
-		e.setName(e.get("Name"));
-//		if (!model.containsEdge(e)) 
-		model.addEdge(e);
-		EdgeLine artifact = e.getEdgeLine();
-		pasteboard.add(0, artifact, e.getLayer());
-	}
-
-	public void addGroup(DataNodeGroup grp) {
-		new VNode(grp, pasteboard);
-		model.addGroup(grp);
-//		nodeTreeTable.addBranch(grp);
-
-	}
-	public void addStateNode(DataNodeState statenode) {
-		// model does not store states!   add the state info onto its host DataNode
-		String graphRef = statenode.get("GraphRef");
-		DataNode host = model.findDataNode(graphRef);
-		if (host != null)
-		{
-			host.getStack().addState(statenode);
-			String hostId = host.getGraphId();
-			nodeTreeTable.addBranch(statenode, hostId);
-			model.addState(graphRef, statenode);
-		}
-		
 	}
 	
-	public void addAnchor(Anchor anchor) 
-	{
-		anchor.copyAttributesToProperties();
-		anchor.setName("Anchor (" + anchor.get("GraphID") + ") on " + anchor.getInteraction().toString());
-		System.out.println("add Anchor " + anchor.get("GraphId"));
-		anchor.setGraphId(anchor.get("GraphId"));
-		model.addResource(anchor);			// add anchors to model, so edges can find them
+	public void setGeneList(GeneListRecord rec) 	
+	{ 		
+		if (rec == null) return;			// TODO clear gene lists?
+		nodeTable.getItems().addAll(rec.getGeneList());			// ADD UNIQUE
+		model.setGeneList(rec, rec.getGeneList());
+		model.fillIdlist();
 	}
-	// **-------------------------------------------------------------------------------
-	// GeneSets
-	// **-------------------------------------------------------------------------------
-	public void setGeneSet(GeneSetRecord rec) {
-		geneModel.setGeneList(rec, rec.getGeneSet());
-		
-	}
-	public void addGeneSet(File f, Point2D dropPt) {
-		addGeneSet( f, dropPt.getX(), dropPt.getY());
-	}
-	public void addGeneSet(File f, double dropX, double dropY) {
-		GeneSetRecord rec = new GeneSetRecord(f);
-//		addGenes(rec.getGeneList());			// ADD UNIQUE
+	public void setActiveLayer(String s) {		pasteboard.setActiveLayer(s);	}
+	public void addGeneList(File f, double dropX, double dropY) {
+		GeneListRecord rec = new GeneListRecord(f);
+		nodeTable.getItems().addAll(rec.getGeneList());			// ADD UNIQUE
 		
 		double COLWID = 90;
 		double ROWHGHT = 40;
 		int NCOLS = (int) Math.ceil(Math.sqrt(rec.getRowCount()));
 		
-		for (int i=0; i< rec.getGeneSet().size(); i++)
+		for (int i=0; i< rec.getGeneList().size(); i++)
 		{
-			Gene g = rec.getGeneSet().get(i);
+			Gene g = rec.getGeneList().get(i);
 			AttributeMap attrs = new AttributeMap(g);
 			attrs.put("CenterX", "" + (dropX + (i % NCOLS) * COLWID));
 			attrs.put("CenterY", "" + (dropY + (i / NCOLS) * ROWHGHT));
 			attrs.put("Width", "80");
 			attrs.put("Height", "30");
-			String name = g.getName();
+			String name = g.getId();
 			attrs.put("TextLabel", name);
 			attrs.put("Type", "GeneProduct");
-			DataNode node = new DataNode(attrs, getModel());
-			node.copyAttributesToProperties();
-			node.setName(name);
-			addDataNode(node);			
+			MNode node = new MNode(attrs, getModel());
+			add(node.getStack());			
 		}
+
 	}
-	public void rebind(String gid) {
-System.err.println("REBIND");	
-}
-	public void addBranch(Interaction interaction, String parentId) {
-		nodeTreeTable.addBranch(interaction, parentId);
-		
+	// **-------------------------------------------------------------------------------
+	boolean isGeneList(File f)
+	{
+		List<String> strs = FileUtil.readFileIntoStringList(f.getAbsolutePath());
+		int sz = strs.size();
+		if (sz < 10) return false;
+		String DELIM = "\t";
+		String firstRow = strs.get(0);
+		int nCols = firstRow.split(DELIM).length;
+		for (int i = 1; i< sz; i++)
+		{
+			String row = strs.get(i);
+			if (row.split(DELIM).length != nCols)
+				return false;
+		}
+		return true;
 	}
-	public GeneSetRecord getGeneSetRecord() {
-		return geneSetRecord;
+	// **-------------------------------------------------------------------------------
+	public void resynch() {
+		if (getInspector() != null)
+		getInspector().syncInspector();
+//		getProperties().syncProperties();
 	}
+
 }

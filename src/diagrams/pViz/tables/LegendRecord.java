@@ -6,7 +6,8 @@ import java.util.Map;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.GPMLRecord;
 import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.MNode;
+import diagrams.pViz.model.Interaction;
+import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
@@ -19,10 +20,7 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
-import javafx.scene.SnapshotParameters;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.DataFormat;
@@ -31,7 +29,6 @@ import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
-import javafx.scene.transform.Translate;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.MIM;
@@ -65,7 +62,7 @@ public class LegendRecord implements GPMLRecord {
 	public void getInfo(DataFormat mimetype, String a, String b) {
 
 	}
-	public static MNode makeLegend(ObjectProperty resultProperty, Model model, Controller ctrlr) {
+	public static DataNode makeLegend(ObjectProperty resultProperty, Model model, Controller ctrlr) {
 		String reslt = resultProperty.getValue().toString();
 		String[] flds = reslt.split("\t");
 		if (flds.length != 5) return null;
@@ -77,7 +74,7 @@ public class LegendRecord implements GPMLRecord {
 		return makeLegend(title, comment, addNodeTypes, addEdgeTypes, addRefs, model, ctrlr, false);
 
 	}
-	public static MNode makeLegend(String title, String comment, boolean addNodeTypes, boolean addEdgeTypes, boolean addRefs, Model model, Controller ctrlr, boolean smallVersion) {
+	public static DataNode makeLegend(String title, String comment, boolean addNodeTypes, boolean addEdgeTypes, boolean addRefs, Model model, Controller ctrlr, boolean smallVersion) {
 
 		int lab1wid = 120;
 		int lab2wid = 150;
@@ -100,8 +97,8 @@ public class LegendRecord implements GPMLRecord {
 		attrs.put("Height", "300");
 		attrs.put("CenterX", "350");
 		attrs.put("CenterY", "200");
-		MNode node = new MNode(attrs, model);
-		model.getResourceMap().put(node.getId(), node);
+		DataNode node = new DataNode(attrs, model);
+		model.getDataNodeMap().put(node.getGraphId(), node);
 		VNode stack = node.getStack();
 		VBox box = new VBox();
 		Label titleLabel = new Label(title);
@@ -128,18 +125,18 @@ public class LegendRecord implements GPMLRecord {
 		
 		if (addNodeTypes)
 		{
-			Map<String, MNode> nodeTypeMap = new HashMap<String, MNode>();
-			for (MNode eachnode : model.getResourceMap().values())
+			Map<String, DataNode> nodeTypeMap = new HashMap<String, DataNode>();
+			for (DataNode eachnode : model.getDataNodeMap().values())
 			{
 				String type = eachnode.getType();
-				MNode extant = nodeTypeMap.get(type);
+				DataNode extant = nodeTypeMap.get(type);
 				if (extant == null)
 					nodeTypeMap.put(type,  eachnode);
 			}
 			for (String key : nodeTypeMap.keySet())
 			{
 				if (key == null) continue;
-				MNode legendEntry = nodeTypeMap.get(key);
+				DataNode legendEntry = nodeTypeMap.get(key);
 				LegendRecord rec = new LegendRecord();
 				rec.setType(key);
 				rec.setName(legendEntry.getInfoStr());
@@ -176,7 +173,7 @@ public class LegendRecord implements GPMLRecord {
 			separatorLine = new Line(0,20, WIDTH, 20);
 			box.getChildren().add(separatorLine);
 			Map<MIM, Edge> edgeTypeMap = new HashMap<MIM, Edge>();
-			for (Edge edge : model.getEdgeList())
+			for (Interaction edge : model.getEdges())
 			{
 				MIM type = edge.getInteractionType();
 				Edge extant = edgeTypeMap.get(type);

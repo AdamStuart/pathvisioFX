@@ -8,7 +8,7 @@ public enum Tool {
 
 	Arrow,
 	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1,   // Shapes
-	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle,
+	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,			// Controls
 	;
@@ -55,7 +55,7 @@ public enum Tool {
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
 	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1 };
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
-	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle };
+	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
 
 	public boolean isArrow()				{	return this == Arrow;		}  
@@ -73,6 +73,7 @@ public enum Tool {
 		if ("Oval".equals(type)) 		return Oval;
 		
 		if ("Brace".equals(type)) 		return Brace;
+		if ("GroupComponent".equals(type)) return GroupComponent;
 		if ("Mitochondria".equals(type)) return Mitochondria;
 		if ("Protein".equals(type)) 	return Protein;
 		if ("Pathway".equals(type)) 	return Pathway;

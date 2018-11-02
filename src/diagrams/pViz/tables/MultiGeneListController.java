@@ -34,7 +34,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import model.IController;
 import model.bio.Gene;
-import model.bio.GeneListRecord;
+import model.bio.GeneSetRecord;
 import model.bio.Species;
 import util.FileUtil;
 
@@ -87,19 +87,19 @@ public class MultiGeneListController  implements Initializable  {
 		
 		firstTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		firstTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(firstTable, GeneListController.GENE_MIME_TYPE, parentController, null);
+		       return new DraggableTableRow<Gene>(firstTable, Controller.GENE_MIME_TYPE, parentController, null);
 			    });
 		DropUtil.makeDropPane(firstTable, e -> { handleDropEvent(e);}	);
 
 		secondTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		secondTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(secondTable, GeneListController.GENE_MIME_TYPE, parentController, null);
+		       return new DraggableTableRow<Gene>(secondTable, Controller.GENE_MIME_TYPE, parentController, null);
 			    });
 		DropUtil.makeDropPane(secondTable, e -> { handleDropEvent(e);}	);
 
 		thirdTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 		thirdTable.setRowFactory((a) -> {
-		       return new DraggableTableRow<Gene>(thirdTable, GeneListController.GENE_MIME_TYPE, parentController, null);
+		       return new DraggableTableRow<Gene>(thirdTable, Controller.GENE_MIME_TYPE, parentController, null);
 			    });
 		DropUtil.makeDropPane(thirdTable, e -> { handleDropEvent(e);}	);
 		
@@ -144,14 +144,14 @@ public class MultiGeneListController  implements Initializable  {
 			List<File> files = db.getFiles();
 			for (File file : files)
 			{
-				GeneListRecord rec = null;
+				GeneSetRecord rec = null;
 				if (FileUtil.isCDT(file) || FileUtil.isTextFile(file))
 					rec = Document.readTabularText(file, getSpecies());
 				else if (FileUtil.isGPML(file))
 					rec = GPML.readGeneList(file, getSpecies());
 
 				if (rec != null) 
-					targetTable.getItems().addAll(rec.getGeneList());
+					targetTable.getItems().addAll(rec.getGeneSet());
 
 			}
 		}

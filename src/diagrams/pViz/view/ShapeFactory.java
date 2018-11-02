@@ -8,7 +8,7 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.CellShapeFactory;
-import diagrams.pViz.model.MNode;
+import diagrams.pViz.model.DataNode;
 import gui.Action.ActionType;
 import gui.Effects;
 import gui.UndoStack;
@@ -63,12 +63,12 @@ public class ShapeFactory {
 	/*
 	 * makeNewShape returns the shape but also adds it to stack's children
 	 */
-	static public Shape makeNewShape(String s, MNode modelNode, VNode stack) {
+	static public Shape makeNewShape(String s, DataNode modelNode, VNode stack) {
 		Tool tool = Tool.lookup(s);
 //		if (tool == null || !tool.isShape())
 //			tool = Tool.Rectangle;
 		Shape newShape= null;
-		AttributeMap attrMap = modelNode.getAttributeMap();
+		AttributeMap attrMap = modelNode;
 //		attrMap.put("stroke-width", "3");  	
 		switch (tool)
 		{
@@ -77,6 +77,8 @@ public class ShapeFactory {
 			case Metabolite:		newShape = new Rectangle();	break;
 			case Protein:			newShape = new Rectangle();	break;
 			case Pathway:			newShape = new Rectangle();	break;
+			case GroupComponent:	newShape = new Rectangle();	break;
+
 			case Rectangle:			newShape = new Rectangle();	break;
 			case RoundedRectangle:	newShape = new Rectangle();	break;
 			case Polygon:			newShape = new Polygon();	break;
@@ -108,6 +110,8 @@ public class ShapeFactory {
 		}
 		stack.setId(id);
 		stack.getProperties().putAll(attrMap);
+		if (tool == Tool.Mitochondria)
+			stack.setScale(0.25);
 		stack.getChildren().add(0, newShape);
 		return newShape;
 	}

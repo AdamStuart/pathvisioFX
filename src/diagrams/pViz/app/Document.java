@@ -14,7 +14,7 @@ import javafx.stage.FileChooser;
 import javafx.util.Pair;
 import model.TableType;
 import model.bio.Gene;
-import model.bio.GeneListRecord;
+import model.bio.GeneSetRecord;
 import model.bio.Species;
 import util.FileUtil;
 import util.StringUtil;
@@ -48,7 +48,7 @@ public class Document
 		else System.err.println("open expected xml: " + s.substring(40));
 	}
 	// **-------------------------------------------------------------------------------
-	public static GeneListRecord readTabularText(File f, Species species)
+	public static GeneSetRecord readTabularText(File f, Species species)
 	{
 		List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath(), 100000);
 		TableType type = TableType.TXT;
@@ -109,7 +109,7 @@ public class Document
 	}
 	
 
-	public static GeneListRecord readTable(String name, TableType type, List<String> lines, Species species)
+	public static GeneSetRecord readTable(String name, TableType type, List<String> lines, Species species)
 	{
 		try
 		{
@@ -121,7 +121,7 @@ public class Document
 				return null;
 				
 			List<Gene> geneList = FXCollections.observableArrayList();
-			GeneListRecord record = new GeneListRecord(name);
+			GeneSetRecord record = new GeneSetRecord(name);
 			record.setSpecies(species.common());
 
 			if (lines.size() > 0)
@@ -138,7 +138,7 @@ public class Document
 				}
 			}
 			record.setColumnList();
-			record.setGeneList(geneList);
+			record.setGeneSet(geneList);
 			return record;
 		}
 		catch (Exception e) 
@@ -187,7 +187,7 @@ public class Document
 		try
 		{
 			if (FileUtil.isCDT(f))
-				controller.setGeneList(readTabularText(f, controller.getSpecies()));
+				controller.setGeneSet(readTabularText(f, controller.getSpecies()));
 			else if (FileUtil.isGPML(f) || FileUtil.isXML(f))
 			{
 				org.w3c.dom.Document doc = FileUtil.openXML(f);
@@ -210,6 +210,7 @@ public class Document
 		if (file != null)				// dialog wasn't canceled
 			open(file);			
 	}
+	static File lastSaveLocation = null;
 	// **-------------------------------------------------------------------------------
 	public void save()		
 	{ 	
@@ -217,9 +218,13 @@ public class Document
 		{
 			FileChooser chooser = new FileChooser();	
 			chooser.setTitle("Save Drawing");
+			chooser.setInitialFileName("Untitled.gpml");
+			chooser.setInitialDirectory(lastSaveLocation);
+			
 			file = chooser.showSaveDialog(App.getInstance().getStage());
 			if (file == null) return;
 			App.getInstance().getStage().setTitle(file.getName());
+			lastSaveLocation = file.getParentFile();
 		}
 		if (verbose > 0) System.out.println("about to do the save traversal");
 		String buff =  controller.getModel().saveState();

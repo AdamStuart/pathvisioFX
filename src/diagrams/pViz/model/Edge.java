@@ -14,10 +14,10 @@ import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.MIM;
+import model.bio.XRefable;
 import util.StringUtil;
 
 /*
@@ -25,40 +25,356 @@ import util.StringUtil;
  *  This is the entry in the edge table, not the actual Shapes on the screen
  *  see EdgeLine for the skin
  */
-public class Edge  {
+abstract public class Edge extends XRefable {
+
 
 	//----------------------------------------------------------------------
-	private AttributeMap attributes = new AttributeMap();
-	public AttributeMap getAttributes() {		return attributes;	}
+//	public Edge(VNode start, VNode end) 
+//    {
+//		this(start, end, null, null, null);
+//    }
+//	
+	public Edge(Model inModel) 
+    {
+		model = inModel;
+	}
+    public Edge(AttributeMap attr, Model inModel) 
+    {
+		this(inModel);
+		addAll(attr);
+		DataNode start = model.getDataNode(get("start"));
+    	if (start != null) 
+    	{
+    		startNode = start;
+        	setSource(start.getLabel()); 
+        	setSourceid(start.getGraphId());
+    	}
+    	DataNode target = model.getDataNode(get("end"));
+    	if (target != null) 
+    	{
+    		endNode = target;
+    		setTarget(target.getLabel()); 
+    		setTargetid(target.getGraphId());
+    	}
+		edgeLine = new EdgeLine(this, null, null);
+		setInteraction(get("ArrowHead"));
+		init();
+      }
+ 
+    public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
+    {
+		model = inModel;
+    	endNode = startNode = null;
+//		attributes = new AttributeMap();
+		edgeLine = new EdgeLine(this, null, null);
+		edgeLine.addPoint(startPt);
+		edgeLine.addPoint(endPt);
+//		model.addEdge(this);
+		init();
+      }
+ 
+	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
+	{
+    	if (attr != null)    	addAll(attr);
+    	startNode = start.modelNode();  
+    	put("source", start.modelNode().getLabel());
+    	put("sourceid", start.modelNode().getGraphId());
+    	setSource(start.modelNode().getLabel()); 
+    	setSourceid(start.modelNode().getGraphId());
+    	
+    	endNode = end.modelNode();	
+    	put("target", end.modelNode().getLabel());
+    	put("targetid", end.modelNode().getGraphId());
+    	setTarget(endNode.getLabel()); 
+    	setTargetid(endNode.getGraphId());
+		model = inModel;
+		if (getGraphId() == null)
+			setGraphId(model.gensym("edge"));
+		makeEdgeLine(pts, anchors);
+		init();
+    }
 	
-	private EdgeLine edgeLine;
-	public EdgeLine getEdgeLine() 	{	return edgeLine;	}
+	abstract protected void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors);
+
+	//------------------------------------------------------------------------------------------
+   public void init()
+    {
+		String type = get("ConnectorType");
+		edgeLine.setEdgeType(EdgeType.lookup(type));
+		String colStr = get("Color");
+		if (colStr != null)
+		{
+			Color c= Color.valueOf(colStr);
+			if (c != null) 		
+				setColor(c);
+		}
+		if ("Broken".equals(get("LineStyle")))		
+		{
+			Double[] vals = {10.0, 5.0};
+			edgeLine.setStrokeDashArray(vals);
+		}
+		addListeners();
+		
+			//			connect(false);		// edgeLine.setStartPoint(startNode.center());
+//			connect(true);		//edgeLine.setEndPoint(endNode.center());
+			
+			// TODO listen to layoutY too?
+//		}
+    }
+	public Point2D  getAdjustedPoint(VNode vNode, GPMLPoint gpmlPt)
+	{
+		if (vNode == null)
+			return new Point2D(100,100);
+		Point2D center = vNode.center();
+		if (gpmlPt == null) return center;
+		double relX = gpmlPt.getRelX();
+		double relY = gpmlPt.getRelY();
+		double width = vNode.getWidth();
+		double height = vNode.getHeight();
+		double x = center.getX() + relX * width / 2;
+		double y = center.getY() + relY * height / 2;
+		return new Point2D(x,y);
+	}
 	
-	private VNode startNode=null, endNode=null;
-	public VNode getStartNode()		{ 	return startNode;	}
-	public VNode getEndNode()		{ 	return endNode;	}
+	public void connect() {
+		if (startNode == null || edgeLine == null)
+			return;
+		Point2D pt = new Point2D(0, 0);
+//		if (startNode == null) {
+//			Shape shape = endNode.getModel().getModel().findShape(edgeLine.startGraphId());
+//			pt = boundsCenter(shape);
+//		} else
+		edgeLine.setStartPoint(getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint()));
+		pt = new Point2D(0, 0);
+		if (endNode == null) {
+			String val = get("end");
+			DataNode mNode = startNode.getModel().getResourceByKey(val);
+			if (mNode != null)	
+				endNode = mNode;
+
+			Shape shape = endNode == null ? 
+					startNode.getModel().findShape(edgeLine.endGraphId()) : endNode.getStack().getFigure();
+			if (shape != null) 
+				pt = boundsCenter(shape);
+			else 
+				System.out.println("no shape");
+		} else
+			pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+		edgeLine.setEndPoint(pt);
+
+//		for (Anchor a : edgeLine.getAnchors()) {  happens in edgeLIne.connect
+//			a.resetPosition(this);
+//		}
+		String layer = startNode.getStack().getLayerName();
+		edgeLine.connect();
+		if (verbose)
+		{
+			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
+			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
+			System.out.println("connect " + startStr + " to " + endStr);
+		}
+	}
+	boolean verbose = false;
+	
+	public Point2D boundsCenter(Shape s)	{
+		Bounds b = s.getBoundsInParent();
+		double x = (b.getMinX() + b.getMaxX()) / 2;
+		double y = (b.getMinY() + b.getMaxY()) / 2;
+		return new Point2D(x, y);		
+	}
+
+   public void connect(boolean atEnd)
+   {
+//	   if (startNode == null || endNode == null || edgeLine == null)
+//		   return;
+		if (atEnd)		edgeLine.setEndPoint(endNode.getStack().center());
+   		else 			edgeLine.setStartPoint(startNode.getStack().center());
+   		edgeLine.connect();
+//   		System.out.println("connect");
+   }
+   public boolean references(String state)
+   {
+	   if (state.equals(get("GraphRef"))) return true;
+	   for (GPMLPoint pt : edgeLine.getPoints())
+		   if (state.equals(pt.getGraphRef()))
+			   return true;
+	   return false;
+   }
+	public boolean touches(String graphId)
+	{
+		if (graphId == null) return false;
+		if (graphId.equals(get("start")))	return true;
+		if (graphId.equals(get("end")))		return true;
+		for (Anchor a : edgeLine.getAnchors())
+			if (graphId.equals(a.getGraphId())) 
+				return true;
+		return false;
+	}
+//
+//    private void dumpPoints(GPMLPoint a, GPMLPoint b, Point2D c) {
+//    	if (a != null) System.out.println(String.format("a: (%.2f, %.2f )", a.getX(), a.getY()));
+//    	if (b != null) System.out.println(String.format("b: (%.2f, %.2f )", b.getX(), b.getY()));
+//    	if (c != null) System.out.println(String.format("c: (%.2f, %.2f )", c.getX(), c.getY()));
+//}
+ //----------------------------------------------------------------------
+
+
+    //------------------------------------------------------------------------------------------
+   public boolean isStart(DataNode n)	{  return n == startNode;	}
+    public boolean isEnd(DataNode n)	{  return n == endNode;	}
+    public boolean isEndpoint(DataNode n)	{  return isStart(n) || isEnd(n);	}
+
+	//------------------------------------------------------------------------------------------
+	
+	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
+	{ 
+		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
+		{ connect(false); }  
+	};
+
+	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
+	{ 
+		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
+		{ connect(true); }  
+	};
+
+	ChangeListener<Number> startposition = new ChangeListener<Number>()
+	{ 
+		@Override public void changed(ObservableValue<? extends Number> observable,Number oldValue, Number newValue)
+		{ connect(false); }  
+	};
+
+	ChangeListener<Number> endposition = new ChangeListener<Number>()
+	{ 
+		@Override public void changed(ObservableValue<? extends Number> observable,Number oldValue, Number newValue)
+		{ connect(true); }  
+	};
+
+	
+	void addListeners()
+	{
+		if (startNode != null)
+		{
+			startNode.getStack().layoutBoundsProperty().addListener(startbounds);
+			startNode.getStack().layoutXProperty().addListener(startposition);
+		}
+		if (endNode == null){
+			String endId = get("end");
+			if (endId != null && getModel() != null)
+			{
+				DataNode mnode = getModel().getDataNode(endId);
+				if (mnode != null)
+					endNode = mnode;
+			}
+		}
+		if (endNode != null)
+		{	
+			endNode.getStack().layoutBoundsProperty().addListener(endbounds);
+			endNode.getStack().layoutXProperty().addListener(endposition);
+		}
+	}
+	public void removeListeners() 
+	{
+		if (startNode != null)
+		{
+			startNode.getStack().layoutBoundsProperty().removeListener(startbounds);
+			startNode.getStack().layoutXProperty().removeListener(startposition);
+		}
+		if (endNode != null)
+		{	
+			endNode.getStack().layoutBoundsProperty().removeListener(endbounds);
+			endNode.getStack().layoutXProperty().removeListener(endposition);
+		}
+	}
+    //------------------------------------------------------------------------------------------
+   @Override public String toString()
+    {
+    	EdgeLine eLine = getEdgeLine();
+    	if (eLine == null) return "NO EDGELINE";
+    	Point2D endpt = eLine.lastPoint();
+    	return "Edge from " + (startNode == null ? "Null" : (startNode.getStack().getText() + " @ " + StringUtil.asString(eLine.firstPoint())  ) +
+    			" to "  + (endNode == null ? "Null" : endNode.getStack().getText())  + " @ " + StringUtil.asString(endpt));
+    }
+
+   //------------------------------------------------------------------------------------------
+     public String toGPML()
+    {
+		StringBuffer b = new StringBuffer(String.format("<Interaction GraphId=\"%s\" >\n", getSafe("GraphId")));
+		b.append("<Graphics ");
+		b.append(attributeList(new String[]{"ConnectorType", "ZOrder","LineStyle","LineThickness"}));
+		b.append (" >\n");
+		
+		b.append (getPointsStr());
+		b.append (getAnchorsStr());
+		b.append("</Graphics>\n");
+		String db = get("database");
+		String dbid =  get("dbid");
+		if (db != null && dbid != null)
+			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
+		b.append("</Interaction>\n");
+		return b.toString();
+    }
+    
+    //------------------------------------------------------------------------------------------
+    public String getPointsStr()
+	{
+		if (edgeLine == null) return "";
+		List<GPMLPoint> pts = edgeLine.getPoints();
+		StringBuilder builder = new StringBuilder();
+		String startId = startNode == null ? "" : startNode.getId();
+		String endId = endNode == null ? "" : endNode.getId();
+//		builder.append("<Point GraphRef=\""+ startId + "\"/>\n");
+		if (pts != null)
+			for (GPMLPoint pt : pts)
+				builder.append(pt.toString());
+//		builder.append("<Point GraphRef=\""+ endId + "\"/>\n");
+		return builder.toString();
+	}
+    
+    public List<Anchor> getAnchors() { return edgeLine.getAnchors();  }
+
+    public String getAnchorsStr ()
+	{
+		List<Anchor> anchors = edgeLine.getAnchors();
+		StringBuilder builder = new StringBuilder();
+		for (Anchor a : anchors)
+			builder.append(a.toGPML());
+		return builder.toString();
+	}
+	//----------------------------------------------------------------------
+//	protected AttributeMap attributes = new AttributeMap();
+//	public AttributeMap getAttributes() {		return attributes;	}
+	
+	protected EdgeLine edgeLine;
+	public EdgeLine getEdgeLine() 	
+	{
+		if (edgeLine.getLine() != null)
+			return edgeLine;	
+		return null;
+	}
+	
+	protected DataNode startNode=null, endNode=null;
+	public void setStartNode(DataNode dn)	{ 	startNode = dn;	}
+	public void setEndNode(DataNode dn)		{  endNode = dn;	}
+	public DataNode getStartNode()		{ 	return startNode;	}
+	public DataNode getEndNode()		{ 	return endNode;	}
 	public Model getModel()		{ 	return model;	}
-	Model model = null;
-	private int zOrder;
+	protected Model model = null;
+	protected int zOrder;
 	public int getz() 				{	return zOrder;	}
 	public void setz(int i) 		{	zOrder = i;	}
 	
 	
 	public double getStrokeWidth() 
-	{	String s =  attributes.get("LineThickness"); 
+	{	String s =  get("LineThickness"); 
 		if (s == null) return 1.4;
 		if (StringUtil.isNumber(s)) return StringUtil.toDouble(s);	
 		return 1.4;
 	}
-	public String getLayer()		{ 	return getAttributes().get("Layer");	}
+	public String getLayer()		{ 	return get("Layer");	}
 	private Color color = Color.BLACK;
 	public Color getColor() 		{	return color;	}
 	public void setColor(Color c) 	{	color = c;	}
-//	public Model getModel()			{ 	return getStartNode().getModel().getModel();	}
-//	private String graphId;
-//	public String getGraphId()		{ return graphId;	}
-//	public String getDatabase() 	{ 	return attributes.get("Database");	}
-	public String getDbId() 		{ 	return attributes.get("ID");	}
 	public MIM getInteractionType()			// TODO
 	{ 	
 		GPMLPoint point = edgeLine.lastGPMLPoint();
@@ -96,371 +412,6 @@ public class Edge  {
 	public StringProperty  interactionProperty()  { return interaction;}
 	public String getInteraction()  { return interaction.get();}
 	public void setInteraction(String s)  { interaction.set(s);}
-	
-	private SimpleStringProperty database = new SimpleStringProperty();	
-	public StringProperty databaseProperty()  { return database;}
-	public String getDatabase()  { return database.get();}
-	public void setDatabase(String s)  { database.set(s);}
-	
-	private SimpleStringProperty dbid = new SimpleStringProperty();		
-	public StringProperty  nameProperty()  { return dbid;}
-	public String getName()  { return dbid.get();}
-	public void setName(String s)  { dbid.set(s);}
-
-	private SimpleStringProperty graphid = new SimpleStringProperty();		
-	public StringProperty  graphIdProperty()  { return graphid;}
-	public String getGraphid()  { return graphid.get();}
-	public void setGraphid(String s)  { graphid.set(s);}
-
-	//----------------------------------------------------------------------
-//	public Edge(VNode start, VNode end) 
-//    {
-//		this(start, end, null, null, null);
-//    }
-//	
-	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
-	{
-    	if (attr == null) attr = new AttributeMap();
-    	startNode = start;  
-    	attr.put("source", start.modelNode().getLabel());
-    	attr.put("sourceid", start.modelNode().getGraphId());
-    	setSource(start.modelNode().getLabel()); 
-    	setSourceid(start.modelNode().getGraphId());
-    	
-    	endNode = end;	
-    	attr.put("target", end.modelNode().getLabel());
-    	attr.put("targetid", end.modelNode().getGraphId());
-    	setTarget(endNode.modelNode().getLabel()); 
-    	setTargetid(endNode.modelNode().getGraphId());
-		model = inModel;
-		if (attr != null) attributes.addAll(attr);
-		edgeLine = new EdgeLine(this, pts, anchors);
-		init();
-    }
-    public Edge(AttributeMap attr, Model inModel) 
-    {
-		model = inModel;
-		MNode start = model.getResource(attr.get("start"));
-    	if (start != null) 
-    	{
-    		startNode = start.getStack();
-        	setSource(start.getLabel()); 
-        	setSourceid(start.getGraphId());
-    	}
-    	MNode target = model.getResource(attr.get("end"));
-    	if (target != null) 
-    	{
-    		endNode = target.getStack();
-    		setTarget(target.getLabel()); 
-    		setTargetid(target.getGraphId());
-    	}
-		edgeLine = new EdgeLine(this, null, null);
-		attributes = attr;
-		setInteraction(attributes.get("ArrowHead"));
-		init();
-      }
- 
-    public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
-    {
-		model = inModel;
-    	endNode = startNode = null;
-		attributes = new AttributeMap();
-		edgeLine = new EdgeLine(this, null, null);
-		edgeLine.addPoint(startPt);
-		edgeLine.addPoint(endPt);
-		model.addEdge(this);
-		init();
-      }
- 
-	//------------------------------------------------------------------------------------------
-   private void init()
-    {
-		if (attributes != null)
-		{
-			String type = attributes.get("ConnectorType");
-			edgeLine.setEdgeType(EdgeType.lookup(type));
-			String colStr = attributes.get("Color");
-			if (colStr != null)
-			{
-				Color c= Color.valueOf(colStr);
-				if (c != null) 		
-					setColor(c);
-			}
- 			if ("Broken".equals(attributes.get("LineStyle")))		
- 			{
- 				Double[] vals = {10.0, 5.0};
- 				edgeLine.setStrokeDashArray(vals);
- 			}
-
-		}
-		addListeners();
-			//			connect(false);		// edgeLine.setStartPoint(startNode.center());
-//			connect(true);		//edgeLine.setEndPoint(endNode.center());
-			
-			// TODO listen to layoutY too?
-//		}
-    }
-	public Point2D  getAdjustedPoint(VNode vNode, GPMLPoint gpmlPt)
-	{
-		if (vNode == null)
-			return new Point2D(100,100);
-		Point2D center = vNode.center();
-		if (gpmlPt == null) return center;
-		double relX = gpmlPt.getRelX();
-		double relY = gpmlPt.getRelY();
-		double width = vNode.getWidth();
-		double height = vNode.getHeight();
-		double x = center.getX() + relX * width / 2;
-		double y = center.getY() + relY * height / 2;
-		return new Point2D(x,y);
-	}
-	
-	public void connect() {
-		if (startNode == null || edgeLine == null)
-			return;
-		Point2D pt = new Point2D(0, 0);
-//		if (startNode == null) {
-//			Shape shape = endNode.getModel().getModel().findShape(edgeLine.startGraphId());
-//			pt = boundsCenter(shape);
-//		} else
-		edgeLine.setStartPoint(getAdjustedPoint(startNode, getEdgeLine().firstGPMLPoint()));
-		pt = new Point2D(0, 0);
-		if (endNode == null) {
-			String val = getAttributes().get("end");
-			MNode mNode = startNode.modelNode().getModel().getResourceByKey(val);
-			if (mNode != null)	
-				endNode = mNode.getStack();
-
-			Shape shape = endNode == null ? 
-					startNode.modelNode().getModel().findShape(edgeLine.endGraphId()) : endNode.getFigure();
-			if (shape != null) 
-				pt = boundsCenter(shape);
-			else 
-				System.out.println("no shape");
-		} else
-			pt = getAdjustedPoint(endNode, getEdgeLine().lastGPMLPoint());
-		edgeLine.setEndPoint(pt);
-
-//		for (Anchor a : edgeLine.getAnchors()) {  happens in edgeLIne.connect
-//			a.resetPosition(this);
-//		}
-		String layer = startNode.getLayerName();
-		edgeLine.connect();
-		if (verbose)
-		{
-			String startStr = startNode == null ? "NULL" : startNode.getText();
-			String endStr = endNode == null ? "NULL" : endNode.getText();
-			System.out.println("connect " + startStr + " to " + endStr);
-		}
-	}
-	boolean verbose = true;
-	
-	public Point2D boundsCenter(Shape s)	{
-		Bounds b = s.getBoundsInParent();
-		double x = (b.getMinX() + b.getMaxX()) / 2;
-		double y = (b.getMinY() + b.getMaxY()) / 2;
-		return new Point2D(x, y);		
-	}
-
-   public void connect(boolean atEnd)
-   {
-//	   if (startNode == null || endNode == null || edgeLine == null)
-//		   return;
-		if (atEnd)		edgeLine.setEndPoint(endNode.center());
-   		else 			edgeLine.setStartPoint(startNode.center());
-   		edgeLine.connect();
-//   		System.out.println("connect");
-   }
-   public boolean references(String state)
-   {
-	   if (state.equals(attributes.get("GraphRef"))) return true;
-	   for (GPMLPoint pt : edgeLine.getPoints())
-		   if (state.equals(pt.getGraphRef()))
-			   return true;
-	   return false;
-   }
-	public boolean touches(String graphId)
-	{
-		if (graphId.equals(attributes.get("start")))	return true;
-		if (graphId.equals(attributes.get("end")))		return true;
-		for (Anchor a : edgeLine.getAnchors())
-			if (graphId.equals(a.getId())) 
-				return true;
-		return false;
-	}
-//
-//    private void dumpPoints(GPMLPoint a, GPMLPoint b, Point2D c) {
-//    	if (a != null) System.out.println(String.format("a: (%.2f, %.2f )", a.getX(), a.getY()));
-//    	if (b != null) System.out.println(String.format("b: (%.2f, %.2f )", b.getX(), b.getY()));
-//    	if (c != null) System.out.println(String.format("c: (%.2f, %.2f )", c.getX(), c.getY()));
-//}
- //----------------------------------------------------------------------
- //----------------------------------------------------------------------
-// GPML specific
-	
-//   public void setAttributes(AttributeMap attr) {
-// 		if (attr == null || attr.isEmpty()) return;
-// 		attributes.addAll(attr); 
-// 		for (String key : attributes.keySet())
-// 		{
-// 			String val = attributes.get(key);
-//			if ("LineThickness".equals(key))
-//				edgeLine.setStrokeWidth(StringUtil.toDouble(val));
-// 			
-// 			else if ("GraphId".equals(key))		{	graphId = val;}
-// 			else if ("ZOrder".equals(key))		{	zOrder = StringUtil.toInteger(val);	}
-// 			else if ("ConnectorType".equals(key))		
-// 			{
-// 				if ("Elbow".equals(val))
-// 					edgeLine.setEdgeType(EdgeType.elbow);
-// 			}
-// 			else if ("Color".equals(key))		
-// 			{
-// 				if (val != null)
-// 					setColor(Color.valueOf(val));
-// 				edgeLine.setStroke(color);
-// 			}
-// 			else if ("LineStyle".equals(key))		
-// 			{
-// 				Double[] vals = {10.0, 5.0};
-// 				edgeLine.setStrokeDashArray("Broken".equals(val) ? vals : null);
-// 			}
-// 			else if ("ArrowHead".equals(key))
-//				attributes.put("ArrowHead", val);
-//		}
-// 	}
-
-
-    //------------------------------------------------------------------------------------------
-   public boolean isStart(Node n)	{  return n == startNode;	}
-    public boolean isEnd(Node n)	{  return n == endNode;	}
-    public boolean isEndpoint(Node n)	{  return isStart(n) || isEnd(n);	}
-
-	//------------------------------------------------------------------------------------------
-	
-	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
-	{ 
-		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-		{ connect(false); }  
-	};
-
-	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
-	{ 
-		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-		{ connect(true); }  
-	};
-
-	ChangeListener<Number> startposition = new ChangeListener<Number>()
-	{ 
-		@Override public void changed(ObservableValue<? extends Number> observable,Number oldValue, Number newValue)
-		{ connect(false); }  
-	};
-
-	ChangeListener<Number> endposition = new ChangeListener<Number>()
-	{ 
-		@Override public void changed(ObservableValue<? extends Number> observable,Number oldValue, Number newValue)
-		{ connect(true); }  
-	};
-
-	
-	void addListeners()
-	{
-		if (startNode != null)
-		{
-			startNode.layoutBoundsProperty().addListener(startbounds);
-			startNode.layoutXProperty().addListener(startposition);
-		}
-		if (endNode == null){
-			String endId = getAttributes().get("end");
-			if (endId != null && getModel() != null)
-			{
-				MNode mnode = getModel().getResource(endId);
-				if (mnode != null)
-					endNode = mnode.getStack();
-			}
-		}
-		if (endNode != null)
-		{	
-			endNode.layoutBoundsProperty().addListener(endbounds);
-			endNode.layoutXProperty().addListener(endposition);
-		}
-	}
-	public void removeListeners() 
-	{
-		if (startNode != null)
-			{
-			startNode.layoutBoundsProperty().removeListener(startbounds);
-			startNode.layoutXProperty().removeListener(startposition);
-			}
-			if (endNode != null)
-			{	
-				endNode.layoutBoundsProperty().removeListener(endbounds);
-				endNode.layoutXProperty().removeListener(endposition);
-			}
-		}
-    //------------------------------------------------------------------------------------------
-   @Override public String toString()
-    {
-    	EdgeLine eLine = getEdgeLine();
-    	Point2D endpt = eLine.lastPoint();
-    	return "Edge from " + (startNode == null ? "Null" : (startNode.getText() + " @ " + StringUtil.asString(eLine.firstPoint())  ) +
-    			" to "  + (endNode == null ? "Null" : endNode.getText())  + " @ " + StringUtil.asString(endpt));
-    }
-
-   //------------------------------------------------------------------------------------------
-     public String toGPML()
-    {
-		StringBuffer b = new StringBuffer(String.format("<Interaction GraphId=\"%s\" >\n", attributes.getSafe("GraphId")));
-		b.append("<Graphics ");
-		b.append(attributeList(new String[]{"ConnectorType", "ZOrder","LineStyle","LineThickness"}));
-		b.append (" >\n");
-		
-		b.append (getPointsStr());
-		b.append (getAnchorsStr());
-		b.append("</Graphics>\n");
-		String db = attributes.get("database");
-		String dbid =  attributes.get("dbid");
-		if (db != null && dbid != null)
-			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
-		b.append("</Interaction>\n");
-		return b.toString();
-    }
-    
-    //------------------------------------------------------------------------------------------
-    public String getPointsStr()
-	{
-		List<GPMLPoint> pts = edgeLine.getPoints();
-		StringBuilder builder = new StringBuilder();
-		String startId = startNode == null ? "" : startNode.getId();
-		String endId = endNode == null ? "" : endNode.getId();
-		builder.append("<Point GraphRef=\""+ startId + "\"/>\n");
-		if (pts != null)
-			for (GPMLPoint pt : pts)
-				builder.append(pt.toString());
-		builder.append("<Point GraphRef=\""+ endId + "\"/>\n");
-		return builder.toString();
-	}
-    
-    public String getAnchorsStr ()
-	{
-		List<Anchor> anchors = edgeLine.getAnchors();
-		StringBuilder builder = new StringBuilder();
-		for (Anchor a : anchors)
-			builder.append(a.toGPML());
-		return builder.toString();
-	}
-	private String attributeList(String[] strs)
-	{
-		StringBuilder bldr = new StringBuilder();
-		for (String attr : strs)
-		{
-			String val = attributes.get(attr);
-			if (val != null)
-				bldr.append(attr + "=\"" + val + "\" ");
-		}
-		return bldr.toString();
-	}
-	
 
 }
 

@@ -1,10 +1,10 @@
 package diagrams.pViz.model;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
+import model.bio.XRefable;
 import util.StringUtil;
 
 /*
@@ -14,58 +14,58 @@ import util.StringUtil;
  * 
  * It is in charge of the VNode which is a StackPane in the view system.
  */
-public class MNode {
+public class DataNode extends XRefable {
 
-	String id;
-	AttributeMap attributes;
 	protected VNode stack;
 	protected Model model;
-	public MNode(AttributeMap am, Controller c)
+//	public DataNode(AttributeMap am, Controller c)
+//	{
+//		this(am,c.getModel());
+//	}	
+	public DataNode(Model m)
 	{
-		this(am,c.getModel());
+		super();
+		model = m;
 	}	
 	static int counter = 4000;
 	static String getNextId()	{ return "id" + counter++; }
-	public MNode(AttributeMap am, Model m)
+	public DataNode(AttributeMap am, Model m)
 	{
-		id = am.get("GraphId");
-		if (id == null) id = am.get("id");
-		if (id == null) id = getNextId();
-		attributes = am;
+		super(am);
 		model = m;
 		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
-	public MNode(MNode orig)
+	public DataNode(DataNode orig, VNode view)
 	{
-		id = getNextId();
-		attributes = new AttributeMap(orig.getAttributeMap());
+		super();
 		model = orig.model;
-		stack = new VNode(this, model.getController().getPasteboard());
+		stack = view;
 	}
+	
 
 	public VNode getStack()					{		return stack;	}
+	public void setStack(VNode st)			{		 stack = st;	}
 	public Model getModel()					{		return model;	}
-	public Object getResource(String id) 	{		return model.getResource(id);	}
-	public String getId() 					{		return id;  }   //attributes.get("GraphId");	}
+	public Object getResource(String id) 	{		return model.getDataNode(id);	}
 	public Shape getShape() 				{		return getStack().getFigure();	}
-	public String getGraphId() 				{		return attributes.get("GraphId");	}
-	public String getShapeType() 			{		return attributes.get("ShapeType");	}
-	public String getType() 				{		return attributes.get("Type");	}
-	public String getLabel() 				{		return attributes.get("TextLabel");	}
-	public AttributeMap getAttributeMap() 	{		return attributes;	}
+//	public String getGraphId() 				{		return get("GraphId");	}
+	public String getShapeType() 			{		return get("ShapeType");	}
+	public String getType() 				{		return get("Type");	}
+	public String getLabel() 				{		return get("TextLabel");	}
 	public void rememberPosition() 			
 	{		
-		attributes.putDouble("X",  stack.getLayoutX());	
-		attributes.putDouble("Y",  stack.getLayoutY());	
-		attributes.putDouble("Width",  stack.getWidth());	
-		attributes.putDouble("Height",  stack.getHeight());	
+		putDouble("X",  stack.getLayoutX());	
+		putDouble("Y",  stack.getLayoutY());	
+		putDouble("Width",  stack.getWidth());	
+		putDouble("Height",  stack.getHeight());	
 	}
 
-	public String getInfoStr()	{ return "HTML Template for " + getId() + "\n" + attributes.toString();	}
-	@Override public String toString()	{ return getId() + " = " + attributes.toString();	}
+	public String getInfoStr()	{ return "HTML Template for " + getGraphId() + "\n" + toString();	}
+//	@Override public String toString()	{ return getGraphId() + " = " + getName();	}
 	//---------------------------------------------------------------------------------------
 	public String toGPML()	{ 
+		copyPropertiesToAttributes();
 		StringBuilder bldr = new StringBuilder();
 		buildNodeOpen(bldr);
 		buildAttributeTag(bldr);
@@ -84,8 +84,9 @@ public class MNode {
 		return false;
 	}
 	private void buildNodeOpen(StringBuilder bldr) {
-		String typ = attributes.get("Type");
-		elementType = (isDataNode(typ)) ? "DataNode" : "Label";
+		String typ = get("Type");
+		if ("Shape".equals(typ)) elementType = "Shape";
+		else elementType = (isDataNode(typ)) ? "DataNode" : "Label"; 
 		bldr.append("<" + elementType + " " + attributeList(nodeAttrs) + ">\n");
 	}
 	private void buildNodeClose(StringBuilder bldr) {
@@ -99,25 +100,6 @@ public class MNode {
 		if (StringUtil.hasText(attributes))
 			bldr.append( "<Attribute ").append(attributes).append( " >\n");
 	}
-	String[]  xrefattrs = {  "Database", "ID"};
-	void buildXRefTag(StringBuilder bldr)
-	{
-		String attributes = attributeList(xrefattrs);
-		if (StringUtil.hasText(attributes))
-			bldr.append( "<Xref ").append(attributes).append( " >\n");
-	}
-	
-	private String attributeList(String[] strs)
-	{
-		StringBuilder bldr = new StringBuilder();
-		for (String attr : strs)
-		{
-			String val = attributes.get(attr);
-			if (val != null)
-				bldr.append(attr + "=\"" + val + "\" ");
-		}
-		return bldr.toString();
-	}
 	
 	String[] attributeNames = { "CenterX", "CenterY", "Width", "Height", 
 			"ShapeType", "ZOrder", "Valign", "FillColor", "Color", 
@@ -128,4 +110,5 @@ public class MNode {
 		if (StringUtil.hasText(attributes))
 			bldr.append( "<Graphics ").append(attributes).append( " >\n");
 	}
+	
 }

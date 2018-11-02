@@ -39,7 +39,7 @@ public class ResizableBox extends DraggableBox {
      * Creates an empty resizable box.
      */
     public ResizableBox() {
-
+super();
         addEventHandler(MouseEvent.MOUSE_ENTERED, this::processMousePosition);
         addEventHandler(MouseEvent.MOUSE_MOVED, this::processMousePosition);
         addEventHandler(MouseEvent.MOUSE_EXITED, event -> {

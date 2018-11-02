@@ -9,10 +9,11 @@ import animation.NodeVisAnimator;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
-import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.MNode;
+import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.EdgeLine;
+import diagrams.pViz.model.EdgeType;
+import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
-import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
 import gui.Action.ActionType;
 import gui.Backgrounds;
@@ -92,10 +93,11 @@ public class Pasteboard extends Pane
 	private LayerRecord backgroundLayer = new LayerRecord("Background");
 	private LayerRecord gridLayer = new LayerRecord("Grid");
 	private LayerRecord contentLayer = new LayerRecord("Content");
-//
+
 	public Layer getBackgroundLayer()		{ return backgroundLayer.getLayer();	}
 	public Layer getGridLayer()				{ return gridLayer.getLayer();	}
 	public Layer getContentLayer()			{ return contentLayer.getLayer();	}
+	LayerRecord[] allLayers = { contentLayer, backgroundLayer, gridLayer };
 	
 	public LayerRecord getBackgroundLayerRecord()		{ return backgroundLayer;	}
 	public LayerRecord getGridLayerRecord()				{ return gridLayer;	}
@@ -104,6 +106,7 @@ public class Pasteboard extends Pane
 	public void restoreBackgroundOrder() {
 		gridLayer.getLayer().toBack();
 		backgroundLayer.getLayer().toBack();
+		contentLayer.sortByZorder();
 		
 	}
 
@@ -147,7 +150,7 @@ public class Pasteboard extends Pane
 		backgroundLayer.add(r);
 	}
 	
-	private Layer getLayer(String string) {
+	public Layer getLayer(String string) {
 		if ("Background".equals(string)) 		return getBackgroundLayer();
 		if ("Grid".equals(string))				return getGridLayer();
 		LayerRecord rec = controller.getLayerRecord(string);
@@ -169,18 +172,21 @@ public class Pasteboard extends Pane
 	public void add(Node node)				{	getActiveLayer().add(node);	}
 	public void remove(Node node)			{	getActiveLayer().remove(node);	}
 
-	public void clear()						{ 	getActiveLayer().clear();	}
+	public void clear()						{ 	for (LayerRecord lay : allLayers) lay.getLayer().clear();	}
 	public void clearLayer()				{ 	getActiveLayer().clear();	}
 	
-	public void add(VNode vnode, String layer)	{	vnode.setLayerName(layer); 	getLayer(layer).add(vnode);	}
-	public void add(VNode vnode)			{	add(vnode, activeLayerName); 	}
-	public void add(int idx, Node node)		{	node.getProperties().put("Layer", activeLayerName); 	getActiveLayer().add(idx, node);	}
-	public void add(int idx, VNode vnode)	
+//	public void add(VNode vnode, String layer)	{	vnode.setLayerName(layer); 	getLayer(layer).add(vnode);	}
+//	public void add(VNode vnode)			{	add(vnode, vnode.getLayerName()); 	}
+	public void add(int idx, Node node, String layername)		
 	{	
-		vnode.setLayerName(activeLayerName); 	
-		getContentLayer().add(idx, vnode);	
+		node.getProperties().put("Layer", layername); 	
+		getLayer(layername).add(idx, node);	
 	}
-	
+//	public void add(int idx, VNode vnode)	
+//	{	
+//		vnode.setLayerName(activeLayerName); 	
+//		getContentLayer().add(idx, vnode);	
+//	}
 	public void addAll(Node[] n) 	
 	{	
 		for (Node node : n )
@@ -240,7 +246,7 @@ public class Pasteboard extends Pane
 		e.acceptTransferModes(TransferMode.ANY);
 //		Set<DataFormat> formats = db.getContentTypes();
 //		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
-		if (db.hasContent(GeneListController.GENE_MIME_TYPE))
+		if (db.hasContent(Controller.GENE_MIME_TYPE))
 		{
 			String id = "" + db.getContent(DataFormat.PLAIN_TEXT);
 			int end = id.indexOf(":");
@@ -267,22 +273,23 @@ public class Pasteboard extends Pane
 		if (db.hasFiles())
 		{
 			List<File> files = db.getFiles();
+			int offset = 0;
 			if (files != null)
 			{
 				push(ActionType.Add, " file");
-				int offset = 0;
 				for (File f : files)
 				{
+					Point2D dropPt = new Point2D(e.getX()+offset, e.getY()+offset);
 					if (FileUtil.isCDT(f))				controller.open(f);				// CDT is a genelist format
 					else if (FileUtil.isGPML(f))		controller.open(f);				// gpml files are parsed 
 					else if (FileUtil.isCSS(f))			controller.addStylesheet(f);	// css files are added to the Scene
 					else if (FileUtil.isDataFile(f))	controller.assignDataFile(f);	// data files are applied to the nodes
-					else if (FileUtil.isTextFile(f))	controller.addGeneList(f, e.getX()+offset, e.getY()+offset);	
+					else if (FileUtil.isTextFile(f))	controller.addGeneSet(f, dropPt);	
 					else
 					{
-						StackPane stack = handleFileDrop(f, e.getX()+offset, e.getY()+offset);
+						StackPane stack = handleFileDrop(f, dropPt);
 						if (stack != null)
-							controller.add(stack);
+							controller.addExternalNode(stack);
 					}
 					offset += 20;
 				}
@@ -316,20 +323,25 @@ public class Pasteboard extends Pane
 				}
 				attrMap.put("ShapeType", text);
 				attrMap.put("TextLabel", text);
-				MNode node = new MNode(attrMap, getModel());
-				add(node.getStack(), "Background");
+				attrMap.putBool("Connectable", false);
+				DataNode node = new DataNode(attrMap, getModel());
+				controller.add(node.getStack());
 			}
 		}
 			
 		e.consume();
 	}
 	// **-------------------------------------------------------------------------------
+	public VNode handleFileDrop(File f, Point2D dropPt)
+	{
+		return handleFileDrop(f,dropPt.getX(), dropPt.getY());	
+	}
 	public VNode handleFileDrop(File f, double x, double y)
 	{
 		AttributeMap attrs = new AttributeMap(f, x, y);
 		Tool tool = Tool.appropriateTool(f);
 		attrs.setTool(tool == null ? "Arrow" : tool.toString());
-		MNode model = new MNode(attrs, getModel());
+		DataNode model = new DataNode(attrs, getModel());
 		return model.getStack();
 	}
 	
@@ -389,7 +401,7 @@ public class Pasteboard extends Pane
 				grid.getChildren().addAll(vert, horz);
 			}		
 			grid.setMouseTransparent(true);
-			getController().add(grid);
+			getController().addExternalNode(grid);
 		}
 		gridLayer.add(grid);
 		new NodeVisAnimator(grid, toggler);
@@ -442,11 +454,11 @@ public class Pasteboard extends Pane
 
 	private Point2D startPoint = null;		// remember where the mouse was pressed
 	private Point2D curPoint = null;		// mouse location in current event
-	private Line dragLine = null;			// a polyline edge
+	private EdgeLine dragLine = null;			// a polyline edge
 	private VNode dragLineSource = null;	// the node where the dragLine starts
 	private Pos dragLinePosition = null;	// the port of the node where the dragLine starts
 	
-	public Line getDragLine() { return dragLine;	}
+	public EdgeLine getDragLine() { return dragLine;	}
 	public VNode getDragSource() { return dragLineSource;	}
 
 	static boolean verbose = false;
@@ -455,26 +467,34 @@ public class Pasteboard extends Pane
 	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
 		if (dragLine == null)
 		{
-			dragLine = new Line();
-			add(dragLine);	
+			dragLine = new EdgeLine();
 		}
 		dragLineSource = source;
 		dragLinePosition = srcPosition;
-		StrokeType st;
-		dragLine.setStroke(Color.AQUA);
-		dragLine.setStrokeWidth(7);
+		getController().getCurrentLineBend();
+		dragLine.setEdgeType(getController().getCurrentLineBend());
+		Line line = dragLine.getLine();
+		line.setStroke(Color.AQUA);
+		line.setStrokeWidth(2);
 		x -= 130;			// TODO  HACK  difference between scene and pasteboard coords
 		y -= 30;
-		dragLine.setStartX(x);
-		dragLine.setStartY(y);
-		dragLine.setEndX(x);
-		dragLine.setEndY(y);
+		line.setStartX(x);
+		line.setStartY(y);
+		line.setEndX(0);
+		line.setEndY(0);
+		add(line);	
+		
+//		Circle dot = new Circle(10);
+//		dot.setCenterX(100);
+//		dot.setCenterY(100);
+//		dot.setFill(Color.RED);
+//		add(dot);
 	}
 	
 	public void removeDragLine() {
 		if (dragLine != null)
 		{
-			remove(dragLine);	
+			remove(dragLine.getLine());	
 			dragLine = null;
 			dragLinePosition = null;
 			dragLineSource = null;
@@ -487,8 +507,7 @@ public class Pasteboard extends Pane
 			double extra = 50;
 			if (dragLineSource != null && dragLineSource.getLayoutX() < event.getY())
 				extra = -50;
-			dragLine.setEndX(event.getX());
-			dragLine.setEndY(event.getY() + extra);
+			dragLine.setEndPoint(new Point2D(event.getX(), event.getY() + extra));  // FUDGE to keep line out of target box
 		}			
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -549,8 +568,10 @@ public class Pasteboard extends Pane
 				map.put("Layer",  activeLayerName);
 				if (lockResizable(getTool().name()))
 					map.put("Resizable", "false");
-				MNode mNode = new MNode(map, getController());
+				DataNode mNode = new DataNode(map, getController().getModel());
 				activeStack = mNode.getStack();	
+				mNode.put("TextLabel", "GENE@");
+				getController().addDataNode(mNode);
 			}
 			
 			activeShape = activeStack == null ? null : activeStack.getFigure();
@@ -578,7 +599,7 @@ public class Pasteboard extends Pane
 				RectangleUtil.setRect(marquee, x, y, 8,8);
 				marquee.setVisible(true);
 				if (marquee.getParent() == null)
-					controller.add(marquee);
+					controller.addExternalNode(marquee);
 				if (event.getClickCount() > 2)
 				{
 					addComment(event);
@@ -587,7 +608,7 @@ public class Pasteboard extends Pane
 			else
 			{
 				push(ActionType.New, " " + getTool().name());
-				add(activeStack);
+//				add(activeStack);
 				getSelectionMgr().select(activeStack);
 			}
 			
@@ -608,7 +629,7 @@ public class Pasteboard extends Pane
 			if (activeStack == null)
 			{
 				AttributeMap at = new AttributeMap("ShapeType:" + getTool().name());
-				MNode mNode = new MNode(at, controller.getDrawModel());
+				DataNode mNode = new DataNode(at, controller.getDrawModel());
 				activeStack = mNode.getStack();
 				add(activeStack);
 
@@ -853,7 +874,7 @@ public class Pasteboard extends Pane
 		newText.setPrefRowCount(10);
 		newText.selectAll();
 		newText.requestFocus();
-		controller.add(newText);
+		controller.addExternalNode(newText);
 
 		newText.skinProperty().addListener(new ChangeListener<Skin<?>>() {			// doesn't work!
 
@@ -933,7 +954,7 @@ public class Pasteboard extends Pane
 	}
 	public void zoomOut() {
 		
-		if (currentZoom > 0.125)
+		if (currentZoom > 0.000125)
 			setZoom(currentZoom / 2);		
 	}
 	//---------------------------------------------------------------------------
@@ -1000,7 +1021,12 @@ public class Pasteboard extends Pane
 		if (dragLine != null)
 		{
 			VNode src = getDragSource();
-			controller.add(new Edge(getModel(), src, vNode, null, null, null ));
+			if (src != vNode)
+			{
+				Interaction i = new Interaction(getModel(), src, vNode );
+				controller.addInteraction(i);
+				i.rebind();
+			}	
 		}
 	}
 }

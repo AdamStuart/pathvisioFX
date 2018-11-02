@@ -30,7 +30,67 @@ import util.LineUtil;
  */
 public class EdgeLine extends Group {
 
-	private Edge edge;		// the model corresponding to this geometry
+	 //----------------------------------------------------------------------
+	public EdgeLine(Edge inter, List<GPMLPoint> pts, List<Anchor> anchorList) 
+	{
+	   	polyline = null;
+	   	line = null;
+	   	head =  tail = null;
+		if (pts != null) 
+			points.addAll(pts);
+		interaction = (Interaction) inter;
+			
+		if (anchorList != null)
+			anchors.addAll(anchorList);
+		for (Anchor anchor : anchors)
+		{
+			anchor.setInteraction(interaction);
+			Circle dot = new Circle(5);
+			dot.setFill(Color.MAGENTA);
+			Point2D pt = getPointAlongLine(anchor.getAnchorPosition());
+			dot.setCenterX(pt.getX());
+			dot.setCenterY(pt.getY());
+			getChildren().add(dot);
+		}
+		setMouseTransparent(false);
+	}
+	 //----------------------------------------------------------------------
+	private double srcX, srcY, targX, targY;
+	
+	public void setEndX(double x) { targX = x; }
+	public void setEndY(double y) { targY = y; }
+	public void setStartX(double x) { srcX = x; }
+	public void setStartY(double y) { srcY = y; }
+	
+	public double getEndX(double x) { return targX; }
+	public double getEndY(double y) { return targY; }
+	public double getStartX(double x) { return srcX; }
+	public double getStartY(double y) { return srcY; }
+	Color stroke = Color.AQUA;
+	double strokeWidth = 2;
+	public void setStroke(Color c) { stroke = c; }
+	public void getStrokeWidth(double w) { strokeWidth = w; }
+
+	public EdgeLine()
+	{
+	   	polyline = null;
+	   	line = null;
+	   	head =  tail = null;
+		interaction = null;			
+		
+	}
+	public EdgeLine(EdgeType edgeType, double startX, double startY, double endX, double endY)
+	{
+	   this();
+	   srcX = startX;
+	   	srcY = startY;
+	   	targX = endX;
+	    targY = endY;
+	    type = edgeType;
+		setMouseTransparent(true);
+	}
+	 //----------------------------------------------------------------------
+	private Interaction interaction;		// the model corresponding to this geometry
 	private Polyline polyline;
 	private Line line;
 	private CubicCurve curve;
@@ -65,7 +125,7 @@ public class EdgeLine extends Group {
 			line  = new Line();
 			line.setStyle("");		// TODO setStyleClass
 			getChildren().add(line);
-			line.setOnMouseClicked(e -> { edge.getEdgeLine().select(true); });
+			line.setOnMouseClicked(e -> { interaction.getEdgeLine().select(true); });
 		}
 		return line;	
 	}
@@ -97,7 +157,7 @@ public class EdgeLine extends Group {
 	public List<Anchor> getAnchors() 	{ 	return anchors;	}
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
 	public void removeAnchor(Anchor a) 	{ 	anchors.remove(a);	}
-	public String getLayer()			{ 	return edge.getLayer();	}
+	public String getLayer()			{ 	return interaction.getLayer();	}
 	public boolean getSelected()		{ 	return selected;	}
 	public void select(boolean b)		
 	{ 	
@@ -111,22 +171,6 @@ public class EdgeLine extends Group {
 	}
 	
 	boolean selected;
-	 //----------------------------------------------------------------------
-	public EdgeLine(Edge container, List<GPMLPoint> pts, List<Anchor> anchorList) 
-	{
-    	polyline = null;
-    	line = null;
-    	head =  tail = null;
-		if (pts != null) 
-			points.addAll(pts);
-		edge = container;
-			
-		if (anchorList != null)
-			anchors.addAll(anchorList);
-		for (Anchor anchor : anchors)
-			anchor.setEdge(edge);
-		setMouseTransparent(true);
-	}
 	//----------------------------------------------------------------------
 	public Point2D getPointAlongLine(double position) {
 		Point2D startPt = firstPoint();
@@ -153,17 +197,31 @@ public class EdgeLine extends Group {
 		points.add(a);
 	}
 	public void setStartPoint(Point2D startPt) {
+		if (startPt == null) return;
 		if (points.size() < 1)
 			points.add(new GPMLPoint(startPt));
-		setPoint(startPt, points.get(0));
+//		setPoint(startPt, points.get(0));
+		if (line != null)
+		{
+			line.setStartX(startPt.getX());
+			line.setStartY(startPt.getY());
+		}
+		
 	}
 	
 	public void setEndPoint(Point2D endPt) {
-		if (points.size() < 2)
+		if (endPt == null) return;
+	if (points.size() < 2)
 			points.add(new GPMLPoint(endPt));
 		setPoint(endPt, points.get(points.size()-1));
+		if (line != null)
+		{
+			line.setEndX(endPt.getX());
+			line.setEndY(endPt.getY());
+		}
 	}
 
+	
 	private void setPoint(Point2D src, GPMLPoint targ)
 	{
 		targ.setX(src.getX());
@@ -177,16 +235,18 @@ public class EdgeLine extends Group {
 	
 	public String toString()
 	{
-		VNode start = edge.getStartNode();
+		if (interaction == null || interaction.getStartNode() == null) return "NO START";
+		VNode start = interaction.getStartNode().getStack();
 		String startID = start == null ? startGraphId() : start.getId();
-		VNode end = edge.getEndNode();
+		if (interaction == null || interaction.getEndNode() == null) return "NO TARGET";
+		VNode end = interaction.getEndNode().getStack();
 		String endID = end == null ? endGraphId() : end.getId();
 //		Line line = edgeline.getLine();
 //		double startX = getStartX();
 //		double endX = getEndX();
 //		double startY = getStartY();
 //		double endY = getEndY();
-		Map<String, Shape> shapes = edge.getModel().getShapes();
+		Map<String, Shape> shapes = interaction.getModel().getShapes();
 		double startCenterX = 0;
 		double startCenterY = 0;
 		if (start != null)
@@ -197,7 +257,7 @@ public class EdgeLine extends Group {
 		}
 		else
 		{
-			Shape shape = edge.getModel().getShapes().get(startGraphId());
+			Shape shape = interaction.getModel().getShapes().get(startGraphId());
 			if (shape != null)
 			{
 				Bounds b = shape.getLayoutBounds();
@@ -224,9 +284,9 @@ public class EdgeLine extends Group {
 			}
 		}
 	
-		String s=  String.format("%s \t(%4.1f, %4.1f) %s (%4.1f, %4.1f)  ", 
+		String s=  String.format("%s \t(%4.1f, %4.1f) %s (%4.1f, %4.1f) %d ", 
 				startID, startCenterX, startCenterY, 
-				endID, endCenterX, endCenterY);
+				endID, endCenterX, endCenterY, getPoints().size());
 				
 		return s;
 	}
@@ -234,7 +294,7 @@ public class EdgeLine extends Group {
 	public void connect()
 	{
 		for (Anchor a : anchors)
-			a.resetPosition(edge);
+			a.resetPosition(interaction);
 		switch (type)
 		{
 			case polyline:	polylineConnect(); 		break;
@@ -248,7 +308,7 @@ public class EdgeLine extends Group {
 		}
 		
 		if (head != null) 	getChildren().remove(head);
-		head = makeArrowhead(edge.getAttributes());
+		head = makeArrowhead(interaction);
 		if (head != null) 	getChildren().add(head);
 //		addTail();			not implemented here
 	}
@@ -321,8 +381,9 @@ boolean BADPOINT(Point2D pt)
 	private void linearConnect() {
 		Point2D lastPt = lastPoint();
 //		if (lastPt != null) return;
-		VNode startNode = edge.getStartNode();
-		VNode endNode = edge.getEndNode();
+		
+		VNode startNode = interaction.getStartNode() == null ? null : interaction.getStartNode().getStack();
+		VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 		if (endNode == null) return;
 		int shorten = SHORTEN ? 10 : 0;
 		if (endNode != null)		// TODO -- and arrowhead??
@@ -336,10 +397,8 @@ boolean BADPOINT(Point2D pt)
 			Point2D prev = forelastPoint();
 			if (prev != null)
 			{
-				if (BADPOINT(prev)) 
-					return;
-				if (BADPOINT(lastPt)) 
-					return;
+				if (BADPOINT(prev))			return;
+				if (BADPOINT(lastPt)) 		return;
 				Line refline = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
 				lastPt= LineUtil.getIntersection(refline, endNode, shorten);
 			}
@@ -347,22 +406,22 @@ boolean BADPOINT(Point2D pt)
 		Point2D start = new Point2D(500,500);
 		if (startNode == null)
 		{
-			String startId = edge.getAttributes().get("start");
+			String startId = interaction.get("start");
 			if (startId != null)
 			{
-				MNode modeNode = edge.getModel().getResource(startId);
+				DataNode modeNode = interaction.getModel().getDataNode(startId);
 				if (modeNode != null) 
 					startNode =	modeNode.getStack();
 			}
 		}
-		else start = edge.getAdjustedPoint(startNode, firstGPMLPoint());
+		else start = interaction.getAdjustedPoint(startNode, firstGPMLPoint());
 		setStartPoint(start);
-		Point2D end = edge.getAdjustedPoint(endNode, lastGPMLPoint());
+		Point2D end = interaction.getAdjustedPoint(endNode, lastGPMLPoint());
 		setEndPoint(end);
 		setArrowPt(end);
 		LineUtil.set(getLine(), start, end);
-		getLine().setStroke(edge.getColor());
-		double width = edge.getStrokeWidth();
+		getLine().setStroke(interaction.getColor());
+		double width = interaction.getStrokeWidth();
 		getLine().setStrokeWidth(width);
 		if (strokeDashArray != null)
 		{
@@ -415,7 +474,7 @@ boolean BADPOINT(Point2D pt)
 	
 	        curve.setStroke(Color.BLACK);
 	        curve.setFill(null);
-	        curve.setStrokeWidth(edge.getStrokeWidth());
+	        curve.setStrokeWidth(interaction.getStrokeWidth());
 			if (strokeDashArray != null)
 				curve.getStrokeDashArray().setAll(strokeDashArray);
 		}
@@ -432,7 +491,7 @@ boolean BADPOINT(Point2D pt)
 			polyline.getPoints().addAll(pt.getX() + pt.getRelX(), pt.getY() + pt.getRelY());
 		}
 		// shorten the last segment if endNode is defined
-		Node endNode = edge.getEndNode();
+		Node endNode = interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead??
 		if (shorten) {
 			GPMLPoint prev = points.get(sz - 2);
@@ -446,8 +505,8 @@ boolean BADPOINT(Point2D pt)
 			polyline.getPoints().addAll(last.getX(), last.getY());
 			setArrowPt(last.getX(), last.getY());
 		}
-		polyline.setStroke(edge.getColor());
-		polyline.setStrokeWidth(edge.getStrokeWidth());
+		polyline.setStroke(interaction.getColor());
+		polyline.setStrokeWidth(interaction.getStrokeWidth());
 		if (strokeDashArray != null)
 			polyline.getStrokeDashArray().setAll(strokeDashArray);
 	}
@@ -466,7 +525,7 @@ boolean BADPOINT(Point2D pt)
 			poly.getPoints().addAll(current.getX(), current.getY(), next.getX(), current.getY());
 		}
 		Point2D last = lastPoint();
-		Node endNode = edge.getEndNode();
+		Node endNode = interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead != null??
 		if (shorten) {
 			GPMLPoint prev = points.get(sz - 2);
@@ -479,7 +538,7 @@ boolean BADPOINT(Point2D pt)
 		{
 			poly.getPoints().addAll(last.getX(), last.getY());
 		}
-		poly.setStroke(edge.getColor());
+		poly.setStroke(interaction.getColor());
 	}
 
    //----------------------------------------------------------------------
@@ -488,7 +547,7 @@ boolean BADPOINT(Point2D pt)
 		if (points != null && points.size() > 1)
 		{
 			GPMLPoint last = points.get(points.size()-1);
-			Color strokeColor = edge.getColor();
+			Color strokeColor = interaction.getColor();
 			ArrowType arrowhead = last.getArrowType();
 			if (arrowhead == ArrowType.none) return null;
 			Point2D prev = forelastPoint();
@@ -523,6 +582,11 @@ boolean BADPOINT(Point2D pt)
    }
    Point2D getStartPoint()	{ return new Point2D(getStartX(), getStartY());  }
    Point2D getEndPoint()	{ return new Point2D(getEndX(), getEndY());  }
+   
+public void setStrokeWidth(int i) {
+	// TODO Auto-generated method stub
+	
+}
 
 
 }

@@ -161,10 +161,10 @@ public class Inspector extends HBox implements Initializable {
 	
 	private void opacityChanged(boolean undoable)							
 	{ 	 			
-		if (undoable) 
-			controller.getUndoStack().push(ActionType.Opacity); 
-		selection.applyStyle(getStyleSettings(opacity));	
-		selection.putDouble("Opacity", opacity.getValue() / 100.);	
+//		if (undoable) 
+//			controller.getUndoStack().push(ActionType.Opacity); 
+//		selection.applyStyle(getStyleSettings(opacity));	
+//		selection.putDouble("Opacity", opacity.getValue() / 100.);	
 	}
 	
 	private void rotationChanged(boolean undoable)							

@@ -131,7 +131,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	{ 		
 //		String pathwayFxml = "../gpml/GeneList.fxml";
 //		String fullname = "../gpml/GeneList.fxml";
-		Pair<FXMLLoader, Stage> pair = App.buildStage("Pathway", "Visio.fxml", 1200, 800);
+		Pair<FXMLLoader, Stage> pair = App.buildStage("Pathway", "PViz.fxml", 1200, 800);
 		Controller newController = pair.getKey().getController();
 		try
 		{

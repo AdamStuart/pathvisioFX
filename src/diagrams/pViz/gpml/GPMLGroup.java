@@ -4,35 +4,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.model.MNode;
+import diagrams.pViz.model.DataNode;
 import javafx.geometry.BoundingBox;
 import model.AttributeMap;
 
-public class GPMLGroup extends MNode {
+public class GPMLGroup extends DataNode {
 	private double minX = Double.MAX_VALUE;
 	private double maxX = Double.MIN_VALUE;
 	private double minY = Double.MAX_VALUE;
 	private double maxY = Double.MIN_VALUE;
-	private List<MNode> children = new ArrayList<MNode>();
+	private List<DataNode> children = new ArrayList<DataNode>();
 	
 	public GPMLGroup(AttributeMap am, Controller c)
 	{
-		super(am, c);
+		super(am, c.getModel());
 	}
 	
-	public void addToGroup(MNode child)
+	public void addToGroup(DataNode child)
 	{
 		children.add(child);
 	}
 	
 	public void calcBounds()
 	{
-		for (MNode child : children)
+		for (DataNode child : children)
 		{
-			double centerX =child.getAttributeMap().getDouble("CenterX");
-			double centerY =child.getAttributeMap().getDouble("CenterY");
-			double width =child.getAttributeMap().getDouble("Width");
-			double height =child.getAttributeMap().getDouble("Height");
+			double centerX =child.getDouble("CenterX");
+			double centerY =child.getDouble("CenterY");
+			double width =child.getDouble("Width");
+			double height =child.getDouble("Height");
 			double halfwidth = width / 2;
 			double halfheight = height / 2;
 			if (centerX - halfwidth < minX)  minX = centerX - halfwidth;

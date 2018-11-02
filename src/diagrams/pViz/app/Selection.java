@@ -3,7 +3,7 @@ package diagrams.pViz.app;
 import java.util.ArrayList;
 import java.util.List;
 
-import diagrams.pViz.model.MNode;
+import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.GroupMouseHandler;
 import diagrams.pViz.view.Layer;
@@ -46,8 +46,7 @@ public class Selection
 	{
 		root = layer;
 		items = FXCollections.observableArrayList(); 
-		items.addListener( (ListChangeListener<Node>)c -> 
-				{ root.getController().resynch();	 });
+		items.addListener( (ListChangeListener<Node>)c ->  { root.getController().resynch(items);	 });
 	}
 	private Model getModel()	{ return getController().getModel();  } 
 	private Controller getController() { return root.getController();	}
@@ -128,6 +127,7 @@ public class Selection
 		{
 			VNode node = items.get(i);
 			if (isGrid(node)) continue;
+			
 			getController().remove(node);
 			items.remove(node);
 		}
@@ -167,7 +167,7 @@ public class Selection
 			String newId = controller.getModel().cloneResourceId(oldId);
 			newAttrs.put("GraphId", newId);
 			newAttrs.incrementZOrder();
-			MNode clone = new MNode(newAttrs, controller);
+			DataNode clone = new DataNode(newAttrs, controller.getModel());
 			controller.add(clone.getStack());
 			newSelection.add(clone.getStack());
 		}
@@ -184,7 +184,7 @@ public class Selection
 		group.addEventHandler(MouseEvent.ANY, new GroupMouseHandler(root));
 		group.getChildren().addAll(items);
 		deleteSelection();
-		getController().add(group);
+		getController().addExternalNode(group);
 		group.setTranslateX(10);
 	}
 	//--------------------------------------------------------------------------
@@ -245,6 +245,7 @@ public class Selection
 	//--------------------------------------------------------------------------
 	public void translate(KeyCode key)		
 	{
+		getUndoStack().push(ActionType.Move);	
 		double amount = 30;
 		double dx = 0, dy = 0;
 		if (key == KeyCode.LEFT)		dx = amount;
@@ -257,7 +258,7 @@ public class Selection
 	
 	public void translate(double dx, double dy, VNode except)		
 	{		
-		getUndoStack().push(ActionType.Move);	
+//		getUndoStack().push(ActionType.Move);	
 		for (Node n : items)
 		{
 			if (n == except) continue;

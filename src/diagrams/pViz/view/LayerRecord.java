@@ -71,5 +71,9 @@ public class LayerRecord implements GPMLRecord {
 	public void add(Node node) 				{ 	theLayer.add(node); 	}
 	public void remove(VNode node) 			{ 	theLayer.remove(node); 	}
 	public void remove(Node node) 			{ 	theLayer.remove(node); 	}
+	public void sortByZorder() {
+		// TODO Auto-generated method stub
+		
+	}
 
 }
