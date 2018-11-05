@@ -80,7 +80,6 @@ public class Pasteboard extends Pane
 	//@formatter:off
 	private static final String INFO_LABEL_ID = "infoLabel";
 	private static final String ELEMENT_NAME = "Pasteboard";
-
 	
 	private Controller controller;
 	public Controller getController()		{ return controller; }
@@ -103,13 +102,6 @@ public class Pasteboard extends Pane
 	public LayerRecord getGridLayerRecord()				{ return gridLayer;	}
 	public LayerRecord getContentLayerRecord()			{ return contentLayer;	}
 	
-	public void restoreBackgroundOrder() {
-		gridLayer.getLayer().toBack();
-		backgroundLayer.getLayer().toBack();
-		contentLayer.sortByZorder();
-		
-	}
-
 	private VNode activeStack;
 	public VNode getActiveStack()		{ return activeStack;	}
 	public Shape getActiveShape()		{ return activeStack == null ? null : activeStack.getFigure();	}
@@ -150,6 +142,12 @@ public class Pasteboard extends Pane
 		backgroundLayer.add(r);
 	}
 	
+	public void restoreBackgroundOrder() {
+		gridLayer.getLayer().toBack();
+		backgroundLayer.getLayer().toBack();
+		contentLayer.sortByZorder();
+	}
+
 	public Layer getLayer(String string) {
 		if ("Background".equals(string)) 		return getBackgroundLayer();
 		if ("Grid".equals(string))				return getGridLayer();
@@ -175,18 +173,11 @@ public class Pasteboard extends Pane
 	public void clear()						{ 	for (LayerRecord lay : allLayers) lay.getLayer().clear();	}
 	public void clearLayer()				{ 	getActiveLayer().clear();	}
 	
-//	public void add(VNode vnode, String layer)	{	vnode.setLayerName(layer); 	getLayer(layer).add(vnode);	}
-//	public void add(VNode vnode)			{	add(vnode, vnode.getLayerName()); 	}
 	public void add(int idx, Node node, String layername)		
 	{	
 		node.getProperties().put("Layer", layername); 	
 		getLayer(layername).add(idx, node);	
 	}
-//	public void add(int idx, VNode vnode)	
-//	{	
-//		vnode.setLayerName(activeLayerName); 	
-//		getContentLayer().add(idx, vnode);	
-//	}
 	public void addAll(Node[] n) 	
 	{	
 		for (Node node : n )
@@ -197,16 +188,16 @@ public class Pasteboard extends Pane
 	public void addAllVNodes(VNode[] n) 	{	for (VNode node : n) add(node);	}
 	public void addAllVNodes(List<VNode> n) {	for (VNode node : n) add(node);	}
 	
-	String activeLayerName = "Content";
+	private String activeLayerName = "Content";
+	public String activeLayerName()			{ 	return activeLayerName; }
+	public void setActiveLayer(String s)	{  	activeLayerName = s; }
 	Layer getActiveLayer() 					
 	{ 	
 		LayerRecord rec =  controller.getLayerRecord(activeLayerName);
 		if (rec == null)	rec = contentLayer;
 		return rec.getLayer();	
 	}
-	public String activeLayerName()			{ 	return activeLayerName; }
-	public void setActiveLayer(String s)	{  	activeLayerName = s; }
-//	ObservableList<Node> getActiveLayer()	{	return getChildren();	}
+
 	private Rectangle clipRect = new Rectangle();
 	private void turnOnClipping()
 	{
@@ -214,10 +205,6 @@ public class Pasteboard extends Pane
 		heightProperty().addListener((o, oldVal, newVal) -> { clipRect.heightProperty().set((double) newVal);    });
 		widthProperty().addListener((o, oldVal, newVal) -> { clipRect.widthProperty().set((double) newVal);    });
 	}
-	/*
-	 * // Handle highlighting the canvas as mouse enters, and resetting as it leaves
-	 */
-	
 	private void setupPasteboardDrops()
 	{
 		setOnDragEntered(e -> 	{  	highlightPasteboard(true);					e.consume();	});
@@ -449,7 +436,6 @@ public class Pasteboard extends Pane
             if (deltaY < 0)
                 zoomFactor = 1 / zoomFactor;
         });
-		
 	}
 
 	private Point2D startPoint = null;		// remember where the mouse was pressed
@@ -478,10 +464,8 @@ public class Pasteboard extends Pane
 		line.setStrokeWidth(2);
 		x -= 130;			// TODO  HACK  difference between scene and pasteboard coords
 		y -= 30;
-		line.setStartX(x);
-		line.setStartY(y);
-		line.setEndX(0);
-		line.setEndY(0);
+		line.setStartX(x); line.setStartY(y);
+		line.setEndX(0); line.setEndY(0);
 		add(line);	
 		
 //		Circle dot = new Circle(10);
@@ -601,9 +585,7 @@ public class Pasteboard extends Pane
 				if (marquee.getParent() == null)
 					controller.addExternalNode(marquee);
 				if (event.getClickCount() > 2)
-				{
 					addComment(event);
-				}
 			}
 			else
 			{
@@ -659,9 +641,6 @@ public class Pasteboard extends Pane
 	}
 
 	//-----------------------------------------------------------------------------------------------------------
-	/** 
-	 *  MouseDraggedHandler
-	 */
 	private final class MouseDraggedHandler implements EventHandler<MouseEvent> {
 		@Override public void handle(final MouseEvent event) {
 
@@ -753,10 +732,6 @@ public class Pasteboard extends Pane
 		}
 	}
 	//---------------------------------------------------------------------------
-	/** 
-	 *  MouseReleasedHandler
-	 */
-
 	private final class MouseReleasedHandler implements EventHandler<MouseEvent> 
 	{
 		@Override public void handle(final MouseEvent event) {
@@ -783,10 +758,6 @@ public class Pasteboard extends Pane
 		}
 	}
 	//---------------------------------------------------------------------------
-	/** 
-	 *  MouseClickHandler
-	 */
-
 	private final class MouseClickHandler implements EventHandler<MouseEvent> 
 	{
 		@Override public void handle(final MouseEvent event) 
@@ -799,18 +770,9 @@ public class Pasteboard extends Pane
 		}
 	}
 	//---------------------------------------------------------------------------
-	/** 
-	 *  MouseMovedHandler
-	 */
-
 	private final class MouseMovedHandler implements EventHandler<MouseEvent> 
 	{
-		@Override public void handle(final MouseEvent event) 
-		{			
-			setDragLine(event);
-		}
-
-
+		@Override public void handle(final MouseEvent event) 	{		setDragLine(event);	}
 	}
 	//---------------------------------------------------------------------------
 	/** 
@@ -898,10 +860,7 @@ public class Pasteboard extends Pane
 	        }
 	    });
 		newText.setBackground(Background.EMPTY);
-    
-//	    
 	}
-
 
 	public void setTool(Tool t)
 	{

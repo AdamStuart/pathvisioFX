@@ -7,20 +7,18 @@ import java.util.List;
 import java.util.Map;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.gpml.GPMLGroup;
+import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.TableColumn;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -36,11 +34,9 @@ import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
-import model.bio.Gene;
-import model.bio.GeneSetRecord;
 import model.bio.Species;
-import services.bridgedb.BridgeDbIdMapper;
-import services.bridgedb.MappingSource;
+import model.bio.XRefable;
+import model.bio.XRefableSetRecord;
 import util.StringUtil;
 
 public class Model
@@ -73,20 +69,23 @@ public class Model
 		
 	}
 
-	public Collection<Interaction> getEdges()			{ return interactionList.values();	}
-	private Map<String, Interaction> interactionList = FXCollections.observableHashMap();
-	public Map<String, Interaction> getInteractions()			{ return interactionList;	}
+	public Collection<Interaction> getEdges()			{ return interactionMap.values();	}
+	private Map<String, Interaction> interactionMap = FXCollections.observableHashMap();
+	public Map<String, Interaction> getInteractions()			{ return interactionMap;	}
 	public List<Interaction> getInteractionList(String nodeId)			
 	{ 
 		List<Interaction> hits = new ArrayList<Interaction>();
-		for (Interaction e : interactionList.values())
+		for (Interaction e : interactionMap.values())
 			if (e.touches(nodeId))
 					hits.add(e);
 		return hits;	
 	}
-	private Map<String, Shape> shapes = new HashMap<String,Shape>();
-	public Map<String, Shape> getShapes()	{ return shapes; }
-	public Shape findShape(String s ) 		{ return shapes.get(s);	}
+	public Interaction getInteraction(String edgeId)	{ 	return interactionMap.get(edgeId);	}
+	
+	private Map<String, DataNode> shapes = new HashMap<String,DataNode>();
+	public Map<String, DataNode> getShapes()	{ return shapes; }
+	public DataNode findShape(String s ) 		{ return shapes.get(s);	}
+	public void addShape(DataNode s ) 		{ shapes.put(s.getGraphId(),s);	}
 
 	private Map<String, DataNode> labels = new HashMap<String,DataNode>();
 	public Map<String, DataNode> getLabels()	{ return labels; }
@@ -247,10 +246,19 @@ public class Model
 	private void readEdges(String state) {
 	}
 	// **-------------------------------------------------------------------------------
-	
+	public Anchor findAnchorById(String graphId)
+	{
+		for (Interaction inter : interactionMap.values())
+		{
+			Anchor a = inter.getEdgeLine().findAnchor(graphId);
+			if (a != null) 
+				return a;
+		}
+		return null;
+	}
 	public Interaction findInteractionById(String graphId)
 	{
-		for (Interaction inter : interactionList.values())
+		for (Interaction inter : interactionMap.values())
 			if (graphId.equals(inter.getGraphId()))
 					return inter;
 		return null;
@@ -260,7 +268,7 @@ public class Model
 	public List< Interaction> findInteractionsByNode(DataNode node)
 	{
 		List< Interaction> hits = new ArrayList<Interaction>();
-		for (Interaction inter : interactionList.values())
+		for (Interaction inter : interactionMap.values())
 			if (inter.isStart(node) || inter.isEnd(node))
 				hits.add(inter);
 		return hits;
@@ -269,21 +277,21 @@ public class Model
 	public List< Interaction> findInteractionsByNodes(DataNode src, DataNode target)
 	{
 		List< Interaction> hits = new ArrayList<Interaction>();
-		for (Interaction inter : interactionList.values())
+		for (Interaction inter : interactionMap.values())
 			if (inter.isStart(src) || inter.isEnd(target))
 				hits.add(inter);
 		return hits;
 	}
 	public void removeEdges(DataNode node)		
 	{  
-		for (int z = interactionList.size()-1; z >= 0; z--)
+		for (Interaction e : getEdges())
 		{
-			Edge e = interactionList.get(z);
-			if (e != null && e.isStart(node) || e.isEnd(node))
+			if (e == null) continue;
+			if (e.isStart(node) || e.isEnd(node))
 			{
 				e.removeListeners();
 				e.getEdgeLine().dispose();
-				interactionList.remove(e);
+				interactionMap.remove(e);
 			}
 		}
 //		List<Edge> okEdges = edgeTable.stream().filter(new TouchingNodeFilter(node)).collect(Collectors.toList());
@@ -399,14 +407,14 @@ public class Model
 		return edge;
 	}
 	
-	public void addEdge(Interaction e)			{  interactionList.put(e.getGraphId(), e);	}
+	public void addEdge(Interaction e)			{  interactionMap.put(e.get("GraphId"), e);	}
 	// **-------------------------------------------------------------------------------
-	public void removeEdge(Edge edge)			{  		interactionList.remove(edge);	}
+	public void removeEdge(Edge edge)			{  		interactionMap.remove(edge);	}
 	
 	public void connectAllEdges() {
-		for (int z = interactionList.size()-1; z >= 0; z--)
+		for (int z = interactionMap.size()-1; z >= 0; z--)
 		{
-			Edge e = interactionList.get(z);
+			Edge e = interactionMap.get(z);
 			e.connect(true);
 			e.connect(false);
 		}
@@ -647,44 +655,21 @@ public class Model
 			inter.connect();		
 		}
 	}
-//	assert(inter != null);
-//			DataNode origin = inter.getStartNode();
-//			if (origin == null)
-//				origin = getDataNodeMap().get(inter.getSourceid());
-//			VNode start = (origin != null) ? origin.getStack() : null;
-//			EdgeLine edgeline = inter.getEdgeLine();
-//			DataNode targ = inter.getEndNode();
-//			if (targ == null)
-//				targ = getDataNodeMap().get(inter.getTargetid());
-//			VNode end = (targ != null) ? targ.getStack() : null;
-//			if (end == null) 
-//			{
-//				String endId = inter.get("end");
-//				if (endId != null)
-//				{
-//					DataNode endMNode = getDataNode("end");
-//					end = (endMNode == null) ? null : endMNode.getStack();
-//				}
-//			}
-//			if (edgeline == null) continue;
-//			inter.connect();
-////			e.addListeners();
-////			Line line = edgeline.getLine();
-////			line.setStartX(startPt.getX());
-////			line.setStartY(startPt.getY());
-////			line.setEndX(endPt.getX());
-////			line.setEndY(endPt.getY());
-//		}
-//	}
+
 	public void dumpViewHierarchy() {
 		String out = "\n" + traverseSceneGraph( getController().getPasteboard());
 		System.out.println(out);
 	}
 	public void dumpEdgeTable() {
-		System.out.println("\n" + interactionList.size());
+		System.out.println("\n" + interactionMap.size());
 		for (Edge e : getEdges())
 			System.out.println(e);
 		}
+	public XRefableSetRecord getXRec() {
+		XRefableSetRecord set = new XRefableSetRecord("XREFS");
+		set.getXRefableSet().addAll(getNodes());
+		return set;
+	}
 
 	
 }

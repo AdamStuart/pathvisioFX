@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.input.KeyCodeCombination?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<BorderPane fx:id="container" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.tables.XrefListController">
+   <top>
+      <HBox>
+         <children>
+            <Button fx:id="westSidebar" layoutX="10.0" layoutY="10.0" minWidth="31.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="31.0" text="West" />
+            <Button fx:id="draggable" minWidth="34.0" mnemonicParsing="false" prefHeight="27.0" prefWidth="34.0" text="All">
+               <font>
+                  <Font size="11.0" />
+               </font>
+            </Button>
+            <MenuBar fx:id="menubar" BorderPane.alignment="CENTER" HBox.hgrow="ALWAYS">
+              <menus>
+                  <Menu mnemonicParsing="false" text="File">
+                    <items>
+                        <MenuItem fx:id="newGeneList" mnemonicParsing="false" onAction="#newGeneList" text="New Gene List">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="N" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="browsePathways" mnemonicParsing="false" onAction="#browsePathways" text="Browse Pathways" />
+                        <MenuItem fx:id="chart" mnemonicParsing="false" onAction="#doChart" text="Chart All Columns" />
+                        <MenuItem fx:id="chartVis" mnemonicParsing="false" onAction="#doChartVisible" text="Chart Visible Columns" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="open" mnemonicParsing="false" onAction="#doOpen" text="Open" />
+                        <MenuItem mnemonicParsing="false" text="Open Recent" />
+                        <MenuItem fx:id="filter" mnemonicParsing="false" onAction="#filterSelectedGenes" text="Filter Selected" />
+                        <MenuItem fx:id="save" mnemonicParsing="false" onAction="#save" text="Save">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="saveAs" mnemonicParsing="false" onAction="#saveAs" text="Save As...">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                           </accelerator>
+                        </MenuItem>
+                        <MenuItem fx:id="close" mnemonicParsing="false" onAction="#doClose" text="Close" />
+                    </items>
+                  </Menu>
+                  <Menu mnemonicParsing="false" text="Edit">
+                     <items>
+                        <MenuItem mnemonicParsing="false" text="Cut" />
+                        <MenuItem mnemonicParsing="false" text="Copy" />
+                        <MenuItem mnemonicParsing="false" text="Paste" />
+                        <MenuItem mnemonicParsing="false" text="Paste Special" />
+                        <SeparatorMenuItem mnemonicParsing="false" />
+                        <MenuItem fx:id="selectAll" mnemonicParsing="false" onAction="#selectAll" text="Select All" />
+                        <MenuItem fx:id="showAllColumns" mnemonicParsing="false" onAction="#showAllColumns" text="Show All Columns" />
+                        <MenuItem fx:id="editColumns" mnemonicParsing="false" onAction="#editColumns" text="Edit Columns" />
+                        <MenuItem fx:id="invert" mnemonicParsing="false" onAction="#invert" text="Invert Selection" />
+                        <MenuItem fx:id="selectAll1" mnemonicParsing="false" onAction="#selectAll" text="Select All" />
+                        <MenuItem fx:id="showAsList" mnemonicParsing="false" onAction="#showAsList" text="Show As List" />
+                        <MenuItem fx:id="showAsTable" mnemonicParsing="false" onAction="#showAsTable" text="Show As Table" />
+                     </items>
+                  </Menu>
+                <Menu mnemonicParsing="false" text="Gene">
+                  <items>
+                        <MenuItem fx:id="drill" mnemonicParsing="false" onAction="#drillDown" text="Drill Down">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="D" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
+                        <MenuItem fx:id="info" mnemonicParsing="false" onAction="#getInfo" text="Get Info..." />
+                    <MenuItem fx:id="addColumn" mnemonicParsing="false" onAction="#doAddColumn" text="Add Column..." />
+                  </items>
+                </Menu>
+              </menus>
+            </MenuBar>
+            <Label fx:id="select" maxWidth="150.0" minWidth="36.0" prefWidth="36.0" textAlignment="RIGHT">
+               <font>
+                  <Font name="System Bold" size="11.0" />
+               </font>
+               <HBox.margin>
+                  <Insets top="6.0" />
+               </HBox.margin>
+            </Label>
+            <Label fx:id="size" maxWidth="150.0" minWidth="50.0" prefWidth="50.0">
+               <font>
+                  <Font name="System Bold" size="11.0" />
+               </font>
+               <HBox.margin>
+                  <Insets top="6.0" />
+               </HBox.margin>
+            </Label>
+            <ChoiceBox fx:id="species" prefHeight="27.0" prefWidth="72.0" />
+            <Button fx:id="search" mnemonicParsing="false" onAction="#doSearch" prefHeight="27.0" prefWidth="40.0" text="F" />
+            <TextField fx:id="searchBox" />
+            <Label fx:id="eselect" layoutX="343.0" layoutY="16.0" maxWidth="150.0" minWidth="36.0" prefHeight="22.0" prefWidth="52.0" textAlignment="RIGHT">
+               <font>
+                  <Font name="System Bold" size="11.0" />
+               </font>
+            </Label>
+            <Label fx:id="esize" layoutX="379.0" layoutY="16.0" maxWidth="150.0" minWidth="27.0" prefHeight="24.0" prefWidth="27.0">
+               <font>
+                  <Font name="System Bold" size="11.0" />
+               </font>
+            </Label>
+            <Button fx:id="bottomSideBarButton" mnemonicParsing="false" prefHeight="27.0" prefWidth="30.0" text="South" />
+         </children>
+      </HBox>
+   </top>
+   <center>
+      <VBox BorderPane.alignment="CENTER">
+         <children>
+            <HBox>
+               <children>
+                  <Button fx:id="showTranscripts" mnemonicParsing="false" onAction="#showTranscripts" text="Transcripts">
+                     <font>
+                        <Font size="11.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="showCategories" mnemonicParsing="false" onAction="#showCategories" text="Categories">
+                     <font>
+                        <Font size="11.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="showDifferences" mnemonicParsing="false" onAction="#showDifferences" text="Differences">
+                     <font>
+                        <Font size="11.0" />
+                     </font>
+                  </Button>
+               </children>
+            </HBox>
+            <TableView fx:id="theTable" prefHeight="371.0" prefWidth="425.0">
+              <columns>
+                  <TableColumn fx:id="geneNameColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Name" />
+                <TableColumn fx:id="geneIdColumn" editable="false" maxWidth="250.0" minWidth="50.0" text="Id" />
+                  <TableColumn fx:id="geneTypeColumn" editable="false" maxWidth="250.0" minWidth="50.0" prefWidth="84.0" text="Type" />
+                  <TableColumn fx:id="termsColumn" editable="false" maxWidth="500.0" minWidth="50.0" prefWidth="146.0" text="Terms" />
+                  <TableColumn fx:id="dataColumn" editable="false" maxWidth="500.0" minWidth="100.0" prefWidth="150.0" text="Data">
+                     <columns>
+                        <TableColumn fx:id="logger" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="logGER" />
+                        <TableColumn fx:id="pvalue" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="pValue" />
+                        <TableColumn fx:id="fdr" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="FDR" />
+                     </columns>
+                  </TableColumn>
+                  <TableColumn fx:id="locationColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Location" />
+                  <TableColumn fx:id="databaseColumn" editable="false" maxWidth="200.0" minWidth="50.0" text="Database" />
+                  <TableColumn fx:id="dbidColumn" editable="false" maxWidth="500.0" minWidth="20.0" prefWidth="100.0" text="dbID" />
+                  <TableColumn fx:id="urlColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="URL" />
+                  <TableColumn fx:id="ensemblColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Ensembl" />
+                  <TableColumn fx:id="graphidColumn" editable="false" maxWidth="1.7976931348623157E308" minWidth="75.0" prefWidth="100.0" text="Graph Reference" />
+              </columns>
+            </TableView>
+         </children>
+      </VBox>
+   </center>
+   <left>
+      <VBox prefHeight="371.0" prefWidth="228.0" BorderPane.alignment="CENTER">
+         <children>
+            <TableView fx:id="columnTable" prefHeight="200.0" prefWidth="200.0" VBox.vgrow="ALWAYS">
+              <columns>
+                <TableColumn fx:id="typeColumn" prefWidth="41.0" text="Type" />
+                <TableColumn fx:id="colNameColumn" prefWidth="134.0" text="Name" />
+                  <TableColumn fx:id="widthColumn" maxWidth="120.0" prefWidth="60.0" text="Width" />
+              </columns>
+            </TableView>
+         </children>
+      </VBox>
+   </left>
+   <bottom>
+      <TableView fx:id="edgeTable" prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+        <columns>
+          <TableColumn fx:id="source" text="Source" />
+            <TableColumn fx:id="sourceid" prefWidth="70.0" text="Source ID" />
+          <TableColumn fx:id="interaction" prefWidth="109.0" text="Interaction" />
+            <TableColumn fx:id="target" prefWidth="94.0" text="Target" />
+            <TableColumn fx:id="targetid" minWidth="3.0" prefWidth="132.0" text="Target ID" />
+            <TableColumn fx:id="edgeid" minWidth="3.0" prefWidth="113.0" text="GraphID" />
+            <TableColumn fx:id="database" minWidth="3.0" prefWidth="76.0" text="Database" />
+            <TableColumn fx:id="dbid" minWidth="3.0" prefWidth="95.0" text="DB ID" />
+        </columns>
+      </TableView>
+   </bottom>
+</BorderPane>

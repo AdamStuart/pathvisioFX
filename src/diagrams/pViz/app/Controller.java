@@ -33,26 +33,20 @@ import diagrams.pViz.view.VNode;
 import gui.Action;
 import gui.Action.ActionType;
 import gui.Borders;
-import gui.DraggableTreeTableRow;
 import gui.UndoStack;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
-import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -65,7 +59,6 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.Toggle;
@@ -74,15 +67,10 @@ import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
-import javafx.scene.control.TreeView;
-import javafx.scene.control.cell.ComboBoxTreeTableCell;
-import javafx.scene.control.cell.TextFieldTreeTableCell;
 import javafx.scene.image.Image;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
@@ -90,8 +78,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -102,9 +88,7 @@ import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneSetRecord;
 import model.bio.Species;
-import model.bio.TableRecord;
 import model.bio.XRefable;
-import model.bio.XRefableSection;
 import util.FileUtil;
 import util.StringUtil;
 
@@ -166,16 +150,6 @@ public class Controller implements Initializable, IController
 	@FXML private MenuItem undo;
 	@FXML private MenuItem redo;
 	@FXML private MenuItem clearundo;
-	
-//	@FXML private MenuItem clearColors;
-//	@FXML private MenuItem browsePathways;
-//	@FXML private MenuItem tofront;
-//	@FXML private MenuItem toback;
-//	@FXML private MenuItem zoomIn;
-//	@FXML private MenuItem zoomOut;
-//	@FXML private MenuItem group;
-//	@FXML private MenuItem ungroup;
-//	@FXML private MenuItem delete;
 	@FXML private VBox west;
 	@FXML private HBox bottomPadding;
 	@FXML private BorderPane 	loadContainer;
@@ -281,8 +255,7 @@ public class Controller implements Initializable, IController
 	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.restoreBackgroundOrder();  	}
 	@FXML public  void zoomIn()			{	undoStack.push(ActionType.Zoom);	pasteboard.zoomIn(); 	}
 	@FXML public  void zoomOut()		{	undoStack.push(ActionType.Zoom);	pasteboard.zoomOut();  pasteboard.restoreBackgroundOrder();  	}
-	@FXML public  void toLayer()		
-	{	
+	@FXML public  void toLayer()		{	//TODO
 	}
 	public List<LayerRecord> getLayers()	{	return layerController.getLayers();	}
 	public void moveSelectionToLayer(String layername)
@@ -295,18 +268,6 @@ public class Controller implements Initializable, IController
 	@FXML private void showAnchors()	{ 	model.setAnchorVisibility(true);	}
 	@FXML public  void browsePathways()		{	App.browsePathways(this);	}	
 	@FXML	private void clearColors() { model.clearColors();}
-	// **-------------------------------------------------------------------------------
-	public  void buildStage(String title, VBox contents)		
-	{
-		Stage browserStage = new Stage();
-		try 
-		{
-			browserStage.setTitle(title);
-		    browserStage.setScene(new Scene(new ScrollPane(contents), 500, 800));
-		    browserStage.show();
-		}
-		catch (Exception e) { e.printStackTrace();}
-	}
 
 	public Species getSpecies()	{ return model.getSpecies();	}
 	public String getActiveArrowType() {	return activeArrowType;	}
@@ -336,18 +297,13 @@ public class Controller implements Initializable, IController
 			List<Interaction> edges = getDrawModel().connectSelectedNodes();
 			if (edges.size() > 0)
 			{
-				addEdges(edges);
+				for (Interaction e: edges)
+					addInteraction(e);
 				pasteboard.resetGrid();
 				for (Edge e : edges)
 					e.connect();
 			}
 		}
-	}
-	
-	void addEdges(List<Interaction> edges)
-	{
-		for (Interaction e: edges)
-			addInteraction(e);
 	}
 	
 	public static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
@@ -369,6 +325,8 @@ public class Controller implements Initializable, IController
 	public SimpleBooleanProperty graphIdsVisibleProperty() { return graphIdsVisible; }
 	SimpleBooleanProperty zOrderVisible = new SimpleBooleanProperty(true);
 	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
+	SimpleBooleanProperty snapToGrip = new SimpleBooleanProperty(true);
+	public SimpleBooleanProperty snapToGripProperty() { return snapToGrip; }
 	// **-------------------------------------------------------------------------------
 	GPMLTreeTableView nodeTreeTable;
 	public GPMLTreeTableView getTreeTableView() { return nodeTreeTable; }
@@ -644,9 +602,12 @@ public class Controller implements Initializable, IController
 		getPasteboard().restoreBackgroundOrder();
 		assignDataNodesToGroups();
 		resetEdgeTable();
-		nodeTreeTable.updateTables();
-      Thread postponed =  new Thread(() -> Platform.runLater(() -> { redrawAllEdges();	} )  );
-    postponed.start();  
+		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
+		{
+			redrawAllEdges();	
+			nodeTreeTable.updateTreeTable();
+		} )  );
+		postponed.start();  
 	}
 			
 	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}
@@ -703,7 +664,7 @@ public class Controller implements Initializable, IController
 	{		
 		pasteboard.add(n);	
 		DataNode modelNode = n.modelNode();
-		if (n.isAnchor()) return;
+//		if (n.isAnchor()) return;
 		if (n.isLabel()) return;
 		AttributeMap map = modelNode;
 		Object prop  = map.get("TextLabel");
@@ -715,6 +676,7 @@ public class Controller implements Initializable, IController
 	public void remove(Node n)						
 	{		
 		pasteboard.getChildren().remove(n);	
+//		getTreeTableView().updateTreeTable();
 	}
 	public void remove(VNode n)						
 	{		
@@ -722,7 +684,7 @@ public class Controller implements Initializable, IController
 		String layer = n.getLayerName();
 		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
 		content.remove(n);
-		nodeTreeTable.rebuildNodeTable();		// TODO redundant?
+		getTreeTableView().updateTreeTable();
 	}
 	// **-------------------------------------------------------------------------------
 	public String getState()					{ 	return model.saveState();  }
@@ -794,8 +756,11 @@ public class Controller implements Initializable, IController
 			edge.connect();
 	}
 	public void redrawAllEdges() {
-		for (Interaction edge : model.getEdges())
+	for (Interaction edge : model.getEdges())
+		{
+			edge.rebind();
 			edge.connect();
+		}
 	}
 	
 	public void assignDataNodesToGroups() {
@@ -830,28 +795,30 @@ public class Controller implements Initializable, IController
 
 	// **-------------------------------------------------------------------------------
 	public void addDataNode(DataNode node) {
+		pasteboard.setActiveLayer("Content");	
 		 node.setName( node.get("TextLabel"));
 		if (node.getStack() == null)
 			new VNode(node, pasteboard);
-		model.addResource(node.getGraphId(), node);
-//		nodeTreeTable.addBranch(node);
+		model.addResource(node);
 	}
 
-	public void addShape(DataNode shape) {
+	public void addShapeNode(DataNode shapeNode) {
 	pasteboard.setActiveLayer("Background");	
-		shape.setType("Shape");
-		shape.put("Type", "Shape");
-		shape.setName(shape.get("ShapeType"));
-		new VNode(shape, pasteboard);
-		model.addResource(shape);
-//		nodeTreeTable.addBranch(shape);
+		shapeNode.setType("Shape");
+		shapeNode.put("Type", "Shape");
+		shapeNode.setName(shapeNode.get("ShapeType"));
+		new VNode(shapeNode, pasteboard);
+		model.addResource(shapeNode);
+		model.addShape(shapeNode);
 		
 	}
 	public void addLabel(DataNode label) {
+		pasteboard.setActiveLayer("Background");	
 		label.setType("Label");
 		label.put("Type", "Label");
 		new VNode(label, pasteboard);
 		model.addResource(label);
+		model.addLabel(label);
 //		nodeTreeTable.addBranch(label);
 	}
 
@@ -871,33 +838,39 @@ public class Controller implements Initializable, IController
 	}
 
 	public void addGroup(DataNodeGroup grp) {
+		pasteboard.setActiveLayer("Background");	
 		new VNode(grp, pasteboard);
-		model.addGroup(grp);
+//		model.addGroup(grp);
 //		nodeTreeTable.addBranch(grp);
 
 	}
 	public void addStateNode(DataNodeState statenode) {
-		// model does not store states!   add the state info onto its host DataNode
+		pasteboard.setActiveLayer("Content");	
 		String graphRef = statenode.get("GraphRef");
 		DataNode host = model.findDataNode(graphRef);
 		if (host != null)
 		{
 			host.getStack().addState(statenode);
 			String hostId = host.getGraphId();
-			nodeTreeTable.addBranch(statenode, hostId);
 			model.addState(graphRef, statenode);
 		}
 		
 	}
 	
-	public void addAnchor(Anchor anchor) 
-	{
-		anchor.copyAttributesToProperties();
-		anchor.setName("Anchor (" + anchor.get("GraphID") + ") on " + anchor.getInteraction().toString());
-		System.out.println("add Anchor " + anchor.get("GraphId"));
-		anchor.setGraphId(anchor.get("GraphId"));
-		model.addResource(anchor);			// add anchors to model, so edges can find them
-	}
+//	public void addAnchor(Anchor anchor) 
+//	{
+//		anchor.copyAttributesToProperties();
+//		String interactionId = anchor.getInteractionId();
+//		Interaction inter = model.getInteraction(interactionId);
+//		anchor.setAnchorPosition(inter);
+//		anchor.setName("Anchor (" + anchor.get("GraphID") + ") on " + interactionId);
+//		System.out.println("add Anchor " + anchor.get("GraphId"));
+//		anchor.setGraphId(anchor.get("GraphId"));
+//		model.addResource(anchor);			// add anchors to model, so edges can find them
+//		VNode n = anchor.getStack();
+//		n.setCenter(300,499);
+//		pasteboard.add(n);
+//	}
 	// **-------------------------------------------------------------------------------
 	// GeneSets
 	// **-------------------------------------------------------------------------------
@@ -933,9 +906,9 @@ public class Controller implements Initializable, IController
 			addDataNode(node);			
 		}
 	}
-	public void rebind(String gid) {
-System.err.println("REBIND");	
-}
+//	public void rebind(String gid) {
+//System.err.println("REBIND");	
+//}
 	public void addBranch(Interaction interaction, String parentId) {
 		nodeTreeTable.addBranch(interaction, parentId);
 		

@@ -22,11 +22,13 @@ public class DataNodeGroup extends DataNode {
 	private double maxY = Double.MIN_VALUE;
 	private List<DataNode> children = new ArrayList<DataNode>();
 	public List<DataNode> getChildren() { return children ; } 
-	public void addToGroup(DataNode child)
-	{
-		children.add(child);
-	}
+	public void addToGroup(DataNode child)	{		children.add(child);	}
 	
+	public DataNodeGroup(AttributeMap map, Model m)
+	{
+		super(map,m);
+	}	
+
 	public void calcBounds()
 	{
 		for (DataNode child : children)
@@ -50,10 +52,6 @@ public class DataNodeGroup extends DataNode {
 		return new BoundingBox(minX-padding,minY-padding,0, maxX-minX + 2 * padding, maxY-minY+ 2 * padding, 0);
 	}
 
-	public DataNodeGroup(Model m)
-	{
-		super(m);
-	}	
 	static int counter = 4000;
 	static String getNextId()	{ return "id" + counter++; }
 //	public DataGroup(AttributeMap am, Model m)
@@ -81,17 +79,7 @@ public class DataNodeGroup extends DataNode {
 	String elementType = "Group";
 	String[]  nodeAttrs = {  "TextLabel", "GroupId", "GraphId", "Style"};
 	private void buildNodeOpen(StringBuilder bldr) {
-		bldr.append("<" + elementType + attributeList(nodeAttrs) + ">\n");
+		bldr.append("<Group" + attributeList(nodeAttrs) + ">\n");
 	}
-	private void buildNodeClose(StringBuilder bldr) {
-		bldr.append("</" + elementType + ">\n");
-	}
-
-	String[]  xrefattrs = {  "Database", "ID"};
-	protected void buildXRefTag(StringBuilder bldr)
-	{
-		String attributes = attributeList(xrefattrs);
-		if (StringUtil.hasText(attributes))
-			bldr.append( "<Xref ").append(attributes).append( " >\n");
-	}
+	private void buildNodeClose(StringBuilder bldr) {		bldr.append("</Group>\n");	}
 }

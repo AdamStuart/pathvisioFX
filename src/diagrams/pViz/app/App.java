@@ -10,6 +10,7 @@ import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.tables.XrefListController;
 import gui.Log;
 //import edu.stanford.nlp.util.ArrayUtils;
 import javafx.application.Application;
@@ -197,30 +198,49 @@ import util.FileUtil;
 	}
 	   //---------------------------------------------------------------------------------------
 	static final String GENELIST = "../gpml/GeneList.fxml";
+	static final String XREFLIST = "../tables/XRefList.fxml";
 	   static public  void doNewGeneList(Model model, GeneModel geneModel) 
 		{
+//		   GeneSetRecord geneList =   geneModel.getGeneList();
+//		   Collection<Interaction>  edgeList =    model.getEdges();
+//		   doNewGeneList( geneList,  edgeList, true); 
 		   GeneSetRecord geneList =   geneModel.getGeneList();
 		   Collection<Interaction>  edgeList =    model.getEdges();
-		   doNewGeneList( geneList,  edgeList, true); 
+		   doNewNetworkList( model); 
 		}
 	   
-		   static public  void doNewGeneList(GeneSetRecord geneList, Collection<Interaction>  edgeList, boolean extra) 
+	   static public  void doNewGeneList(GeneSetRecord geneList, Collection<Interaction>  edgeList, boolean extra) 
+	   {
+	if (geneList == null)
+		geneList = new GeneSetRecord("Empty");
+	try
 	{
-		if (geneList == null)
-			geneList = new GeneSetRecord("Empty");
-		try
-		{
-			Pair<FXMLLoader, Stage> pair = buildStage("Gene List", GENELIST, 800, 650)	;
-			if (pair == null) return;
-			GeneListController glc = (GeneListController) pair.getKey().getController();   
-			Stage s =  pair.getValue();
-		    registerWindow(s);
-		    glc.loadTables(geneList, edgeList, true);
-			s.show();
-		}
-		catch (Exception e) { e.printStackTrace();	}
+		Pair<FXMLLoader, Stage> pair = buildStage("Gene List", GENELIST, 800, 650)	;
+		if (pair == null) return;
+		GeneListController glc = (GeneListController) pair.getKey().getController();   
+		Stage s =  pair.getValue();
+	    registerWindow(s);
+	    glc.loadTables(geneList, edgeList, true);
+		s.show();
 	}
-	//---------------------------------------------------------------------------------------
+	catch (Exception e) { e.printStackTrace();	}
+}
+//---------------------------------------------------------------------------------------
+	   static public  void doNewNetworkList(Model inModel) 
+{
+	try
+	{
+		Pair<FXMLLoader, Stage> pair = buildStage("Pathway Components", XREFLIST, 800, 650)	;
+		if (pair == null) return;
+		XrefListController glc = (XrefListController) pair.getKey().getController();   
+		Stage s =  pair.getValue();
+	    registerWindow(s);
+	    glc.loadTables(inModel);
+		s.show();
+	}
+	catch (Exception e) { e.printStackTrace();	}
+}
+//---------------------------------------------------------------------------------------
 	static final String RESOURCE = "ReferenceList.fxml";
     static final String STYLE = "genelistStyles.css";
 	static  public Pair<FXMLLoader, Stage>  openReferenceList() {

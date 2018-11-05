@@ -30,6 +30,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -63,6 +64,10 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	@FXML private ChoiceBox<String> species;
 	@FXML private Button search;
 	@FXML private TextField searchBox;
+	@FXML private Button cancel;
+	@FXML private Button preview;
+	@FXML private Button view;
+	@FXML private Button edit;
 
 	static TableRow<PathwayRecord> thisRow = null;
 	private Controller parentController;
@@ -80,7 +85,9 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 			" Use quotes to escape special characters. E.g. 'apoptosis*' will include the * in the search and not use it as wildcard.";
 	
 	//---------------------------------------------------------------------------
-	@Override public void initialize(URL location, ResourceBundle resources)
+	String lastSearch = "ATF2";
+			
+			@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		String[] organisms = { "Any", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Canis familiarus", "Box taurus", "Pan troglodytes", "Gallus gallus" };
 		species.getItems().addAll(organisms);
@@ -90,7 +97,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		search.setText("");
 		search.setTooltip(new Tooltip(tooltip));
 		searchBox.setTooltip(new Tooltip(tooltip));
-		searchBox.setText("ATF2");
+		searchBox.setText(lastSearch);
 		searchBox.addEventHandler(KeyEvent.KEY_PRESSED, e -> {  if (e.getCode() == KeyCode.ENTER) doSearch();	} );
 		searchBox.selectAll();
 		if (pathwayTable != null)
@@ -229,6 +236,24 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 			PathwayRecord rec = pathwayTable.getItems().get(idx);
 			boolean edit = !ev.isShiftDown();
 			viewPathway(rec, edit);
+		}
+	}
+	@FXML public void cancel()	
+	{
+		
+	}
+	@FXML public void preview()		{	processSelection("PREVIEW");}
+	@FXML public void view()		{	processSelection("VIEW");}
+	@FXML public void edit	()		{   processSelection("EDIT");	}
+	
+	private void processSelection(String verb)
+	{
+		List<Integer> selected = pathwayTable.getSelectionModel().getSelectedIndices();
+		for (int idx : selected)
+		{
+			PathwayRecord rec = pathwayTable.getItems().get(idx);
+			boolean editable = "EDIT".equals(verb);
+			viewPathway( rec, editable);
 		}
 	}
 	//---------------------------------------------------------------------------

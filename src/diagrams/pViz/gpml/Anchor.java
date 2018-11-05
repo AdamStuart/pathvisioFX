@@ -1,89 +1,85 @@
 package diagrams.pViz.gpml;
 
-import java.util.List;
-
 import diagrams.pViz.model.Edge;
+import diagrams.pViz.model.EdgeLine;
 import diagrams.pViz.model.Interaction;
-import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.Model;
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
+import model.bio.XRefable;
 
-public class Anchor extends DataNode {
+public class Anchor extends XRefable{		// extends DataNode
 
-	private Interaction inter;
-	public Interaction getInteraction() 				{  return inter;	}
-	public void setInteraction(Interaction e) 		{  inter = e;	}
-//	
-//	public String getGraphId()			{  return get("getGraphId");	}
-	public double getAnchorPosition()			{  return getDouble("Position");	}
-	public void setPosition(double d)	{   putDouble("Position", d);	}
+	private Circle myShape;
+	private Interaction myInteraction;
+	private String interId;
 
 	
-	public Anchor(org.w3c.dom.Node node, Model m, Interaction inter)
-	{
-		super(new AttributeMap(node.getAttributes(), "ShapeType", "Circle"), m);
-		copyAttributesToProperties();
-		setType("Anchor");
-		setName("Anchor: " + get("GraphId"));
-//		setGraphId(get("GraphId"));
-		setInteraction(inter);
+	public Interaction getInteraction() 				{  return myInteraction;	}
+	public void setInteraction(Edge e) 		
+	{  
+		myInteraction = (Interaction) e;  
+		interId = myInteraction == null ? "" : myInteraction.getGraphId();	
+	}
+	public String getInteractionId() 				{  return interId;	}
+	public void setInteractionId(String e) 			{  interId = e;	}
+//	
+	public double getAnchorPosition()				{  return getDouble("Position");	}
+	public void setPosition(double d)				{   putDouble("Position", d);	}
+	public Shape getShape()							{	return myShape;}
 
-		putDouble("CenterX", 0);
-		putDouble("CenterY", 0);
-		putDouble("Radius", 2);		
+	
+	public Anchor(org.w3c.dom.Node node, Model m, String inter)
+	{
+		super(new AttributeMap(node.getAttributes()));
+		myShape = new Circle();
+		myShape.setRadius(6);
+		myShape.setVisible(true);
+		myShape.setFill(Color.BISQUE);
+		setName("Anchor: " + get("GraphId"));
+//		setInteraction(inter);
+		setInteractionId(inter);
 	}
 	
-	String getInteractionGraphId()	{ return inter.getGraphId();		}
-	String getStartName()	{ return inter.getStartName();		}
-	String getEndName()		{ return inter.getEndName();		}
 	public String toString()
 	{
 		String type =  getType();
 		if (type == null) type = get("Type") ;		
 		if (type == null) type = "Unspecified";		
-		return String.format("Anchor Type=\"%s\" On Edge from %s to %s/>", type, getStartName(), getEndName());
+		return String.format("Anchor of type=\"%s\" />", type);  // On Edge from %s to %s   , getStartName(), getEndName()
 	}
+	
 	public String toGPML()
 	{
-		String shape =  get("Shape");
-		if (shape == null) shape = "None";
-		
+		String shape = get("Shape");
+		if (shape == null) shape = "Oval";
 		return String.format("<Anchor Position=(%.2f, %.2f) Shape=\"%s\" GraphId=\"%s\" />\n", getPosition().getX(), getPosition().getY(), shape, getGraphId());
 	}
 
+//	public void setAnchorPosition(Interaction i) {		resetPosition(i);	}
 	public void resetPosition(Edge caller)
 	{
 		double position = getAnchorPosition();
-		Point2D pt = inter.getEdgeLine().getPointAlongLine(position);
-		String myId = getGraphId();
-		getStack().setCenter(pt);
-		getStack().setWidth(4);
-		getStack().setHeight(4);
-		Shape fig = getStack().getFigure();
-		if (fig instanceof Circle) 
-			((Circle)(fig)).setRadius(2);
-		List<Interaction> edges =  getModel().getInteractionList(myId);
-		for (Interaction e : edges)
+		if (Double.isNaN(position))
+			position = 0.5;
+		if (caller == null) return;
+		EdgeLine edgeLine = caller.getEdgeLine();
+		Point2D pt = edgeLine.getPointAlongLine(position);
+		if (!edgeLine.getChildren().contains(myShape))
+			edgeLine.getChildren().add(myShape);
+		String myId = get("GraphId");
+//		System.out.println(String.format("position: %.2f id: %s @ [ %.2f, %.2f] ",position, myId,  pt.getX(), pt.getY()));
+		if (myShape instanceof Circle) 
+		{
+			Circle c = ((Circle)(myShape));
+			c.setCenterX(pt.getX());
+			c.setCenterY(pt.getY());
+		}
+		Interaction e  = getInteraction();
 			if (e != caller)
 				e.connect();
-		
 	}
-
-	public Shape getShape()
-	{
-		Shape sh = getStack().getShape();
-		if (sh == null)
-			getStack().setShape(sh = new Circle(4));
-		sh.setStrokeWidth(0);
-		sh.setFill(Color.MAGENTA);
-//		sh.setFill(Color.TRANSPARENT);
-		return sh;
-	}
-	public void setShape(Shape p)		{  getStack().setShape(p);	}
-
-
 }

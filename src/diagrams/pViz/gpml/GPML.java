@@ -112,11 +112,11 @@ public class GPML {
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
 		handleLabels(doc.getElementsByTagName("Label"));
 		handleBiopax(doc.getElementsByTagName("Biopax"));
+		parseShapes(doc.getElementsByTagName("Shape"));
+		parseStateNodes(doc.getElementsByTagName("State"));
 		handleGroups(doc.getElementsByTagName("Group"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseInteractions(doc.getElementsByTagName("Interaction"));
-		parseShapes(doc.getElementsByTagName("Shape"));
-		parseStateNodes(doc.getElementsByTagName("State"));
 //		List<Node> sorted = getController().getPasteboard().getChildren().stream()
 //        	.sorted(Comparator.comparing(null).reversed())
 //        	.peek(System.out::println)
@@ -186,7 +186,7 @@ public class GPML {
 				System.out.println("");
 			DataNode node = parseGPMLDataNode(child, model, "Background");
 			if (node != null)
-				getController().addShape(node);
+				getController().addShapeNode(node);
 		}
 	}
 	// **-------------------------------------------------------------------------------
@@ -247,12 +247,9 @@ public class GPML {
 	public Interaction parseGPMLInteraction(org.w3c.dom.Node edgeML, Model m) {
 	try
 	{
-		Interaction interaction = new Interaction(m);
-		interaction.put("Layer", "Content");
-		interaction.add(edgeML.getAttributes());
-		interaction.copyAttributesToProperties();
 		List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 		List<Anchor> anchors = new ArrayList<Anchor>();
+		AttributeMap attrib = new AttributeMap(edgeML.getAttributes());
 		NodeList elems = edgeML.getChildNodes();
 		String startId="", endId="";
 		DataNode endNode = null, startNode = null;
@@ -262,7 +259,7 @@ public class GPML {
 			String name = n.getNodeName();
 			if ("Graphics".equals(name))
 			{
-				interaction.add(n.getAttributes());
+				attrib.add(n.getAttributes());
 				NodeList pts = n.getChildNodes();
 				boolean sourceAssigned = false;
 				for (int j=0; j<pts.getLength(); j++)
@@ -274,22 +271,23 @@ public class GPML {
 						points.add(gpt);
 						String key = sourceAssigned ? "targetid" : "sourceid";
 						sourceAssigned = true;
-						interaction.put(key, gpt.getGraphRef());
+						attrib.put(key, gpt.getGraphRef());
 						ArrowType type = gpt.getArrowType();
 						if (type != null)
-							interaction.put("ArrowHead", type.toString());
+							attrib.put("ArrowHead", type.toString());
 					}
 					if ("Anchor".equals(pt.getNodeName()))
 					{
-						Anchor gpt = new Anchor(pt, m,interaction);
-						getController().addAnchor(gpt);
+						Anchor anchor = new Anchor(pt, m,attrib.get("GraphId"));
+						anchors.add(anchor);
+//						getController().addAnchor(anchor);
 					}
 				}
 			}
 			else if ("Xref".equals(name))	// suck the Xref element into our attributes
-				interaction.add(n.getAttributes());
+				attrib.add(n.getAttributes());
 			else if ("BiopaxRef".equals(name))	// suck the BiopaxRef element into our attributes
-				interaction.put("BiopaxRef", n.getTextContent());
+				attrib.put("BiopaxRef", n.getTextContent());
 		}
 		//post parsing
 		int z = points.size();
@@ -298,13 +296,13 @@ public class GPML {
 			GPMLPoint startPt = points.get(0);
 			startId = startPt.getGraphRef();
 			startNode = m.getDataNode(startId);
-			interaction.put("start", startId);
+			attrib.put("sourceid", startId);
 			GPMLPoint lastPt = points.get(z-1);
 			endId = lastPt.getGraphRef();
-			interaction.put("end", endId);
+			attrib.put("targetid", endId);
 			endNode = m.getDataNode(endId);
-			double thickness = interaction.getDouble("LineThickness");
-			interaction.putDouble("LineThickness", thickness);
+			double thickness = attrib.getDouble("LineThickness");
+			attrib.putDouble("LineThickness", thickness);
 //			if (startNode != null && endNode != null) 
 //				return interaction;	
 //			else if (startPt != null && lastPt != null) 
@@ -315,15 +313,18 @@ public class GPML {
 			System.err.println("z = " + z);
 			return null;
 		}
+		Interaction interaction = new Interaction(attrib, m,points, anchors);
+		interaction.put("Layer", "Content");
+		interaction.add(edgeML.getAttributes());
+		interaction.copyAttributesToProperties();
+		// copy attributes into properties for tree table editing
+		interaction.copyAttributesToProperties();
+		
 		if (startNode != null && endNode != null)
 		{
 			interaction.setStartNode(startNode);
 			interaction.setEndNode(endNode);
 		}
-		// copy attributes into properties for tree table editing
-		interaction.copyAttributesToProperties();
-		
-		interaction.makeEdgeLine(points, anchors);
 		return interaction;
 	}
 	catch(Exception e)
@@ -471,13 +472,15 @@ public class GPML {
 		{
 			graphId = attrs.getNamedItem("GraphId").getNodeValue();
 		}
-		DataNodeGroup newGroup = new DataNodeGroup(model);
-		newGroup.put("Fill", "808080");
-		newGroup.put("LineStyle", "Broken");
-		newGroup.put("ShapeType", "Octagon");
-		if (!graphId.isEmpty())	newGroup.put("GraphId", graphId);
-		if (!style.isEmpty())	newGroup.put("Style", style);
-		if (!groupId.isEmpty())	newGroup.put("GroupId", groupId);
+		AttributeMap attrMap = new AttributeMap();
+		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "Style", style, "Fill", "808080", "LineStyle", "Broken", "ShapeType", "Octagon");
+		DataNodeGroup newGroup = new DataNodeGroup(attrMap,model);
+//		newGroup.put("Fill", "808080");
+//		newGroup.put("LineStyle", "Broken");
+//		newGroup.put("ShapeType", "Octagon");
+//		if (!graphId.isEmpty())	newGroup.put("GraphId", graphId);
+//		if (!style.isEmpty())	newGroup.put("Style", style);
+//		if (!groupId.isEmpty())	newGroup.put("GroupId", groupId);
 
 		newGroup.copyAttributesToProperties();
 		newGroup.setName(newGroup.get("Style") + " [" + newGroup.get("GroupId") + "]");
@@ -518,7 +521,7 @@ public class GPML {
 			if (shape != null)
 			{
 				shape.setStyle("-fx-stroke-dash-array: 10 10;");
-				shape.setFill(Color.TRANSPARENT);
+				shape.setFill(Color.LIGHTGRAY);
 			}
 			stack.toBack();
 			

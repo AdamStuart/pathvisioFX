@@ -38,27 +38,32 @@ abstract public class Edge extends XRefable {
     {
 		model = inModel;
 	}
-    public Edge(AttributeMap attr, Model inModel) 
+    public Edge(AttributeMap attr, Model inModel, List<GPMLPoint> pts, List<Anchor> anchors) 
     {
 		this(inModel);
 		addAll(attr);
-		DataNode start = model.getDataNode(get("start"));
+		init(pts, anchors);
+		DataNode start = model.getDataNode(get("sourceid"));
     	if (start != null) 
     	{
     		startNode = start;
         	setSource(start.getLabel()); 
         	setSourceid(start.getGraphId());
     	}
-    	DataNode target = model.getDataNode(get("end"));
+    	DataNode target = model.getDataNode(get("targetid"));
+    	if (target == null)
+    	{
+    		String id = get("targetid");
+    		Anchor anch = startNode.getModel().findAnchorById(id);
+    		if (anch != null)
+    			setTargetid(anch.getGraphId());
+   	}
     	if (target != null) 
     	{
     		endNode = target;
     		setTarget(target.getLabel()); 
     		setTargetid(target.getGraphId());
     	}
-		edgeLine = new EdgeLine(this, null, null);
-		setInteraction(get("ArrowHead"));
-		init();
       }
  
     public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
@@ -66,11 +71,10 @@ abstract public class Edge extends XRefable {
 		model = inModel;
     	endNode = startNode = null;
 //		attributes = new AttributeMap();
-		edgeLine = new EdgeLine(this, null, null);
+		init(null, null);
 		edgeLine.addPoint(startPt);
 		edgeLine.addPoint(endPt);
 //		model.addEdge(this);
-		init();
       }
  
 	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
@@ -90,17 +94,27 @@ abstract public class Edge extends XRefable {
 		model = inModel;
 		if (getGraphId() == null)
 			setGraphId(model.gensym("edge"));
-		makeEdgeLine(pts, anchors);
-		init();
+		init(pts, anchors);
     }
 	
-	abstract protected void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors);
+//	abstract protected void init( List<GPMLPoint> pts, List<Anchor> anchors);
 
 	//------------------------------------------------------------------------------------------
-   public void init()
+	public void init( List<GPMLPoint> pts, List<Anchor> anchors)
     {
+		edgeLine = new EdgeLine(this, pts, anchors);
+		setInteraction(get("ArrowHead"));
+	   EdgeType edgeType = EdgeType.simple;
 		String type = get("ConnectorType");
-		edgeLine.setEdgeType(EdgeType.lookup(type));
+		if (type != null)  
+			edgeType = EdgeType.lookup(type);
+		edgeLine.setEdgeType(edgeType);
+		if (anchors != null && anchors.size() > 0)
+			System.out.println("ANCHORS");
+//		edgeLine.addAnchors(anchors);
+		if (anchors != null)
+			for (Anchor a : anchors)
+				a.setInteraction(this);
 		String colStr = get("Color");
 		if (colStr != null)
 		{
@@ -144,35 +158,39 @@ abstract public class Edge extends XRefable {
 //			Shape shape = endNode.getModel().getModel().findShape(edgeLine.startGraphId());
 //			pt = boundsCenter(shape);
 //		} else
-		edgeLine.setStartPoint(getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint()));
+		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
+		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
+		edgeLine.setStartPoint(startPt);
 		pt = new Point2D(0, 0);
 		if (endNode == null) {
-			String val = get("end");
+			String val = get("targetid");
 			DataNode mNode = startNode.getModel().getResourceByKey(val);
 			if (mNode != null)	
 				endNode = mNode;
-
-			Shape shape = endNode == null ? 
-					startNode.getModel().findShape(edgeLine.endGraphId()) : endNode.getStack().getFigure();
+		if (endNode == null)
+		{
+			Anchor anch = startNode.getModel().findAnchorById(val);
+			System.out.println("anch " + anch);
+		}
+			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
+//					startNode.getModel().findShape(edgeLine.endGraphId()) : 
 			if (shape != null) 
 				pt = boundsCenter(shape);
 			else 
 				System.out.println("no shape");
 		} else
-			pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
 		edgeLine.setEndPoint(pt);
 
-//		for (Anchor a : edgeLine.getAnchors()) {  happens in edgeLIne.connect
-//			a.resetPosition(this);
-//		}
-		String layer = startNode.getStack().getLayerName();
-		edgeLine.connect();
+
 		if (verbose)
 		{
 			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
 			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
 			System.out.println("connect " + startStr + " to " + endStr);
 		}
+		edgeLine.connect();
 	}
 	boolean verbose = false;
 	
@@ -203,8 +221,8 @@ abstract public class Edge extends XRefable {
 	public boolean touches(String graphId)
 	{
 		if (graphId == null) return false;
-		if (graphId.equals(get("start")))	return true;
-		if (graphId.equals(get("end")))		return true;
+		if (graphId.equals(get("sourceid")))	return true;
+		if (graphId.equals(get("targetid")))		return true;
 		for (Anchor a : edgeLine.getAnchors())
 			if (graphId.equals(a.getGraphId())) 
 				return true;

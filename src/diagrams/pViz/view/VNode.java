@@ -73,7 +73,6 @@ import javafx.scene.text.TextAlignment;
 import javafx.scene.web.WebView;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
-import model.bio.Gene;
 import model.dao.CSVTableData;
 import util.FileUtil;
 import util.MacUtil;
@@ -82,7 +81,7 @@ import util.StringUtil;
 
 public class VNode extends ResizableBox implements Comparable<VNode> {		//StackPane
 
-	private DataNode model;
+	private DataNode dataNode;
 	private Shape figure;
 	private Label text;
 	private Label graphIdLabel;
@@ -102,6 +101,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	{
 		return new VNode(this);
 	}
+	public VNode(VNode orig)		 {		 this(orig.modelNode(), orig.pasteboard);	}
 	public void setScale(double x)
 	{
 		setScaleX(x);
@@ -111,8 +111,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	{
 		super();
 		assert(modelNode != null && p != null);
-		model = modelNode;
-		model.setStack(this);
+		dataNode = modelNode;
+		dataNode.setStack(this);
 		pasteboard = p;
 		selection = pasteboard.getSelectionMgr();
 //		AttributeMap attributes = modelNode;
@@ -166,7 +166,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}	
 	public void setZOrder()
 	{
-		zOrderLabel.setText(model.get("ZOrder"));
+		zOrderLabel.setText(dataNode.get("ZOrder"));
 	}
 	public void addZOrderDisplay()
 	{
@@ -185,27 +185,26 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}	
 	
 	
-	public VNode(VNode orig) {		 this(orig.modelNode(), orig.pasteboard);	}
 	public void setText(String s)		{ 	text.setText(s);	}
 	public String getText()				
 	{ 	
 		String s = text.getText();	
 		if (StringUtil.isEmpty(s))
 		{
-			if (isAnchor()) return "Anchor (" + getGraphId() + ")";
+//			if (isAnchor()) return "Anchor (" + getGraphId() + ")";
 			return getId();
 		}
 		return s;
 	}
 	
-	public String getGraphId()			{ 	return model.getGraphId();	}
+	public String getGraphId()			{ 	return dataNode.getGraphId();	}
 	private Controller getController()  { 	return pasteboard.getController();   	}
 	public Label getTextField()			{ 	return text;	}
 	public Shape getFigure()			{	return figure;	}
 	public void setFigure(Shape s)		{	figure = s;	}
-	public DataNode modelNode()			{	return model;	}
-	private String gensym(String s)		{	return model.getModel().gensym(s);	}
-	public AttributeMap getAttributes() {	return model;	}
+	public DataNode modelNode()			{	return dataNode;	}
+	private String gensym(String s)		{	return dataNode.getModel().gensym(s);	}
+	public AttributeMap getAttributes() {	return dataNode;	}
 	// **-------------------------------------------------------------------------------
 	public boolean canResize()	{	return resizable;	}
 	public void handleResize(MouseEvent event)
@@ -299,7 +298,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	
 	}
 	// **-------------------------------------------------------------------------------
-	public boolean isAnchor()	{ return modelNode() instanceof Anchor;	}
+//	public boolean isAnchor()	{ return modelNode() instanceof Anchor;	}
 	public String getShapeType(){ return modelNode().getShapeType(); 	}
 	public boolean isLabel()	{ return "Label".equals(getShapeType());	}
 //	public boolean isShape()	{ return "RoundedRectangle".equals(getShapeType());	}// TODO
@@ -357,17 +356,17 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
  	// **-------------------------------------------------------------------------------
 	private void createFigure(Point2D center) 
 	{	
-		String type = model.getShapeType();
+		String type = dataNode.getShapeType();
 		if ("None".equals(type)) return;
 		if (type == null) type = "Rectangle";			// TODO
 		Tool tool = Tool.lookup(type);
 		if (tool == null) return ;
 		if (tool.isControl())
 		{
-			addNewNode(tool, model);
+			addNewNode(tool, dataNode);
 			return;
 		}
-		else figure = ShapeFactory.makeNewShape(type, model, this);
+		else figure = ShapeFactory.makeNewShape(type, dataNode, this);
 
 		Insets insets = new Insets(2,2,2,2);  //getInsets();
         double hInsets = insets.getLeft() + insets.getRight();
@@ -380,19 +379,33 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         	c.setRadius(Math.min(w, h)/ 2); 
         	c.setCenterX(center.getX());
         	c.setCenterY(center.getY());
-        	if (isAnchor())
-        	{
-        		setStyle("-fx-border-color: blue; -fx-border-width: 3; -fx-background-color: green; -fx-opacity: 1.0;");	    
-        		setResizeBorderTolerance(-2);
-        	}
+//        	if (isAnchor())
+//        	{
+//        		setStyle("-fx-border-color: blue; -fx-border-width: 3; -fx-background-color: green; -fx-opacity: 1.0;");	    
+//        		setResizeBorderTolerance(-2);
+//        	}
+        }
+        else if (figure instanceof Ellipse)
+        {
+        	Ellipse c = (Ellipse) figure;
+        	c.setRadiusX(Math.min(w, h)/ 2); 
+        	c.setRadiusY(Math.min(w, h)/ 2); 
+        	c.setCenterX(center.getX());
+        	c.setCenterY(center.getY());
+        	DataNode model = modelNode();
+//        	if (isAnchor())
+//        	{
+//        		setStyle("-fx-border-color: blue; -fx-border-width: 3; -fx-background-color: green; -fx-opacity: 1.0;");	    
+//        		setResizeBorderTolerance(-2);
+//        	}
         }
         else if (figure instanceof Rectangle)
         {
 	        Rectangle r = (Rectangle) figure;
 	        r.setWidth(w);
 	        r.setHeight(h);
-	        r.setLayoutX(center.getX() - w /2 ); 
-	        r.setLayoutY(center.getY() - h /2 ); 
+	        r.setX(center.getX() - w /2 ); 
+	        r.setY(center.getY() - h /2 ); 
         }
         else if (figure instanceof Polygon)
         {
@@ -489,24 +502,25 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 				Circle c = (Circle) figure;
 				c.setCenterX(getCenterX()); 
 				c.setCenterY(getCenterY());
-				if (isAnchor())
-				{
-					c.setRadius(2);
-					setText("");
-				}
-				else c.setRadius(Math.min(getHeight(),getWidth())/2);
+//				if (isAnchor())
+//				{
+//					c.setRadius(2);
+//					setText("");
+//				}
+//				else 
+					c.setRadius(Math.min(getHeight(),getWidth())/2);
 			}
 			if (figure instanceof Ellipse)
 			{
 				Ellipse e = (Ellipse) figure;
 				e.setCenterX(getCenterX()); 
 				e.setCenterY(getCenterY());
-				if (isAnchor())
-				{
-					e.setRadiusX(2);	e.setRadiusY(2);
-					setText("");
-				}
-				else 
+//				if (isAnchor())
+//				{
+//					e.setRadiusX(2);	e.setRadiusY(2);
+//					setText("");
+//				}
+//				else 
 					{
 					e.setRadiusX(getWidth()/2);
 					e.setRadiusY(getHeight()/2);
@@ -867,7 +881,7 @@ public void addBadge(String letter)
 
 		
 		
-		String colorTag = model.get("Color");
+		String colorTag = dataNode.get("Color");
 		if (colorTag != null)
 			bldr.append("-fx-text-fill:#" + colorTag + "; ");
 		bldr.append(makeStyleString("FontSize"));
@@ -877,7 +891,7 @@ public void addBadge(String letter)
 		setStyle(str);
 		if (text != null) text.setFont(Font.font("times", wt, posture, size)); 
 		bldr = new StringBuilder();		// start over with Shape
-		colorTag = model.get("Color");
+		colorTag = dataNode.get("Color");
 		if (colorTag != null)
 			bldr.append("-fx-border-color:#" + colorTag + "; ");
 		bldr.append(makeStyleString("FillColor"));
@@ -892,7 +906,7 @@ public void addBadge(String letter)
 	}
 	
 	private String makeStyleString(String gpmlTag) {
-		String val = model.get(gpmlTag);
+		String val = dataNode.get(gpmlTag);
 		if (val == null) return "";
 		String fxml = GPML.asFxml(gpmlTag);
 		if (fxml == null) return "";
@@ -917,7 +931,7 @@ public void addBadge(String letter)
 	// **-------------------------------------------------------------------------------
 	private void makeBrowser()
 	{
-		AttributeMap attrMap = model;
+		AttributeMap attrMap = dataNode;
 		attrMap.put("ShapeType","Browser");
 		String url = attrMap.get("url");
 		if (url == null) 
@@ -936,30 +950,30 @@ public void addBadge(String letter)
 	// **-------------------------------------------------------------------------------
 	private void makeImageView()
 	{
-		model.put("ShapeType","Image");
-		String filepath = model.get("file");		// f.getAbsolutePath()
+		dataNode.put("ShapeType","Image");
+		String filepath = dataNode.get("file");		// f.getAbsolutePath()
 		if (filepath == null) return;
 		Image img = new Image("file:" + filepath);
 		if (img.isError())
 			System.out.println("makeImageView error");
 		ImageView imgView = new ImageView(img);
-		if (model.get("GraphId") == null) 
-			model.put("GraphId", gensym("I"));
+		if (dataNode.get("GraphId") == null) 
+			dataNode.put("GraphId", gensym("I"));
 		
 		imgView.prefWidth(200); 	imgView.prefHeight(200);
 		imgView.setFitWidth(200); 	imgView.setFitHeight(200);
-		model.put("name", filepath);
+		dataNode.put("name", filepath);
 	    imgView.setMouseTransparent(true);
 	    imgView.fitWidthProperty().bind(Bindings.subtract(widthProperty(), 20));
 	    imgView.fitHeightProperty().bind(Bindings.subtract(heightProperty(), 40));
 	    imgView.setTranslateY(-10);
-		readGeometry(model, imgView);
+		readGeometry(dataNode, imgView);
 		getChildren().add(new VBox(addTitleBar(filepath), imgView));
 	}
 	
 	// **-------------------------------------------------------------------------------
 	private void makeSVGPath() {
-		AttributeMap attrMap = model;
+		AttributeMap attrMap = dataNode;
 		attrMap.put("ShapeType","SVGPath");
 
 		String path = attrMap.get("file");
@@ -982,7 +996,7 @@ public void addBadge(String letter)
 	// **-------------------------------------------------------------------------------
 	private void makeTableView()
 	{
-		AttributeMap attrMap = model;
+		AttributeMap attrMap = dataNode;
 		attrMap.put("ShapeType","Table");
 		TableView<ObservableList<StringProperty>> table = new TableView<ObservableList<StringProperty>>();
 		if (attrMap.get("GraphId") == null)
@@ -997,7 +1011,7 @@ public void addBadge(String letter)
 	// **-------------------------------------------------------------------------------
 	public void makeTextArea()
 	{
-		AttributeMap attrMap = model;
+		AttributeMap attrMap = dataNode;
 		attrMap.put("ShapeType","Text");
 		String text = attrMap.get("text");
 		if (text == null)

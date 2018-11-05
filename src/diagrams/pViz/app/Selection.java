@@ -131,6 +131,7 @@ public class Selection
 			getController().remove(node);
 			items.remove(node);
 		}
+		getController().getTreeTableView().updateTreeTable();
 	}
 	//--------------------------------------------------------------------------
 	boolean isGrid(VNode node) { return node != null && node.getId() != null && node.getId().contains("grid"); }

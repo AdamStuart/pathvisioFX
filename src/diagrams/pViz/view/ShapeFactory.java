@@ -86,6 +86,7 @@ public class ShapeFactory {
 			case Line:				newShape = new Line();		break;
 			case Shape1:			newShape = Shape1.getHeartPath();	break;
 			case Oval:				newShape = new Ellipse();	break;
+			case Circle:			newShape = new Ellipse();	break;
 			default:	 
 				if (Tool.contains(Tool.customShapes,s))
 					newShape = CellShapeFactory.makeCustomShape(s); 

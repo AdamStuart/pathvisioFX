@@ -2,7 +2,6 @@ package diagrams.pViz.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
@@ -31,27 +30,37 @@ import util.LineUtil;
 public class EdgeLine extends Group {
 
 	 //----------------------------------------------------------------------
-	public EdgeLine(Edge inter, List<GPMLPoint> pts, List<Anchor> anchorList) 
+	public EdgeLine()
 	{
 	   	polyline = null;
 	   	line = null;
 	   	head =  tail = null;
+		interaction = null;			
+		
+	}
+	public EdgeLine(EdgeType edgeType, double startX, double startY, double endX, double endY)
+	{
+	   this();
+	   srcX = startX;
+	   	srcY = startY;
+	   	targX = endX;
+	    targY = endY;
+	    type = edgeType;
+		setMouseTransparent(true);
+	}
+
+	public EdgeLine(Edge inter, List<GPMLPoint> pts, List<Anchor> anchorList) 
+	{
+	   	this();
 		if (pts != null) 
 			points.addAll(pts);
 		interaction = (Interaction) inter;
-			
+		if (inter != null)
+			System.out.println("Interactino id = "+ interaction.get("GraphId"));
 		if (anchorList != null)
 			anchors.addAll(anchorList);
 		for (Anchor anchor : anchors)
-		{
-			anchor.setInteraction(interaction);
-			Circle dot = new Circle(5);
-			dot.setFill(Color.MAGENTA);
-			Point2D pt = getPointAlongLine(anchor.getAnchorPosition());
-			dot.setCenterX(pt.getX());
-			dot.setCenterY(pt.getY());
-			getChildren().add(dot);
-		}
+			System.out.println("A: " +anchor.toString());
 		setMouseTransparent(false);
 	}
 	 //----------------------------------------------------------------------
@@ -71,24 +80,6 @@ public class EdgeLine extends Group {
 	public void setStroke(Color c) { stroke = c; }
 	public void getStrokeWidth(double w) { strokeWidth = w; }
 
-	public EdgeLine()
-	{
-	   	polyline = null;
-	   	line = null;
-	   	head =  tail = null;
-		interaction = null;			
-		
-	}
-	public EdgeLine(EdgeType edgeType, double startX, double startY, double endX, double endY)
-	{
-	   this();
-	   srcX = startX;
-	   	srcY = startY;
-	   	targX = endX;
-	    targY = endY;
-	    type = edgeType;
-		setMouseTransparent(true);
-	}
 	 //----------------------------------------------------------------------
 	private Interaction interaction;		// the model corresponding to this geometry
 	private Polyline polyline;
@@ -97,7 +88,15 @@ public class EdgeLine extends Group {
 	private EdgeType type = EdgeType.simple;
 	private List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 	private List<Anchor> anchors = new ArrayList<Anchor>();
-	
+   public Anchor findAnchor(String graphId)
+   {
+	  if (graphId == null) return null;
+	  for (Anchor a : getAnchors())
+		   if (graphId.equals(a.getGraphId()))
+			   return a;
+	   return null;
+   }
+
 	private Point2D arrowPt = new Point2D(0,0);			// the arrowhead is drawn to stop short of the node edge
 	public double getArrowX()		{ return arrowPt.getX();	}
 	public double getArrowY()		{ return arrowPt.getY();	}
@@ -106,7 +105,7 @@ public class EdgeLine extends Group {
 	public void setAnchorVis(boolean visible)
 	{
 		for (Anchor a: anchors) 
-			a.getStack().setVisible(visible);
+			a.getShape().setVisible(visible);
 	}
 	public Polyline getPolyline()	
 	{
@@ -156,6 +155,7 @@ public class EdgeLine extends Group {
 	public List<GPMLPoint> getPoints() 	{ 	return points;	}
 	public List<Anchor> getAnchors() 	{ 	return anchors;	}
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
+	public void addAnchors(List<Anchor> a) 	{ 	if (a != null) anchors.addAll(a);	}
 	public void removeAnchor(Anchor a) 	{ 	anchors.remove(a);	}
 	public String getLayer()			{ 	return interaction.getLayer();	}
 	public boolean getSelected()		{ 	return selected;	}
@@ -173,9 +173,9 @@ public class EdgeLine extends Group {
 	boolean selected;
 	//----------------------------------------------------------------------
 	public Point2D getPointAlongLine(double position) {
-		Point2D startPt = firstPoint();
-		Point2D endPt = lastPoint();
-		
+		Point2D startPt = getStartPoint();   //firstPoint();
+		Point2D endPt = getEndPoint();  //lastPoint();
+		System.out.println(String.format("%.2f,  %.2f  --> %.2f %.2f ", startPt.getX(), startPt.getY(), endPt.getX(), endPt.getY())); 
 		// TODO Assuming simple connection!!!
 		double x = startPt.getX() + ((endPt.getX() - startPt.getX()) * position);
 		double y = startPt.getY() + ((endPt.getY() - startPt.getY()) * position);
@@ -210,6 +210,9 @@ public class EdgeLine extends Group {
 	}
 	
 	public void setEndPoint(Point2D endPt) {
+		if (endPt == null) return;
+	if (endPt.getX() == 0 && endPt.getY() == 0)
+		return;
 		if (endPt == null) return;
 	if (points.size() < 2)
 			points.add(new GPMLPoint(endPt));
@@ -246,7 +249,10 @@ public class EdgeLine extends Group {
 //		double endX = getEndX();
 //		double startY = getStartY();
 //		double endY = getEndY();
-		Map<String, Shape> shapes = interaction.getModel().getShapes();
+//		Map<String, Shape> shapes = interaction.getModel().getShapes();
+//		Shape shape = interaction.getModel().getShapes().get(startGraphId());
+//		Bounds b = shape.getLayoutBounds();
+		Bounds b = start.getBoundsInParent();
 		double startCenterX = 0;
 		double startCenterY = 0;
 		if (start != null)
@@ -257,13 +263,8 @@ public class EdgeLine extends Group {
 		}
 		else
 		{
-			Shape shape = interaction.getModel().getShapes().get(startGraphId());
-			if (shape != null)
-			{
-				Bounds b = shape.getLayoutBounds();
-				startCenterX = b.getMinX() + (b.getWidth() / 2);
-				startCenterY = b.getMinY() + (b.getHeight() / 2);
-			}
+			startCenterX = b.getMinX() + (b.getWidth() / 2);
+			startCenterY = b.getMinY() + (b.getHeight() / 2);
 		}
 		double endCenterX = 0;
 		double endCenterY = 0;
@@ -275,16 +276,11 @@ public class EdgeLine extends Group {
 		}
 		else
 		{
-			Shape shape = shapes.get(endGraphId());
-			if (shape != null)
-			{
-				Bounds b = shape.getLayoutBounds();
-				endCenterX = b.getMinX() + (b.getWidth() / 2);
-				endCenterY = b.getMinY() + (b.getHeight() / 2);
-			}
+			endCenterX = b.getMinX() + (b.getWidth() / 2);
+			endCenterY = b.getMinY() + (b.getHeight() / 2);
 		}
 	
-		String s=  String.format("%s \t(%4.1f, %4.1f) %s (%4.1f, %4.1f) %d ", 
+		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
 				startID, startCenterX, startCenterY, 
 				endID, endCenterX, endCenterY, getPoints().size());
 				
@@ -309,7 +305,7 @@ public class EdgeLine extends Group {
 		
 		if (head != null) 	getChildren().remove(head);
 		head = makeArrowhead(interaction);
-		if (head != null) 	getChildren().add(head);
+	 	if (head != null) 	getChildren().add(head);
 //		addTail();			not implemented here
 	}
 	
@@ -388,7 +384,7 @@ boolean BADPOINT(Point2D pt)
 		int shorten = SHORTEN ? 10 : 0;
 		if (endNode != null)		// TODO -- and arrowhead??
 		{
-			if (endNode.isAnchor()) 	shorten = 0;
+//			if (endNode.isAnchor()) 	shorten = 0;
 //			if (edge.getInteractionType() == MIM.MIM_CATALYSIS) 
 //				shorten = false;	
 		}
@@ -525,7 +521,7 @@ boolean BADPOINT(Point2D pt)
 			poly.getPoints().addAll(current.getX(), current.getY(), next.getX(), current.getY());
 		}
 		Point2D last = lastPoint();
-		Node endNode = interaction.getEndNode().getStack();
+		Node endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead != null??
 		if (shorten) {
 			GPMLPoint prev = points.get(sz - 2);

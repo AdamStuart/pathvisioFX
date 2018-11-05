@@ -9,8 +9,7 @@ import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.view.VNode;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.ObservableList;
-import javafx.scene.control.TreeItem;
+import javafx.geometry.Point2D;
 import model.AttributeMap;
 import model.bio.XRefable;
 import util.StringUtil;
@@ -40,16 +39,16 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	}
 	
 	
-	public Interaction(AttributeMap attr, Model inModel)
+	public Interaction(AttributeMap attr, Model inModel, List<GPMLPoint> pts, List<Anchor> anchors)
 	{
-		super(attr, inModel);
+		super(attr, inModel, pts, anchors);
 		interactionType.set("arrow");
 	}
 
 	
-	@Override public void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors) {
-		edgeLine = new EdgeLine(this, pts, anchors);
-	}
+//	@Override public void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors) {
+//		edgeLine = new EdgeLine(this, pts, anchors);
+//	}
 	public Interaction(Model model, VNode src, VNode vNode) {
 		this(model,src,vNode, null, null, null);
 	}	
@@ -87,21 +86,33 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	public void rebind() {
 		if (isWellConnected())
 		{
-			String gid = getStartNode().getGraphId();
-			model.getController().rebind(gid);
+//			String gid = getStarTtNode().getGraphId();
+//			model.getController().rebind(gid);
 		}
 		else
 		{
 			String src = get("sourceid");
 			String targ = get("targetid");
 			if (StringUtil.isEmpty(src) ||StringUtil.isEmpty(targ))
+			{	
 				System.err.println("Interaction rebind failed");
+				return;
+			}
 			startNode = model.findDataNode(src);
 			endNode = model.findDataNode(targ);
 //			if (endNode == null)
 //				endNode = model.findAnchor(targ);
-			String gid = getStartNode().getGraphId();
-			model.getController().rebind(gid);
+			if (startNode != null)
+			{
+				String gid = getStartNode().getGraphId();
+				Point2D lastPoint = getEdgeLine().lastPoint();
+				getEdgeLine().setEndPoint(lastPoint);
+//				model.getController().rebind(gid);
+			}
+			else
+			{
+				
+			}
 		}
 		
 	}
@@ -111,6 +122,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		setTarget(getEndNode().getName());
 		setNameFromState();
 		model.getController().getTreeTableView().addBranch(this, sourceId);
+//		repostionAnchors();
 	}
 	
 	public boolean isWellConnected() {
@@ -121,14 +133,19 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		if (arrow == null) arrow = "arrow";
 		else arrow = arrow.toLowerCase();
 		setInteractionType(arrow);
-		if ("arrow".equals(arrow)) 		arrow = "->";
-		if (arrow.contains("inhibit")) 	arrow = "-|";
-		if (arrow.contains("conver")) 	arrow = ">>";
-		if (arrow.contains("catal")) 	arrow = "-O";
-		if (arrow.contains("reg")) 		arrow = " regs";
-		String targPropertyValue = getTarget();
-		if (targPropertyValue == null)
-		setName("--" + arrow + " " + getEndName());
+		if ("arrow".equals(arrow)) 				arrow = "->";
+		else if (arrow.contains("inhibit")) 	arrow = "-|";
+		else if (arrow.contains("conver")) 		arrow = ">>";
+		else if (arrow.contains("catal")) 		arrow = "-O";
+		else if (arrow.contains("reg")) 		arrow = " regs";
+		String target = getTarget();
+		if ( target == null)
+		{
+			target = get("targetid");
+			if ( target == null)
+				target = "??";
+		}
+		setName("--" + arrow + " " + target);
 	}
 	public String getStartName() {
 		return getStartNode() == null ?  get("sourceid") : getStartNode().getName();
@@ -140,6 +157,11 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		edgeLine.setStartPoint(getStartNode().getStack().center());
 		edgeLine.setEndPoint(getEndNode().getStack().center());
 		
+	}
+	public void connect(boolean atEnd)
+   {
+		super.connect(atEnd);
+//		getEdgeLine().resetAnchors();		
 	}
 }
 
