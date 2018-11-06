@@ -71,7 +71,7 @@ public class Selection
 //		if (s.isLayerLocked()) return;
 		items.add(s);	
 		s.setEffect(new DropShadow()); 
-		s.showPorts(true);
+		s.showPorts(s.isConnectable());
 		
 		ObservableMap<Object, Object> properties = s.getProperties(); 
 		BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 

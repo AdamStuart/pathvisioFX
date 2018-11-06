@@ -137,12 +137,27 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		addPorts();
 
         readGeometry(modelNode, this);
+        String shapeType = dataNode.get("ShapeType");
+        if (shapeType == null) shapeType = "";
+        String type = dataNode.get("Type");
+        if (type == null) type = "";
+
         movable = modelNode.getBool("Movable", true);
-        resizable = modelNode.getBool("Resizable", true);
+        resizable = modelNode.getBool("Resizable", false);
         setResize(resizable);
         editable = modelNode.getBool("Editable", true);
-        connectable = modelNode.getBool("Connectable", true);
-         Tooltip tooltip = new Tooltip();
+        boolean connectable = isConnectable();
+        if ("Label".equals(type) || "Shape".equals(type))
+        	connectable = false;
+        setConnectable(connectable);
+
+        if ("Label".equals(modelNode.get("Type"))) 	connectable = false;
+        if (shapeType.equals("Mitochondria)")) 	connectable = false;
+        if (shapeType.equals("Oval)"))        	connectable = false;
+        if (shapeType.equals("Cell)"))        	connectable = false;
+        modelNode.putBool("Connectable", connectable);
+
+        Tooltip tooltip = new Tooltip();
          tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
          Tooltip.install(this,  tooltip);
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
@@ -234,7 +249,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	        {
 	        	boolean live = true;  //isSelected() || pasteboard.getDragLine() != null;
 	        	setEffect(live ? new InnerShadow() : null);
-	        	showPorts(live);
+	        	showPorts(isConnectable());
 	        }
 	        if (event.getEventType().equals(MouseEvent.MOUSE_MOVED))
 	        {
@@ -711,7 +726,7 @@ public void addBadge(String letter)
      */
 	protected void handleMouseEntered(MouseEvent event) 
 	{
-		showPorts(pasteboard.getDragLine() != null);
+		showPorts(pasteboard.getDragLine() != null && isConnectable());
 		System.out.println("enter");
 	}
 
@@ -898,11 +913,11 @@ public void addBadge(String letter)
 //		bldr.append(makeStyleString("Opacity"));
 		bldr.append(makeStyleString("LineThickness"));
 		str = bldr.toString();
-//		System.out.println(str);
-//		setStyle(str);	    
 		if (getFigure()!= null)
+		{	
 			getFigure().setStyle(str);	    
-//		addTitleBar(title);
+		
+		}
 	}
 	
 	private String makeStyleString(String gpmlTag) {

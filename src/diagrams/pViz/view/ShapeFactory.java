@@ -119,7 +119,7 @@ public class ShapeFactory {
 	
 	static private void setDefaultAttributes(Shape newShape) {
 		newShape.setFill(Color.WHITE);
-		newShape.setStroke(Color.BLACK);
+		newShape.setStroke(Color.BLUE);
 		newShape.setStrokeWidth(0.5f);
 	}
 	public static void setAttributes(Shape shape, AttributeMap map) {
@@ -150,36 +150,11 @@ public class ShapeFactory {
 			else if (k.equals("width"))		r.setWidth(d+MARGIN2);
 			else if (k.equals("height"))	r.setHeight(d+MARGIN2);
 
-			if ( "RoundedRectangle".equals(shapeType))
-			{	
-				r.setArcWidth(10);
-				r.setArcHeight(10);
-			}
-			if ("Cell".equals(shapeType))
-			{	
-				r.setArcWidth(100);
-				r.setArcHeight(100);
-				r.setStroke(Color.GOLD);
-				r.setStrokeWidth(8.0);
-			}
-			if ("Pathway".equals(shapeType))
-			{	
-				r.setStroke(Color.AQUAMARINE);
-				r.setStrokeWidth(5.0);
-				r.setWidth(120); 	r.setHeight(45);
-			}
-			if ("Gene".equals(shapeType))
-			{	
-				r.setStrokeWidth(1.0);
-				r.setWidth(80); 	r.setHeight(30);
-			}
-	
-			if ("Metabolite".equals(shapeType))
-			{	
-				r.setStroke(Color.NAVY);
-				r.setStrokeWidth(2.0);
-				r.setWidth(120); 	r.setHeight(20);
-			}
+			if ("RoundedRectangle".equals(shapeType)) 	{	 	r.setArcWidth(10); 	r.setArcHeight(10); 	}
+			if ("Cell".equals(shapeType))		{	r.setStrokeWidth(8.0);	r.setStroke(Color.GOLD);  r.setArcWidth(100); r.setArcHeight(100); }
+			if ("Pathway".equals(shapeType)) 	{	r.setStrokeWidth(5.0); 	r.setStroke(Color.AQUAMARINE);r.setWidth(120); 	r.setHeight(45);			}
+			if ("Gene".equals(shapeType))		{	r.setStrokeWidth(1.0);	r.setStroke(Color.GRAY); r.setWidth(80); 	r.setHeight(30);			}
+			if ("Metabolite".equals(shapeType))	{	r.setStrokeWidth(2.0);	r.setStroke(Color.NAVY); r.setWidth(120); 	r.setHeight(20);	}
 		}
 		if (shape instanceof Circle) {
 			Circle circ = (Circle) shape;
@@ -212,7 +187,6 @@ public class ShapeFactory {
 			Line line = (Line) shape;
 			if (k.equals("points"))			parseLinePoints(line, map.get(k));
 			if (k.equals("stroke-width"))	line.setStrokeWidth(d);
-			
 		}
 
 		if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
@@ -235,6 +209,7 @@ public class ShapeFactory {
 		catch (Exception e) {		System.err.println("Parse errors: " + k);	}
 		}
 	}
+	// **-------------------------------------------------------------------------------
 
 	private static void parsePolygonPoints(Polygon poly, String string) {	parsePoints(poly.getPoints(), string);	}
 
@@ -322,9 +297,7 @@ public class ShapeFactory {
 			Rectangle rect = (Rectangle) target;
 			Object obj = rect.getProperties().get("BiopaxRef");
 			if (obj instanceof String)
-			{
 				drawLayer.getController().openByReference("" + obj);
-			}
 		}
 	}
 	// **-------------------------------------------------------------------------------
@@ -341,16 +314,11 @@ public class ShapeFactory {
 			r.addEventHandler(MouseEvent.MOUSE_RELEASED, this);
 		}
 
-		@Override
-		protected void handleMousePressed(final MouseEvent event) {
+		@Override protected void handleMousePressed(final MouseEvent event) {
 			if (drawLayer.getTool() != Tool.Arrow) return;
-			if (((Node) event.getTarget()).getParent() instanceof Group)
-				return;
+			if (((Node) event.getTarget()).getParent() instanceof Group)				return;
 			super.handleMousePressed(event);
-			if (event.getClickCount() > 1) {
-				doDoubleClick(event);
-				return;
-			}
+			if (event.getClickCount() > 1) {		doDoubleClick(event);			return;		}
 			startPoint = currentPoint;
 
 			if (RectangleUtil.inCorner(event)) {
@@ -567,15 +535,11 @@ public class ShapeFactory {
 	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
-	// **-------------------------------------------------------------------------------
-	// **-------------------------------------------------------------------------------
 	protected class PolylineMouseHandler extends NodeMouseHandler {
 		public PolylineMouseHandler(Polyline p, Pasteboard d) {
 			super(d);
 			assignMouseHandlers( p, this);
 		}
-//		SimpleDoubleProperty mouseX, mouseY;
-		
 
 		@Override
 		protected void handleMousePressed(final MouseEvent event) {
@@ -593,7 +557,6 @@ public class ShapeFactory {
 			}
 			if (verbose > 3)
 				System.out.println("PolylineMousePressedHandler: " + event.getTarget());
-			// System.out.println("" + idx);
 			if (idx >= 0)		activeIndex = idx;
 			else				dragging = true;
 
@@ -616,8 +579,6 @@ public class ShapeFactory {
 				dragLine.setEndX(event.getX());
 				dragLine.setEndY(event.getY());
 			}
-//			if (mouseX != null) 	mouseX.set(event.getX());
-//			if (mouseY != null) 	mouseY.set(event.getY());
 		}
 
 		@Override
@@ -715,87 +676,84 @@ public class ShapeFactory {
 
 	}
 	// -----------------------------------------------------------------------------------
-		private class NodeMouseHandler extends BasicMouseHandler {
-			public NodeMouseHandler(Pasteboard d) {
-				super(d);
-			}
+	private class NodeMouseHandler extends BasicMouseHandler 
+	{
+			public NodeMouseHandler(Pasteboard d) {		super(d);		}
 
-		@Override
-		public void handle(MouseEvent e) {
-			target = e.getTarget();
-			// scenePoint = new Point2D(e.getSceneX(), e.getSceneY());
-			currentPoint = new Point2D(e.getX(), e.getY());
-			if (verbose > 4)
-				System.out.println((int) currentPoint.getX() + ", " + (int) currentPoint.getY());
-			EventType<?> type = e.getEventType();
-
-			if (type == MouseEvent.MOUSE_MOVED)				handleMouseMoved(e);
-			else if (type == MouseEvent.MOUSE_PRESSED)		handleMousePressed(e);
-			else if (type == MouseEvent.MOUSE_DRAGGED)		handleMouseDragged(e);
-			else if (type == MouseEvent.MOUSE_RELEASED)		handleMouseReleased(e);
-			prevPoint = currentPoint;
-		}
-
-		// **-------------------------------------------------------------------------------
-		protected Point2D startPoint, currentPoint, prevPoint, offset;
-
-		protected int verbose = 3;
-		protected boolean dragging = false;
-		protected boolean resizing = false;
-		protected EventTarget target;
-		Line dragLine = new Line();
-		private ContextMenu menu;
-
-		// **-------------------------------------------------------------------------------
-		protected void handleMouseMoved(MouseEvent event) {
-			event.consume();
-		}
-
-		protected void handleMousePressed(MouseEvent event) {
-			if (verbose >= 3)
-				System.out.println("NodeMousePressedHandler, Target: " + event.getTarget());
-			if (drawLayer.getTool().isArrow())
-			{
-				resizing = false;
+			@Override
+			public void handle(MouseEvent e) {
+				target = e.getTarget();
+				// scenePoint = new Point2D(e.getSceneX(), e.getSceneY());
+				currentPoint = new Point2D(e.getX(), e.getY());
+				if (verbose > 4)
+					System.out.println((int) currentPoint.getX() + ", " + (int) currentPoint.getY());
+				EventType<?> type = e.getEventType();
+		
+				if (type == MouseEvent.MOUSE_MOVED)				handleMouseMoved(e);
+				else if (type == MouseEvent.MOUSE_PRESSED)		handleMousePressed(e);
+				else if (type == MouseEvent.MOUSE_DRAGGED)		handleMouseDragged(e);
+				else if (type == MouseEvent.MOUSE_RELEASED)		handleMouseReleased(e);
 				prevPoint = currentPoint;
-				boolean altDown = event.isAltDown();
-				// boolean leftClick = event.isPrimaryButtonDown();
-				boolean rightClick = event.isSecondaryButtonDown();
-				if (altDown)
-					pasteboard.getController().getSelectionManager().cloneSelection(5);
-				// do nothing for a right-click
-				// if (event.isSecondaryButtonDown()) return;// TODO -- popup up
-				// Node menu
-				if (event.isPopupTrigger() || rightClick) {
-					if (menu == null)
-						menu = buildContextMenu();
-					if (menu != null)
-						menu.show(pasteboard, event.getScreenX(), event.getScreenY());
-					return;
-				}
-				Selection sel = drawLayer.getSelectionMgr();
-				if (target instanceof VNode)
-				{
-					VNode node = (VNode) target;
-					boolean wasSelected = sel.isSelected(node);
-					if (event.isControlDown())			sel.select(node, !wasSelected);
-					else if ((event.isShiftDown()))		sel.select(node);
-					else if (!wasSelected)				sel.selectX(node);
-				}
-				if (sel.count() > 0) {
-					dragging = true;
-					pasteboard.getController().getUndoStack().push(ActionType.Move);
-					startPoint = currentPoint;
-				}
-				event.consume();
 			}
-	}
-		//--------------------------------------------------------------------------------------------
+		
+			// **-------------------------------------------------------------------------------
+			protected Point2D startPoint, currentPoint, prevPoint, offset;
+		
+			protected int verbose = 3;
+			protected boolean dragging = false;
+			protected boolean resizing = false;
+			protected EventTarget target;
+			Line dragLine = new Line();
+			private ContextMenu menu;
+		
+			// **-------------------------------------------------------------------------------
+			protected void handleMouseMoved(MouseEvent event) {		event.consume();	}
+		
+			protected void handleMousePressed(MouseEvent event) {
+				if (verbose >= 3)
+					System.out.println("NodeMousePressedHandler, Target: " + event.getTarget());
+				if (drawLayer.getTool().isArrow())
+				{
+					resizing = false;
+					prevPoint = currentPoint;
+					boolean altDown = event.isAltDown();
+					// boolean leftClick = event.isPrimaryButtonDown();
+					boolean rightClick = event.isSecondaryButtonDown();
+					if (altDown)
+						pasteboard.getController().getSelectionManager().cloneSelection(5);
+					// do nothing for a right-click
+					// if (event.isSecondaryButtonDown()) return;// TODO -- popup up
+					// Node menu
+					if (event.isPopupTrigger() || rightClick) {
+						if (menu == null)
+							menu = buildContextMenu();
+						if (menu != null)
+							menu.show(pasteboard, event.getScreenX(), event.getScreenY());
+						return;
+					}
+					Selection sel = drawLayer.getSelectionMgr();
+					if (target instanceof VNode)
+					{
+						VNode node = (VNode) target;
+						boolean wasSelected = sel.isSelected(node);
+						if (event.isControlDown())			sel.select(node, !wasSelected);
+						else if ((event.isShiftDown()))		sel.select(node);
+						else if (!wasSelected)				sel.selectX(node);
+					}
+					if (sel.count() > 0) {
+						dragging = true;
+						pasteboard.getController().getUndoStack().push(ActionType.Move);
+						startPoint = currentPoint;
+					}
+					event.consume();
+				}
+			}
+	//--------------------------------------------------------------------------------------------
 		private ContextMenu buildContextMenu() {
 			menu = new ContextMenu();
 			Controller c = pasteboard.getController();
-//			MenuItem cut = 		makeItem("Cut", a -> 			{	c.cutSelection();	});
-//			MenuItem copy = 		makeItem("Copy", a -> 			{	c.copySelection();	});
+	//		MenuItem cut = 		makeItem("Cut", a -> 			{	c.cutSelection();	});
+	//		MenuItem copy = 	makeItem("Copy", a -> 			{	c.copySelection();	});
 			MenuItem dup = 		makeItem("Duplicate", a -> 		{	c.duplicateSelection();	});
 			MenuItem del = 		makeItem("Delete", a -> 		{	c.deleteSelection();	});
 			MenuItem toFront = 	makeItem("Bring To Front", a -> {	c.toFront();	});
@@ -812,8 +770,8 @@ public class ShapeFactory {
 			item.setOnAction(foo);
 			return item;
 		}
-		//--------------------------------------------------------------------------------------------
-
+			//--------------------------------------------------------------------------------------------
+	
 		protected void handleMouseDragged(MouseEvent event) {
 		if (verbose > 3)
 				System.out.println("NodeMouseDraggedHandler, Target: " + event.getTarget());
@@ -834,105 +792,16 @@ public class ShapeFactory {
 			}
 			event.consume();
 		}
-
+	
 		protected void handleMouseReleased(MouseEvent event) {
 			startPoint = null;
-//			dragLine = null;
+	//			dragLine = null;
 			resizing = dragging = false;
 			drawLayer.requestFocus(); 
 			event.consume();
-//			drawLayer.getController().refreshZoomPane();
 		}
+		protected void handleMouseEntered(MouseEvent event) 		{		}
+		protected void handleMouseExited(MouseEvent event) 			{		}
 	}
-		protected void handleMouseEntered(MouseEvent event) 
-		{
-		}
-	
-		protected void handleMouseExited(MouseEvent event) 
-		{
-		}
-
 }
 
-// -----------------------------------------------------------------------
-// -----------------------------------------------------------------------
-////
-//public MNode makeNewMNode(AttributeMap attrMap, Model m, Pasteboard pasteboard) {
-//	String type = attrMap.get("ShapeType");
-//	Tool tool = Tool.lookup(type);
-//	if (tool  != null)
-//		return makeNewMNode(tool, attrMap, m, pasteboard);
-//	return null;
-//}
-
-//// **-------------------------------------------------------------------------------
-//public MNode makeNewMNode(Tool type, AttributeMap attrMap, Model m, Pasteboard pasteboard) {
-//	MNode modelNode = new MNode(attrMap, m, pasteboard);
-//	VNode view = new VNode(modelNode, pasteboard);
-////	makeNewShape(attrMap.getToolName(), modelNode, view);
-//	view.setId("V" + attrMap.get("GraphId"));
-//	if (view.getShapeLayer() instanceof  Circle)
-//	{
-//		double rad = attrMap.getDouble("Radius");
-//		if (Double.isNaN(rad))
-//			rad = attrMap.getDouble("Width") / 2;
-//		((Circle) view.getShapeLayer()).setRadius(rad);
-//	}
-//	return modelNode;
-//}
-//
-//public VNode makeVNode(MNode modelNode) {
-//	String s = modelNode.getShapeType();
-//	VNode stack = new VNode(modelNode);
-//	 makeNewShape(s, modelNode, stack);
-//	 return stack;
-//}
-
-//public VNode makeNewShape(String s, MNode modelNode) {
-//	VNode stack = new VNode(modelNode);
-//	 makeNewShape(s, modelNode, stack);
-//	 return stack;
-//}
-//public StackPane makeLabeledShapePane(Tool tool, AttributeMap attrMap, String s) {
-//Shape newShape = makeNewShape(tool, attrMap);
-//StackPane stack = new StackPane();
-//final Label text = createLabel(s);
-//text.setTranslateX(attrMap.getDouble("centerX"));
-//text.setTranslateY(attrMap.getDouble("centerY"));
-//StackPane.setAlignment(newShape, Pos.CENTER);
-//StackPane.setAlignment(text, Pos.CENTER);
-//stack.getChildren().addAll(newShape, text);
-//makeNodeMouseHandler(stack);
-//return stack;
-//}
-
-//public Group makeLabeledShapeGroup(Tool tool, AttributeMap attrMap, String s) {
-//Shape newShape = makeNewShape(tool, attrMap);
-//Group group = new Group();
-//final Label text = createLabel(s);
-//text.setTranslateX(attrMap.getDouble("centerX"));
-//text.setTranslateY(attrMap.getDouble("centerY"));
-//StackPane.setAlignment(newShape, Pos.CENTER);
-//StackPane.setAlignment(text, Pos.CENTER);
-//group.getChildren().addAll(newShape, text);
-//makeNodeMouseHandler(group);
-//return group;
-//}
-//public Label createLabel(String s, Color c) {
-//Label label = createLabel(s);
-//label.setTextFill(c);
-//return label;
-//}
-//
-//public static Label createLabel(String s) {
-//final Label text = new Label(s);
-//text.setFont(new Font(12));
-////text.setBoundsType(TextBoundsType.VISUAL);
-//text.setMouseTransparent(true);
-//return text;
-//}
-// -----------------------------------------------------------------------
-//public MNode parseShape(AttributeMap attrMap, Model m) {
-//return makeNewMNode( attrMap, m);
-//}
-//

@@ -475,7 +475,7 @@ boolean BADPOINT(Point2D pt)
 			if (strokeDashArray != null)
 				curve.getStrokeDashArray().setAll(strokeDashArray);
 		}
-		setArrowPt(line1End.getX(), line1End.getY());
+		setArrowPt(line1End);
 
 	}
 	boolean SHORTEN = true;
@@ -580,10 +580,4 @@ boolean BADPOINT(Point2D pt)
    Point2D getStartPoint()	{ return new Point2D(getStartX(), getStartY());  }
    Point2D getEndPoint()	{ return new Point2D(getEndX(), getEndY());  }
    
-public void setStrokeWidth(int i) {
-	// TODO Auto-generated method stub
-	
-}
-
-
 }

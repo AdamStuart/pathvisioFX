@@ -841,7 +841,7 @@ public class Controller implements Initializable, IController
 	public void addGroup(DataNodeGroup grp) {
 		pasteboard.setActiveLayer("Background");	
 		new VNode(grp, pasteboard);
-//		model.addGroup(grp);
+		model.addGroup(grp);
 //		nodeTreeTable.addBranch(grp);
 
 	}
