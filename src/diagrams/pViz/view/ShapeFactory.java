@@ -132,101 +132,107 @@ public class ShapeFactory {
 			map.put("Fill", "None");
 			map.put("TextLabel", "");
 		}
+		for (String k : map.keySet()) 
+		{
+			String val = map.get(k);
+			double d = StringUtil.toDouble(val); // exception safe: comes back
+			// NaN if val is not a
+			// number
+			k = k.toLowerCase();
+			if (k.equals("graphid"))   			shape.setId(val);
 		if (shape instanceof Rectangle)
 		{
 			Rectangle r = ((Rectangle)shape);
+			if (k.equals("centerx"))		r.setX(d+MARGIN);	
+			else if (k.equals("centery"))	r.setY(d+MARGIN);
+			else if (k.equals("x"))			r.setX(d+MARGIN);
+			else if (k.equals("y"))			r.setY(d+MARGIN); 
+			else if (k.equals("width"))		r.setWidth(d+MARGIN2);
+			else if (k.equals("height"))	r.setHeight(d+MARGIN2);
+
 			if ( "RoundedRectangle".equals(shapeType))
 			{	
 				r.setArcWidth(10);
 				r.setArcHeight(10);
 			}
-			if (shape instanceof Rectangle && "Cell".equals(shapeType))
+			if ("Cell".equals(shapeType))
 			{	
 				r.setArcWidth(100);
 				r.setArcHeight(100);
 				r.setStroke(Color.GOLD);
 				r.setStrokeWidth(8.0);
 			}
-			if (shape instanceof Rectangle && "Pathway".equals(shapeType))
+			if ("Pathway".equals(shapeType))
 			{	
 				r.setStroke(Color.AQUAMARINE);
 				r.setStrokeWidth(5.0);
 				r.setWidth(120); 	r.setHeight(45);
 			}
-			if (shape instanceof Rectangle && "Gene".equals(shapeType))
+			if ("Gene".equals(shapeType))
 			{	
 				r.setStrokeWidth(1.0);
 				r.setWidth(80); 	r.setHeight(30);
 			}
 	
-			if (shape instanceof Rectangle && "Metabolite".equals(shapeType))
+			if ("Metabolite".equals(shapeType))
 			{	
 				r.setStroke(Color.NAVY);
 				r.setStrokeWidth(2.0);
 				r.setWidth(120); 	r.setHeight(20);
 			}
+		}
+		if (shape instanceof Circle) {
+			Circle circ = (Circle) shape;
+			if (k.equals("centerx"))		circ.setCenterX(d);
+			else if (k.equals("centery"))	circ.setCenterY(d);
+			else if (k.equals("x"))			circ.setCenterX(d);
+			else if (k.equals("y"))			circ.setCenterY(d);
+			else if (k.equals("width"))		circ.setRadius(d/2);
+			else if (k.equals("radius"))	circ.setRadius(d);
+		}
+		if (shape instanceof Ellipse) {
+			Ellipse oval = (Ellipse) shape;
+			if (k.equals("centerx"))		oval.setCenterX(d);
+			else if (k.equals("centery"))	oval.setCenterY(d);
+			else if (k.equals("x"))			oval.setCenterX(d);
+			else if (k.equals("y"))			oval.setCenterY(d);
+			else if (k.equals("width"))		oval.setRadiusX(d/2);
+			else if (k.equals("height"))	oval.setRadiusY(d/2);
 			
-			for (String k : map.keySet()) 
-			{
-				String val = map.get(k);
-				k = k.toLowerCase();
-				if (k.equals("graphid"))   			shape.setId(val);
-	
-	//			if (k.equals("textlabel"))   
-	//				setText(val);
-				if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
-				if (k.equals("fontweight"))			;// TODO	k = "-fx-font-size"??;
-				if (k.equals("valign"))				;// TODO	
-				if (k.equals("zorder"))				;// TODO	
-				if (k.equals("stroke"))				k = "-fx-stroke";
-				if (k.equals("strokewidth"))		k = "-fx-stroke-weight";
-				if (k.equals("linethickness"))		k = "-fx-stroke-weight";
-				if (k.equals("graphid"))			shape.setId(val);
-				double d = StringUtil.toDouble(val); // exception safe: comes back
-														// NaN if val is not a
-														// number
-				if (shape instanceof Rectangle) {
-					if (k.equals("centerx"))		r.setX(d+MARGIN);	
-					else if (k.equals("centery"))	r.setY(d+MARGIN);
-					else if (k.equals("x"))			r.setX(d+MARGIN);
-					else if (k.equals("y"))			r.setY(d+MARGIN); 
-					else if (k.equals("width"))		r.setWidth(d+MARGIN2);
-					else if (k.equals("height"))	r.setHeight(d+MARGIN2);
-				}
-				if (shape instanceof Circle) {
-					Circle circ = (Circle) shape;
-					if (k.equals("centerx"))		circ.setCenterX(d);
-					else if (k.equals("centery"))	circ.setCenterY(d);
-					else if (k.equals("x"))			circ.setCenterX(d);
-					else if (k.equals("y"))			circ.setCenterY(d);
-					else if (k.equals("width"))		circ.setRadius(d/2);
-					else if (k.equals("radius"))	circ.setRadius(d);
-				}
-				if (shape instanceof Polygon) {
-					Polygon poly = (Polygon) shape;
-					if (k.equals("points"))			parsePolygonPoints(poly, map.get(k));
-				}
-				if (shape instanceof Polyline) {
-					Polyline poly = (Polyline) shape;
-					if (k.equals("points"))			parsePolylinePoints(poly, map.get(k));
-				}
-				if (shape instanceof Line) {
-					Line line = (Line) shape;
-					if (k.equals("points"))			parseLinePoints(line, map.get(k));
-					if (k.equals("stroke-width"))	line.setStrokeWidth(d);
-					
-				}
-				try {
-					Shape sh = shape;   
-					if (k.equals("fill") || k.equals("-fx-fill") || k.equals("fillcolor")) 
-						sh.setFill(Color.web(val));
-					else if (k.equals("-fx-stroke") || k.equals("color"))	
-						sh.setStroke(Color.web(val));
-					else if (k.equals("-fx-stroke-weight") || k.equals("linethickness"))
-						sh.setStrokeWidth(d);
-				} 
-				catch (Exception e) {		System.err.println("Parse errors: " + k);	}
-			}
+		}
+		if (shape instanceof Polygon) {
+			Polygon poly = (Polygon) shape;
+			if (k.equals("points"))			parsePolygonPoints(poly, map.get(k));
+		}
+		if (shape instanceof Polyline) {
+			Polyline poly = (Polyline) shape;
+			if (k.equals("points"))			parsePolylinePoints(poly, map.get(k));
+		}
+		if (shape instanceof Line) {
+			Line line = (Line) shape;
+			if (k.equals("points"))			parseLinePoints(line, map.get(k));
+			if (k.equals("stroke-width"))	line.setStrokeWidth(d);
+			
+		}
+
+		if (k.equals("fontsize"))			;// TODO	k = "-fx-font-size"??;
+		if (k.equals("fontweight"))			;// TODO	k = "-fx-font-size"??;
+		if (k.equals("valign"))				;// TODO	
+		if (k.equals("zorder"))				;// TODO	
+		if (k.equals("stroke"))				k = "-fx-stroke";
+		if (k.equals("strokewidth"))		k = "-fx-stroke-weight";
+		if (k.equals("linethickness"))		k = "-fx-stroke-weight";
+		if (k.equals("graphid"))			shape.setId(val);
+			try {
+			Shape sh = shape;   
+			if (k.equals("fill") || k.equals("-fx-fill") || k.equals("fillcolor")) 
+				sh.setFill(Color.web(val));
+			else if (k.equals("-fx-stroke") || k.equals("color"))	
+				sh.setStroke(Color.web(val));
+			else if (k.equals("-fx-stroke-weight") || k.equals("linethickness"))
+				sh.setStrokeWidth(d);
+		} 
+		catch (Exception e) {		System.err.println("Parse errors: " + k);	}
 		}
 	}
 

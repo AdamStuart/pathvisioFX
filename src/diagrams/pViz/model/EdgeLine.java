@@ -297,7 +297,8 @@ public class EdgeLine extends Group {
 			case elbow:		elbowConnect(); 		break;
 			case curved:	
 				if (curve != null) 	getChildren().remove(curve);
-				curveConnect(); 	
+				if (line != null) line.setVisible(false);
+					curveConnect(); 	
 				if (curve != null) 	getChildren().add(curve);
 				break;
 			default: 		 linearConnect();

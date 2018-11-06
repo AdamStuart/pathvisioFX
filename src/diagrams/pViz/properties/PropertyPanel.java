@@ -15,10 +15,7 @@ import model.AttributeMap;
 
 public class PropertyPanel extends AnchorPane implements Initializable{
 	Controller controller;
-	public PropertyPanel(Controller c)
-	{
-		controller = c;
-	}
+	public PropertyPanel(Controller c)	{		controller = c;	}
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		// TODO Auto-generated method stub

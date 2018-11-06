@@ -17,7 +17,7 @@ import javafx.beans.property.SimpleDoubleProperty;
  * <p>
  * For example, should the editor have 'bounds', or should objects be draggable outside the editor area?
  * </p>
- *
+ *SDFSDF
  * <p>
  * If a bound is <b>active</b>, objects that are dragged or resized in the editor should stop when they hit the edge,
  * and the editor region will not try to grow in size. Otherwise it will grow up to its max size.

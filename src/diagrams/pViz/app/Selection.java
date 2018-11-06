@@ -129,6 +129,7 @@ public class Selection
 			if (isGrid(node)) continue;
 			
 			getController().remove(node);
+			node.getLayer().remove(node);
 			items.remove(node);
 		}
 		getController().getTreeTableView().updateTreeTable();

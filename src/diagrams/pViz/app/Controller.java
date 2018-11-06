@@ -807,7 +807,7 @@ public class Controller implements Initializable, IController
 		shapeNode.setType("Shape");
 		shapeNode.put("Type", "Shape");
 		shapeNode.setName(shapeNode.get("ShapeType"));
-		new VNode(shapeNode, pasteboard);
+		VNode stack = new VNode(shapeNode, pasteboard);
 		model.addResource(shapeNode);
 		model.addShape(shapeNode);
 		

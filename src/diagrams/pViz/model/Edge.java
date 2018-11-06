@@ -180,6 +180,11 @@ abstract public class Edge extends XRefable {
 				System.out.println("no shape");
 		} else
 		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+		if (pt.getX() < 1)
+		{
+			edgeLine.setVisible(false);
+			System.out.println("zerro");
+		}
 		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
 		edgeLine.setEndPoint(pt);
 
