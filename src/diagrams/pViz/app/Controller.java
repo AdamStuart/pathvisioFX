@@ -814,6 +814,7 @@ public class Controller implements Initializable, IController
 	}
 	public void addLabel(DataNode label) {
 		pasteboard.setActiveLayer("Background");	
+		label.put("Layer", "Background");
 		label.setType("Label");
 		label.put("Type", "Label");
 		new VNode(label, pasteboard);

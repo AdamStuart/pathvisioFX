@@ -110,11 +110,11 @@ public class GPML {
 		labl.setLayoutY(10);
 		
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
-		handleLabels(doc.getElementsByTagName("Label"));
-		handleBiopax(doc.getElementsByTagName("Biopax"));
+		parseLabels(doc.getElementsByTagName("Label"));
+		parseBiopax(doc.getElementsByTagName("Biopax"));
 		parseShapes(doc.getElementsByTagName("Shape"));
 		parseStateNodes(doc.getElementsByTagName("State"));
-		handleGroups(doc.getElementsByTagName("Group"));
+		parseGroups(doc.getElementsByTagName("Group"));
 //		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseInteractions(doc.getElementsByTagName("Interaction"));
 //		List<Node> sorted = getController().getPasteboard().getChildren().stream()
@@ -420,7 +420,7 @@ public class GPML {
 //	}
 	//----------------------------------------------------------------------------
 
-	private void handleBiopax(NodeList elements) {
+	private void parseBiopax(NodeList elements) {
 		for (int i=0; i<elements.getLength(); i++)
 		{
 			org.w3c.dom.Node child = elements.item(i);
@@ -442,7 +442,7 @@ public class GPML {
 		}
 	}
 	//----------------------------------------------------------------------------
-	private void handleLabels(NodeList elements) {
+	private void parseLabels(NodeList elements) {
 		for (int i=0; i<elements.getLength(); i++)
 		{
 			org.w3c.dom.Node child = elements.item(i);
@@ -489,7 +489,7 @@ public class GPML {
 	}
 	
 	//----------------------------------------------------------------------------
-	private void handleGroups(NodeList elements) {			//TODO
+	private void parseGroups(NodeList elements) {			//TODO
 		for (int i=0; i<elements.getLength(); i++)
 		{
 //if (i >= 0) continue;			//SKIP
