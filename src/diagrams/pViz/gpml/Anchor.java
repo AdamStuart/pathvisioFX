@@ -11,21 +11,21 @@ import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.XRefable;
 
-public class Anchor extends XRefable{		// extends DataNode
+public class Anchor extends XRefable {		// extends DataNode
 
 	private Circle myShape;
 	private Interaction myInteraction;
-	private String interId;
+//	private String interId;
 
 	
 	public Interaction getInteraction() 				{  return myInteraction;	}
 	public void setInteraction(Edge e) 		
 	{  
 		myInteraction = (Interaction) e;  
-		interId = myInteraction == null ? "" : myInteraction.getGraphId();	
+		setInteractionId (myInteraction == null ? "" : myInteraction.get("GraphId"));	
 	}
-	public String getInteractionId() 				{  return interId;	}
-	public void setInteractionId(String e) 			{  interId = e;	}
+	public String getInteractionId() 				{  return  get("InteractionId");	}
+	public void setInteractionId(String e) 			{  put("InteractionId", e);	}
 //	
 	public double getAnchorPosition()				{  return getDouble("Position");	}
 	public void setPosition(double d)				{   putDouble("Position", d);	}

@@ -314,6 +314,7 @@ public class GPMLTreeTableView  {
 	private TreeItem<XRefable> findDeep(TreeItem<XRefable> inRoot, String inId) {
 		
 		if (inId == null) return null;
+		if (inId.isEmpty()) return null;
 		XRefable val = inRoot.getValue();
 		if (inRoot.getValue() == null) return null;
 //		System.out.println("searching " + val.getName() + " "+ val.getGraphId() + "  v. " + inId);

@@ -133,16 +133,18 @@ public class GPML {
 	};
 	
 	private void parseDataNodes(NodeList nodes) {
+		Controller controller = getController();
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = nodes.item(i);
 			DataNode node = parseGPMLDataNode(child, model, activeLayer);
-			getController().addDataNode(node);
+			controller.addDataNode(node);
 			System.out.println("adding: " + node + "\n");
 		}
 	}
 	
 	private void parseStateNodes(NodeList nodes) {
+		Controller controller = getController();
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			AttributeMap attrMap = new AttributeMap();
@@ -155,7 +157,7 @@ public class GPML {
 			if ("Graphics".equals(name))
 				attrMap.add(map);
 			DataNodeState sstate = new DataNodeState(attrMap, model);
-			getController().addStateNode(sstate);
+			controller.addStateNode(sstate);
 		}
 	}
 	
@@ -168,8 +170,6 @@ public class GPML {
 	private void parseInteractions(NodeList edges) 
 	{
 		Controller controller = getController();
-//		System.err.println("-------------------------------------");
-//		System.out.println("Edges: "+ edges.getLength());
 		for (int i=0; i<edges.getLength(); i++)
 		{
 			org.w3c.dom.Node xml = edges.item(i);
@@ -179,6 +179,7 @@ public class GPML {
 	}
 	boolean verbose = true;
 	private void parseShapes(NodeList shapes) {
+		Controller controller = getController();
 		for (int i=0; i<shapes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = shapes.item(i);
@@ -186,7 +187,7 @@ public class GPML {
 				System.out.println("");
 			DataNode node = parseGPMLDataNode(child, model, "Background");
 			if (node != null)
-				getController().addShapeNode(node);
+				controller.addShapeNode(node);
 		}
 	}
 	// **-------------------------------------------------------------------------------
