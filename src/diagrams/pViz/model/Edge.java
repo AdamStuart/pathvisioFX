@@ -165,40 +165,44 @@ abstract public class Edge extends XRefable {
 	public void connect() {
 		if (startNode == null || edgeLine == null)
 			return;
-//		Point2D pt = new Point2D(0, 0);
-//		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
-//		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
-//		edgeLine.setStartPoint(startPt);
-//		pt = new Point2D(0, 0);
-//		if (endNode == null) 
-//		{
-//			String val = get("targetid");
-//			DataNode mNode = startNode.getModel().getResourceByKey(val);
-//			if (mNode != null)	
-//				endNode = mNode;
-//			if (endNode == null)
-//			{
-//				Anchor anch = startNode.getModel().findAnchorById(val);
-//				System.out.println("anch " + anch);
-//			}
-//			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
-////					startNode.getModel().findShape(edgeLine.endGraphId()) : 
-//			if (shape != null) 
-//				pt = boundsCenter(shape);
-//			else 
-//				System.err.println("no shape");
-//		} else
-//		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
-//		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
-//		edgeLine.setEndPoint(pt);
-//
-//
-//		if (verbose)
-//		{
-//			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
-//			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
-//			System.out.println("connect " + startStr + " to " + endStr);
-//		}
+		Point2D pt = new Point2D(0, 0);
+		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
+		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
+		edgeLine.setStartPoint(startPt);
+		pt = new Point2D(0, 0);
+		if (endNode == null) {
+			String val = get("targetid");
+			DataNode mNode = startNode.getModel().getResourceByKey(val);
+			if (mNode != null)	
+				endNode = mNode;
+		if (endNode == null)
+		{
+			Anchor anch = startNode.getModel().findAnchorById(val);
+			System.out.println("anch " + anch);
+		}
+			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
+//					startNode.getModel().findShape(edgeLine.endGraphId()) : 
+			if (shape != null) 
+				pt = boundsCenter(shape);
+			else 
+				System.out.println("no shape");
+		} else
+		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+		if (pt.getX() < 1)
+		{
+			edgeLine.setVisible(false);
+			System.out.println("zerro");
+		}
+		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
+		edgeLine.setEndPoint(pt);
+
+
+		if (verbose)
+		{
+			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
+			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
+			System.out.println("connect " + startStr + " to " + endStr);
+		}
 		edgeLine.connect();
 	}
 	boolean verbose = false;

@@ -87,12 +87,12 @@ public class Model
 	private Map<String, DataNode> shapes = new HashMap<String,DataNode>();
 	public Map<String, DataNode> getShapes()	{ return shapes; }
 	public DataNode findShape(String s ) 		{ return shapes.get(s);	}
-	public void addShape(DataNode s ) 		{ shapes.put(s.getGraphId(),s);	}
+	public void addShape(DataNode s ) 			{ shapes.put(s.getGraphId(),s);	}
 
 	private Map<String, DataNode> labels = new HashMap<String,DataNode>();
 	public Map<String, DataNode> getLabels()	{ return labels; }
 	public DataNode findLabel(String s ) 		{ return labels.get(s);	}
-	public void addLabel(DataNode d)		{ labels.put(d.getGraphId(),  d); }
+	public void addLabel(DataNode d)			{ labels.put(d.getGraphId(),  d); }
 
 
 	private String title = "PathVisio Mockup";

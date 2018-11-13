@@ -12,6 +12,7 @@ import diagrams.pViz.model.DataNodeGroup;
 import diagrams.pViz.model.DataNodeState;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.ResizableBox;
+import gui.Action.ActionType;
 import gui.Backgrounds;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
@@ -121,6 +122,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         String type = dataNode.get("Type");
         if (type == null) type = "";
 
+        readGeometry(modelNode, this);
         movable = modelNode.getBool("Movable", true);
         resizable = modelNode.getBool("Resizable", false);
         setResize(resizable);
@@ -134,6 +136,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         Tooltip tooltip = new Tooltip();
         tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
         Tooltip.install(this,  tooltip);
+
+        if ("Label".equals(modelNode.get("Type"))) 	connectable = false;
+        if (shapeType.equals("Mitochondria)")) 	connectable = false;
+        if (shapeType.equals("Oval)"))        	connectable = false;
+        if (shapeType.equals("Cell)"))        	connectable = false;
+        modelNode.putBool("Connectable", connectable);
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
  		pasteboard.add(this);
 	}
@@ -618,6 +626,36 @@ public void addBadge(String letter)
      *
      * @param event {@link MouseEvent}
      */
+	protected void handleMouseEntered(MouseEvent event) 
+	{
+		showPorts(pasteboard.getDragLine() != null && isConnectable());
+		System.out.println("enter");
+	}
+
+	protected void handleMouseExited(MouseEvent event) 
+	{
+		System.out.println("exit");
+		showPorts(false);
+	}
+
+	protected void handleMouseReleased(final MouseEvent event) {
+		if (pasteboard.getDragLine() != null && isConnectable()) {
+			VNode starter = pasteboard.getDragSource();
+			if (starter != this)
+			{	
+				getController().getUndoStack().push(ActionType.AddEdge);
+				getController().addInteraction(starter, this);
+				pasteboard.removeDragLine();
+		
+			}
+			event.consume();
+			return;
+		}
+
+		getController().getUndoStack().push(ActionType.Move);
+		pasteboard.getSelectionMgr().extract();
+		super.handleMouseReleased(event);
+    }
 
 	double prevMouseX, prevMouseY;
 	protected void handleMousePressed(final MouseEvent event) {
