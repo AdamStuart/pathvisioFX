@@ -1,13 +1,16 @@
 package diagrams.pViz.app;
 
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.DataNodeGroup;
 import diagrams.pViz.model.DataNodeState;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -16,17 +19,23 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
+import javafx.scene.control.TableView;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.cell.ComboBoxTreeTableCell;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import model.bio.XRefable;
 import model.bio.XRefableSection;
 
-public class GPMLTreeTableView  {
+public class GPMLTreeTableView implements ChangeListener {
 	
 	TreeTableView<XRefable> treeView;
 	Controller controller;
@@ -38,29 +47,42 @@ public class GPMLTreeTableView  {
 		controller = c;
 		model = c.getModel();
 	}
-	TreeItem<XRefable> root = new TreeItem<XRefable> ();
-	TreeItem<XRefable> nodes = new TreeItem<XRefable> ();
-	TreeItem<XRefable> shapes = new TreeItem<XRefable> ();
-	TreeItem<XRefable> labels = new TreeItem<XRefable> ();
-	TreeItem<XRefable> groups = new TreeItem<XRefable> ();
+	TreeItem<XRefable> root = makeTreeItem();
+	TreeItem<XRefable> nodes = makeTreeItem();
+	TreeItem<XRefable> shapes = makeTreeItem();
+	TreeItem<XRefable> labels = makeTreeItem ();
+	TreeItem<XRefable> groups = makeTreeItem ();
+	TreeItem<XRefable> orphans = makeTreeItem ();
 	Label size, select;
 	
+	TreeItem<XRefable> makeTreeItem()	{	return makeTreeItem(null);	}
+	TreeItem<XRefable> makeTreeItem(DataNode node)
+	{
+		TreeItem<XRefable>  item = new TreeItem<XRefable> (node);
+//		item.expandedProperty().addListener( );
+		return item;
+	}
+	@Override
+	public void stateChanged(ChangeEvent e) {
+System.out.println("stateChanged " + e.toString());		
+	}
 	public void setup(Label inSize, Label inSelect)
 	{
 		size = inSize;
 		select = inSelect;
 		if (treeView != null)
 		{
-			root = new TreeItem<XRefable> ();
+			root = makeTreeItem();
 			treeView.setRoot(root);
 			nodes.setValue(new XRefableSection("Nodes"));
 			shapes.setValue(new XRefableSection("Shapes"));
 			labels.setValue(new XRefableSection("Labels"));
 			groups.setValue(new XRefableSection("Groups"));
+			orphans.setValue(new XRefableSection("Orphans"));
 //			root.getChildren().addAll(nodes, shapes, labels, groups);
 			root.setExpanded(true);
 			model.getNodes().stream().forEach((node) -> {
-				nodes.getChildren().add(new TreeItem<XRefable>(node));
+				nodes.getChildren().add(makeTreeItem(node));
 		        });
 		       
 			treeView.setStyle(Controller.CSS_Gray2);		
@@ -173,10 +195,13 @@ public class GPMLTreeTableView  {
 //			{
 //				@Override public void onChanged(Change<? extends Gene> change) { size.setText("/ " + nodeTable.getItems().size()); }
 //			});
-	        treeView.setOnKeyPressed( new EventHandler<KeyEvent>()
-			{
-				@Override
-				public void handle(final KeyEvent keyEvent) {
+	        final KeyCodeCombination keyCodeCopy = new KeyCodeCombination(KeyCode.C, KeyCombination.CONTROL_ANY);
+	        treeView.setOnKeyPressed(event -> {
+	            if (keyCodeCopy.match(event)) {
+	                copySelectionToClipboard();
+	            }
+	        });		        
+//	        treeView.setOnKeyPressed( keyEvent -> {
 //					if (keyEvent.getCode().equals(KeyCode.DELETE) || keyEvent.getCode().equals(KeyCode.BACK_SPACE)) {
 //						List<Integer> ids = treeView.getSelectionModel().getSelectedIndices();
 //						int sz = ids.size();
@@ -184,13 +209,36 @@ public class GPMLTreeTableView  {
 //							treeView.getRoot().getChildren().remove(i);
 //						treeView.getSelectionModel().clearSelection();
 //					}
-				}
-			});
+//				}
+//			});
 //			search.setTooltip(new Tooltip(tooltip));
 //			searchBox.setTooltip(new Tooltip(tooltip));
 		}
 	}
-	
+	// **-------------------------------------------------------------------------------
+	@SuppressWarnings("rawtypes")
+	public void copySelectionToClipboard() {
+		final StringBuilder strb = new StringBuilder();
+	    boolean firstRow = true;
+	    for (int idx : treeView.getSelectionModel().getSelectedIndices()) {
+	        if (!firstRow) {
+	            strb.append('\n');
+	        }
+	        firstRow = false;
+	        boolean firstCol = true;
+	        for (final TreeTableColumn<?, ?> column : treeView.getColumns()) {
+	            if (!firstCol) {
+	                strb.append('\t');
+	            }
+	            firstCol = false;
+	            final Object cellData = column.getCellData(idx);
+	            strb.append(cellData == null ? "" : cellData.toString());
+	        }
+	    }
+	    final ClipboardContent clipboardContent = new ClipboardContent();
+	    clipboardContent.putString(strb.toString());
+	    Clipboard.getSystemClipboard().setContent(clipboardContent);
+	}
 	// **-------------------------------------------------------------------------------
 	public void updateTreeTable() 
 	{	
@@ -202,34 +250,30 @@ public class GPMLTreeTableView  {
 			shapes.getChildren().clear(); root.getChildren().add(shapes); }
 		if (model.getLabels().size() > 0) 
 		{ 
-			labels.getChildren().clear(); root.getChildren().add(labels);}
+			labels.getChildren().clear(); root.getChildren().add(labels);
+		}
 		if (model.getGroups().size() > 0)  
 		{ 
-			groups.getChildren().clear(); root.getChildren().add(groups);}
+			groups.getChildren().clear(); root.getChildren().add(groups);
+		}
+		orphans.getChildren().clear(); root.getChildren().add(orphans);
 //		root.getChildren().addAll(nodes, shapes, labels, groups);
 		ObservableList<TreeItem<XRefable>> kids =  nodes.getChildren();
 		kids.clear();
 
-		model.getNodes().stream().forEach((node) -> {
-//			if (node instanceof Anchor) return;
-			addBranch(node);
-        });
+		model.getNodes().stream().forEach((node) -> {			addBranch(node);        });
 		
 		model.getEdges().stream().forEach((interaction) -> {
 			String origin = interaction.get("sourceid");
 			interaction.setNameFromState();
 //			System.out.println("interaction " + interaction.get("GraphId") + " starts at " + origin);
 
-			TreeItem<XRefable> origItem = findDeep(nodes,origin);
+			TreeItem<XRefable> origItem = findDeep(root,origin);
 			if (origItem == null)  // source of interaction is an anchor
 			{
-				DataNode node = model.findDataNode(origin);
-				System.err.println("origItem  == null");
-//				if (node instanceof Anchor)
-//					System.err.println("Anchor");
-//				else  
-					System.err.println("Not Anchor");
-//				dumpDeep(nodes, "");
+//				DataNode node = model.findDataNode(origin);
+//				System.err.println("origItem  == null");
+				addBranch(interaction, orphans);
 			}
 			else addBranch(interaction, origItem);
         });
@@ -253,7 +297,10 @@ public class GPMLTreeTableView  {
 				if (interactionRow == null)
 					System.out.println("Error");
 				else
+				{
+					a.setGraphId(a.get("GraphId"));
 					addBranch(a, interactionRow);
+				}
 			}
         });
 		model.getGroups().stream().forEach((group) -> {
@@ -281,7 +328,7 @@ public class GPMLTreeTableView  {
 
 
 	private void addBranch(XRefable node, TreeItem<XRefable> parent) {
-		TreeItem<XRefable> anItem = new TreeItem<XRefable>();
+		TreeItem<XRefable> anItem = makeTreeItem();
 		anItem.setValue(node);
 		parent.getChildren().add(anItem);
 	}
@@ -291,7 +338,7 @@ public class GPMLTreeTableView  {
 		if (mom == null)  System.err.println("Null parent: " + parentID);
 		else
 		{
-			TreeItem<XRefable> anItem = new TreeItem<XRefable>();
+			TreeItem<XRefable> anItem = makeTreeItem();
 			anItem.setValue(node);
 			mom.getChildren().add(anItem);
 		}
@@ -314,26 +361,14 @@ public class GPMLTreeTableView  {
 	private TreeItem<XRefable> findDeep(TreeItem<XRefable> inRoot, String inId) {
 		
 		if (inId == null) return null;
+		if (inId.isEmpty()) return null;
 		XRefable val = inRoot.getValue();
-		if (inRoot.getValue() == null) return null;
-//		System.out.println("searching " + val.getName() + " "+ val.getGraphId() + "  v. " + inId);
-		if (inId.equals(val.getGraphId()))
-		{
-//			System.out.println("HIT");
+//		if (inRoot.getValue() == null) return null;
+		if (val != null && inId.equals(val.getGraphId()))
 			return inRoot;
-		}
 		for (TreeItem<XRefable> branch : inRoot.getChildren())
 		{
 			XRefable xref =  branch.getValue();
-			String id = xref.getGraphId();
-			if (id == null)  
-				id = xref.get("GraphId");
-//			System.out.println("comparing " + inId + " to " + id);
-			if (inId.equals(id))
-			{
-//				System.out.println("HIT");
-				return branch;
-			}
 			for (TreeItem<XRefable> subbranch : branch.getChildren())
 			{	
 				TreeItem<XRefable> hit = findDeep(subbranch, inId);
@@ -341,17 +376,16 @@ public class GPMLTreeTableView  {
 					return hit;
 			}
 		}
-//		System.out.println("no " + inId + " in " + val.getName());
 		return null;
 	}
 
-	private TreeItem<XRefable> findNodeShallow(DataNode origin) {
-		for (TreeItem<XRefable> branch : nodes.getChildren())
-			if (branch.getValue().getGraphId().equals(origin.getGraphId()))
-				return branch;
-		return null;
-	}	
-	
+//	private TreeItem<XRefable> findNodeShallow(DataNode origin) {
+//		for (TreeItem<XRefable> branch : nodes.getChildren())
+//			if (branch.getValue().getGraphId().equals(origin.getGraphId()))
+//				return branch;
+//		return null;
+//	}	
+//	
 	//---------------------------------------
 	private void dumpDeep(TreeItem<XRefable> inRoot, String prefix, int depth) {
 		
@@ -361,7 +395,7 @@ public class GPMLTreeTableView  {
 		for (TreeItem<XRefable> branch : inRoot.getChildren())
 		{
 			XRefable xref =  branch.getValue();
-			dump(prefix, xref, depth);
+//			dump(prefix, xref, depth);
 			for (TreeItem<XRefable> subbranch : branch.getChildren())
 				dumpDeep(subbranch,">  " + prefix, depth+1);
 		}

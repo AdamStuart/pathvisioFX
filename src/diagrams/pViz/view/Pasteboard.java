@@ -15,6 +15,8 @@ import diagrams.pViz.model.EdgeType;
 import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.util.GraphEditorProperties;
+import diagrams.pViz.view.VNode.EState;
 import gui.Action.ActionType;
 import gui.Backgrounds;
 import javafx.beans.value.ChangeListener;
@@ -53,14 +55,15 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
-import javafx.scene.shape.StrokeType;
 import javafx.scene.transform.Scale;
 import javafx.stage.Screen;
+import javafx.util.Pair;
 import model.AttributeMap;
 import model.bio.PathwayRecord;
 import util.FileUtil;
 import util.LineUtil;
 import util.RectangleUtil;
+import util.StringUtil;
 
 // Pasteboard 
 /*
@@ -123,6 +126,7 @@ public class Pasteboard extends Pane
 		setHeight(CANVAS_HEIGHT);
 		setId("root");
 		controller = ctrl;
+		editorProperties = new GraphEditorProperties();
 		makeMarquee();
 		createBackground();
 		getChildren().addAll(getBackgroundLayer(), getGridLayer(), getContentLayer());
@@ -131,6 +135,8 @@ public class Pasteboard extends Pane
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
 		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
+		editorProperties.snapToGridProperty().bind(getController().snapToGridProperty());
+		editorProperties.gridSpacingProperty().set(25);
 	}
 	
 	private void createBackground() {
@@ -342,6 +348,8 @@ public class Pasteboard extends Pane
 		map.putBool("infoShown", infoLabel.isVisible());
 		map.put("fill", defaultFill.toString());
 		map.put("stroke", defaultStroke.toString());
+		map.putBool("snapToGrid", editorProperties.isSnapToGridOn());
+		map.putDouble("gridSpacing", editorProperties.getGridSpacing());
 		return map.makeElementString(ELEMENT_NAME);
 	}
 	//-------------------------------------------------------------------------------
@@ -352,8 +360,12 @@ public class Pasteboard extends Pane
 		infoLabel.setVisible(map.getBool("infoShown")); 
 		defaultFill = map.getPaint("fill");
 		defaultStroke = map.getPaint("stroke");
+		editorProperties.setSnapToGrid(map.getBool("snapToGrid" )) ;
+		editorProperties.setGridSpacing(map.getDouble("gridSpacing" )) ;
 	}
 	
+    protected GraphEditorProperties editorProperties = new GraphEditorProperties();
+	public GraphEditorProperties getEditorProperties() {	return editorProperties;	}
 	//-------------------------------------------------------------------------------
 	private Group grid;
 //	public Group getGrid()	{  return grid;  }
@@ -446,39 +458,29 @@ public class Pasteboard extends Pane
 	
 	public EdgeLine getDragLine() { return dragLine;	}
 	public VNode getDragSource() { return dragLineSource;	}
+	public Pos getDragSourcePosition () { return dragLinePosition;	}
 
 	static boolean verbose = false;
 
 //
 	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
-		if (dragLine == null)
-		{
-			dragLine = new EdgeLine();
-		}
+		EdgeType edgeType = getController().getCurrentLineBend();
+		Point2D startPt = source.getPortPosition( srcPosition);
+		dragLine = new EdgeLine(edgeType, startPt);
 		dragLineSource = source;
 		dragLinePosition = srcPosition;
-		getController().getCurrentLineBend();
-		dragLine.setEdgeType(getController().getCurrentLineBend());
-		Line line = dragLine.getLine();
-		line.setStroke(Color.AQUA);
-		line.setStrokeWidth(2);
-		x -= 130;			// TODO  HACK  difference between scene and pasteboard coords
-		y -= 30;
-		line.setStartX(x); line.setStartY(y);
-		line.setEndX(0); line.setEndY(0);
-		add(line);	
-		
-//		Circle dot = new Circle(10);
-//		dot.setCenterX(100);
-//		dot.setCenterY(100);
-//		dot.setFill(Color.RED);
-//		add(dot);
+
+		dragLine.setStroke(Color.AQUA);
+		dragLine.setStrokeWidth(2);
+		add(dragLine); 
 	}
 	
+
+
 	public void removeDragLine() {
 		if (dragLine != null)
 		{
-			remove(dragLine.getLine());	
+			remove(dragLine);	
 			dragLine = null;
 			dragLinePosition = null;
 			dragLineSource = null;
@@ -488,10 +490,10 @@ public class Pasteboard extends Pane
 	private void setDragLine(MouseEvent event) {
 		if (dragLine != null)
 		{
-			double extra = 50;
-			if (dragLineSource != null && dragLineSource.getLayoutX() < event.getY())
-				extra = -50;
-			dragLine.setEndPoint(new Point2D(event.getX(), event.getY() + extra));  // FUDGE to keep line out of target box
+//			double extra = 0;
+//			if (dragLineSource != null && dragLineSource.getLayoutX() < event.getY())
+//				extra = 0;
+			dragLine.setEndPoint(new Point2D(event.getX(), event.getY()));  // + extra  FUDGE to keep line out of target box
 		}			
 	}
 	//-----------------------------------------------------------------------------------------------------------
@@ -801,8 +803,9 @@ public class Pasteboard extends Pane
 			
 //			else if (KeyCode.X.equals(key)) 	setTool(Tool.Xhair);
 			else if (KeyCode.ESCAPE.equals(key)) {		terminatePoly();  	removeDragLine(); }
-			else if (KeyCode.SPACE.equals(key))
-				controller.getSelectionManager().connect();
+			else if (KeyCode.SPACE.equals(key)) {		terminatePoly();  	removeDragLine(); }
+////				controller.getSelectionManager().connect();
+//						getModel().connectSelectedNodes();
 		}
 
 		private void terminatePoly() {
@@ -976,17 +979,50 @@ public class Pasteboard extends Pane
 //		for (VNode)
 		
 	}
+
+	
 	public void connectTo(VNode vNode, Shape port) {
 		if (dragLine != null)
 		{
+			Pos targPos = idToPosition(port.getId());
 			VNode src = getDragSource();
+			Pos srcPos = getDragSourcePosition();
 			if (src != vNode)
 			{
-				Interaction i = new Interaction(getModel(), src, vNode );
+				Interaction i = new Interaction(getModel(), src, srcPos, vNode, targPos );
 				controller.addInteraction(i);
 				i.rebind();
+				removeDragLine();
 			}	
 		}
+	}
+	public void startPortDrag(MouseEvent e, VNode node, Shape port) 
+	{
+		if (getDragLine()!= null)  // finish an ongoing drag
+		{
+			connectTo(node, port);
+			port.setFill(node.portFillColor(EState.FILLED)); 
+			return;
+		}
+		port.setFill(Color.AQUAMARINE); 
+		String id = port.getId();
+		Pos pos = idToPosition(id);
+		double myX = getBoundsInParent().getMinX();
+		double myY = getBoundsInParent().getMinY();
+		startDragLine(node, pos, node.getLayoutX(), node.getLayoutY());
+//		pasteboard.getDragLine().setEndPoint(new Point2D(e.getSceneX(), e.getSceneY()));  // FUDGE to keep line out of target box
+		e.consume();
+	}
+	
+	public static Pos idToPosition(String id)
+	{
+		if (StringUtil.isInteger(id))
+		{
+			int i = StringUtil.toInteger(id);
+			if (i < Pos.values().length)
+				return Pos.values()[i];
+		}
+		return Pos.CENTER;
 	}
 }
 

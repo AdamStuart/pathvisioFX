@@ -3,6 +3,7 @@
  */
 package diagrams.pViz.util;
 
+import diagrams.pViz.view.Pasteboard;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Cursor;
@@ -38,8 +39,8 @@ public class ResizableBox extends DraggableBox {
     /**
      * Creates an empty resizable box.
      */
-    public ResizableBox() {
-super();
+    public ResizableBox(Pasteboard p) {
+    	super(p);
         addEventHandler(MouseEvent.MOUSE_ENTERED, this::processMousePosition);
         addEventHandler(MouseEvent.MOUSE_MOVED, this::processMousePosition);
         addEventHandler(MouseEvent.MOUSE_EXITED, event -> {
@@ -274,7 +275,7 @@ super();
 
         double newLayoutY = lastLayoutY + yDragDistance;
         double newHeight = lastHeight - yDragDistance;
-
+        GraphEditorProperties editorProperties =  pasteboard.getEditorProperties();
         // Snap-to-grid logic here.
         if (editorProperties.isSnapToGridOn()) {
 
@@ -310,7 +311,8 @@ super();
      */
     private void handleResizeSouth(final double y) {
 
-        final double scaleFactor = getLocalToSceneTransform().getMyy();
+        GraphEditorProperties editorProperties =  pasteboard.getEditorProperties();
+      final double scaleFactor = getLocalToSceneTransform().getMyy();
 
         final double yDragDistance = (y - lastMouseY) / scaleFactor;
         final double parentHeight = getParent().getLayoutBounds().getHeight();
@@ -347,7 +349,8 @@ super();
      */
     private void handleResizeEast(final double x) {
 
-        final double scaleFactor = getLocalToSceneTransform().getMxx();
+        GraphEditorProperties editorProperties =  pasteboard.getEditorProperties();
+       final double scaleFactor = getLocalToSceneTransform().getMxx();
 
         final double xDragDistance = (x - lastMouseX) / scaleFactor;
         final double parentWidth = getParent().getLayoutBounds().getWidth();
@@ -380,7 +383,8 @@ super();
      */
     private void handleResizeWest(final double x) {
 
-        final double scaleFactor = getLocalToSceneTransform().getMxx();
+        GraphEditorProperties editorProperties =  pasteboard.getEditorProperties();
+       final double scaleFactor = getLocalToSceneTransform().getMxx();
 
         final double xDragDistance = (x - lastMouseX) / scaleFactor;
         final double minResizeWidth = Math.max(getMinWidth(), 0);

@@ -38,6 +38,8 @@ abstract public class Edge extends XRefable {
     {
 		model = inModel;
 	}
+	
+	// from parser
     public Edge(AttributeMap attr, Model inModel, List<GPMLPoint> pts, List<Anchor> anchors) 
     {
 		this(inModel);
@@ -54,10 +56,13 @@ abstract public class Edge extends XRefable {
     	if (target == null)
     	{
     		String id = get("targetid");
-    		Anchor anch = startNode.getModel().findAnchorById(id);
-    		if (anch != null)
-    			setTargetid(anch.getGraphId());
-   	}
+    		if (startNode != null)
+    		{
+    			Anchor anch = model.findAnchorById(id);
+        		if (anch != null)
+        			setTargetid(anch.getGraphId());
+    		}
+  		}
     	if (target != null) 
     	{
     		endNode = target;
@@ -66,20 +71,20 @@ abstract public class Edge extends XRefable {
     	}
       }
  
-    public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
-    {
-		model = inModel;
-    	endNode = startNode = null;
-//		attributes = new AttributeMap();
-		init(null, null);
-		edgeLine.addPoint(startPt);
-		edgeLine.addPoint(endPt);
-//		model.addEdge(this);
-      }
+//    public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
+//    {
+//		model = inModel;
+//    	endNode = startNode = null;
+//		init(null, null);
+//		edgeLine.addPoint(startPt);
+//		edgeLine.addPoint(endPt);
+////		model.addEdge(this);
+//      }
  
-	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
+	public Edge(Model inModel, VNode start, VNode end, AttributeMap attr) 		//, List<GPMLPoint> pts, List<Anchor> anchors
 	{
-    	if (attr != null)    	addAll(attr);
+		this(inModel);
+		if (attr != null)    	addAll(attr);
     	startNode = start.modelNode();  
     	put("source", start.modelNode().getLabel());
     	put("sourceid", start.modelNode().getGraphId());
@@ -91,10 +96,13 @@ abstract public class Edge extends XRefable {
     	put("targetid", end.modelNode().getGraphId());
     	setTarget(endNode.getLabel()); 
     	setTargetid(endNode.getGraphId());
-		model = inModel;
-		if (getGraphId() == null)
-			setGraphId(model.gensym("edge"));
-		init(pts, anchors);
+		if (StringUtil.isEmpty(getGraphId()))
+		{	
+			String id = model.gensym("edge");
+			setGraphId(id);
+			put("GraphId", id);
+		}
+		init(null, null);		//pts, anchors
     }
 	
 //	abstract protected void init( List<GPMLPoint> pts, List<Anchor> anchors);
@@ -102,6 +110,7 @@ abstract public class Edge extends XRefable {
 	//------------------------------------------------------------------------------------------
 	public void init( List<GPMLPoint> pts, List<Anchor> anchors)
     {
+		
 		edgeLine = new EdgeLine(this, pts, anchors);
 		setInteraction(get("ArrowHead"));
 	   EdgeType edgeType = EdgeType.simple;
@@ -109,8 +118,8 @@ abstract public class Edge extends XRefable {
 		if (type != null)  
 			edgeType = EdgeType.lookup(type);
 		edgeLine.setEdgeType(edgeType);
-		if (anchors != null && anchors.size() > 0)
-			System.out.println("ANCHORS");
+//		if (anchors != null && anchors.size() > 0)
+//			System.out.println("ANCHORS");
 //		edgeLine.addAnchors(anchors);
 		if (anchors != null)
 			for (Anchor a : anchors)
@@ -138,7 +147,10 @@ abstract public class Edge extends XRefable {
 	public Point2D  getAdjustedPoint(VNode vNode, GPMLPoint gpmlPt)
 	{
 		if (vNode == null)
-			return new Point2D(100,100);
+		{
+			double x = gpmlPt.getX();
+			return new Point2D(gpmlPt.getX(),gpmlPt.getY());
+		}
 		Point2D center = vNode.center();
 		if (gpmlPt == null) return center;
 		double relX = gpmlPt.getRelX();
@@ -153,43 +165,40 @@ abstract public class Edge extends XRefable {
 	public void connect() {
 		if (startNode == null || edgeLine == null)
 			return;
-		Point2D pt = new Point2D(0, 0);
-//		if (startNode == null) {
-//			Shape shape = endNode.getModel().getModel().findShape(edgeLine.startGraphId());
-//			pt = boundsCenter(shape);
+//		Point2D pt = new Point2D(0, 0);
+//		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
+//		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
+//		edgeLine.setStartPoint(startPt);
+//		pt = new Point2D(0, 0);
+//		if (endNode == null) 
+//		{
+//			String val = get("targetid");
+//			DataNode mNode = startNode.getModel().getResourceByKey(val);
+//			if (mNode != null)	
+//				endNode = mNode;
+//			if (endNode == null)
+//			{
+//				Anchor anch = startNode.getModel().findAnchorById(val);
+//				System.out.println("anch " + anch);
+//			}
+//			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
+////					startNode.getModel().findShape(edgeLine.endGraphId()) : 
+//			if (shape != null) 
+//				pt = boundsCenter(shape);
+//			else 
+//				System.err.println("no shape");
 //		} else
-		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
-		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
-		edgeLine.setStartPoint(startPt);
-		pt = new Point2D(0, 0);
-		if (endNode == null) {
-			String val = get("targetid");
-			DataNode mNode = startNode.getModel().getResourceByKey(val);
-			if (mNode != null)	
-				endNode = mNode;
-		if (endNode == null)
-		{
-			Anchor anch = startNode.getModel().findAnchorById(val);
-			System.out.println("anch " + anch);
-		}
-			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
-//					startNode.getModel().findShape(edgeLine.endGraphId()) : 
-			if (shape != null) 
-				pt = boundsCenter(shape);
-			else 
-				System.out.println("no shape");
-		} else
-		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
-		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
-		edgeLine.setEndPoint(pt);
-
-
-		if (verbose)
-		{
-			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
-			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
-			System.out.println("connect " + startStr + " to " + endStr);
-		}
+//		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+//		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
+//		edgeLine.setEndPoint(pt);
+//
+//
+//		if (verbose)
+//		{
+//			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
+//			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
+//			System.out.println("connect " + startStr + " to " + endStr);
+//		}
 		edgeLine.connect();
 	}
 	boolean verbose = false;
@@ -201,15 +210,15 @@ abstract public class Edge extends XRefable {
 		return new Point2D(x, y);		
 	}
 
-   public void connect(boolean atEnd)
-   {
+//   public void connect(boolean atEnd)
+//   {
 //	   if (startNode == null || endNode == null || edgeLine == null)
 //		   return;
-		if (atEnd)		edgeLine.setEndPoint(endNode.getStack().center());
-   		else 			edgeLine.setStartPoint(startNode.getStack().center());
-   		edgeLine.connect();
+//		if (atEnd)		edgeLine.setEndPoint(endNode.getStack().center());
+//   		else 			edgeLine.setStartPoint(startNode.getStack().center());
+//   		edgeLine.connect();
 //   		System.out.println("connect");
-   }
+//   }
    public boolean references(String state)
    {
 	   if (state.equals(get("GraphRef"))) return true;
@@ -247,25 +256,25 @@ abstract public class Edge extends XRefable {
 	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
 	{ 
 		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-		{ connect(false); }  
+		{ connect(); }  //false
 	};
 
 	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
 	{ 
 		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-		{ connect(true); }  
+		{ connect(); }   //true
 	};
 
 	ChangeListener<Number> startposition = new ChangeListener<Number>()
 	{ 
 		@Override public void changed(ObservableValue<? extends Number> observable,Number oldValue, Number newValue)
-		{ connect(false); }  
+		{ connect(); }   //false
 	};
 
 	ChangeListener<Number> endposition = new ChangeListener<Number>()
 	{ 
 		@Override public void changed(ObservableValue<? extends Number> observable,Number oldValue, Number newValue)
-		{ connect(true); }  
+		{ connect(); }   //true
 	};
 
 	

@@ -44,7 +44,6 @@ public class DataNodeGroup extends DataNode {
 			if (centerY - halfheight < minY)  minY = centerY - halfheight;
 			if (centerY + halfheight > maxY)  maxY = centerY + halfheight;
 		}
-		
 	}
 
 	public BoundingBox getBounds() {

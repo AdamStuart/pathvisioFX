@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.input.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
@@ -23,7 +30,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
    <items>
       <BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0">
          <top>
@@ -34,53 +41,52 @@
                      <menus>
                         <Menu mnemonicParsing="false" text="File">
                            <items>
-                              <MenuItem mnemonicParsing="false" onAction="#doNew" text="New">
+                              <MenuItem id="New..." mnemonicParsing="false" onAction="#doNew" text="New">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="N" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem mnemonicParsing="false" onAction="#open" text="Open">
+                              <MenuItem id="Open..." mnemonicParsing="false" onAction="#open" text="Open...">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="O" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem mnemonicParsing="false" onAction="#close" text="Close">
+                              <MenuItem id="Close" mnemonicParsing="false" onAction="#close" text="Close">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="W" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem mnemonicParsing="false" onAction="#save" text="Save">
+                              <MenuItem id="Save" mnemonicParsing="false" onAction="#save" text="Save">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem mnemonicParsing="false" onAction="#saveas" text="Save As">
+                              <MenuItem id="Save as..." mnemonicParsing="false" onAction="#saveas" text="Save As">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem id="Submit" fx:id="submit" mnemonicParsing="false" onAction="#submit" text="Submit to WikiPathways...">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="DOWN" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem mnemonicParsing="false" text="Share" />
-                              <MenuItem mnemonicParsing="false" onAction="#saveas" text="Submit to WikiPathways...">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem mnemonicParsing="false" onAction="#print" text="Print">
+                              <MenuItem id="Print" mnemonicParsing="false" onAction="#print" text="Print">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="P" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem mnemonicParsing="false" onAction="#quit" text="Quit">
+                              <MenuItem id="Quit" mnemonicParsing="false" onAction="#quit" text="Quit">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                            </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="Edit">
+                        <Menu id="Edit" mnemonicParsing="false" text="Edit">
                            <items>
                               <MenuItem fx:id="undo" mnemonicParsing="false" onAction="#undo" text="Undo">
                                  <accelerator>
@@ -132,16 +138,11 @@
                               <MenuItem mnemonicParsing="false" onAction="#deleteSelection" text="Delete" />
                            </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="View">
+                        <Menu id="View" mnemonicParsing="false" text="View">
                            <items>
                               <MenuItem fx:id="group1" mnemonicParsing="false" onAction="#group" text="Show Info">
                                  <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="ungroup1" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                    <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
@@ -150,7 +151,17 @@
                                     <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="toback1" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
+                              <MenuItem fx:id="tofront11" mnemonicParsing="false" onAction="#toFront" text="Bring Forward">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="toback1" mnemonicParsing="false" onAction="#toBack" text="Send Backward">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem fx:id="toback11" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
@@ -305,19 +316,18 @@
                               </MenuItem>
                            </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="Edges">
+                        <Menu id="Edges" mnemonicParsing="false" text="Edges">
                            <items>
-                              <MenuItem fx:id="connect" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
+                              <MenuItem id="connect" fx:id="connect" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="resetEdgeTable1" mnemonicParsing="false" onAction="#resetEdgeTable" text="Select Edges" />
-                              <MenuItem mnemonicParsing="false" text="Add Midpoint" />
-                              <MenuItem fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
+                              <MenuItem id="select edges" fx:id="selectEdges" mnemonicParsing="false" onAction="#selectEdges" text="Select Edges" />
+                              <MenuItem id="reset edge table" fx:id="resetEdgeTable" mnemonicParsing="false" onAction="#resetEdgeTable" text="Reset Edge Table" />
+                              <MenuItem id="addmidpt" mnemonicParsing="false" text="Add Midpoint" />
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem fx:id="hideAnchors" mnemonicParsing="false" onAction="#hideAnchors" text="Hide Anchors" />
-                              <MenuItem fx:id="clearColors" mnemonicParsing="false" onAction="#clearColors" text="Clear Data Coloring">
+                              <MenuItem id="clear data color" fx:id="clearColors" mnemonicParsing="false" onAction="#clearColors" text="Clear Data Coloring">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
@@ -337,17 +347,17 @@
                                     <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="resetEdgeTable" mnemonicParsing="false" onAction="#resetEdgeTable" text="Reset Edge Table" />
                            </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="Pathways">
+                        <Menu id="Pathways" mnemonicParsing="false" text="Pathways">
                            <items>
                               <MenuItem fx:id="addLegend" mnemonicParsing="false" onAction="#addLegend" text="Add Legend" />
                               <MenuItem fx:id="addLegendDlog" mnemonicParsing="false" onAction="#addLegendDlog" text="Add Legend..." />
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways..." />
+                              <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways..." />
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem fx:id="showJupyter" mnemonicParsing="false" onAction="#showJupyter" text="Show Jupyter Notebook" />
+                              <MenuItem id="Jupyter" fx:id="showJupyter" mnemonicParsing="false" onAction="#showJupyter" text="Show Jupyter Notebook" />
+                              <MenuItem id="Annotate" fx:id="annotate" mnemonicParsing="false" onAction="#annotate" text="Annotate" />
                            </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="Tools">
@@ -407,7 +417,7 @@
          <bottom>
            </bottom>
          <left>
-            <VBox fx:id="west" prefHeight="591.0" prefWidth="126.0" spacing="2.0" BorderPane.alignment="CENTER">
+            <VBox fx:id="west" prefHeight="853.0" prefWidth="147.0" spacing="2.0" BorderPane.alignment="CENTER">
                <children>
                   <ToolBar orientation="VERTICAL" prefHeight="179.0" prefWidth="122.0">
                      <items>
@@ -503,7 +513,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/transports.gif" />
+                                                <Image url="@../view/icons/transports.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -515,7 +525,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/inhibits.gif" />
+                                                <Image url="@../view/icons/inhibits.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -527,7 +537,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/activates.gif" />
+                                                <Image url="@../view/icons/activates.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -539,7 +549,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/catalyzes.gif" />
+                                                <Image url="@../view/icons/catalyzes.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -551,7 +561,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/converts.gif" />
+                                                <Image url="@../view/icons/converts.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -563,7 +573,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/stimulates.gif" />
+                                                <Image url="@../view/icons/stimulates.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -579,7 +589,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/straight.gif" />
+                                                <Image url="@../view/icons/straight.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -591,7 +601,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/curve.gif" />
+                                                <Image url="@../view/icons/curve.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -603,7 +613,7 @@
                                        <graphic>
                                           <ImageView>
                                              <image>
-                                                <Image url="@../../../../../../Development/pvfx/pvfx/pathvisioFX/src/diagrams/pViz/view/icons/elbow.gif" />
+                                                <Image url="@../view/icons/elbow.gif" />
                                              </image>
                                           </ImageView>
                                        </graphic>
@@ -622,9 +632,12 @@
                         <ToggleButton fx:id="polyline" mnemonicParsing="false" onAction="#setPolyline" />
                      </children>
                   </HBox>
-                  <CheckBox fx:id="showGraphId" mnemonicParsing="false" onAction="#showGraphId" selected="true" text="Show GraphId" />
-                  <CheckBox fx:id="showZOrder" layoutX="14.0" layoutY="593.0" mnemonicParsing="false" onAction="#showZOrder" selected="true" text="Show Z Order" />
-                  <CheckBox fx:id="snapToGrid" layoutX="14.0" layoutY="593.0" mnemonicParsing="false" onAction="#setSnapToGrid" selected="true" text="Snap To Grid" />
+                  <CheckBox fx:id="showGraphId" mnemonicParsing="false" onAction="#showGraphId" text="Show GraphId" />
+                  <CheckBox fx:id="showZOrder" layoutX="14.0" layoutY="593.0" mnemonicParsing="false" onAction="#showZOrder" text="Show Z Order" />
+                  <CheckBox fx:id="snapToGrid" layoutX="14.0" layoutY="593.0" mnemonicParsing="false" onAction="#setSnapToGrid" text="Snap To Grid" />
+                  <CheckBox fx:id="showAnchors" layoutX="14.0" layoutY="633.0" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
+                  <CheckBox fx:id="showLocks" layoutX="14.0" layoutY="653.0" mnemonicParsing="false" onAction="#showLocks" text="Show Locks" />
+                  <CheckBox fx:id="debug" layoutX="14.0" layoutY="653.0" mnemonicParsing="false" onAction="#setSnapToGrid" text="Debug" />
                </children>
                <padding>
                   <Insets left="4.0" top="4.0" />
@@ -648,7 +661,7 @@
                   </ScrollPane>
                   <SplitPane fx:id="vsplitter" orientation="VERTICAL">
                     <items>
-                        <VBox>
+                        <VBox spacing="4.0">
                            <children>
                               <HBox>
                                  <children>
@@ -664,7 +677,7 @@
                                     </Label>
                                  </children>
                               </HBox>
-                              <TreeTableView fx:id="nodeTable" editable="true" prefHeight="742.0" prefWidth="273.0">
+                              <TreeTableView fx:id="nodeTable" editable="true" VBox.vgrow="ALWAYS">
                                 <columns>
                                   <TreeTableColumn prefWidth="155.4107666015625" text="Database" fx:id="xrefdb" />
                                   <TreeTableColumn fx:id="nodeColumn" prefWidth="124.0" text="Node" />

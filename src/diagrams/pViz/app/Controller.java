@@ -2,6 +2,7 @@ package diagrams.pViz.app;
 
 import java.io.File;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,7 +10,6 @@ import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
 import diagrams.pViz.dialogs.LegendDialog;
-import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.DataNodeGroup;
@@ -24,6 +24,7 @@ import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.WebUtil;
+import diagrams.pViz.view.GroupMouseHandler;
 import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
@@ -48,6 +49,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Side;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -60,7 +62,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
-import javafx.scene.control.TableView;
 import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
@@ -96,6 +97,8 @@ import util.StringUtil;
 
 public class Controller implements Initializable, IController 
 {
+	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
+	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
 
 	//@formatter:off
 	private Model model;
@@ -111,65 +114,10 @@ public class Controller implements Initializable, IController
 	private String species = "Unspecified";
 
 	int verbose = 1;
-	
-//	@FXML private VBox east;
-	@FXML private VBox south;
-	@FXML private Pane drawPane;
-	@FXML private ScrollPane scrollPane;
-	@FXML private ListView<Action> undoview = null;
-//	private GeneListTable geneListTable = null;
 	private AnchorPane propertyPanel = null;
 	private PathwayController pathwayController = null;
-	@FXML private BorderPane container;			// root of fxml	
-	@FXML private Button tableOptions;
-	@FXML private ToggleButton gene;	
-	@FXML private ToggleButton metabolite;	
-	@FXML private ToggleButton protein;		
-	@FXML private ToggleButton pathway;		
-	@FXML private ToggleButton rna;	
-	@FXML private CheckBox showGraphId;	
-	@FXML private CheckBox snapToGrid;	
-	@FXML private CheckBox showZOrder;	
-	@FXML private void	showZOrder()
-	{
-		zOrderVisible.set(showZOrder.isSelected());
-	}
-	@FXML private void	setSnapToGrid()
-	{
-//		snapper.set(snapToGrid.isSelected());
-	}
-	@FXML private void	showGraphId()
-	{
-		graphIdsVisible.set(showGraphId.isSelected());
-	}
-	@FXML private Button bottomSideBarButton;
-	@FXML private Button leftSideBarButton;
-	@FXML private Button rightSideBarButton;
-	@FXML private Button toggleGridButton;
-	//-------------------------------------------------------------
-	@FXML private MenuItem undo;
-	@FXML private MenuItem redo;
-	@FXML private MenuItem clearundo;
-	@FXML private VBox west;
-	@FXML private HBox bottomPadding;
-	@FXML private BorderPane 	loadContainer;
-
-	//------------------------------------------
-	//------------------------------------------
-	@Override public void resetTableColumns() {	}
-	@Override public void reorderColumns(int a, int b) {	}
 	private GeneSetRecord geneSetRecord;		// the model
-	@FXML protected TreeTableView<XRefable> nodeTable;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> nodeColumn;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> graphid;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> xrefdb;
-	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> xrefid;
-	@FXML private Label select;
-	@FXML private Label size;
-	public static final DataFormat COLUMN_MIME_TYPE = new DataFormat("application/x-java-serialized-column");
-	public static final DataFormat GENE_MIME_TYPE = new DataFormat("application/x-java-serialized-gene");
-	@FXML private SplitPane hsplitter;
-	
+
 	//------------------------------------------
 	//------------------------------------------
 	static Image dragImage;
@@ -197,6 +145,14 @@ public class Controller implements Initializable, IController
 	        db.setContent(cc);
 		}
 	}
+	// **-------------------------------------------------------------------------------
+	// **-------------------------------------------------------------------------------
+	// **-------------------------------------------------------------------------------
+	@FXML protected TreeTableView<XRefable> nodeTable;
+	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> nodeColumn;
+	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> graphid;
+	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> xrefdb;
+	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> xrefid;
 	
 	@FXML private void selectProtein()	{ 	pasteboard.selectByType("Protein");	}
 	@FXML private void selectPathway()	{ 	pasteboard.selectByType("Pathway");	}
@@ -218,6 +174,7 @@ public class Controller implements Initializable, IController
 	public void open(String s)			{ 	doc.open(s);	}			//doc.open();
 	@FXML private void save()			{ 	doc.save();	}
 	@FXML private void saveas()			{	doc.saveas();		}
+	@FXML private void submit() 		{ 	doc.submit();		} 
 	@FXML private void close()			
 	{ 
 		doc.close();	
@@ -264,8 +221,8 @@ public class Controller implements Initializable, IController
 		getSelectionManager().setLayer(layername);
 		pasteboard.restoreBackgroundOrder();  	
 	}
-	@FXML private void hideAnchors()	{ 	model.setAnchorVisibility(false);	}
-	@FXML private void showAnchors()	{ 	model.setAnchorVisibility(true);	}
+//	@FXML private void hideAnchors()	{ 	model.setAnchorVisibility(false);	}
+//	@FXML private void showAnchors()	{ 	model.setAnchorVisibility(true);	}
 	@FXML public  void browsePathways()		{	App.browsePathways(this);	}	
 	@FXML	private void clearColors() { model.clearColors();}
 
@@ -275,7 +232,7 @@ public class Controller implements Initializable, IController
 
 	String activeLineType = "Straight";
 	String activeArrowType = "Arrow1";
-	// **-------------------------------------------------------------------------------
+
 	@FXML private void setStraight()	{		activeLineType = "Straight";	}
 	@FXML private void setCurved()		{		activeLineType = "Curved";	}
 	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
@@ -286,6 +243,9 @@ public class Controller implements Initializable, IController
 	@FXML private void setArrow4()		{		activeArrowType = "Arrow4";	}
 	@FXML private void setArrow5()		{		activeArrowType = "Arrow5";	}
 	@FXML private void setArrow6()		{		activeArrowType = "Arrow6";	}
+	
+	@FXML private MenuItem submit;			// save to server
+
 	
 	@FXML private MenuItem connect;			// TODO bind enableProperty to selection size > 2
 	//@formatter:on
@@ -306,6 +266,70 @@ public class Controller implements Initializable, IController
 		}
 	}
 	
+//	@FXML private VBox east;
+	@FXML private VBox south;
+	@FXML private Pane drawPane;
+	@FXML private ScrollPane scrollPane;
+	@FXML private ListView<Action> undoview = null;
+//	private GeneListTable geneListTable = null;
+	@FXML private BorderPane container;			// root of fxml	
+	@FXML private Button tableOptions;
+	@FXML private ToggleButton gene;	
+	@FXML private ToggleButton metabolite;	
+	@FXML private ToggleButton protein;		
+	@FXML private ToggleButton pathway;		
+	@FXML private ToggleButton rna;	
+	@FXML private Button bottomSideBarButton;
+	@FXML private Button leftSideBarButton;
+	@FXML private Button rightSideBarButton;
+	@FXML private Button toggleGridButton;
+	
+	//-------------------------------------------------------------
+	@FXML private CheckBox showGraphId;	
+	@FXML private CheckBox snapToGrid;	
+	@FXML private CheckBox showZOrder;	
+	@FXML private CheckBox showAnchors;	
+	@FXML private CheckBox showLocks;	
+	@FXML private void	showZOrder() 	{		zOrderVisible.set(showZOrder.isSelected());	}
+	@FXML private void	setSnapToGrid() {		snapToGridProperty.set(snapToGrid.isSelected());  }
+	@FXML private void	showGraphId() 	{		graphIdsVisible.set(showGraphId.isSelected());	} 
+	@FXML private void	showAnchors() 	{		anchorVisibleProperty.set(showAnchors.isSelected());	}
+	@FXML private void	showLocks() 	{		lockVisibleProperty.set(showLocks.isSelected());	}
+
+	SimpleBooleanProperty graphIdsVisible = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty graphIdsVisibleProperty() { return graphIdsVisible; }
+	SimpleBooleanProperty zOrderVisible = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
+	SimpleBooleanProperty snapToGridProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty snapToGridProperty() { return snapToGridProperty; }
+	SimpleBooleanProperty anchorVisibleProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty anchorVisibleProperty() { return anchorVisibleProperty; }
+	SimpleBooleanProperty lockVisibleProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty lockVisibleProperty() { return lockVisibleProperty; }
+//-------------------------------------------------------------
+	@FXML private MenuItem annotate;
+	@FXML private void	annotate() 	{	model.annotateIdentifiers(); 	}
+	@FXML private MenuItem selectEdges;
+	@FXML private MenuItem undo;
+	@FXML private MenuItem redo;
+	@FXML private MenuItem clearundo;
+	@FXML private VBox west;
+	@FXML private HBox bottomPadding;
+	@FXML private BorderPane 	loadContainer;
+
+	//------------------------------------------
+	@FXML private Label select;
+	@FXML private Label size;
+	@FXML private SplitPane hsplitter;
+	
+
+	// **-------------------------------------------------------------------------------
+	// **-------------------------------------------------------------------------------
+	// **-------------------------------------------------------------------------------
+	
+	@Override public void resetTableColumns() {	}
+	@Override public void reorderColumns(int a, int b) {	}
+
 	public static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
 	static String CSS_cellBackground(boolean undone) 	{		return "-fx-background-color: " + (undone ? "GREY; " : "BEIGE; ");	}
 	static String ctrlStr = "fx:id=\"%s\" was not injected: check your FXML file '%s'.";
@@ -321,12 +345,6 @@ public class Controller implements Initializable, IController
 	@FXML private void showInspector() {
 		bottomSideBarButton.fire();
 	}
-	SimpleBooleanProperty graphIdsVisible = new SimpleBooleanProperty(true);
-	public SimpleBooleanProperty graphIdsVisibleProperty() { return graphIdsVisible; }
-	SimpleBooleanProperty zOrderVisible = new SimpleBooleanProperty(true);
-	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
-	SimpleBooleanProperty snapToGrip = new SimpleBooleanProperty(true);
-	public SimpleBooleanProperty snapToGripProperty() { return snapToGrip; }
 	// **-------------------------------------------------------------------------------
 	GPMLTreeTableView nodeTreeTable;
 	public GPMLTreeTableView getTreeTableView() { return nodeTreeTable; }
@@ -355,7 +373,7 @@ public class Controller implements Initializable, IController
 		if (west != null) 		west.setBorder(Borders.lineBorder);
 		setupPalette();
 		setupListviews();
-		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 90);
+		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 135);
 		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 150);
 		rightSideBarButton.setOnAction(event -> {	toggleHSplitter();	});
 		rightSideBarButton.fire();
@@ -384,6 +402,7 @@ public class Controller implements Initializable, IController
 		resetTableColumns();
         Thread postponed =  new Thread(() -> Platform.runLater(() -> {  loader.getValue().toFront();	} )  );
         postponed.start();
+        toggleHSplitter();
 	}
 	boolean open = true;
 	private void toggleHSplitter() {
@@ -492,43 +511,6 @@ public class Controller implements Initializable, IController
 	 @FXML private void test2()	{		Test.test2(this);	}
 	 @FXML private void test3()	{		Test.test3(this);	}
 
-// **-------------------------------------------------------------------------------
-	// Tool palette
-	@FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
-	@FXML private void setRectangle()	{ pasteboard.setTool(Tool.Rectangle);}	// TODO capture double click for stickiness
-	@FXML private void setText()		{ pasteboard.setTool(Tool.Text);}
-	@FXML private void setOval()		{ pasteboard.setTool(Tool.Circle);		}
-	@FXML private void setPolygon()		{ pasteboard.setTool(Tool.Polygon);	}
-	@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
-	@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
-	@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
-	@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
-	@FXML private void setGene()		{ pasteboard.setTool(Tool.GeneProduct);	}
-	@FXML private void setMetabolite()	{ pasteboard.setTool(Tool.Metabolite);	}
-	@FXML private void setProtein()		{ pasteboard.setTool(Tool.Protein);	}
-	@FXML private void setRNA()			{ pasteboard.setTool(Tool.Rna);	}
-	@FXML private void setPathway()		{ pasteboard.setTool(Tool.Pathway);	}
-
-	@FXML private ToggleButton arrow;
-	@FXML private ToggleButton rectangle;
-	@FXML private ToggleButton circle;
-	@FXML private ToggleButton text;
-	@FXML private ToggleButton polygon;
-	@FXML private ToggleButton polyline;
-	@FXML private ToggleButton line;
-	@FXML private ToggleButton shape1;
-//		@FXML private ToggleButton shape2;
-	@FXML private ToggleButton straight;
-	@FXML private ToggleButton curved;
-	@FXML private ToggleButton elbowed;
-		
-	@FXML private ToggleButton arrow1;
-	@FXML private ToggleButton arrow2;
-	@FXML private ToggleButton arrow3;
-	@FXML private ToggleButton arrow4;
-	@FXML private ToggleButton arrow5;
-	@FXML private ToggleButton arrow6;
-
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
 	{
@@ -543,6 +525,44 @@ public class Controller implements Initializable, IController
 	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
 	public ToggleGroup getArrowGroup()			{ 	return arrowGroup;	}
 	public ToggleGroup getLineTypeGroup()		{ 	return lineTypeGroup;	}
+	// **-------------------------------------------------------------------------------
+		// Tool palette
+		@FXML private void setArrow()		{ pasteboard.setTool(Tool.Arrow);	}
+		@FXML private void setRectangle()	{ pasteboard.setTool(Tool.Rectangle);}	// TODO capture double click for stickiness
+		@FXML private void setText()		{ pasteboard.setTool(Tool.Text);}
+		@FXML private void setOval()		{ pasteboard.setTool(Tool.Circle);		}
+		@FXML private void setPolygon()		{ pasteboard.setTool(Tool.Polygon);	}
+		@FXML private void setPolyline()	{ pasteboard.setTool(Tool.Polyline);	}
+		@FXML private void setLine()		{ pasteboard.setTool(Tool.Line);	}
+		@FXML private void setShape1()		{ pasteboard.setTool(Tool.Shape1);	}
+		@FXML private void setBrace()		{ pasteboard.setTool(Tool.Brace);	}
+		@FXML private void setGene()		{ pasteboard.setTool(Tool.GeneProduct);	}
+		@FXML private void setMetabolite()	{ pasteboard.setTool(Tool.Metabolite);	}
+		@FXML private void setProtein()		{ pasteboard.setTool(Tool.Protein);	}
+		@FXML private void setRNA()			{ pasteboard.setTool(Tool.Rna);	}
+		@FXML private void setPathway()		{ pasteboard.setTool(Tool.Pathway);	}
+
+		@FXML private ToggleButton arrow;
+		@FXML private ToggleButton rectangle;
+		@FXML private ToggleButton circle;
+		@FXML private ToggleButton text;
+		@FXML private ToggleButton polygon;
+		@FXML private ToggleButton polyline;
+		@FXML private ToggleButton line;
+		@FXML private ToggleButton shape1;
+//			@FXML private ToggleButton shape2;
+		@FXML private ToggleButton straight;
+		@FXML private ToggleButton curved;
+		@FXML private ToggleButton elbowed;
+			
+		@FXML private ToggleButton arrow1;
+		@FXML private ToggleButton arrow2;
+		@FXML private ToggleButton arrow3;
+		@FXML private ToggleButton arrow4;
+		@FXML private ToggleButton arrow5;
+		@FXML private ToggleButton arrow6;
+
+		// **-------------------------------------------------------------------------------
 
 	private void setupPalette()	
 	{
@@ -588,7 +608,8 @@ public class Controller implements Initializable, IController
 				}
 			}
 		}
-	}	// **-------------------------------------------------------------------------------
+	}	
+	// **-------------------------------------------------------------------------------
 	public void setState(String s)
 	{
 		pasteboard.clear();
@@ -613,6 +634,11 @@ public class Controller implements Initializable, IController
 	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}
 	public String getActiveLayerName() 	{		return pasteboard.activeLayerName();	}
 
+	//-----------------------------------------------------------------------------
+	public void doCopy()// TODO 
+	{	
+		
+	}
 	//-----------------------------------------------------------------------------
 	public void doPaste()// TODO 
 	{	}
@@ -699,8 +725,8 @@ public class Controller implements Initializable, IController
 	}
 	// **-------------------------------------------------------------------------------
 	// TODO add charts
-	public void scatter(TableView content)	{}
-	public void timeseries(TableView content)	{	}
+//	public void scatter(TableView content)	{}
+//	public void timeseries(TableView content)	{	}
 	public void hiliteByReference(String ref) {
 //		for (BiopaxRecord biopax : model.getReferences())
 //			if (ref.equals(biopax.getRdfid()))
@@ -749,7 +775,7 @@ public class Controller implements Initializable, IController
 		}		
 	}
 	
-	public void redrawEdgesToMe(VNode vNode) {
+	public void redrawEdgesToMe(VNode vNode, double dx, double dy) {
 		DataNode data = vNode.modelNode();
 		List<Interaction> edges = model.findInteractionsByNode(data);
 		for (Interaction edge : edges)
@@ -768,25 +794,36 @@ public class Controller implements Initializable, IController
 		Map<String, DataNode> nodes = model.getDataNodeMap();
 		for (String key : groupMap.keySet())
 		{
-			DataNodeGroup group = groupMap.get(key);
-			String groupId = group.get("GroupId");
+			List<VNode> vnodes = new ArrayList<VNode>();
+			DataNodeGroup groupNode = groupMap.get(key);
+			String groupId = groupNode.get("GroupId");
 			if (groupId == null) 		return;		//ERROR
-			group.getChildren().clear();
+			groupNode.getChildren().clear();
+			vnodes.add(groupNode.getStack());
 			for (String nodeKey : nodes.keySet())
 			{
 				DataNode nod = nodes.get(nodeKey);
+				VNode stack = nod.getStack();
 				String groupRef = nod.get("GroupRef");
 				if (groupId.equals(groupRef))
-					group.addToGroup(nod);
+				{
+					groupNode.addToGroup(nod);
+					vnodes.add(stack);
+					pasteboard.getContentLayer().remove(stack);
+					stack.setMouseTransparent(true);
+				}
 			}
-			group.calcBounds();
+			groupNode.calcBounds();
+			Group group = new Group();
+			group.getChildren().addAll(vnodes);
+			pasteboard.getContentLayer().add(group);
 		}
-		// DEBUG
+			// DEBUG
 		for (String key : groupMap.keySet())
 		{
-			DataNodeGroup group = groupMap.get(key);
-			System.out.print(group.getGraphId() + " contains ");
-			for (DataNode dn : group.getChildren())
+			DataNodeGroup groupNode = groupMap.get(key);
+			System.out.print(groupNode.getGraphId() + " contains ");
+			for (DataNode dn : groupNode.getChildren())
 				System.out.print(dn + " ");
 			System.out.println(". ");
 
@@ -794,6 +831,13 @@ public class Controller implements Initializable, IController
 	}
 
 	// **-------------------------------------------------------------------------------
+	public void addInteraction(VNode starter, VNode end) {		
+		Interaction i = model.addIteraction(starter, end);
+		i.rebind();
+	}
+	// **-------------------------------------------------------------------------------
+	// coming from parser:
+	
 	public void addDataNode(DataNode node) {
 		pasteboard.setActiveLayer("Content");	
 		 node.setName( node.get("TextLabel"));
@@ -813,23 +857,18 @@ public class Controller implements Initializable, IController
 		
 	}
 	public void addLabel(DataNode label) {
-		pasteboard.setActiveLayer("Background");	
+		pasteboard.setActiveLayer("Content");	
+		label.put("Layer", "Background");
 		label.setType("Label");
 		label.put("Type", "Label");
 		new VNode(label, pasteboard);
 		model.addResource(label);
 		model.addLabel(label);
-//		nodeTreeTable.addBranch(label);
-	}
-
-	public void addInteraction(VNode starter, VNode end) {		
-		Interaction i = model.addIteraction(starter, end);
-		i.rebind();
 	}
 
 	public void addInteraction(Interaction e)							
 	{	
-		if (e == null) return;
+		if (e == null ) return;
 		e.setName(e.get("Name"));
 //		if (!model.containsEdge(e)) 
 		model.addEdge(e);
@@ -840,10 +879,10 @@ public class Controller implements Initializable, IController
 	public void addGroup(DataNodeGroup grp) {
 		pasteboard.setActiveLayer("Background");	
 		new VNode(grp, pasteboard);
-//		model.addGroup(grp);
+		model.addGroup(grp);
 //		nodeTreeTable.addBranch(grp);
 
-	}
+	} 
 	public void addStateNode(DataNodeState statenode) {
 		pasteboard.setActiveLayer("Content");	
 		String graphRef = statenode.get("GraphRef");
@@ -851,26 +890,11 @@ public class Controller implements Initializable, IController
 		if (host != null)
 		{
 			host.getStack().addState(statenode);
-			String hostId = host.getGraphId();
 			model.addState(graphRef, statenode);
 		}
 		
 	}
-	
-//	public void addAnchor(Anchor anchor) 
-//	{
-//		anchor.copyAttributesToProperties();
-//		String interactionId = anchor.getInteractionId();
-//		Interaction inter = model.getInteraction(interactionId);
-//		anchor.setAnchorPosition(inter);
-//		anchor.setName("Anchor (" + anchor.get("GraphID") + ") on " + interactionId);
-//		System.out.println("add Anchor " + anchor.get("GraphId"));
-//		anchor.setGraphId(anchor.get("GraphId"));
-//		model.addResource(anchor);			// add anchors to model, so edges can find them
-//		VNode n = anchor.getStack();
-//		n.setCenter(300,499);
-//		pasteboard.add(n);
-//	}
+
 	// **-------------------------------------------------------------------------------
 	// GeneSets
 	// **-------------------------------------------------------------------------------
@@ -909,10 +933,7 @@ public class Controller implements Initializable, IController
 //	public void rebind(String gid) {
 //System.err.println("REBIND");	
 //}
-	public void addBranch(Interaction interaction, String parentId) {
-		nodeTreeTable.addBranch(interaction, parentId);
-		
-	}
+
 	public GeneSetRecord getGeneSetRecord() {
 		return geneSetRecord;
 	}

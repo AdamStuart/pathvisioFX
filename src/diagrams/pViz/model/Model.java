@@ -3,8 +3,11 @@ package diagrams.pViz.model;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.Anchor;
@@ -35,7 +38,6 @@ import javafx.scene.text.Text;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Species;
-import model.bio.XRefable;
 import model.bio.XRefableSetRecord;
 import util.StringUtil;
 
@@ -49,7 +51,7 @@ public class Model
 	private Controller controller;
 	public Controller getController() { return controller; } 
 	private Map<String, DataNode> dataNodeMap = FXCollections.observableHashMap();
-	private int nodeCounter = 0;
+	private static int nodeCounter = 0;
 	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
 	public Map<String, DataNode> getDataNodeMap() {		return dataNodeMap;	}
 
@@ -219,7 +221,7 @@ public class Model
 	{  
 		AttributeMap attributes = new AttributeMap();
 		attributes.put("Layer", activeLayer);
-		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes, null, null);
+		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes);
 		addEdge(edge);
 		return edge;
 	}
@@ -233,7 +235,7 @@ public class Model
 		List<GPMLPoint> pts = new ArrayList<GPMLPoint>();
 		pts.add(new GPMLPoint(start.center()));
 		pts.add(new GPMLPoint(end.center()));
-		Interaction edge = new Interaction(this, start, end, attributes, null, null);
+		Interaction edge = new Interaction(this, start, end, attributes);
 		addEdge(edge);
 		return edge;
 	}
@@ -288,8 +290,7 @@ public class Model
 		{
 			if (e == null) continue;
 			if (e.isStart(node) || e.isEnd(node))
-			{
-				e.removeListeners();
+			{				e.removeListeners();
 				e.getEdgeLine().dispose();
 				interactionMap.remove(e);
 			}
@@ -361,7 +362,7 @@ public class Model
 				if (end.getShape() instanceof Line) continue;		//TODO add anchor
 				
 				if (downRightAndClose(start, end) || selection.size() == 2)
-					edges.add(new Interaction(this, start, end, null, null, null));
+					edges.add(new Interaction(this, start, end, null));
 			}
 		}
 		return edges;
@@ -401,7 +402,7 @@ public class Model
 		String arrow = controller.getActiveArrowType();
 		attributes.put("ArrowType", arrow);
 		attributes.put("LineType", linetype);
-		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes, null, null);
+		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes);
 		controller.addInteraction(edge);
 		edge.connect();
 		return edge;
@@ -415,8 +416,7 @@ public class Model
 		for (int z = interactionMap.size()-1; z >= 0; z--)
 		{
 			Edge e = interactionMap.get(z);
-			e.connect(true);
-			e.connect(false);
+			e.connect();
 		}
 	}
 	
@@ -476,7 +476,7 @@ public class Model
 	static String getBoundsString(double x, double y, double w, double h)	{
 	 return String.format("x=%.1f, y=%.1f, width=%.1f, height=%.1f", x, y, w, h);
 	}
-	public String gensym(String prefix)	{		return (prefix == null ? "" : prefix ) + ++nodeCounter;	}
+	static public String gensym(String prefix)	{		return (prefix == null ? "" : prefix ) + ++nodeCounter;	}
 	
 	
 	int verbose = 0;
@@ -669,6 +669,59 @@ public class Model
 		XRefableSetRecord set = new XRefableSetRecord("XREFS");
 		set.getXRefableSet().addAll(getNodes());
 		return set;
+	}
+//---------------------------------------------------------------------------------------------
+	 class Reference
+	 {
+		 String id;
+		 String db;
+		 String dbid;
+		 
+		 Reference(String a, String b, String c)
+		 {
+			 id = a;
+			 db = b;
+			 dbid =c ;
+		 }
+	 };
+	 
+	 List<Reference> filterByDB(List<Reference> inList, String db)
+	 {
+		 List<Reference> subset = new ArrayList<Reference>();		
+		 for (Reference r : inList)
+			 if (db.equals(r.db))
+				 subset.add(r);
+		 return subset;
+	 }
+	 
+	 String idListToString(List<Reference> inList)
+	 {
+		 StringBuilder build = new StringBuilder();
+		 for (Reference r : inList)
+			 build.append(r.id).append("\t");
+		 return StringUtil.chopLast(build.toString());
+	 }
+	 
+	public void annotateIdentifiers() {
+		 System.out.println("Annotate");
+		 Set<String> dbs = new HashSet<String>();		
+		 List<Reference> refs = new ArrayList<Reference>();		
+		 for (DataNode n : dataNodeMap.values())
+		 {
+			 String type = n.getType();		if (StringUtil.isEmpty(type)) continue;
+			 String db = n.getDatabase();	if (StringUtil.isEmpty(db)) continue;
+			 String dbid = n.getDbid();	 	if (StringUtil.isEmpty(dbid)) continue;
+			 String id = n.getGraphId();	if (StringUtil.isEmpty(id)) continue;
+			 refs.add(new Reference(id, db, dbid));
+			 dbs.add(db);
+		 }
+		Iterator<String> iter = dbs.iterator();
+		while (iter.hasNext())
+		{
+			String db = iter.next();
+			List<Reference> match = filterByDB(refs, db);
+			String idlist = idListToString(match);
+		}
 	}
 
 	

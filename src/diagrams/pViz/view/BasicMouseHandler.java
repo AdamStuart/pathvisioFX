@@ -31,7 +31,7 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 	
 	@Override
 	public void handle(MouseEvent event) {
-		if (!((VNode) event.getTarget() instanceof VNode))	return;
+		if (!(event.getTarget() instanceof VNode))	return;
 		target = (VNode) event.getTarget();
 		type = (EventType<? extends MouseEvent>) event.getEventType();
 		currentPoint = new Point2D(event.getX(), event.getY());
