@@ -9,6 +9,7 @@ import animation.NodeVisAnimator;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
+import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.EdgeLine;
 import diagrams.pViz.model.EdgeType;
@@ -57,13 +58,12 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.transform.Scale;
 import javafx.stage.Screen;
-import javafx.util.Pair;
 import model.AttributeMap;
 import model.bio.PathwayRecord;
+import model.stat.RelPosition;
 import util.FileUtil;
 import util.LineUtil;
 import util.RectangleUtil;
-import util.StringUtil;
 
 // Pasteboard 
 /*
@@ -465,6 +465,7 @@ public class Pasteboard extends Pane
 //
 	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
 		EdgeType edgeType = getController().getCurrentLineBend();
+		ArrowType arrow = getController().getCurrentArrowType();
 		Point2D startPt = source.getPortPosition( srcPosition);
 		dragLine = new EdgeLine(edgeType, startPt);
 		dragLineSource = source;
@@ -554,6 +555,8 @@ public class Pasteboard extends Pane
 				map.put("Layer",  activeLayerName);
 				if (lockResizable(getTool().name()))
 					map.put("Resizable", "false");
+				if (lockConnectable(getTool().name()))
+					map.put("Connectable", "false");
 				DataNode mNode = new DataNode(map, getController().getModel());
 				activeStack = mNode.getStack();	
 				mNode.put("TextLabel", "GENE@");
@@ -603,6 +606,13 @@ public class Pasteboard extends Pane
 		private boolean lockResizable(String name) {
 			String[] fixedSizes = {"GeneProduct", "Protein", "Metabolite"};		
 			for (String s: fixedSizes)
+				if (s.equals(name)) return true;
+			return false;
+		}
+
+		private boolean lockConnectable(String name) {
+			String[] unconnectable = {"Shape", "Label"};		
+			for (String s: unconnectable)
 				if (s.equals(name)) return true;
 			return false;
 		}
@@ -672,6 +682,7 @@ public class Pasteboard extends Pane
 		private void setActiveShapeBounds()
 		{
 			if (activeStack == null) return;
+			if (!activeStack.isResizable()) return;
 			double left = Math.min(curPoint.getX(),  startPoint.getX());
 			double top = Math.min(curPoint.getY(),  startPoint.getY());
 			double w = Math.max(20,Math.abs(curPoint.getX() - startPoint.getX()));
@@ -980,49 +991,54 @@ public class Pasteboard extends Pane
 		
 	}
 
-	
-	public void connectTo(VNode vNode, Shape port) {
-		if (dragLine != null)
+	public void connectTo(VNode vNode, RelPosition relPos ) {
+		if (dragLine == null) return;  	// shouldn't happen
+		VNode src = getDragSource();
+		Pos srcPos = getDragSourcePosition();
+		
+		if (src != vNode)
 		{
-			Pos targPos = idToPosition(port.getId());
-			VNode src = getDragSource();
-			Pos srcPos = getDragSourcePosition();
-			if (src != vNode)
-			{
-				Interaction i = new Interaction(getModel(), src, srcPos, vNode, targPos );
-				controller.addInteraction(i);
-				i.rebind();
-				removeDragLine();
-			}	
+			ArrowType arrow = getController().getCurrentArrowType();
+			EdgeType edge = getController().getCurrentLineBend();
+			Interaction i = new Interaction(getModel(), src, srcPos, vNode, relPos, arrow, edge );
+			controller.addInteraction(i);
+//			i.rebind();
+			removeDragLine();
+			controller.redrawEdgesToMe(vNode);
 		}
 	}
+
+//	public void connectTo(VNode vNode, Pos targPos) {
+//		if (dragLine != null)
+//		{
+////			Pos targPos = port == null ? Pos.CENTER : idToPosition(port.getId());
+//			VNode src = getDragSource();
+//			Pos srcPos = getDragSourcePosition();
+//			if (src != vNode)
+//			{
+//				Interaction i = new Interaction(getModel(), src, srcPos, vNode, targPos );
+//				controller.addInteraction(i);
+//				i.rebind();
+//				removeDragLine();
+//				controller.redrawEdgesToMe(vNode);
+//			}
+//		}
+//	}
 	public void startPortDrag(MouseEvent e, VNode node, Shape port) 
 	{
 		if (getDragLine()!= null)  // finish an ongoing drag
 		{
-			connectTo(node, port);
+			RelPosition pos = port == null ? RelPosition.ZERO : RelPosition.idToRelPosition(port.getId());
+			connectTo(node,pos);
 			port.setFill(node.portFillColor(EState.FILLED)); 
 			return;
 		}
 		port.setFill(Color.AQUAMARINE); 
 		String id = port.getId();
-		Pos pos = idToPosition(id);
-		double myX = getBoundsInParent().getMinX();
-		double myY = getBoundsInParent().getMinY();
+		Pos pos = RelPosition.idToPosition(id);
 		startDragLine(node, pos, node.getLayoutX(), node.getLayoutY());
-//		pasteboard.getDragLine().setEndPoint(new Point2D(e.getSceneX(), e.getSceneY()));  // FUDGE to keep line out of target box
 		e.consume();
 	}
 	
-	public static Pos idToPosition(String id)
-	{
-		if (StringUtil.isInteger(id))
-		{
-			int i = StringUtil.toInteger(id);
-			if (i < Pos.values().length)
-				return Pos.values()[i];
-		}
-		return Pos.CENTER;
-	}
 }
 

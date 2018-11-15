@@ -167,7 +167,7 @@ abstract public class Edge extends XRefable {
 			return;
 		Point2D pt = new Point2D(0, 0);
 		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
-		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
+//		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
 		edgeLine.setStartPoint(startPt);
 		pt = new Point2D(0, 0);
 		if (endNode == null) {
@@ -193,7 +193,7 @@ abstract public class Edge extends XRefable {
 			edgeLine.setVisible(false);
 			System.out.println("zerro");
 		}
-		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
+//		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
 		edgeLine.setEndPoint(pt);
 
 

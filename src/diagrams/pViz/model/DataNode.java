@@ -63,6 +63,7 @@ public class DataNode extends XRefable {
 		putDouble("Height",  stack.getHeight());	
 	}
 
+	public String toString()	{ return "[" + getGraphId() + "] " + getLabel() + ' ' + getShapeType();  }
 	public String getInfoStr()	{ return "HTML Template for " + getGraphId() + "\n" + toString();	}
 //	@Override public String toString()	{ return getGraphId() + " = " + getName();	}
 	//---------------------------------------------------------------------------------------

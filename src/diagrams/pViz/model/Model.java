@@ -12,6 +12,7 @@ import java.util.Set;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
@@ -290,7 +291,8 @@ public class Model
 		{
 			if (e == null) continue;
 			if (e.isStart(node) || e.isEnd(node))
-			{				e.removeListeners();
+			{				
+				e.removeListeners();
 				e.getEdgeLine().dispose();
 				interactionMap.remove(e);
 			}
@@ -303,11 +305,11 @@ public class Model
 	
 	public void removeNode(VNode node)		
 	{  
-		if (node != null && ! "Marquee".equals(node.getId()))
-		{
-			removeEdges(node.modelNode());
-			dataNodeMap.remove(node.modelNode().getGraphId());
-		}
+		if (node == null) return;
+		if ("Marquee".equals(node.getId())) return;
+		
+		removeEdges(node.modelNode());
+		dataNodeMap.remove(node.modelNode().getGraphId());
 	}
 
 	public DataNode getResourceByKey(String key)				
@@ -399,8 +401,8 @@ public class Model
 		String activeLayer = start.getStack().getLayerName();
 		attributes.put("Layer", activeLayer);
 		String linetype = controller.getActiveLineType();
-		String arrow = controller.getActiveArrowType();
-		attributes.put("ArrowType", arrow);
+		ArrowType arrow = controller.getActiveArrowType();
+		attributes.put("ArrowType", arrow.toString());
 		attributes.put("LineType", linetype);
 		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes);
 		controller.addInteraction(edge);
@@ -619,13 +621,13 @@ public class Model
 			DataNode node = dataNodeMap.get(key);
 			if (node != null)
 			{
-				s=  String.format("%s \t(%4.1f, %4.1f) \t %s ", node.getGraphId(), 
+				s=  String.format("GraphId: %s \t(%4.1f, %4.1f) \t %s ", node.getGraphId(), 
 						node.getDouble("CenterX"),
 						node.getDouble("CenterY"),
 						node.get("TextLabel"));
 				}
 			else s = key;
-			System.out.println(s);
+			System.out.println(key + "\n" + s);
 		}
 	}
 

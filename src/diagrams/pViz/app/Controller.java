@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 import animation.BorderPaneAnimator;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.GPML;
+import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.DataNodeGroup;
 import diagrams.pViz.model.DataNodeState;
@@ -24,7 +25,6 @@ import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.WebUtil;
-import diagrams.pViz.view.GroupMouseHandler;
 import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
@@ -227,22 +227,23 @@ public class Controller implements Initializable, IController
 	@FXML	private void clearColors() { model.clearColors();}
 
 	public Species getSpecies()	{ return model.getSpecies();	}
-	public String getActiveArrowType() {	return activeArrowType;	}
+	public ArrowType getActiveArrowType() {	return activeArrowType;	}
 	public String getActiveLineType() {		return activeLineType;	}
 
 	String activeLineType = "Straight";
-	String activeArrowType = "Arrow1";
+	ArrowType activeArrowType = ArrowType.mimactivation;
 
 	@FXML private void setStraight()	{		activeLineType = "Straight";	}
 	@FXML private void setCurved()		{		activeLineType = "Curved";	}
 	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
 	public EdgeType getCurrentLineBend() { return EdgeType.lookup(activeLineType);		}
-	@FXML private void setArrow1()		{		activeArrowType = "Arrow1";	}
-	@FXML private void setArrow2()		{		activeArrowType = "Arrow2";	}
-	@FXML private void setArrow3()		{		activeArrowType = "Arrow3";	}
-	@FXML private void setArrow4()		{		activeArrowType = "Arrow4";	}
-	@FXML private void setArrow5()		{		activeArrowType = "Arrow5";	}
-	@FXML private void setArrow6()		{		activeArrowType = "Arrow6";	}
+	@FXML private void setArrow1()		{		activeArrowType = ArrowType.mimactivation;	}
+	@FXML private void setArrow2()		{		activeArrowType = ArrowType.miminhibition;	}
+	@FXML private void setArrow3()		{		activeArrowType = ArrowType.mimconversion;	}
+	@FXML private void setArrow4()		{		activeArrowType = ArrowType.mimcatalysis;	}
+	@FXML private void setArrow5()		{		activeArrowType = ArrowType.mimtranslation;	}
+	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	}
+	public ArrowType getCurrentArrowType() { return activeArrowType;		}
 	
 	@FXML private MenuItem submit;			// save to server
 
@@ -619,10 +620,13 @@ public class Controller implements Initializable, IController
 	//-----------------------------------------------------------------------------
 	public void addXMLDoc(org.w3c.dom.Document doc)
 	{
+		nodeTreeTable.disableUpdates();
 		new GPML(model, getActiveLayerName()).read(doc);
 		getPasteboard().restoreBackgroundOrder();
 		assignDataNodesToGroups();
 		resetEdgeTable();
+		nodeTreeTable.resumeUpdates();
+		
 		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
 		{
 			redrawAllEdges();	
@@ -710,7 +714,7 @@ public class Controller implements Initializable, IController
 		String layer = n.getLayerName();
 		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
 		content.remove(n);
-		getTreeTableView().updateTreeTable();
+//		getTreeTableView().updateTreeTable();
 	}
 	// **-------------------------------------------------------------------------------
 	public String getState()					{ 	return model.saveState();  }
@@ -775,7 +779,7 @@ public class Controller implements Initializable, IController
 		}		
 	}
 	
-	public void redrawEdgesToMe(VNode vNode, double dx, double dy) {
+	public void redrawEdgesToMe(VNode vNode) {
 		DataNode data = vNode.modelNode();
 		List<Interaction> edges = model.findInteractionsByNode(data);
 		for (Interaction edge : edges)
@@ -834,16 +838,19 @@ public class Controller implements Initializable, IController
 	public void addInteraction(VNode starter, VNode end) {		
 		Interaction i = model.addIteraction(starter, end);
 		i.rebind();
+		nodeTreeTable.updateTreeTable();
 	}
 	// **-------------------------------------------------------------------------------
 	// coming from parser:
 	
 	public void addDataNode(DataNode node) {
 		pasteboard.setActiveLayer("Content");	
+		node.setGraphId(node.get("GraphId"));
 		 node.setName( node.get("TextLabel"));
 		if (node.getStack() == null)
 			new VNode(node, pasteboard);
 		model.addResource(node);
+		nodeTreeTable.updateTreeTable();
 	}
 
 	public void addShapeNode(DataNode shapeNode) {

@@ -53,8 +53,10 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
+import javafx.util.Pair;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
+import model.stat.RelPosition;
 // a VNode can be a shape or a control or a container
 import util.StringUtil;
 
@@ -227,24 +229,26 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setResizeEnabledSouth(enable);
 		resizable = enable;	
 	}
+	static InnerShadow effect = new InnerShadow();
+	
 	   protected void processMousePosition(final MouseEvent event) {
 
 	       super.processMousePosition(event);
 	        if (event.getEventType().equals(MouseEvent.MOUSE_ENTERED))
 	        {
 	        	boolean live = true;  //isSelected() || pasteboard.getDragLine() != null;
-	        	setEffect(live ? new InnerShadow() : null);
+	        	setEffect(live ? effect : null);
 	        	showPorts(isConnectable());
 	        }
 	        if (event.getEventType().equals(MouseEvent.MOUSE_MOVED))
 	        {
 	        	boolean live = true;  //= isSelected() || pasteboard.getDragLine() != null;
-	        	setEffect(live ? new InnerShadow() : null);
+	        	setEffect(live ? effect : null);
 	        	showPorts(live);
 	        }
 	        if (event.getEventType().equals(MouseEvent.MOUSE_EXITED))
 	        {
-	        	setEffect(null);
+	        	setEffect(isSelected() ? effect : null);
 	        	showPorts(false);
 	        }
 	    }
@@ -394,6 +398,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return new Point2D(center.getX()+dx, center.getY()+dy);
 	}
 
+	public Point2D getRelativePosition(RelPosition rel) {
+		return getRelativePosition(rel.x(), rel.y());
+	}
+
 	private double getAdjustmentX(Pos srcPosition, double nodeWidth) {
 	
 		String s = srcPosition.name();
@@ -440,7 +448,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		getAttributes().putDouble("CenterY", (minY + b.getMaxY()) / 2);
 		getAttributes().putDouble("Width",b.getWidth());
 		getAttributes().putDouble("Height",b.getHeight());
-		getController().redrawEdgesToMe(this, offsetX, offsetY);
+		getController().redrawEdgesToMe(this);
 	}
 	
 	public String getTitle() 		{ 	return "getTitle"; }
@@ -567,7 +575,7 @@ public void addBadge(String letter)
 			getChildren().add(port);
 			ports.add(port);
 			port.setVisible(false);
-			port.setId(""+i+1);
+			port.setId(""+(i+1));
 		}
 
 //		for (int i=0; i< 2 ; i++)
@@ -610,15 +618,21 @@ public void addBadge(String letter)
 	
 	private void addPortHandlers(Shape port)
 	{		
-		port.addEventHandler(MouseEvent.MOUSE_MOVED, e -> { if (pasteboard.getDragLine() != null) return; 	port.setFill(portFillColor( EState.ACTIVE)); });
+		port.addEventHandler(MouseEvent.MOUSE_MOVED, e ->  { 	if (pasteboard.getDragLine() != null) return; 	port.setFill(portFillColor( EState.ACTIVE)); });
 		port.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {	port.setFill(portFillColor( EState.OFF)); } );
 		port.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {  	port.setFill(portFillColor( EState.STANDBY));  	 finishDragLine(port, this); });
-		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> { pasteboard.startPortDrag(e, this, port);} );
+		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> { 	pasteboard.startPortDrag(e, this, port);} );
 	}
 
-	private void finishDragLine(Shape port, VNode target)
+	private void finishDragLine(Node port, VNode target)
 	{
-		pasteboard.connectTo(target, port);
+		String id = port.getId();
+		RelPosition relPos = RelPosition.idToRelPosition(id);
+		finishDragLine(target, relPos);
+	}
+	private void finishDragLine( VNode target, RelPosition relPos)
+	{
+		pasteboard.connectTo(target, relPos);
 	}
 	// **-------------------------------------------------------------------------------
 	  /**
@@ -626,18 +640,18 @@ public void addBadge(String letter)
      *
      * @param event {@link MouseEvent}
      */
-	protected void handleMouseEntered(MouseEvent event) 
-	{
-		showPorts(pasteboard.getDragLine() != null && isConnectable());
-		System.out.println("enter");
-	}
-
-	protected void handleMouseExited(MouseEvent event) 
-	{
-		System.out.println("exit");
-		showPorts(false);
-	}
-
+//	protected void handleMouseEntered(MouseEvent event) 
+//	{
+//		showPorts(pasteboard.getDragLine() != null && isConnectable());
+//		System.out.println("enter");
+//	}
+//
+//	protected void handleMouseExited(MouseEvent event) 
+//	{
+//		System.out.println("exit");
+//		showPorts(false);
+//	}
+//
 	protected void handleMouseReleased(final MouseEvent event) {
 		if (pasteboard.getDragLine() != null && isConnectable()) {
 			VNode starter = pasteboard.getDragSource();
@@ -675,7 +689,15 @@ public void addBadge(String letter)
 		   }
 		   if (pasteboard.getDragLine() != null)
 		   {
-			   finishDragLine(null, this);
+			   double x = event.getSceneX();
+			   double y = event.getSceneY();
+			   double stackX = getLayoutX();
+			   double stackY = getLayoutY();
+			   
+				double relX = (x - stackX) * 2 / getWidth();
+				double relY = (y - stackY) * 2 / getHeight();
+				RelPosition pos =  new RelPosition(relX,relY);
+			   finishDragLine(this, pos);
 				event.consume();
 				return;
 		   }

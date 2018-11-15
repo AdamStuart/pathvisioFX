@@ -6,14 +6,15 @@ import java.util.List;
 
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.view.VNode;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.util.Pair;
 import model.AttributeMap;
 import model.bio.XRefable;
+import model.stat.RelPosition;
 import util.StringUtil;
 
 public class Interaction extends Edge implements Comparable<Interaction>
@@ -52,13 +53,28 @@ public class Interaction extends Edge implements Comparable<Interaction>
 //	@Override public void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors) {
 //		edgeLine = new EdgeLine(this, pts, anchors);
 //	}
-	public Interaction(Model model, VNode src, Pos srcPosition, VNode vNode, Pos targPosition) {
+	
+	public Interaction(Model model, VNode src, Pos srcPosition, 
+			VNode vNode, RelPosition targPosition, ArrowType arrow, EdgeType edge) 
+	{
 		this(model,src,vNode, null);
-		put("GraphId", newEdgeId());
-		GPMLPoint startPoint = edgeLine.firstGPMLPoint();
+		setInteractionType(edge.toString());
+		String newId = newEdgeId();
+		put("GraphId", newId);
+		setGraphId(newId);
+		GPMLPoint  startPoint = new GPMLPoint(src.getPortPosition(srcPosition));
+		startPoint.setRelPosition(srcPosition);
+		startPoint.setGraphRef(src.getGraphId());
+		edgeLine.setStartPoint(startPoint);
 		startPoint.setPos(srcPosition);
-		GPMLPoint endPoint = edgeLine.lastGPMLPoint();
+		
+		GPMLPoint endPoint = new GPMLPoint(vNode.getRelativePosition(targPosition));
+		endPoint.setRelX(targPosition.x());
+		endPoint.setRelY(targPosition.y());
+		edgeLine.setEndPoint(endPoint);
+		endPoint.setGraphRef(vNode.getGraphId());
 		endPoint.setPos(targPosition);
+		endPoint.setArrowType(arrow);
 	}	
 
 	
@@ -105,6 +121,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		}
 		else
 		{
+			System.err.println("Interaction rebind required");
 			String src = get("sourceid");
 			String targ = get("targetid");
 			if (StringUtil.isEmpty(src) ||StringUtil.isEmpty(targ))

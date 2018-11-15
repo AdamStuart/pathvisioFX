@@ -1,12 +1,7 @@
 package diagrams.pViz.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import org.pathvisio.core.model.ConnectorRestrictions;
-import org.pathvisio.core.model.PathwayElement;
-import org.pathvisio.core.model.PathwayElement.MPoint;
 
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
@@ -27,17 +22,18 @@ import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
-import model.AttributeMap;
 import util.LineUtil;
 
 /* 
  * EdgeLine 
  * Isolate the drawing elements from the nodes/attribute definition
  * so that the edge can be switched from simple line to curve to elbow
- * without having to destroy the edge itself.
+ * without having to destroy the edge at the model level.
  * 
- * Anchors are endpoints of other interactions, specified by a number 
+ * Anchors are endpoints of other interactions, specified by a 0-1 number 
  * representing how far along the path from source to target the anchor is positioned
+ *
+ *  All edges are directional. We support arrow heads but not tails (or double headed arrows). 
  */
 public class EdgeLine extends Group {
 
@@ -48,8 +44,15 @@ public class EdgeLine extends Group {
 	   	line = null;
 	   	head =  tail = null;
 		interaction = null;			
+		arrowType = ArrowType.arrow;			
+	}
+	public EdgeLine(EdgeType edgeType, Point2D start, ArrowType arrow)
+	{
+		this(edgeType, start);
+		arrowType = arrow;
 	}
 	public EdgeLine(EdgeType edgeType, Point2D start)
+	
 	{
 	   this();
 //	   srcX = startX;
@@ -130,6 +133,7 @@ public class EdgeLine extends Group {
 	}
 	 //----------------------------------------------------------------------
 	private Interaction interaction;		// the model corresponding to this geometry
+	private ArrowType arrowType;
 	private Polyline polyline;
 	private Line line;
 	private CubicCurve curve;
@@ -252,6 +256,17 @@ public class EdgeLine extends Group {
 	}
 
 	//----------------------------------------------------------------------
+	public void setStartPoint(GPMLPoint startPt) {
+		if (startPt == null) return;
+		if (points.size() < 1)
+			points.add(startPt);
+		setPoint(startPt.getPoint(), points.get(0));
+		if (line != null)
+		{
+			line.setStartX(startPt.getX());
+			line.setStartY(startPt.getY());
+		}
+	}
 	public void setStartPoint(Point2D startPt) {
 		if (startPt == null) return;
 		if (points.size() < 1)
@@ -264,18 +279,30 @@ public class EdgeLine extends Group {
 		}
 	}
 	
-	public void setEndPoint(Point2D endPt) {
-		if (endPt == null) 								return;
-		if (endPt.getX() == 0 && endPt.getY() == 0)		return;
-		if (points.size() < 2)
-			points.add(new GPMLPoint(endPt));
-		setPoint(endPt, points.get(points.size()-1));
-		if (getLine() != null)
-		{
-			line.setEndX(endPt.getX());
-			line.setEndY(endPt.getY());
+		public void setEndPoint(GPMLPoint endPt) {
+			if (endPt == null) 								return;
+			if (endPt.getX() == 0 && endPt.getY() == 0)		return;
+			if (points.size() < 2)
+				points.add(endPt);
+			setPoint(endPt.getPoint(), points.get(points.size()-1));
+			if (getLine() != null)
+			{
+				line.setEndX(endPt.getX());
+				line.setEndY(endPt.getY());
+			}
 		}
-	}
+		public void setEndPoint(Point2D endPt) {
+			if (endPt == null) 								return;
+			if (endPt.getX() == 0 && endPt.getY() == 0)		return;
+			if (points.size() < 2)
+				points.add(new GPMLPoint(endPt));
+			setPoint(endPt, points.get(points.size()-1));
+			if (getLine() != null)
+			{
+				line.setEndX(endPt.getX());
+				line.setEndY(endPt.getY());
+			}
+		}
 	//----------------------------------------------------------------------
 	public void dispose()
 	{
@@ -305,7 +332,7 @@ public class EdgeLine extends Group {
 		}
 		
 		if (head != null) 	getChildren().remove(head);
-		head = makeArrowhead(interaction);
+		head = makeArrowhead();
 	 	if (head != null) 	getChildren().add(head);
 	 	
 		Point2D pt = getPointAlongLine(0.5);
@@ -564,7 +591,7 @@ public class EdgeLine extends Group {
 	}
 
    //----------------------------------------------------------------------
-	public Shape makeArrowhead(AttributeMap attributes)
+	public Shape makeArrowhead()
 	{	
 		if (points != null && points.size() > 1)
 		{

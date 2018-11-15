@@ -107,7 +107,7 @@ System.out.println("stateChanged " + e.toString());
 	                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
 	                {
 	                	XRefable g = param.getValue().getValue();
-	        			String s = g == null ? "" : g.getGraphId();
+	        			String s = (g == null) ? "" : g.getGraphId();
 	        	        return  new ReadOnlyStringWrapper(s);
 	                 }
 	                );
@@ -239,9 +239,13 @@ System.out.println("stateChanged " + e.toString());
 	    clipboardContent.putString(strb.toString());
 	    Clipboard.getSystemClipboard().setContent(clipboardContent);
 	}
+	boolean disabled = false;
+	public void disableUpdates() {	 disabled = true;	}
+	public void resumeUpdates() {	 disabled = false;	}
 	// **-------------------------------------------------------------------------------
 	public void updateTreeTable() 
-	{	
+	{
+		if (disabled ) return;
 		System.out.println("GPMLTreeTableView.updateTreeTable");
 		root.getChildren().clear();
 		if (model.getDataNodeMap().size() > 0) { nodes.getChildren().clear();   root.getChildren().add(nodes);  }
@@ -256,7 +260,8 @@ System.out.println("stateChanged " + e.toString());
 		{ 
 			groups.getChildren().clear(); root.getChildren().add(groups);
 		}
-		orphans.getChildren().clear(); root.getChildren().add(orphans);
+		orphans.getChildren().clear(); 		// only add it if it gets children from the interaction processing
+		
 //		root.getChildren().addAll(nodes, shapes, labels, groups);
 		ObservableList<TreeItem<XRefable>> kids =  nodes.getChildren();
 		kids.clear();
@@ -277,6 +282,9 @@ System.out.println("stateChanged " + e.toString());
 			}
 			else addBranch(interaction, origItem);
         });
+		
+		if (orphans.getChildren().size() > 0)
+			root.getChildren().add(orphans);
 		
 		model.getStates().stream().forEach((state) -> {
 			String origin = state.get("GraphRef");
@@ -316,16 +324,25 @@ System.out.println("stateChanged " + e.toString());
 		// TODO Auto-generated method stub
 		
 	}
+	// **-------------------------------------------------------------------------------
 
-	public void addBranch(XRefable node) {
+	public void addBranch(DataNode node) {
 		String type = node.get("Type");
-		System.out.println(type);
-		if  ("Label".equals(type))  addBranch(node, labels);
-		else if ("Shape".equals(type))  addBranch(node, shapes);
-		else if (node instanceof DataNodeGroup)  addBranch(node, groups);
-		else if (node instanceof DataNode)  addBranch(node, nodes);
+//		node.get("GraphId");
+		System.out.println(type + " " + 	node.getGraphId());
+		
+		if  ("Label".equals(type))  				addBranch(node, labels);
+		else if ("Shape".equals(type))  			addBranch(node, shapes);
+		else if (node instanceof DataNodeGroup)  	addBranch(node, groups);
+		else if (node instanceof DataNode)  		addBranch(node, nodes);
 	}
 
+	public void addBranch(XRefable node, String parentID) {
+		TreeItem<XRefable> mom = findDeep(nodes, parentID);
+		if (mom == null)  System.err.println("Null parent: " + parentID);
+		else
+			addBranch(node, mom);
+	}
 
 	private void addBranch(XRefable node, TreeItem<XRefable> parent) {
 		TreeItem<XRefable> anItem = makeTreeItem();
@@ -333,16 +350,6 @@ System.out.println("stateChanged " + e.toString());
 		parent.getChildren().add(anItem);
 	}
 
-	public void addBranch(XRefable node, String parentID) {
-		TreeItem<XRefable> mom = findDeep(nodes, parentID);
-		if (mom == null)  System.err.println("Null parent: " + parentID);
-		else
-		{
-			TreeItem<XRefable> anItem = makeTreeItem();
-			anItem.setValue(node);
-			mom.getChildren().add(anItem);
-		}
-	}
 	// **-------------------------------------------------------------------------------
 
 	public TreeItem<XRefable> findNodeTreeItem(String inId) {		return findNode(inId);	}

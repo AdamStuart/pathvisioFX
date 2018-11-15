@@ -6,7 +6,7 @@ import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.Interaction;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.util.Pair;
+import model.stat.RelPosition;
 import util.StringUtil;
 
 public class GPMLPoint {
@@ -34,6 +34,8 @@ public class GPMLPoint {
 	public ArrowType getArrowType()		{ return head;	}
 	public void setArrowType(ArrowType s)	{ head = s;	}
 
+	public void setPos(Pos pos)			{ setPos(RelPosition.toRelPos(pos)); }
+	public void setPos(RelPosition pos)	{ setRelX(pos.x()); setRelY(pos.y()); }
 	public double getRelX()				{ return relX;	}
 	public void setRelX(double s)		{ relX = s;	}
 	public double getRelY()				{ return relY;	}
@@ -90,17 +92,6 @@ public class GPMLPoint {
 //		return new Pair<Double, Double >(relX, relY);
 //	}
 //	
-	public void setPos(Pos pos) {
-		String name = pos.name();
-		
-		if (name.contains("LEFT")) relX = -1;
-		else if (name.contains("RIGHT")) relX = 1;
-		else relX = 0;
-		
-		if (name.contains("TOP")) relY = -1;
-		else if (name.contains("BOTTOM")) relY = 1;
-		else relY = 0;
-	}
 	
 	public void setXYFromNode()
 	{
@@ -195,6 +186,13 @@ public class GPMLPoint {
 	public static void setInteraction(List<GPMLPoint> pts, Interaction edge) {
 		for (GPMLPoint pt : pts)
 			pt.setInteraction(edge);
+		
+	}
+
+	public void setRelPosition(Pos srcPosition) {
+		RelPosition pos = RelPosition.toRelPos(srcPosition);
+		setRelX(pos.x());
+		setRelY(pos.y());
 		
 	}
 
