@@ -161,10 +161,10 @@ public class Inspector extends HBox implements Initializable {
 	
 	private void opacityChanged(boolean undoable)							
 	{ 	 			
-//		if (undoable) 
-//			controller.getUndoStack().push(ActionType.Opacity); 
-//		selection.applyStyle(getStyleSettings(opacity));	
-//		selection.putDouble("Opacity", opacity.getValue() / 100.);	
+		if (undoable) 
+			controller.getUndoStack().push(ActionType.Opacity); 
+		selection.applyStyle(getStyleSettings(opacity));	
+		selection.putDouble("Opacity", opacity.getValue() / 100.);	
 	}
 	
 	private void rotationChanged(boolean undoable)							
@@ -236,7 +236,7 @@ public class Inspector extends HBox implements Initializable {
 				AttributeMap attr = new AttributeMap(style, true);
 				Color fill = attr.getColor("-fx-background-color");
 				Color stroke = attr.getColor("-fx-border-color");
-				double opac = attr.getDouble("-fx-opacity", 0.5);
+				double opac = attr.getDouble("-fx-opacity", 1.0);
 				double wt = attr.getDouble("-fx-border-width", 12);
 				double rot = attr.getDouble("-fx-rotate", 0);			
 				fillColor.setValue(fill);
