@@ -1,6 +1,5 @@
 package diagrams.pViz.model;
 
-import diagrams.pViz.app.Controller;
 import diagrams.pViz.view.VNode;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
@@ -13,11 +12,13 @@ import util.StringUtil;
  * of a node in our graph. 
  * 
  * It is in charge of the VNode which is a StackPane in the view system.
+ * Parent class XRefable is an AttributeMap with added properties to support binding in tables
  */
+@SuppressWarnings("serial")
 public class DataNode extends XRefable {
 
+	Model model;
 	protected VNode stack;
-	protected Model model;
 //	public DataNode(AttributeMap am, Controller c)
 //	{
 //		this(am,c.getModel());
@@ -33,6 +34,7 @@ public class DataNode extends XRefable {
 	{
 		super(am);
 		model = m;
+		put("GraphId", Model.gensym("G"));
 		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
@@ -61,6 +63,7 @@ public class DataNode extends XRefable {
 		putDouble("Height",  stack.getHeight());	
 	}
 
+	public String toString()	{ return "[" + getGraphId() + "] " + getLabel() + ' ' + getShapeType();  }
 	public String getInfoStr()	{ return "HTML Template for " + getGraphId() + "\n" + toString();	}
 //	@Override public String toString()	{ return getGraphId() + " = " + getName();	}
 	//---------------------------------------------------------------------------------------

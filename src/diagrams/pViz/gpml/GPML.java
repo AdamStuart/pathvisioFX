@@ -317,9 +317,7 @@ public class GPML {
 		Interaction interaction = new Interaction(attrib, m,points, anchors);
 		interaction.put("Layer", "Content");
 		interaction.add(edgeML.getAttributes());
-		interaction.copyAttributesToProperties();
-		// copy attributes into properties for tree table editing
-		interaction.copyAttributesToProperties();
+		interaction.copyAttributesToProperties();		// copy attributes into properties for tree table editing
 		
 		if (startNode != null && endNode != null)
 		{
@@ -338,6 +336,8 @@ public class GPML {
 	public DataNode parseGPMLLabel(org.w3c.dom.Node labelNode) {
 		DataNode label = new DataNode(model);
 		label.setType("Label");
+		if (label.getStack() != null)
+			label.getStack().setLayerName("Background");
 		NodeList elems = labelNode.getChildNodes();
 		label.add(labelNode.getAttributes());
 		label.setGraphId(label.get("GraphId"));
@@ -433,6 +433,12 @@ public class GPML {
 				org.w3c.dom.Node gchild = child.getChildNodes().item(j);
 				String jname = gchild.getNodeName();
 //				System.out.println(name);
+				if ("bp:openControlledVocabulary".equals(jname))
+				{
+					VocabRecord ref = new VocabRecord(gchild);
+//					model.addRef(ref);
+					System.out.println(ref);					//TODO
+				}
 				if ("bp:PublicationXref".equals(jname))
 				{
 					BiopaxRecord ref = new BiopaxRecord(gchild);
@@ -476,12 +482,6 @@ public class GPML {
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "Style", style, "Fill", "808080", "LineStyle", "Broken", "ShapeType", "Octagon");
 		DataNodeGroup newGroup = new DataNodeGroup(attrMap,model);
-//		newGroup.put("Fill", "808080");
-//		newGroup.put("LineStyle", "Broken");
-//		newGroup.put("ShapeType", "Octagon");
-//		if (!graphId.isEmpty())	newGroup.put("GraphId", graphId);
-//		if (!style.isEmpty())	newGroup.put("Style", style);
-//		if (!groupId.isEmpty())	newGroup.put("GroupId", groupId);
 
 		newGroup.copyAttributesToProperties();
 		newGroup.setName(newGroup.get("Style") + " [" + newGroup.get("GroupId") + "]");
@@ -524,7 +524,7 @@ public class GPML {
 				shape.setStyle("-fx-stroke-dash-array: 10 10;");
 				shape.setFill(Color.LIGHTGRAY);
 			}
-			stack.toBack();
+			stack.toFront();
 			
 		}
 	}

@@ -85,9 +85,9 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 			" Use quotes to escape special characters. E.g. 'apoptosis*' will include the * in the search and not use it as wildcard.";
 	
 	//---------------------------------------------------------------------------
-	String lastSearch = "ATF2";
+	static String lastSearch = "ATF2";
 			
-			@Override public void initialize(URL location, ResourceBundle resources)
+	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		String[] organisms = { "Any", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Canis familiarus", "Box taurus", "Pan troglodytes", "Gallus gallus" };
 		species.getItems().addAll(organisms);

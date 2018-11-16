@@ -129,7 +129,7 @@ public class Selection
 			if (isGrid(node)) continue;
 			
 			getController().remove(node);
-			node.getLayer().remove(node);
+			if (node.getLayer() != null) node.getLayer().remove(node);
 			items.remove(node);
 		}
 		getController().getTreeTableView().updateTreeTable();
@@ -144,6 +144,7 @@ public class Selection
 			if (!isGrid(n)) 
 				duplicats.add(n.clone());
 		getController().addAll(duplicats);
+		
 	}
 	//--------------------------------------------------------------------------
 	public void deleteAll()	
@@ -187,7 +188,7 @@ public class Selection
 		group.getChildren().addAll(items);
 		deleteSelection();
 		getController().addExternalNode(group);
-		group.setTranslateX(10);
+//		group.setTranslateX(10);
 	}
 	//--------------------------------------------------------------------------
 	public void connect()
@@ -264,6 +265,11 @@ public class Selection
 		for (Node n : items)
 		{
 			if (n == except) continue;
+			if (n instanceof VNode) 
+			{
+				if (!((VNode)n).isMovable())  continue;
+			}
+			
 			if (n.getParent() instanceof Group && !(n.getParent() instanceof Layer))
 				n = n.getParent();
 			if (n instanceof Rectangle)

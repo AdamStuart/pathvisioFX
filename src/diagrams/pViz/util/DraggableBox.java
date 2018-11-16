@@ -5,6 +5,7 @@ package diagrams.pViz.util;
 
 import java.util.List;
 
+import diagrams.pViz.view.Pasteboard;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Point2D;
@@ -43,7 +44,7 @@ public class DraggableBox extends StackPane {
     protected double absoluteMaxWidth;
     protected double absoluteMaxHeight;
 
-    protected GraphEditorProperties editorProperties = new GraphEditorProperties();
+//    protected GraphEditorProperties editorProperties = new GraphEditorProperties();
 
     // Note that ResizableBox subclass currently pays no attention to alignment targets!
     private List<Double> alignmentTargetsX;
@@ -58,15 +59,15 @@ public class DraggableBox extends StackPane {
 
     // Turned off by default because it leads to poor performance of panning while zoomed.
     private boolean cacheWhenStationary;
-
+    Pasteboard pasteboard;
     /**
      * Creates an empty draggable box.
      */
-    public DraggableBox() {
+    public DraggableBox(Pasteboard p) {
 
         setPickOnBounds(false);
         setCache(cacheWhenStationary);
-
+        pasteboard = p;
         // Must be default or quality for re-rasterization to occur after a scale transform.
         cacheHintProperty().set(CacheHint.DEFAULT);
 
@@ -75,20 +76,20 @@ public class DraggableBox extends StackPane {
         addEventHandler(MouseEvent.MOUSE_RELEASED, this::handleMouseReleased);
     }
 
-    /**
-     * Sets the editor properties object that the drag logic should respect.
-     *
-     * <p>
-     * This method is called by the framework. Custom skins should <b>not</b> call it. Editor properties should instead
-     * be set via the graph editor instance.
-     * </p>
-     *
-     * @param editorProperties the {@link GraphEditorProperties} instance for the graph editor
-     */
-    public void setEditorProperties(final GraphEditorProperties editorProperties) {
-        this.editorProperties = editorProperties;
-    }
-
+//    /**   GraphEditorProperties are now kept in the Pasteboard
+//     * Sets the editor properties object that the drag logic should respect.
+//     *
+//     * <p>
+//     * This method is called by the framework. Custom skins should <b>not</b> call it. Editor properties should instead
+//     * be set via the graph editor instance.
+//     * </p>
+//     *
+//     * @param editorProperties the {@link GraphEditorProperties} instance for the graph editor
+//     */
+//    public void setEditorProperties(final GraphEditorProperties editorProperties) {
+//        this.editorProperties = editorProperties;
+//    }
+//
     /**
      * Gets whether dragging of the box is enabled in the x (horizontal) direction.
      *
@@ -365,11 +366,15 @@ public class DraggableBox extends StackPane {
      */
     protected double roundToGridSpacing(final double value) {
 
-        final double spacing = editorProperties.getGridSpacing();
+        final double spacing = getEditorProperties().getGridSpacing();
         return spacing * Math.round(value / spacing);
     }
 
-    /**
+    private GraphEditorProperties getEditorProperties() {
+		return pasteboard.getEditorProperties();
+	}
+
+	/**
      * Handles a drag event to the given cursor position.
      *
      * @param x the cursor x position
@@ -393,16 +398,16 @@ public class DraggableBox extends StackPane {
      */
     private void handleDragX(final double x) {
 
-        final double maxParentWidth = editorProperties.isEastBoundActive() ? lastParentWidth : absoluteMaxWidth;
+        final double maxParentWidth = getEditorProperties().isEastBoundActive() ? lastParentWidth : absoluteMaxWidth;
 
-        final double minLayoutX = editorProperties.getWestBoundValue();
-        final double maxLayoutX = maxParentWidth - getWidth() - editorProperties.getEastBoundValue();
+        final double minLayoutX = getEditorProperties().getWestBoundValue();
+        final double maxLayoutX = maxParentWidth - getWidth() - getEditorProperties().getEastBoundValue();
 
         final double scaleFactor = getLocalToSceneTransform().getMxx();
 
         double newLayoutX = lastLayoutX + (x - lastMouseX) / scaleFactor;
 
-        if (editorProperties.isSnapToGridOn()) {
+        if (getEditorProperties().isSnapToGridOn()) {
             // The -1 here is to put the rectangle border exactly on top of a grid line.
             newLayoutX = roundToGridSpacing(newLayoutX - snapToGridOffset.getX()) + snapToGridOffset.getX() - 1;
         } else {
@@ -414,7 +419,7 @@ public class DraggableBox extends StackPane {
             }
         }
 
-        if (editorProperties.isWestBoundActive() && newLayoutX < minLayoutX) {
+        if (getEditorProperties().isWestBoundActive() && newLayoutX < minLayoutX) {
             newLayoutX = minLayoutX;
         } else if (newLayoutX > maxLayoutX) {
             newLayoutX = maxLayoutX;
@@ -430,16 +435,16 @@ public class DraggableBox extends StackPane {
      */
     private void handleDragY(final double y) {
 
-        final double maxParentHeight = editorProperties.isSouthBoundActive() ? lastParentHeight : absoluteMaxHeight;
+        final double maxParentHeight = getEditorProperties().isSouthBoundActive() ? lastParentHeight : absoluteMaxHeight;
 
-        final double minLayoutY = editorProperties.getNorthBoundValue();
-        final double maxLayoutY = maxParentHeight - getHeight() - editorProperties.getSouthBoundValue();
+        final double minLayoutY = getEditorProperties().getNorthBoundValue();
+        final double maxLayoutY = maxParentHeight - getHeight() - getEditorProperties().getSouthBoundValue();
 
         final double scaleFactor = getLocalToSceneTransform().getMxx();
 
         double newLayoutY = lastLayoutY + (y - lastMouseY) / scaleFactor;
 
-        if (editorProperties.isSnapToGridOn()) {
+        if (getEditorProperties().isSnapToGridOn()) {
             // The -1 here is to put the rectangle border exactly on top of a grid line.
             newLayoutY = roundToGridSpacing(newLayoutY - snapToGridOffset.getY()) + snapToGridOffset.getY() - 1;
         } else {
@@ -451,7 +456,7 @@ public class DraggableBox extends StackPane {
             }
         }
 
-        if (editorProperties.isNorthBoundActive() && newLayoutY < minLayoutY) 
+        if (getEditorProperties().isNorthBoundActive() && newLayoutY < minLayoutY) 
             newLayoutY = minLayoutY;
         else if (newLayoutY > maxLayoutY) 
             newLayoutY = maxLayoutY;

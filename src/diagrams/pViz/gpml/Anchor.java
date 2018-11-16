@@ -37,9 +37,10 @@ public class Anchor extends XRefable {		// extends DataNode
 		super(new AttributeMap(node.getAttributes()));
 		myShape = new Circle();
 		myShape.setRadius(6);
-		myShape.setVisible(true);
+		myShape.visibleProperty().bind(m.getController().anchorVisibleProperty());
 		myShape.setFill(Color.BISQUE);
-		setName("Anchor: " + get("GraphId"));
+		myShape.setStroke(Color.DARKOLIVEGREEN);
+		setName(String.format("Anchor @ %.2f", getAnchorPosition()));
 //		setInteraction(inter);
 		setInteractionId(inter);
 	}

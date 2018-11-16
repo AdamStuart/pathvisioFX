@@ -242,6 +242,13 @@ public class Document
 		file = null;
 		save();	
 	}
+	
+	public void submit()		
+	{ 	
+		String buff =  controller.getModel().saveState();
+		System.out.println("Sending to server: " + buff); 		 // TODO
+//		sendFileToServer(buff);
+	}
 	// **-------------------------------------------------------------------------------
 	boolean fileDirty = false;
 	

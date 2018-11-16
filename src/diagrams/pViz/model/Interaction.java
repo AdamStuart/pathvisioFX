@@ -6,12 +6,15 @@ import java.util.List;
 
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.view.VNode;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import model.AttributeMap;
 import model.bio.XRefable;
+import model.stat.RelPosition;
 import util.StringUtil;
 
 public class Interaction extends Edge implements Comparable<Interaction>
@@ -43,39 +46,66 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	{
 		super(attr, inModel, pts, anchors);
 		interactionType.set("arrow");
+		GPMLPoint.setInteraction(pts, this);
 	}
 
 	
 //	@Override public void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors) {
 //		edgeLine = new EdgeLine(this, pts, anchors);
 //	}
-	public Interaction(Model model, VNode src, VNode vNode) {
-		this(model,src,vNode, null, null, null);
-	}	
 	
-	public Interaction(Model inModel, VNode start, VNode end, AttributeMap attr, List<GPMLPoint> pts, List<Anchor> anchors) 
+	public Interaction(Model model, VNode src, Pos srcPosition, 
+			VNode vNode, RelPosition targPosition, ArrowType arrow, EdgeType edge) 
 	{
-    	super( inModel,  start,  end,  attr,  pts,  anchors);
+		this(model,src,vNode, null);
+		setInteractionType(edge.toString());
+		String newId = newEdgeId();
+		put("GraphId", newId);
+		setGraphId(newId);
+		GPMLPoint  startPoint = new GPMLPoint(src.getPortPosition(srcPosition));
+		startPoint.setRelPosition(srcPosition);
+		startPoint.setGraphRef(src.getGraphId());
+		edgeLine.setStartPoint(startPoint);
+		startPoint.setPos(srcPosition);
+		
+		GPMLPoint endPoint = new GPMLPoint(vNode.getRelativePosition(targPosition));
+		endPoint.setRelX(targPosition.x());
+		endPoint.setRelY(targPosition.y());
+		edgeLine.setEndPoint(endPoint);
+		endPoint.setGraphRef(vNode.getGraphId());
+		endPoint.setPos(targPosition);
+		endPoint.setArrowType(arrow);
+	}	
+
+	
+	private String newEdgeId()
+	{
+		return "23rwe";
+	}
+	
+	public Interaction(Model inModel, VNode start, VNode end, AttributeMap attr) 		//, List<GPMLPoint> pts, List<Anchor> anchors
+	{
+    	super( inModel,  start,  end,  attr);		//,  pts,  anchors
     	
-    	if (pts != null)
-    	{	
-    		int siz = pts.size();
-    		if (siz >= 2)
-    		{
-    			GPMLPoint endPt = pts.get(siz-1);
-        		interactionType.set(endPt.getArrowType().toString());
-    		}
-    	}
+//    	if (pts != null)
+//    	{	
+//    		int siz = pts.size();
+//    		if (siz >= 2)
+//    		{
+//    			GPMLPoint endPt = pts.get(siz-1);
+//        		interactionType.set(endPt.getArrowType().toString());
+//    		}
+//    	}
     }
 	@Override public String toString()
 	{
 		return getName() + " " + getGraphId() + " " + (edgeLine == null ? "" : edgeLine.toString());
 	}
-	   public Interaction(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
-	    {
-			super(startPt, endPt, thickness, inModel);
-			model.addEdge(this);
-	      }
+//	   public Interaction(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
+//	    {
+//			super(startPt, endPt, thickness, inModel);
+//			model.addEdge(this);
+//	      }
 
 
 	public int compareTo(Interaction other)
@@ -91,6 +121,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		}
 		else
 		{
+			System.err.println("Interaction rebind required");
 			String src = get("sourceid");
 			String targ = get("targetid");
 			if (StringUtil.isEmpty(src) ||StringUtil.isEmpty(targ))
@@ -134,9 +165,12 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		else arrow = arrow.toLowerCase();
 		setInteractionType(arrow);
 		if ("arrow".equals(arrow)) 				arrow = "->";
+		else if (arrow.contains("none")) 		arrow = "--";
+		else if (arrow.contains("tbar")) 		arrow = "-|";
 		else if (arrow.contains("inhibit")) 	arrow = "-|";
 		else if (arrow.contains("conver")) 		arrow = ">>";
 		else if (arrow.contains("catal")) 		arrow = "-O";
+		else if (arrow.contains("bind")) 		arrow = "-{";
 		else if (arrow.contains("reg")) 		arrow = " regs";
 		String target = getTarget();
 		if ( target == null)
@@ -153,49 +187,11 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	public String getEndName() {
 		return getEndNode() == null ? get("targetid") : getEndNode().getName();
 	}
-	public void resetEdgeLine() {
-		edgeLine.setStartPoint(getStartNode().getStack().center());
-		edgeLine.setEndPoint(getEndNode().getStack().center());
-		
-	}
-	public void connect(boolean atEnd)
-   {
-		super.connect(atEnd);
-//		getEdgeLine().resetAnchors();		
+//	public void resetEdgeLine() {
+//		edgeLine.setStartPoint(getStartNode().getStack().center());  // TODO adjusted pts
+//		edgeLine.setEndPoint(getEndNode().getStack().center());
+//	}
+	public Anchor findAnchorById(String targId) {
+		return getModel().findAnchorById(targId);
 	}
 }
-
-//----------------------------------------------------------------------
-//GPML specific
-	
-//public void setAttributes(AttributeMap attr) {
-//		if (attr == null || attr.isEmpty()) return;
-//		attributes.addAll(attr); 
-//		for (String key : attributes.keySet())
-//		{
-//			String val = attributes.get(key);
-//			if ("LineThickness".equals(key))
-//				edgeLine.setStrokeWidth(StringUtil.toDouble(val));
-//			
-//			else if ("GraphId".equals(key))		{	graphId = val;}
-//			else if ("ZOrder".equals(key))		{	zOrder = StringUtil.toInteger(val);	}
-//			else if ("ConnectorType".equals(key))		
-//			{
-//				if ("Elbow".equals(val))
-//					edgeLine.setEdgeType(EdgeType.elbow);
-//			}
-//			else if ("Color".equals(key))		
-//			{
-//				if (val != null)
-//					setColor(Color.valueOf(val));
-//				edgeLine.setStroke(color);
-//			}
-//			else if ("LineStyle".equals(key))		
-//			{
-//				Double[] vals = {10.0, 5.0};
-//				edgeLine.setStrokeDashArray("Broken".equals(val) ? vals : null);
-//			}
-//			else if ("ArrowHead".equals(key))
-//				attributes.put("ArrowHead", val);
-//		}
-//	}

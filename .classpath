@@ -1,16 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_171]"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_172]"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/libFX"/>
-	<classpathentry kind="lib" path="/appFX/libs/stanford-corenlp-3.5.2.jar"/>
-	<classpathentry kind="lib" path="/Users/adamtreister/.m2/repository/junit/junit/4.10/junit-4.10.jar" sourcepath="/Users/adamtreister/.m2/repository/junit/junit/4.10/junit-4.10-sources.jar">
+	<classpathentry kind="lib" path="/Users/adam/git/appFX/libs/stanford-corenlp-3.5.2.jar"/>
+	<classpathentry kind="lib" path="/Users/adam/git/appFX/libs/junit-4.11.jar" sourcepath="/Users/adamtreister/.m2/repository/junit/junit/4.10/junit-4.10-sources.jar">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>
 			<attribute name="maven.groupId" value="junit"/>
 			<attribute name="maven.artifactId" value="junit"/>
 			<attribute name="maven.version" value="4.10"/>
 			<attribute name="maven.scope" value="compile"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="/Users/adam/.m2/repository/org/pathvisio/pathvisio-core/3.2.2/pathvisio-core-3.2.2.jar">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+			<attribute name="maven.groupId" value="org.pathvisio"/>
+			<attribute name="maven.artifactId" value="pathvisio-core"/>
+			<attribute name="maven.version" value="3.2.2"/>
+			<attribute name="maven.scope" value="compile"/>
+			<attribute name="maven.optionaldependency" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="output" path="bin"/>

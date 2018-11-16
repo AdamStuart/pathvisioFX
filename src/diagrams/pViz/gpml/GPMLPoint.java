@@ -1,6 +1,12 @@
 package diagrams.pViz.gpml;
 
+import java.util.List;
+
+import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.Interaction;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import model.stat.RelPosition;
 import util.StringUtil;
 
 public class GPMLPoint {
@@ -11,7 +17,9 @@ public class GPMLPoint {
 	private double relY = 0;
 	private ArrowType head = ArrowType.none;
 	private String graphRef;
-	
+	private Interaction interaction;
+	public void setInteraction(Interaction s)	{ interaction = s;	}
+
 	public double getX()				{ return x;	}
 	public void setX(double d)			{ x = d;	}
 
@@ -26,15 +34,22 @@ public class GPMLPoint {
 	public ArrowType getArrowType()		{ return head;	}
 	public void setArrowType(ArrowType s)	{ head = s;	}
 
+	public void setPos(Pos pos)			{ setPos(RelPosition.toRelPos(pos)); }
+	public void setPos(RelPosition pos)	{ setRelX(pos.x()); setRelY(pos.y()); }
 	public double getRelX()				{ return relX;	}
 	public void setRelX(double s)		{ relX = s;	}
 	public double getRelY()				{ return relY;	}
 	public void setRelY(double s)		{ relY = s;	}
 	//-----------------------------------------------------------------------
 	
+	public GPMLPoint(Point2D pt, Interaction i) {
+		this(pt.getX(), pt.getY());
+		interaction = i;
+		graphRef = i == null ? "" : i.getSourceid();
+	}
+	
 	public GPMLPoint(Point2D pt) {
-		x = pt.getX();
-		y = pt.getY();
+		this(pt.getX(), pt.getY());
 	}
 	
 	public GPMLPoint(double X, double Y) {
@@ -42,12 +57,12 @@ public class GPMLPoint {
 		y = Y;
 	}
 
-	public GPMLPoint(double X, double Y, String ref, ArrowType h) {
-		x = X;
-		y = Y;
-		head = h;
-		graphRef = ref;
-	}
+//	public GPMLPoint(double X, double Y, String ref, ArrowType h) {
+//		x = X;
+//		y = Y;
+//		head = h;
+//		graphRef = ref;
+//	}
 	
 	public GPMLPoint(org.w3c.dom.Node node) {
 		for (int i=0; i<node.getAttributes().getLength(); i++)
@@ -65,7 +80,38 @@ public class GPMLPoint {
 //		System.out.println("(" + x + ", " + y + ")"); 
 	}
 	
+//	Pair<Double, Double > portToRelXY(String portId)
+//	{
+//		int id = StringUtil.toInteger(portId);
+//		double relX = -1;
+//		if ((id % 3)== 2) relX = 0;
+//		if ((id % 3)== 0) relX = 1;
+//		double relY = -1;
+//		if (id > 3) relY = 0;
+//		if (id > 6) relY = 1;
+//		return new Pair<Double, Double >(relX, relY);
+//	}
+//	
+	
+	public void setXYFromNode()
+	{
+		if (interaction != null)		// the dragLine has no interaction defined
+		{
+			DataNode endNode = interaction.getModel().findDataNode(graphRef);
+			if (endNode != null)
+				setXY(endNode, relX, relY);
+		}
+	}
+	
+	public void setXY(DataNode endNode, double relX, double relY)
+	{
+		Point2D position = endNode.getStack().getRelativePosition(relX, relY);
+		x = position.getX();
+		y = position.getY();
+	}
 
+
+	
 	public String toString()
 	{
 		String firstPart = String.format("<Point X=\"%.2f\" Y=\"%.2f\" ", x, y);
@@ -73,6 +119,9 @@ public class GPMLPoint {
 		return firstPart + secondPart;
 	}
 
+
+	
+	
 	//-----------------------------------------------------------------------
 	public enum ArrowType
 	{
@@ -129,6 +178,22 @@ public class GPMLPoint {
 			if ( "Circle".equals(shape) ) return true;
 			return lookup(shape) == mimcatalysis;
 		}
+	}
+
+
+
+
+	public static void setInteraction(List<GPMLPoint> pts, Interaction edge) {
+		for (GPMLPoint pt : pts)
+			pt.setInteraction(edge);
+		
+	}
+
+	public void setRelPosition(Pos srcPosition) {
+		RelPosition pos = RelPosition.toRelPos(srcPosition);
+		setRelX(pos.x());
+		setRelY(pos.y());
+		
 	}
 
 }
