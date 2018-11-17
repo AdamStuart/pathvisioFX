@@ -12,7 +12,6 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
-import javafx.scene.Node;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
@@ -25,6 +24,7 @@ import util.StringUtil;
  *  This is the entry in the edge table, not the actual Shapes on the screen
  *  see EdgeLine for the skin
  */
+@SuppressWarnings("serial")
 abstract public class Edge extends XRefable {
 
 
@@ -98,7 +98,7 @@ abstract public class Edge extends XRefable {
     	setTargetid(endNode.getGraphId());
 		if (StringUtil.isEmpty(getGraphId()))
 		{	
-			String id = model.gensym("edge");
+			String id = model.gensym("E");
 			setGraphId(id);
 			put("GraphId", id);
 		}
@@ -144,29 +144,12 @@ abstract public class Edge extends XRefable {
 			// TODO listen to layoutY too?
 //		}
     }
-	public Point2D  getAdjustedPoint(VNode vNode, GPMLPoint gpmlPt)
-	{
-		if (vNode == null)
-		{
-			double x = gpmlPt.getX();
-			return new Point2D(gpmlPt.getX(),gpmlPt.getY());
-		}
-		Point2D center = vNode.center();
-		if (gpmlPt == null) return center;
-		double relX = gpmlPt.getRelX();
-		double relY = gpmlPt.getRelY();
-		double width = vNode.getWidth();
-		double height = vNode.getHeight();
-		double x = center.getX() + relX * width / 2;
-		double y = center.getY() + relY * height / 2;
-		return new Point2D(x,y);
-	}
-	
+
 	public void connect() {
 		if (startNode == null || edgeLine == null)
 			return;
 		Point2D pt = new Point2D(0, 0);
-		Point2D startPt = getAdjustedPoint(startNode.getStack(), getEdgeLine().firstGPMLPoint());
+		Point2D startPt = startNode.getAdjustedPoint(getEdgeLine().firstGPMLPoint());
 //		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
 		edgeLine.setStartPoint(startPt);
 		pt = new Point2D(0, 0);
@@ -187,7 +170,7 @@ abstract public class Edge extends XRefable {
 			else 
 				System.out.println("no shape");
 		} else
-		pt = getAdjustedPoint(endNode.getStack(), getEdgeLine().lastGPMLPoint());
+		pt = endNode.getAdjustedPoint(getEdgeLine().lastGPMLPoint());
 		if (pt.getX() < 1)
 		{
 			edgeLine.setVisible(false);

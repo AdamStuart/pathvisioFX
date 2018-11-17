@@ -506,6 +506,7 @@ public class GPML {
 					getController().addGroup(group);
 			}
 		}
+		
 		for (DataNodeGroup group : model.getGroups())
 		{
 			String id = group.get("GroupId");

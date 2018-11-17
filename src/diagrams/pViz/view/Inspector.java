@@ -236,11 +236,7 @@ public class Inspector extends HBox implements Initializable {
 				AttributeMap attr = new AttributeMap(style, true);
 				Color fill = attr.getColor("-fx-background-color");
 				Color stroke = attr.getColor("-fx-border-color");
-<<<<<<< HEAD
 				double opac = attr.getDouble("-fx-opacity", 1.0);
-=======
-				double opac = attr.getDouble("-fx-opacity", 1);
->>>>>>> branch 'inspectorRefactor' of git@github.com:AdamStuart/pathvisioFX.git
 				double wt = attr.getDouble("-fx-border-width", 12);
 				double rot = attr.getDouble("-fx-rotate", 0);			
 				fillColor.setValue(fill);

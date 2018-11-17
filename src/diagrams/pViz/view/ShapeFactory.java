@@ -94,7 +94,7 @@ public class ShapeFactory {
 		String id = modelNode.get("GraphId");
 		if (id == null)
 		{
-			id = Model.gensym("" + s.charAt(0));
+			id = modelNode.getModel().gensym("" + s.charAt(0));
 			modelNode.setGraphId(id);
 			modelNode.put("GraphId", id);
 		}

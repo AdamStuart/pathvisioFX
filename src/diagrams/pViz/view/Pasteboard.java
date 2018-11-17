@@ -559,7 +559,7 @@ public class Pasteboard extends Pane
 					map.put("Connectable", "false");
 				DataNode mNode = new DataNode(map, getController().getModel());
 				activeStack = mNode.getStack();	
-				mNode.put("TextLabel", "GENE@");
+				mNode.put("TextLabel", mNode.getGraphId());
 				getController().addDataNode(mNode);
 			}
 			
@@ -1005,6 +1005,7 @@ public class Pasteboard extends Pane
 //			i.rebind();
 			removeDragLine();
 			controller.redrawEdgesToMe(vNode);
+			controller.updateTreeTable();
 		}
 	}
 

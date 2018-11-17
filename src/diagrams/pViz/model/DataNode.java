@@ -1,6 +1,8 @@
 package diagrams.pViz.model;
 
+import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.view.VNode;
+import javafx.geometry.Point2D;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.XRefable;
@@ -34,7 +36,9 @@ public class DataNode extends XRefable {
 	{
 		super(am);
 		model = m;
-		put("GraphId", Model.gensym("G"));
+		String id = get("GraphId");
+		if (id == null)
+			put("GraphId", id = model.gensym("G"));
 		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
@@ -112,6 +116,19 @@ public class DataNode extends XRefable {
 		String attributes = attributeList(attributeNames);
 		if (StringUtil.hasText(attributes))
 			bldr.append( "<Graphics ").append(attributes).append( " >\n");
+	}
+
+	public Point2D  getAdjustedPoint(GPMLPoint gpmlPt)
+	{
+		Point2D center = getStack().center();
+		if (gpmlPt == null) return center;
+		double relX = gpmlPt.getRelX();
+		double relY = gpmlPt.getRelY();
+		double width = getStack().getWidth();
+		double height = getStack().getHeight();
+		double x = center.getX() + relX * width / 2;
+		double y = center.getY() + relY * height / 2;
+		return new Point2D(x,y);
 	}
 	
 }

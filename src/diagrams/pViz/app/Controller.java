@@ -349,6 +349,7 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	GPMLTreeTableView nodeTreeTable;
 	public GPMLTreeTableView getTreeTableView() { return nodeTreeTable; }
+	public void updateTreeTable()	{ nodeTreeTable.updateTreeTable();  }
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		undoStack = new UndoStack(this, null);
@@ -630,7 +631,7 @@ public class Controller implements Initializable, IController
 		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
 		{
 			redrawAllEdges();	
-			nodeTreeTable.updateTreeTable();
+			updateTreeTable();
 		} )  );
 		postponed.start();  
 	}
@@ -706,7 +707,6 @@ public class Controller implements Initializable, IController
 	public void remove(Node n)						
 	{		
 		pasteboard.getChildren().remove(n);	
-//		getTreeTableView().updateTreeTable();
 	}
 	public void remove(VNode n)						
 	{		
@@ -714,7 +714,6 @@ public class Controller implements Initializable, IController
 		String layer = n.getLayerName();
 		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
 		content.remove(n);
-//		getTreeTableView().updateTreeTable();
 	}
 	// **-------------------------------------------------------------------------------
 	public String getState()					{ 	return model.saveState();  }
@@ -802,7 +801,7 @@ public class Controller implements Initializable, IController
 			DataNodeGroup groupNode = groupMap.get(key);
 			String groupId = groupNode.get("GroupId");
 			if (groupId == null) 		return;		//ERROR
-			groupNode.getChildren().clear();
+			groupNode.clearMembers();
 			vnodes.add(groupNode.getStack());
 			for (String nodeKey : nodes.keySet())
 			{
@@ -822,24 +821,10 @@ public class Controller implements Initializable, IController
 			group.getChildren().addAll(vnodes);
 			pasteboard.getContentLayer().add(group);
 		}
-			// DEBUG
-		for (String key : groupMap.keySet())
-		{
-			DataNodeGroup groupNode = groupMap.get(key);
-			System.out.print(groupNode.getGraphId() + " contains ");
-			for (DataNode dn : groupNode.getChildren())
-				System.out.print(dn + " ");
-			System.out.println(". ");
-
-		}
 	}
 
 	// **-------------------------------------------------------------------------------
-	public void addInteraction(VNode starter, VNode end) {		
-		Interaction i = model.addIteraction(starter, end);
-		i.rebind();
-		nodeTreeTable.updateTreeTable();
-	}
+
 	// **-------------------------------------------------------------------------------
 	// coming from parser:
 	
@@ -850,7 +835,7 @@ public class Controller implements Initializable, IController
 		if (node.getStack() == null)
 			new VNode(node, pasteboard);
 		model.addResource(node);
-		nodeTreeTable.updateTreeTable();
+		updateTreeTable();
 	}
 
 	public void addShapeNode(DataNode shapeNode) {
@@ -883,6 +868,11 @@ public class Controller implements Initializable, IController
 		pasteboard.add(0, artifact, e.getLayer());
 	}
 
+	public void addInteraction(VNode starter, VNode end) {		
+		Interaction i = model.addIteraction(starter, end);
+//		i.rebind();
+		updateTreeTable();
+	}
 	public void addGroup(DataNodeGroup grp) {
 		pasteboard.setActiveLayer("Background");	
 		new VNode(grp, pasteboard);
@@ -937,9 +927,6 @@ public class Controller implements Initializable, IController
 			addDataNode(node);			
 		}
 	}
-//	public void rebind(String gid) {
-//System.err.println("REBIND");	
-//}
 
 	public GeneSetRecord getGeneSetRecord() {
 		return geneSetRecord;

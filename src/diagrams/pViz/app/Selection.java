@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.EdgeLine;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.GroupMouseHandler;
 import diagrams.pViz.view.Layer;
@@ -65,6 +66,8 @@ public class Selection
 
 	//--------------------------------------------------------------------------
 	public void selectX(VNode s)		{ clear(); select(s);	}
+	
+
 	public void select(VNode s)		
 	{
 		if ("Marquee".equals(s.getId())) return;
@@ -129,7 +132,7 @@ public class Selection
 			if (isGrid(node)) continue;
 			
 			getController().remove(node);
-			if (node.getLayer() != null) node.getLayer().remove(node);
+			node.getLayer().remove(node);
 			items.remove(node);
 		}
 		getController().getTreeTableView().updateTreeTable();
@@ -144,7 +147,6 @@ public class Selection
 			if (!isGrid(n)) 
 				duplicats.add(n.clone());
 		getController().addAll(duplicats);
-		
 	}
 	//--------------------------------------------------------------------------
 	public void deleteAll()	
@@ -188,7 +190,7 @@ public class Selection
 		group.getChildren().addAll(items);
 		deleteSelection();
 		getController().addExternalNode(group);
-//		group.setTranslateX(10);
+		group.setTranslateX(10);
 	}
 	//--------------------------------------------------------------------------
 	public void connect()
@@ -265,11 +267,6 @@ public class Selection
 		for (Node n : items)
 		{
 			if (n == except) continue;
-			if (n instanceof VNode) 
-			{
-				if (!((VNode)n).isMovable())  continue;
-			}
-			
 			if (n.getParent() instanceof Group && !(n.getParent() instanceof Layer))
 				n = n.getParent();
 			if (n instanceof Rectangle)
@@ -373,16 +370,22 @@ public class Selection
 				Layer layer = (Layer) n;
 				for (Node node : layer.getChildren()) 
 				{
-					if (!(node instanceof VNode))	 continue;
 					Bounds bounds = node.boundsInParentProperty().get();
 					if (bounds.intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()))
-						select((VNode)node); 
+					{
+						if (node instanceof VNode)
+							select((VNode)node);
+					}
+					if (node instanceof EdgeLine)	
+						((EdgeLine)node).select(true);
 				}
 			}
-			if (!(n instanceof VNode))	 continue;
-			Bounds bounds = n.boundsInParentProperty().get();
-			if (bounds.intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()))
-				select((VNode)n); 
+			if (n instanceof VNode)	
+			{
+				Bounds bounds = n.boundsInParentProperty().get();
+				if (bounds.intersects(r.getX(), r.getY(), r.getWidth(), r.getHeight()))
+					select((VNode)n); 
+			}
 		}
 	}
 	

@@ -104,15 +104,16 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			System.out.println("GROUP");
 		}
 		createFigure(modelNode.getPosition());
-		setId(modelNode.get("GraphId"));
+		String id = modelNode.get("GraphId");
+		setId(id);
 		title = modelNode.get("TextLabel");
-		if (title == null) title = "";
+		if (title == null) title = id;
+		addText(title);
 		String biopaxRef = modelNode.get("BiopaxRef");
 		if (biopaxRef != null)
 			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT, biopaxRef);
 
 //		String type = attributes.get("ShapeType");
-		addText(title);//   + "\n" + modelNode.getId()
 //		System.out.println(title);
 		addPorts();
         readGeometry(modelNode, this);
@@ -430,7 +431,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double y = getAttributes().getDouble("CenterY");
 		double w = getAttributes().getDouble("Width",20);
 		double h = getAttributes().getDouble("Height",20);
-		fill(x,y,w,h, getTitle(), getId());
+		fill(x,y,w,h, getText(), getId());
 	}
 	
 	public void extractPosition()
@@ -451,7 +452,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		getController().redrawEdgesToMe(this);
 	}
 	
-	public String getTitle() 		{ 	return "getTitle"; }
 	public void setWidth(double w)	{	super.setWidth(w);		resizeFigureToNode();	}
 	public void setHeight(double h)	{	super.setHeight(h);		resizeFigureToNode();	}
 	
@@ -509,21 +509,21 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	public void addText(String textLabel)
 	{
-		boolean showAlignmentSpots = false;
-		if (showAlignmentSpots )		// DEBUG-------------------
-		{
-			for (int i=0; i< 9 ; i++)
-			{
-				Pos pos = Pos.values()[i];
-				String posName = pos.name();
-				final Label label = new Label(posName);
-				label.setFont(new Font(12));
-				label.setMouseTransparent(true);
-				setAlignment(label, pos);
-				label.setTextAlignment(TextAlignment.CENTER);
-				getChildren().add(label);
-			}
-		}								// End DEBUG-------------------
+//		boolean showAlignmentSpots = false;
+//		if (showAlignmentSpots )		// DEBUG-------------------
+//		{
+//			for (int i=0; i< 9 ; i++)
+//			{
+//				Pos pos = Pos.values()[i];
+//				String posName = pos.name();
+//				final Label label = new Label(posName);
+//				label.setFont(new Font(12));
+//				label.setMouseTransparent(true);
+//				setAlignment(label, pos);
+//				label.setTextAlignment(TextAlignment.CENTER);
+//				getChildren().add(label);
+//			}
+//		}								// End DEBUG-------------------
 		Pos pos = Pos.CENTER;
 		text = new Label(textLabel);
 		text.setMinWidth(180);
@@ -564,9 +564,7 @@ public void addBadge(String letter)
 			Pos pos = Pos.values()[i];
 			Shape port = null;
 			if (i % 2 == 0) 
-			{
 				port = new Rectangle(5,5);
-			}
 			else  port = new Circle(3);
 			port.setFill(portFillColor(EState.STANDBY));
 			port.setStroke(Color.MEDIUMAQUAMARINE);
@@ -689,13 +687,17 @@ public void addBadge(String letter)
 		   }
 		   if (pasteboard.getDragLine() != null)
 		   {
+			   double halfWidth = getWidth() / 2.0;
+			   double halfHeight = getHeight() / 2.0;
 			   double x = event.getSceneX();
 			   double y = event.getSceneY();
-			   double stackX = getLayoutX();
-			   double stackY = getLayoutY();
+			   double centerX = getLayoutX() + halfWidth ;
+			   double centerY = getLayoutY() + halfHeight;
+			   Point2D local = pasteboard.sceneToLocal(new Point2D(x,y));
 			   
-				double relX = (x - stackX) * 2 / getWidth();
-				double relY = (y - stackY) * 2 / getHeight();
+			   
+				double relX = (local.getX() - centerX)  / halfWidth;
+				double relY = (local.getY() - centerY)  / halfHeight;
 				RelPosition pos =  new RelPosition(relX,relY);
 			   finishDragLine(this, pos);
 				event.consume();

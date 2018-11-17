@@ -52,7 +52,7 @@ public class Model
 	private Controller controller;
 	public Controller getController() { return controller; } 
 	private Map<String, DataNode> dataNodeMap = FXCollections.observableHashMap();
-	private static int nodeCounter = 0;
+	private int nodeCounter = 0;
 	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
 	public Map<String, DataNode> getDataNodeMap() {		return dataNodeMap;	}
 
@@ -478,7 +478,7 @@ public class Model
 	static String getBoundsString(double x, double y, double w, double h)	{
 	 return String.format("x=%.1f, y=%.1f, width=%.1f, height=%.1f", x, y, w, h);
 	}
-	static public String gensym(String prefix)	{		return (prefix == null ? "" : prefix ) + ++nodeCounter;	}
+	public String gensym(String prefix)	{		return (prefix == null ? "" : prefix ) + ++nodeCounter;	}
 	
 	
 	int verbose = 0;

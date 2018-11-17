@@ -59,9 +59,9 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	{
 		this(model,src,vNode, null);
 		setInteractionType(edge.toString());
-		String newId = newEdgeId();
-		put("GraphId", newId);
-		setGraphId(newId);
+//		String newId = newEdgeId();
+//		put("GraphId", newId);
+//		setGraphId(newId);
 		GPMLPoint  startPoint = new GPMLPoint(src.getPortPosition(srcPosition));
 		startPoint.setRelPosition(srcPosition);
 		startPoint.setGraphRef(src.getGraphId());
@@ -78,35 +78,20 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	}	
 
 	
-	private String newEdgeId()
-	{
-		return "23rwe";
-	}
-	
 	public Interaction(Model inModel, VNode start, VNode end, AttributeMap attr) 		//, List<GPMLPoint> pts, List<Anchor> anchors
 	{
-    	super( inModel,  start,  end,  attr);		//,  pts,  anchors
-    	
-//    	if (pts != null)
-//    	{	
-//    		int siz = pts.size();
-//    		if (siz >= 2)
-//    		{
-//    			GPMLPoint endPt = pts.get(siz-1);
-//        		interactionType.set(endPt.getArrowType().toString());
-//    		}
-//    	}
-    }
+    	super( inModel,  start,  end,  attr);	
+     }
+	
 	@Override public String toString()
 	{
-		return getName() + " " + getGraphId() + " " + (edgeLine == null ? "" : edgeLine.toString());
+		String name =  getName();
+		if (StringUtil.isEmpty(name)) name = "#"; 
+		String id =  getGraphId();
+		if (StringUtil.isEmpty(id)) id = "*"; 
+		String str = (edgeLine == null) ? "X" : edgeLine.toString();
+		return name + " " + id + " " + str;
 	}
-//	   public Interaction(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
-//	    {
-//			super(startPt, endPt, thickness, inModel);
-//			model.addEdge(this);
-//	      }
-
 
 	public int compareTo(Interaction other)
 	{
@@ -171,7 +156,8 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		else if (arrow.contains("conver")) 		arrow = ">>";
 		else if (arrow.contains("catal")) 		arrow = "-O";
 		else if (arrow.contains("bind")) 		arrow = "-{";
-		else if (arrow.contains("reg")) 		arrow = " regs";
+		else if (arrow.contains("transcriptiontranslation")) 		arrow = "-#";
+		else if (arrow.contains("reg")) 		arrow = "-R";
 		String target = getTarget();
 		if ( target == null)
 		{

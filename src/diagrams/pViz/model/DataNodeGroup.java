@@ -12,6 +12,7 @@ import model.bio.XRefable;
 import util.StringUtil;
 
 
+@SuppressWarnings("serial")
 public class DataNodeGroup extends DataNode {
 
 	protected VNode stack;
@@ -20,9 +21,10 @@ public class DataNodeGroup extends DataNode {
 	private double maxX = Double.MIN_VALUE;
 	private double minY = Double.MAX_VALUE;
 	private double maxY = Double.MIN_VALUE;
-	private List<DataNode> children = new ArrayList<DataNode>();
-	public List<DataNode> getChildren() { return children ; } 
-	public void addToGroup(DataNode child)	{		children.add(child);	}
+	private List<DataNode> members = new ArrayList<DataNode>();
+//	public List<DataNode> getChildren() { return children ; } 
+	public void addToGroup(DataNode child)	{		members.add(child);	}
+	public void clearMembers() 				{		members.clear();	}
 	
 	public DataNodeGroup(AttributeMap map, Model m)
 	{
@@ -31,7 +33,7 @@ public class DataNodeGroup extends DataNode {
 
 	public void calcBounds()
 	{
-		for (DataNode child : children)
+		for (DataNode child : members)
 		{
 			double centerX =child.getDouble("CenterX");
 			double centerY =child.getDouble("CenterY");
@@ -81,4 +83,6 @@ public class DataNodeGroup extends DataNode {
 		bldr.append("<Group" + attributeList(nodeAttrs) + ">\n");
 	}
 	private void buildNodeClose(StringBuilder bldr) {		bldr.append("</Group>\n");	}
+
+
 }
