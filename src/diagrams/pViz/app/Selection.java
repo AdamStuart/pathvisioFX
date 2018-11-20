@@ -3,12 +3,12 @@ package diagrams.pViz.app;
 import java.util.ArrayList;
 import java.util.List;
 
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.DataNodeGroup;
-import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.EdgeLine;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Edge;
+import diagrams.pViz.model.edges.EdgeLine;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.Shape1;
@@ -357,7 +357,11 @@ public class Selection
 						if (node instanceof VNode)
 							select((VNode)node);
 						if (node instanceof EdgeLine)	
-							((EdgeLine)node).select(true);
+						{
+							EdgeLine edge = ((EdgeLine)node);
+							if (edge.sectRect(r))
+								edge.select(true);
+						}
 					}
 				}
 			}

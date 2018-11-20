@@ -1,9 +1,6 @@
-package diagrams.pViz.model;
+package diagrams.pViz.model.edges;
 
 import java.util.List;
-
-import org.pathvisio.core.model.ConnectorRestrictions;
-import org.pathvisio.core.model.ConnectorShape;
 
 import javafx.geometry.Point2D;
 

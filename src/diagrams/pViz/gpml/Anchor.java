@@ -1,9 +1,9 @@
 package diagrams.pViz.gpml;
 
-import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.EdgeLine;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Edge;
+import diagrams.pViz.model.edges.EdgeLine;
+import diagrams.pViz.model.edges.Interaction;
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;

@@ -1,3 +1,4 @@
+package diagrams.pViz.model.edges;
 //package diagrams.pViz.model;
 //
 //import java.util.ArrayList;

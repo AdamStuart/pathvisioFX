@@ -12,8 +12,14 @@ import java.util.Set;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.Anchor;
+import diagrams.pViz.gpml.CommentRecord;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
+import diagrams.pViz.model.edges.Edge;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.model.nodes.DataNodeGroup;
+import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;

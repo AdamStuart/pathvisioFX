@@ -1,6 +1,7 @@
-package diagrams.pViz.model;
+package diagrams.pViz.model.nodes;
 
 import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.model.Model;
 import diagrams.pViz.view.VNode;
 import javafx.collections.ObservableMap;
 import javafx.geometry.Point2D;

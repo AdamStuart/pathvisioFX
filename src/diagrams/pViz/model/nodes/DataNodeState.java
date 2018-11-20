@@ -1,6 +1,7 @@
-package diagrams.pViz.model;
+package diagrams.pViz.model.nodes;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.model.Model;
 import diagrams.pViz.view.VNode;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;

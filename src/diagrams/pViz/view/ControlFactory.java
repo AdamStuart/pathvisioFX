@@ -3,7 +3,7 @@ package diagrams.pViz.view;
 import java.io.File;
 
 import diagrams.pViz.app.Tool;
-import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.nodes.DataNode;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;

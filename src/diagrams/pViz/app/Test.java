@@ -1,8 +1,8 @@
 package diagrams.pViz.app;
 
-import diagrams.pViz.model.Interaction;
-import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
 import gui.Action.ActionType;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;

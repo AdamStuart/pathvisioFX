@@ -6,8 +6,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import diagrams.pViz.model.GeneModel;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.XrefListController;

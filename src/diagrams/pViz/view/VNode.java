@@ -8,9 +8,9 @@ import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.gpml.GPMLPoint;
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.DataNodeGroup;
-import diagrams.pViz.model.DataNodeState;
+import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.model.nodes.DataNodeGroup;
+import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.ResizableBox;
 import gui.Action.ActionType;
@@ -142,11 +142,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         
         resizable = modelNode.getBool("Resizable", "Shape".equals(type));
         setResize(resizable);
-        modelNode.putBool("Connectable", connectable);
+        modelNode.putBool("Resizable", resizable);
 
         editable = modelNode.getBool("Editable", true);
        
-        boolean connectable = isConnectable();
+        connectable = modelNode.getBool("Connectable", true);
         if ("Label".equals(type) || "Shape".equals(type))   connectable = false;
         setConnectable(connectable);
 //        if ("Label".equals(modelNode.get("Type"))) 	connectable = false;

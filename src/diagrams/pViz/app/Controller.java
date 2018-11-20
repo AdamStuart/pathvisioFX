@@ -12,15 +12,15 @@ import animation.BorderPaneAnimator;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.DataNodeGroup;
-import diagrams.pViz.model.DataNodeState;
-import diagrams.pViz.model.Edge;
-import diagrams.pViz.model.EdgeLine;
-import diagrams.pViz.model.EdgeType;
 import diagrams.pViz.model.GeneModel;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Edge;
+import diagrams.pViz.model.edges.EdgeLine;
+import diagrams.pViz.model.edges.EdgeType;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.model.nodes.DataNodeGroup;
+import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
@@ -641,12 +641,12 @@ public class Controller implements Initializable, IController
 		resetEdgeTable();
 		nodeTreeTable.resumeUpdates();
 		
-		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
-		{
+//		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
+//		{
 			redrawAllEdges();	
 			modelChanged();
-		} )  );
-		postponed.start();  
+//		} )  );
+//		postponed.start();  
 	}
 			
 	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}

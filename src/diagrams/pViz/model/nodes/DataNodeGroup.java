@@ -1,8 +1,9 @@
-package diagrams.pViz.model;
+package diagrams.pViz.model.nodes;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import diagrams.pViz.model.Model;
 import diagrams.pViz.view.VNode;
 import javafx.geometry.BoundingBox;
 import javafx.scene.layout.AnchorPane;

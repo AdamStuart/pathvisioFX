@@ -1,4 +1,4 @@
-package diagrams.pViz.model;
+package diagrams.pViz.gpml;
 
 import diagrams.pViz.app.GPMLRecord;
 import javafx.beans.property.SimpleStringProperty;

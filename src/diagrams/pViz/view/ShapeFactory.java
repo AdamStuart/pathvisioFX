@@ -8,7 +8,7 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.CellShapeFactory;
-import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.nodes.DataNode;
 import gui.Action.ActionType;
 import gui.UndoStack;
 import javafx.collections.ObservableList;

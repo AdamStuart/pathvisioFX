@@ -1,3 +1,4 @@
+package diagrams.pViz.model.nodes;
 //package diagrams.pViz.model;
 //
 //import diagrams.pViz.view.VNode;

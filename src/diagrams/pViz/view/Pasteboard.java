@@ -10,11 +10,11 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.EdgeLine;
-import diagrams.pViz.model.EdgeType;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.EdgeLine;
+import diagrams.pViz.model.edges.EdgeType;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.util.GraphEditorProperties;
 import diagrams.pViz.view.VNode.EState;
@@ -1076,6 +1076,7 @@ public class Pasteboard extends Pane
 			RelPosition pos = port == null ? RelPosition.ZERO : RelPosition.idToRelPosition(port.getId());
 			connectTo(node,pos);
 			port.setFill(node.portFillColor(EState.FILLED)); 
+			e.consume();
 			return;
 		}
 		port.setFill(Color.AQUAMARINE); 

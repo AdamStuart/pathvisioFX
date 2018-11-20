@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.nodes.DataNode;
 import javafx.geometry.BoundingBox;
 import model.AttributeMap;
 

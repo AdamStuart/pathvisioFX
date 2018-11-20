@@ -4,19 +4,17 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.junit.Assert;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.DataNodeGroup;
-import diagrams.pViz.model.DataNodeState;
-import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.model.nodes.DataNodeGroup;
+import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -39,7 +37,6 @@ public class GPML {
 	public GPML(Model m, String layer) {
 		model = m;
 		if (layer != null) activeLayer = layer;
-		Assert.assertNotNull(m);
 	}
 	private Controller getController() { 	return model.getController();	}
 	//----------------------------------------------------------------------------

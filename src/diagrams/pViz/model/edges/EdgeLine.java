@@ -1,4 +1,4 @@
-package diagrams.pViz.model;
+package diagrams.pViz.model.edges;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,6 +6,7 @@ import java.util.List;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
+import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.view.Arrow;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
@@ -21,6 +22,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.CubicCurve;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import util.LineUtil;
@@ -763,6 +765,78 @@ private void addCenterPointListeners() {
 		if (points == null || points.size() < 1) return;
 		GPMLPoint last = points.get(points.size()-1);
 		last.setArrowType(arrow);
-		
 	}
+	
+	//-----------------------------------------------------------------------------------
+	// does any segment intersect the rectangle
+	public boolean sectRect(Rectangle r) {
+		for (int i = 0; i < points.size() - 1; i++) {
+			Point2D a = points.get(i).getPoint();
+			Point2D b = points.get(i + 1).getPoint();
+			double left = r.getX();
+			double top = r.getY();
+			Point2D r1 = new Point2D(left, top);
+			Point2D r2 = new Point2D(left + r.getWidth(), top);
+			Point2D r3 = new Point2D(left + r.getWidth(), top + r.getHeight());
+			Point2D r4 = new Point2D(left, top + r.getHeight());
+
+			if (doIntersect(a, b, r1, r2))				return true;
+			if (doIntersect(a, b, r2, r3))				return true;
+			if (doIntersect(a, b, r3, r4))				return true;
+			if (doIntersect(a, b, r4, r1))				return true;
+		}
+		return false;
+	}
+	  
+	// The main function that returns true if line segment 'p1q1' and 'p2q2' intersect. 
+	boolean doIntersect(Point2D p1, Point2D q1, Point2D p2, Point2D q2) 
+	{ 
+	    // Find the four orientations needed for general and 
+	    // special cases 
+	    int o1 = orientation(p1, q1, p2); 
+	    int o2 = orientation(p1, q1, q2); 
+	    int o3 = orientation(p2, q2, p1); 
+	    int o4 = orientation(p2, q2, q1); 
+	  
+	    // General case 
+	    if (o1 != o2 && o3 != o4)  		     return true; 
+	  
+	    // Special Cases 
+	    // p1, q1 and p2 are colinear and p2 lies on segment p1q1 
+	    if (o1 == 0 && onSegment(p1, p2, q1)) return true; 
+	  
+	    // p1, q1 and q2 are colinear and q2 lies on segment p1q1 
+	    if (o2 == 0 && onSegment(p1, q2, q1)) return true; 
+	  
+	    // p2, q2 and p1 are colinear and p1 lies on segment p2q2 
+	    if (o3 == 0 && onSegment(p2, p1, q2)) return true; 
+	  
+	     // p2, q2 and q1 are colinear and q1 lies on segment p2q2 
+	    if (o4 == 0 && onSegment(p2, q1, q2)) return true; 
+	  
+	    return false; // Doesn't fall in any of the above cases 
+	} 	
+	
+	// To find orientation of ordered triplet (p, q, r). 
+	// The function returns following values 
+	// 0 --> p, q and r are colinear 
+	// 1 --> Clockwise 
+	// 2 --> Counterclockwise 
+	int orientation(Point2D p, Point2D q, Point2D r) 
+	{ 
+	    double val = (q.getY() - p.getY()) * (r.getX() - q.getX()) - 
+	              (q.getX() - p.getX()) * (r.getY() - q.getY()); 
+	  
+	    if (Math.abs(val) < 0.01) return 0;  // colinear 
+	    return (val > 0) ? 1: 2; // clock or counterclock wise 
+	} 
+	// Given three colinear points p, q, r, the function checks if 
+	// point q lies on line segment 'pr' 
+	boolean onSegment(Point2D p, Point2D q, Point2D r) 
+	{ 
+	    if (q.getX() <= Math.max(p.getX(), r.getX()) && q.getX() >= Math.min(p.getX(), r.getX()) && 
+	        q.getY() <= Math.max(p.getY(), r.getY()) && q.getY() >= Math.min(p.getY(), r.getY())) 
+	       return true; 
+	    return false; 
+	} 
 }

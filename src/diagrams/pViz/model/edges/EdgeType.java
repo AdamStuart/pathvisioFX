@@ -1,4 +1,4 @@
-package diagrams.pViz.model;
+package diagrams.pViz.model.edges;
 
 public enum EdgeType {
 

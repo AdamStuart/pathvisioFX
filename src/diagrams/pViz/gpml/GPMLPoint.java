@@ -2,8 +2,8 @@ package diagrams.pViz.gpml;
 
 import java.util.List;
 
-import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.Interaction;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import model.stat.RelPosition;
