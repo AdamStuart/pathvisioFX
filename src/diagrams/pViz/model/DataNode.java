@@ -2,7 +2,9 @@ package diagrams.pViz.model;
 
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.view.VNode;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Point2D;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.XRefable;
@@ -19,7 +21,7 @@ import util.StringUtil;
 @SuppressWarnings("serial")
 public class DataNode extends XRefable {
 
-	Model model;
+	protected Model model;
 	protected VNode stack;
 //	public DataNode(AttributeMap am, Controller c)
 //	{
@@ -37,8 +39,8 @@ public class DataNode extends XRefable {
 		super(am);
 		model = m;
 		String id = get("GraphId");
-		if (id == null)
-			put("GraphId", id = model.gensym("G"));
+		if (id == null) id = model.gensym("C");
+		put("GraphId", id);
 		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
@@ -60,16 +62,56 @@ public class DataNode extends XRefable {
 	public String getType() 				{		return get("Type");	}
 	public String getLabel() 				{		return get("TextLabel");	}
 	public void rememberPosition() 			
-	{		
+	{	
+		double width =  stack.getWidth();
+		double height =  stack.getHeight();
+		
 		putDouble("X",  stack.getLayoutX());	
 		putDouble("Y",  stack.getLayoutY());	
-		putDouble("Width",  stack.getWidth());	
-		putDouble("Height",  stack.getHeight());	
+		putDouble("CenterX",  stack.getLayoutX() + width / 2);	
+		putDouble("CenterY",  stack.getLayoutY() + height / 2);	
+		putDouble("Width", width);	
+		putDouble("Height",  height);	
 	}
+	public void removeSelf() {	}		// this allows groups to do more disposal
 
+	
 	public String toString()	{ return "[" + getGraphId() + "] " + getLabel() + ' ' + getShapeType();  }
 	public String getInfoStr()	{ return "HTML Template for " + getGraphId() + "\n" + toString();	}
 //	@Override public String toString()	{ return getGraphId() + " = " + getName();	}
+	
+	//--------------------------------------------------------
+	public String asGPML()
+	{
+		ObservableMap<Object, Object> pro = getStack().getProperties();
+		Object o = pro.get("TextLabel");
+		String textLabel = o == null ? "" : o.toString();
+		o = pro.get("Type");
+		String type = o == null ? "" : o.toString();
+		String header = "<DataNode TextLabel=\"%s\" GraphId=\"%s\" Type=\"%s\" >\n";
+		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, getGraphId(), type));
+
+		String[] tokens = toString().split(" ");
+		String shape = tokens.length > 1 ? tokens[1] : "Error";
+		double w = getStack().getWidth();
+		double h = getStack().getHeight();
+		double cx = getStack().getLayoutX() + w / 2;
+		double cy = getStack().getLayoutY() + h / 2;
+		if (getShape() instanceof Rectangle)
+		{
+			Rectangle sh = (Rectangle) getShape();
+			cx = sh.getX() + w / 2;
+			cy = sh.getY() + h / 2;
+			if (sh.getArcWidth() > 0)
+				shape = "RoundedRectangle";
+		}
+		String graphics1 = String.format("  <Graphics CenterX=\"%.2f\" CenterY=\"%.2f\" Width=\"%.2f\" Height=\"%.2f\" ZOrder=\"32768\" ", cx, cy, w, h);
+		String graphics2 = String.format("FontWeight=\"%s\" FontSize=\"%d\" Valign=\"%s\" ShapeType=\"%s\"", "Bold", 12, "Middle", shape);
+		buffer.append(graphics1).append(graphics2).append(" />\n") ;
+		buffer.append("  <Xref Database=\"\" ").append("ID=\"\"").append("/>\n") ;
+		buffer.append("</DataNode>\n");
+		return buffer.toString();
+	}
 	//---------------------------------------------------------------------------------------
 	public String toGPML()	{ 
 		copyPropertiesToAttributes();
@@ -91,7 +133,7 @@ public class DataNode extends XRefable {
 		return false;
 	}
 	private void buildNodeOpen(StringBuilder bldr) {
-		String typ = get("Type");
+		String typ = get("ShapeType");
 		if ("Shape".equals(typ)) elementType = "Shape";
 		else elementType = (isDataNode(typ)) ? "DataNode" : "Label"; 
 		bldr.append("<" + elementType + " " + attributeList(nodeAttrs) + ">\n");
@@ -105,7 +147,7 @@ public class DataNode extends XRefable {
 	{
 		String attributes = attributeList(attrs);
 		if (StringUtil.hasText(attributes))
-			bldr.append( "<Attribute ").append(attributes).append( " >\n");
+			bldr.append( "<Attribute ").append(attributes).append( "/>\n");
 	}
 	
 	String[] attributeNames = { "CenterX", "CenterY", "Width", "Height", 
@@ -115,20 +157,12 @@ public class DataNode extends XRefable {
 	{
 		String attributes = attributeList(attributeNames);
 		if (StringUtil.hasText(attributes))
-			bldr.append( "<Graphics ").append(attributes).append( " >\n");
+			bldr.append( "<Graphics ").append(attributes).append( " />\n");
 	}
 
 	public Point2D  getAdjustedPoint(GPMLPoint gpmlPt)
 	{
-		Point2D center = getStack().center();
-		if (gpmlPt == null) return center;
-		double relX = gpmlPt.getRelX();
-		double relY = gpmlPt.getRelY();
-		double width = getStack().getWidth();
-		double height = getStack().getHeight();
-		double x = center.getX() + relX * width / 2;
-		double y = center.getY() + relY * height / 2;
-		return new Point2D(x,y);
+		return getStack().getAdjustedPoint( gpmlPt);
 	}
-	
+
 }

@@ -1,5 +1,7 @@
 package diagrams.pViz.view;
 
+import java.util.Collections;
+
 import diagrams.pViz.app.GPMLRecord;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
@@ -72,8 +74,8 @@ public class LayerRecord implements GPMLRecord {
 	public void remove(VNode node) 			{ 	theLayer.remove(node); 	}
 	public void remove(Node node) 			{ 	theLayer.remove(node); 	}
 	public void sortByZorder() {
-		// TODO Auto-generated method stub
 		
+		theLayer.getChildren().sort(null);
 	}
 
 }

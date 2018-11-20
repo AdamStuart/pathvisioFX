@@ -164,7 +164,8 @@ public class GPML {
 	private void put(AttributeMap attrMap, String key, NamedNodeMap map)
 	{
 		org.w3c.dom.Node  named = map.getNamedItem(key);
-		attrMap.put(named.getNodeName(), named.getNodeValue());
+		if (named != null)
+			attrMap.put(named.getNodeName(), named.getNodeValue());
 	}
 	
 	private void parseInteractions(NodeList edges) 
@@ -513,7 +514,7 @@ public class GPML {
 			if (id != null)
 			for (DataNode node : model.getNodes())
 				if (id.equals(node.get("GroupRef")))
-					group.addToGroup(node);
+					group.addMember(node);
 			group.calcBounds();
 			VNode stack = group.getStack();
 			

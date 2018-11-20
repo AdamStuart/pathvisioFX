@@ -134,7 +134,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 			e.printStackTrace();
 		}
 	}
-	static private void viewPathway(String result)		
+	static private void viewPathway(String inputStr)		
 	{ 		
 //		String pathwayFxml = "../gpml/GeneList.fxml";
 //		String fullname = "../gpml/GeneList.fxml";
@@ -142,7 +142,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		Controller newController = pair.getKey().getController();
 		try
 		{
-			String gpml  =StringUtil.readTag( result, "ns2:gpml");
+			String gpml  =StringUtil.readTag( inputStr, "ns2:gpml");
 			Decoder decoder = Base64.getDecoder();
 			byte[] cleanXML  = decoder.decode(gpml);
 			String str = new String(cleanXML);

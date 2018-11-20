@@ -7,7 +7,7 @@ import util.FileUtil;
 public enum Tool {
 
 	Arrow,
-	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1,   // Shapes
+	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Pentagon, Hexagon, Octagon, Polyline, Line, Brace, Shape1,   // Shapes
 	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,			// Controls
@@ -68,10 +68,14 @@ public enum Tool {
 	// HACK -- convert from GPML type to shape
 	public static Tool lookup(String type) {
 		if (type == null) return Circle;
-		if ("Pentagon".equals(type)) 	return RoundedRectangle;
+		if ("Hexagon".equals(type)) 	return Hexagon;
+		if ("Pentagon".equals(type)) 	return Pentagon;
+		if ("Octagon".equals(type)) 	return Octagon;
 		if ("None".equals(type)) 		return Rectangle;
 		if ("Oval".equals(type)) 		return Oval;
 		
+		if ("Nucleus".equals(type)) 	return Nucleus;
+		if ("Cell".equals(type)) 		return Cell;
 		if ("Brace".equals(type)) 		return Brace;
 		if ("GroupComponent".equals(type)) return GroupComponent;
 		if ("Mitochondria".equals(type)) return Mitochondria;

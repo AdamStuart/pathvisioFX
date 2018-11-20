@@ -304,14 +304,14 @@
                            <items>
                               <MenuItem fx:id="group2" mnemonicParsing="false" onAction="#group" text="Select Neighbors">
                                  <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                    <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <MenuItem fx:id="doAbout1" mnemonicParsing="false" text="Align To Grid" />
                               <MenuItem fx:id="dumpNodeTable1" mnemonicParsing="false" onAction="#dumpNodeTable" text="Create Complex" />
                               <MenuItem fx:id="showNodeList" mnemonicParsing="false" onAction="#showNodeList" text="Show Node List">
                                  <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                    <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                            </items>
@@ -379,7 +379,7 @@
                               </MenuItem>
                               <MenuItem fx:id="browseGenes" mnemonicParsing="false" onAction="#doNewGeneList" text="New Gene List">
                                  <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                    <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
                               <MenuItem fx:id="multiGeneList" mnemonicParsing="false" onAction="#doNewMultiGeneList" text="Multi Gene List">

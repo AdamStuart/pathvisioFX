@@ -178,6 +178,7 @@ abstract public class Edge extends XRefable {
 		}
 //		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
 		edgeLine.setEndPoint(pt);
+//		Shape head = edgeLine.makeArrowhead();
 
 
 		if (verbose)
@@ -239,18 +240,18 @@ abstract public class Edge extends XRefable {
     public boolean isEndpoint(DataNode n)	{  return isStart(n) || isEnd(n);	}
 
 	//------------------------------------------------------------------------------------------
-	
-	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
-	{ 
-		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-		{ connect(); }  //false
-	};
-
-	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
-	{ 
-		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-		{ connect(); }   //true
-	};
+//	
+//	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
+//	{ 
+//		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
+//		{ connect(); }  //false
+//	};
+//
+//	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
+//	{ 
+//		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
+//		{ connect(); }   //true
+//	};
 
 	ChangeListener<Number> startposition = new ChangeListener<Number>()
 	{ 
@@ -269,7 +270,7 @@ abstract public class Edge extends XRefable {
 	{
 		if (startNode != null)
 		{
-			startNode.getStack().layoutBoundsProperty().addListener(startbounds);
+//			startNode.getStack().layoutBoundsProperty().addListener(startbounds);
 			startNode.getStack().layoutXProperty().addListener(startposition);
 		}
 		if (endNode == null){
@@ -283,7 +284,7 @@ abstract public class Edge extends XRefable {
 		}
 		if (endNode != null)
 		{	
-			endNode.getStack().layoutBoundsProperty().addListener(endbounds);
+//			endNode.getStack().layoutBoundsProperty().addListener(endbounds);
 			endNode.getStack().layoutXProperty().addListener(endposition);
 		}
 	}
@@ -291,12 +292,12 @@ abstract public class Edge extends XRefable {
 	{
 		if (startNode != null)
 		{
-			startNode.getStack().layoutBoundsProperty().removeListener(startbounds);
+//			startNode.getStack().layoutBoundsProperty().removeListener(startbounds);
 			startNode.getStack().layoutXProperty().removeListener(startposition);
 		}
 		if (endNode != null)
 		{	
-			endNode.getStack().layoutBoundsProperty().removeListener(endbounds);
+//			endNode.getStack().layoutBoundsProperty().removeListener(endbounds);
 			endNode.getStack().layoutXProperty().removeListener(endposition);
 		}
 	}
@@ -310,38 +311,17 @@ abstract public class Edge extends XRefable {
     			" to "  + (endNode == null ? "Null" : endNode.getStack().getText())  + " @ " + StringUtil.asString(endpt));
     }
 
-   //------------------------------------------------------------------------------------------
-     public String toGPML()
-    {
-		StringBuffer b = new StringBuffer(String.format("<Interaction GraphId=\"%s\" >\n", getSafe("GraphId")));
-		b.append("<Graphics ");
-		b.append(attributeList(new String[]{"ConnectorType", "ZOrder","LineStyle","LineThickness"}));
-		b.append (" >\n");
-		
-		b.append (getPointsStr());
-		b.append (getAnchorsStr());
-		b.append("</Graphics>\n");
-		String db = get("database");
-		String dbid =  get("dbid");
-		if (db != null && dbid != null)
-			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
-		b.append("</Interaction>\n");
-		return b.toString();
-    }
-    
+   public boolean isSelected()  	 {	   return getEdgeLine().isSelected();   }
+   public void select(boolean on)   {	   getEdgeLine().select(on);   }
     //------------------------------------------------------------------------------------------
     public String getPointsStr()
 	{
 		if (edgeLine == null) return "";
 		List<GPMLPoint> pts = edgeLine.getPoints();
+		if (pts == null) return "";
 		StringBuilder builder = new StringBuilder();
-		String startId = startNode == null ? "" : startNode.getId();
-		String endId = endNode == null ? "" : endNode.getId();
-//		builder.append("<Point GraphRef=\""+ startId + "\"/>\n");
-		if (pts != null)
-			for (GPMLPoint pt : pts)
-				builder.append(pt.toString());
-//		builder.append("<Point GraphRef=\""+ endId + "\"/>\n");
+		for (GPMLPoint pt : pts)
+			builder.append(pt.toGPML());
 		return builder.toString();
 	}
     

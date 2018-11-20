@@ -151,7 +151,7 @@ public class Pasteboard extends Pane
 	public void restoreBackgroundOrder() {
 		gridLayer.getLayer().toBack();
 		backgroundLayer.getLayer().toBack();
-		contentLayer.sortByZorder();
+//		contentLayer.getLayer().sort();
 	}
 
 	public Layer getLayer(String string) {
@@ -176,7 +176,12 @@ public class Pasteboard extends Pane
 	public void add(Node node)				{	getActiveLayer().add(node);	}
 	public void remove(Node node)			{	getActiveLayer().remove(node);	}
 
-	public void clear()						{ 	for (LayerRecord lay : allLayers) lay.getLayer().clear();	}
+	public void clear()						
+	{ 	
+		for (LayerRecord lay : allLayers) 
+			if (!lay.getName().contains("Grid")) 
+				lay.getLayer().clear();	
+	}
 	public void clearLayer()				{ 	getActiveLayer().clear();	}
 	
 	public void add(int idx, Node node, String layername)		
@@ -236,6 +241,8 @@ public class Pasteboard extends Pane
 	private void handlePasteboardDrop(DragEvent e)
 	{
 		Dragboard db = e.getDragboard();
+		int offset = 0;
+		Point2D dropPt = new Point2D(e.getX()+offset, e.getY()+offset);
 		e.acceptTransferModes(TransferMode.ANY);
 //		Set<DataFormat> formats = db.getContentTypes();
 //		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
@@ -266,13 +273,11 @@ public class Pasteboard extends Pane
 		if (db.hasFiles())
 		{
 			List<File> files = db.getFiles();
-			int offset = 0;
 			if (files != null)
 			{
 				push(ActionType.Add, " file");
 				for (File f : files)
 				{
-					Point2D dropPt = new Point2D(e.getX()+offset, e.getY()+offset);
 					if (FileUtil.isCDT(f))				controller.open(f);				// CDT is a genelist format
 					else if (FileUtil.isGPML(f))		controller.open(f);				// gpml files are parsed 
 					else if (FileUtil.isCSS(f))			controller.addStylesheet(f);	// css files are added to the Scene
@@ -295,35 +300,68 @@ public class Pasteboard extends Pane
 			{
 				String text = content.toString();
 				if (verbose) 	System.out.println("Dropped: " + text);
-				AttributeMap attrMap = new AttributeMap();
-				attrMap.putDouble("X", e.getX());
-				attrMap.putDouble("Y", e.getY());
-				attrMap.put("CenterX", "" + e.getX());
-				attrMap.put("CenterY", "" + e.getY());
-				attrMap.put("Width", "80");
-				attrMap.put("Height", "30");
-				attrMap.put("Layer", "Background");
-				
-				if ("Nucleus".equals(text))
+				if (text.startsWith("SHAPE:"))
 				{
-					attrMap.put("Width", "350");
-					attrMap.put("Height", "150");
+					String shapeType = text.substring(6);
+					addShapeAt(shapeType, dropPt);
+					return;
 				}
-				if ("Cell".equals(text))
+				String[] lines = text.split("\n");
+				if (lines.length > 0)
 				{
-					attrMap.put("Width", "500");
-					attrMap.put("Height", "300");
+					for (String line : lines)
+					{	
+						addNodeAt(line, dropPt);
+						dropPt = dropPt.add(0,40);
+						
+					}
 				}
-				attrMap.put("ShapeType", text);
-				attrMap.put("TextLabel", text);
-				attrMap.putBool("Connectable", false);
-				DataNode node = new DataNode(attrMap, getModel());
-				controller.add(node.getStack());
-			}
 		}
 			
 		e.consume();
 	}
+	}
+	public void addNodeAt(String text, Point2D pt) {
+			
+		double w = 80;
+		double h  = 30;
+
+		AttributeMap attrMap = new AttributeMap();
+		attrMap.putDouble("X", pt.getX());
+		attrMap.putDouble("Y", pt.getY());
+		attrMap.put("CenterX", "" + pt.getX() + w/2);
+		attrMap.put("CenterY", "" + pt.getY() + h/2);
+		attrMap.putDouble("Width", w);
+		attrMap.putDouble("Height", h);
+		attrMap.put("Layer", "Content");
+		attrMap.put("TextLabel", text);
+		attrMap.putBool("Connectable", true);
+		attrMap.putBool("Resizable", false);
+		DataNode node = new DataNode(attrMap, getModel());
+		controller.addDataNode(node);
+	}
+	public void addShapeAt(String text, Point2D pt) {
+		
+		double w = 280;
+		double h  = 300;
+
+		AttributeMap attrMap = new AttributeMap();
+		attrMap.putDouble("X", pt.getX());
+		attrMap.putDouble("Y", pt.getY());
+		attrMap.put("CenterX", "" + pt.getX() + w/2);
+		attrMap.put("CenterY", "" + pt.getY() + h/2);
+		attrMap.putDouble("Width", w);
+		attrMap.putDouble("Height", h);
+		attrMap.put("Type", "Shape");
+		attrMap.put("ShapeType", text);
+		attrMap.put("Layer", "Content");
+		attrMap.put("TextLabel", text);
+		attrMap.putBool("Connectable", true);
+		attrMap.putBool("Resizable", true);
+		DataNode node = new DataNode(attrMap, getModel());
+		controller.addDataNode(node);
+	}
+		
 	// **-------------------------------------------------------------------------------
 	public VNode handleFileDrop(File f, Point2D dropPt)
 	{
@@ -338,7 +376,7 @@ public class Pasteboard extends Pane
 		return model.getStack();
 	}
 	
-	private Model getModel() {		return controller.getDrawModel();	}
+	public Model getModel() {		return controller.getDrawModel();	}
 	//-------------------------------------------------------------------------------
 	public String getState()		
 	{
@@ -466,8 +504,11 @@ public class Pasteboard extends Pane
 	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
 		EdgeType edgeType = getController().getCurrentLineBend();
 		ArrowType arrow = getController().getCurrentArrowType();
-		Point2D startPt = source.getPortPosition( srcPosition);
+		Point2D startPt = new Point2D(x,y);
+		if (source != null)
+			source.getPortPosition( srcPosition);
 		dragLine = new EdgeLine(edgeType, startPt);
+		dragLine.setArrowType(arrow);
 		dragLineSource = source;
 		dragLinePosition = srcPosition;
 
@@ -559,7 +600,7 @@ public class Pasteboard extends Pane
 					map.put("Connectable", "false");
 				DataNode mNode = new DataNode(map, getController().getModel());
 				activeStack = mNode.getStack();	
-				mNode.put("TextLabel", mNode.getGraphId());
+				mNode.put("TextLabel", mNode.get("GraphId"));
 				getController().addDataNode(mNode);
 			}
 			
@@ -996,6 +1037,9 @@ public class Pasteboard extends Pane
 		VNode src = getDragSource();
 		Pos srcPos = getDragSourcePosition();
 		
+		if (relPos.isInside()) 
+			relPos = relPos.moveToEdge();
+		
 		if (src != vNode)
 		{
 			ArrowType arrow = getController().getCurrentArrowType();
@@ -1005,7 +1049,7 @@ public class Pasteboard extends Pane
 //			i.rebind();
 			removeDragLine();
 			controller.redrawEdgesToMe(vNode);
-			controller.updateTreeTable();
+			controller.modelChanged();
 		}
 	}
 

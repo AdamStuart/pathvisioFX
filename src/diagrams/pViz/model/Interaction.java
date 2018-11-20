@@ -10,7 +10,6 @@ import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.view.VNode;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import model.AttributeMap;
 import model.bio.XRefable;
@@ -59,6 +58,8 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	{
 		this(model,src,vNode, null);
 		setInteractionType(edge.toString());
+		putDouble("LineThickness", 1.5);
+		
 //		String newId = newEdgeId();
 //		put("GraphId", newId);
 //		setGraphId(newId);
@@ -97,41 +98,6 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	{
 		return getName().compareToIgnoreCase(other.getName());
 	}
-	
-	public void rebind() {
-		if (isWellConnected())
-		{
-//			String gid = getStarTtNode().getGraphId();
-//			model.getController().rebind(gid);
-		}
-		else
-		{
-			System.err.println("Interaction rebind required");
-			String src = get("sourceid");
-			String targ = get("targetid");
-			if (StringUtil.isEmpty(src) ||StringUtil.isEmpty(targ))
-			{	
-				System.err.println("Interaction rebind failed");
-				return;
-			}
-			startNode = model.findDataNode(src);
-			endNode = model.findDataNode(targ);
-//			if (endNode == null)
-//				endNode = model.findAnchor(targ);
-			if (startNode != null)
-			{
-				String gid = getStartNode().getGraphId();
-				Point2D lastPoint = getEdgeLine().lastPoint();
-				getEdgeLine().setEndPoint(lastPoint);
-//				model.getController().rebind(gid);
-			}
-			else
-			{
-				
-			}
-		}
-		
-	}
 	public void rebind(String sourceId) {
 		if (!isWellConnected()) return; 
 		setSource(getStartNode().getName());
@@ -140,7 +106,25 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		model.getController().getTreeTableView().addBranch(this, sourceId);
 //		repostionAnchors();
 	}
-	
+	   //------------------------------------------------------------------------------------------
+    public String toGPML()
+   {
+		StringBuffer b = new StringBuffer(String.format("<Interaction GraphId=\"%s\" >\n", getSafe("GraphId")));
+		b.append("<Graphics ");
+		b.append(attributeList(new String[]{"ConnectorType", "ZOrder","LineStyle","LineThickness"}));
+		b.append (" >\n");
+		
+		b.append (getPointsStr());
+		b.append (getAnchorsStr());
+		b.append("</Graphics>\n");
+		String db = get("database");
+		String dbid =  get("dbid");
+		if (db != null && dbid != null)
+			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
+		b.append("</Interaction>\n");
+		return b.toString();
+   }
+
 	public boolean isWellConnected() {
 		return getStartNode() != null && getEndNode() != null;
 	}
@@ -153,11 +137,18 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		else if (arrow.contains("none")) 		arrow = "--";
 		else if (arrow.contains("tbar")) 		arrow = "-|";
 		else if (arrow.contains("inhibit")) 	arrow = "-|";
+		else if (arrow.contains("activ")) 		arrow = "->";
 		else if (arrow.contains("conver")) 		arrow = ">>";
 		else if (arrow.contains("catal")) 		arrow = "-O";
 		else if (arrow.contains("bind")) 		arrow = "-{";
+		else if (arrow.contains("stimu")) 		arrow = "+>";
+		else if (arrow.contains("modif")) 		arrow = "~>";
+		else if (arrow.contains("cleav")) 		arrow = "-\\";
+		else if (arrow.contains("coval")) 		arrow = "::";
 		else if (arrow.contains("transcriptiontranslation")) 		arrow = "-#";
-		else if (arrow.contains("reg")) 		arrow = "-R";
+		else if (arrow.contains("translat")) 	arrow = "-X";
+		else if (arrow.contains("gap")) 		arrow = " >";
+	else if (arrow.contains("reg")) 			arrow = "-R";
 		String target = getTarget();
 		if ( target == null)
 		{
@@ -173,10 +164,8 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	public String getEndName() {
 		return getEndNode() == null ? get("targetid") : getEndNode().getName();
 	}
-//	public void resetEdgeLine() {
-//		edgeLine.setStartPoint(getStartNode().getStack().center());  // TODO adjusted pts
-//		edgeLine.setEndPoint(getEndNode().getStack().center());
-//	}
+
+
 	public Anchor findAnchorById(String targId) {
 		return getModel().findAnchorById(targId);
 	}

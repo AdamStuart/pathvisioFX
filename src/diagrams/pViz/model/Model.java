@@ -1,6 +1,7 @@
 package diagrams.pViz.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Species;
 import model.bio.XRefableSetRecord;
+import util.FileUtil;
 import util.StringUtil;
 
 public class Model
@@ -120,7 +122,9 @@ public class Model
 		StringBuilder saver = new StringBuilder(header);
 		serializeComments(saver);
 		serializeNodes(saver);
+		serializeStates(saver);
 		serializeEdges(saver);
+		serializeGroups(saver);
 		serializeReferences(saver);
 		saver.append("</Pathway>\n");
 		return saver.toString();
@@ -129,7 +133,7 @@ public class Model
 	private static String xmlHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?> \n";
 	private static String namespace = "xmlns=\"http://pathvisio.org/GPML/2013a\"\n";
 	
-	private String docHeader() {		return xmlHeader +  "<Pathway >";	}
+	private String docHeader() {		return xmlHeader +  "<Pathway>\n";	}
 	
 	private void serializeComments(StringBuilder saver) {
 		for (CommentRecord rec : getComments())
@@ -142,6 +146,10 @@ public class Model
 	private void serializeNodes(StringBuilder saver) {
 		for (DataNode node : getNodes())
 			saver.append(node.toGPML());
+		}
+	private void serializeStates(StringBuilder saver) {
+		for (DataNodeState s : getStates())
+			saver.append(s.toGPML());
 		}
 	private void serializeEdges(StringBuilder saver) {
 		for (Interaction edge : getEdges())
@@ -156,9 +164,19 @@ public class Model
 	public void setState(String s)
 	{
 //		readNodes(s.);
-//		readReferences(saver);
+//		readReferences(saver);h
 //		readEdges(saver);
 //		readComments(saver);
+		try
+		{
+		org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
+		if (doc != null)
+			controller.addXMLDoc(doc);	
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 	// **-------------------------------------------------------------------------------
 	
@@ -287,16 +305,15 @@ public class Model
 	}
 	public void removeEdges(DataNode node)		
 	{  
+		List<String> edgesToRemove = new ArrayList<String>();
 		for (Interaction e : getEdges())
 		{
 			if (e == null) continue;
 			if (e.isStart(node) || e.isEnd(node))
-			{				
-				e.removeListeners();
-				e.getEdgeLine().dispose();
-				interactionMap.remove(e);
-			}
+				edgesToRemove.add(e.getGraphId());
 		}
+		for (String id : edgesToRemove)
+			interactionMap.remove(id);
 //		List<Edge> okEdges = edgeTable.stream().filter(new TouchingNodeFilter(node)).collect(Collectors.toList());
 //		edgeTable.clear();
 //		edgeTable.addAll(okEdges);
@@ -308,8 +325,15 @@ public class Model
 		if (node == null) return;
 		if ("Marquee".equals(node.getId())) return;
 		
-		removeEdges(node.modelNode());
-		dataNodeMap.remove(node.modelNode().getGraphId());
+		DataNode mNode = node.modelNode();
+		String id = mNode.getGraphId();
+		if (id == null) id = mNode.get("GraphId");
+		removeEdges(mNode);
+		
+		dataNodeMap.remove(id);
+		shapes.remove(id);
+		labels.remove(id);
+		groupMap.remove(id);
 	}
 
 	public DataNode getResourceByKey(String key)				
@@ -412,7 +436,12 @@ public class Model
 	
 	public void addEdge(Interaction e)			{  interactionMap.put(e.get("GraphId"), e);	}
 	// **-------------------------------------------------------------------------------
-	public void removeEdge(Edge edge)			{  		interactionMap.remove(edge);	}
+	public void removeEdge(Edge edge)			
+	{  						
+		edge.removeListeners();
+		edge.getEdgeLine().dispose();
+		interactionMap.remove(edge.getGraphId());	
+	}
 	
 	public void connectAllEdges() {
 		for (int z = interactionMap.size()-1; z >= 0; z--)

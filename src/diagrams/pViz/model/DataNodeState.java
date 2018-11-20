@@ -50,15 +50,27 @@ public class DataNodeState extends XRefable {
 	public String toGPML()	{ 
 		StringBuilder bldr = new StringBuilder();
 		buildNodeOpen(bldr);
+		buildGraphicsTag(bldr);
 		buildXRefTag(bldr);
 		buildNodeClose(bldr);
 		return bldr.toString();
 	}
+	
+		
 	String elementType = "State";
 	String[]  nodeAttrs = {  "TextLabel", "GraphId", "Type"};
 	private void buildNodeOpen(StringBuilder bldr) {
-		bldr.append("<" + attributeList(nodeAttrs) + ">\n");
+		bldr.append("<State " + attributeList(nodeAttrs) + " >\n");
 	}
+
+	String[] attributeNames = { "RelX", "RelY", "Width", "Height",  "ShapeType" };
+	private void buildGraphicsTag(StringBuilder bldr)
+	{
+		String attributes = attributeList(attributeNames);
+		if (StringUtil.hasText(attributes))
+			bldr.append( "<Graphics ").append(attributes).append( " />\n");
+	}	
+
 	private void buildNodeClose(StringBuilder bldr) {
 		bldr.append("</" + elementType + ">\n");
 	}	

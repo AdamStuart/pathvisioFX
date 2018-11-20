@@ -7,6 +7,7 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPML;
+import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.DataNode;
 import diagrams.pViz.model.DataNodeGroup;
 import diagrams.pViz.model.DataNodeState;
@@ -15,6 +16,7 @@ import diagrams.pViz.util.ResizableBox;
 import gui.Action.ActionType;
 import gui.Backgrounds;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
@@ -97,18 +99,24 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		dataNode.setStack(this);
 		pasteboard = p;
 		selection = pasteboard.getSelectionMgr();
-		controlFactory = new ControlFactory(this);
+		controlFactory = new ControlFactory(this);	
 //		AttributeMap attributes = modelNode;
 		if (modelNode instanceof DataNodeGroup)
 		{
 			System.out.println("GROUP");
 		}
-		createFigure(modelNode.getPosition());
 		String id = modelNode.get("GraphId");
 		setId(id);
 		title = modelNode.get("TextLabel");
-		if (title == null) title = id;
-		addText(title);
+		if (title == null)
+			{
+			title = id;
+			modelNode.put("TextLabel", id);
+			}
+		String fontWeight = dataNode.get("FontWeight");
+		String fontSize = dataNode.get("FontSize");
+		String vAlign = dataNode.get("Valign");
+		addText(title, fontWeight, fontSize, vAlign);
 		String biopaxRef = modelNode.get("BiopaxRef");
 		if (biopaxRef != null)
 			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT, biopaxRef);
@@ -120,31 +128,38 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		addGraphIdDisplay();
 		addZOrderDisplay();
 		setZOrder();
+		createFigure();
 		String shapeType = dataNode.get("ShapeType");
         if (shapeType == null) shapeType = "";
         String type = dataNode.get("Type");
         if (type == null) type = "";
 
+        
         readGeometry(modelNode, this);
+        modelNode.putDouble("CenterX", getLayoutX() + .5 * getWidth());
+        modelNode.putDouble("CenterY", getLayoutY() + .5 * getHeight());
         movable = modelNode.getBool("Movable", true);
-        resizable = modelNode.getBool("Resizable", false);
+        
+        resizable = modelNode.getBool("Resizable", "Shape".equals(type));
         setResize(resizable);
-        editable = modelNode.getBool("Editable", true);
-        boolean connectable = isConnectable();
-        if ("Label".equals(type) || "Shape".equals(type))
-        	connectable = false;
-        setConnectable(connectable);
         modelNode.putBool("Connectable", connectable);
+
+        editable = modelNode.getBool("Editable", true);
+       
+        boolean connectable = isConnectable();
+        if ("Label".equals(type) || "Shape".equals(type))   connectable = false;
+        setConnectable(connectable);
+//        if ("Label".equals(modelNode.get("Type"))) 	connectable = false;
+//        if (shapeType.equals("Mitochondria)")) 	connectable = false;
+//        if (shapeType.equals("Oval)"))        	connectable = false;
+//        if (shapeType.equals("Cell)"))        	connectable = false;
+        modelNode.putBool("Connectable", connectable);
+         
 
         Tooltip tooltip = new Tooltip();
         tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
         Tooltip.install(this,  tooltip);
 
-        if ("Label".equals(modelNode.get("Type"))) 	connectable = false;
-        if (shapeType.equals("Mitochondria)")) 	connectable = false;
-        if (shapeType.equals("Oval)"))        	connectable = false;
-        if (shapeType.equals("Cell)"))        	connectable = false;
-        modelNode.putBool("Connectable", connectable);
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
  		pasteboard.add(this);
 	}
@@ -243,7 +258,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	        }
 	        if (event.getEventType().equals(MouseEvent.MOUSE_MOVED))
 	        {
-	        	boolean live = true;  //= isSelected() || pasteboard.getDragLine() != null;
+	        	boolean live = isConnectable();  //= isSelected() || pasteboard.getDragLine() != null;
 	        	setEffect(live ? effect : null);
 	        	showPorts(live);
 	        }
@@ -307,10 +322,32 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public String getShapeType(){ return modelNode().getShapeType(); 	}
 	public boolean isLabel()	{ return "Label".equals(getShapeType());	}
 	// **-------------------------------------------------------------------------------
-	public boolean isGroup()	{ return false;	}			// TODO
+	public boolean isGroup()	{ return modelNode() instanceof DataNodeGroup;	}			// TODO
 	public List<VNode> ungroup()	
 	{ 
-		return FXCollections.emptyObservableList();	
+		List<VNode> futureItems = new ArrayList<VNode>();
+		if (isGroup())
+		{
+			DataNodeGroup grp = (DataNodeGroup) modelNode();
+			double groupX = grp.getDouble("X");
+			double groupY = grp.getDouble("Y");
+			
+			for (DataNode member :  grp.getMembers())
+			{
+				VNode stack = member.getStack();
+				double x = stack.getTranslateX();
+				double y  = stack.getTranslateY();
+				stack.setTranslateX(0);
+				stack.setTranslateY(0);
+				stack.setLayoutX(groupX + x);
+				stack.setLayoutY(groupY + y);
+				stack.setMouseTransparent(false);
+				futureItems.add(stack);
+//				pasteboard.getContentLayer().add( stack);
+//				pasteboard.getSelectionMgr().select(stack);
+			}
+		}
+		return futureItems;
 	}			// TODO
 	
 //	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
@@ -349,19 +386,23 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	double localLastMouseX = -1; 
 	double localLastMouseY = -1; 
  	// **-------------------------------------------------------------------------------
-	private void createFigure(Point2D center) 
+	private void createFigure() 
 	{	
-		String type = dataNode.getShapeType();
-		if ("None".equals(type)) return;
-		if (type == null) type = "Rectangle";			// TODO
-		Tool tool = Tool.lookup(type);
+		String shapeType = dataNode.getShapeType();
+		if ("None".equals(shapeType)) return;
+		if (shapeType == null) shapeType = "Rectangle";			// TODO
+		Tool tool = Tool.lookup(shapeType);
 		if (tool == null) return ;
 		if (tool.isControl())
 		{
 			controlFactory.addNewNode(tool, dataNode);
 			return;
 		}
-		else figure = ShapeFactory.makeNewShape(type, center, dataNode, this);
+		else figure = ShapeFactory.makeNewShape(shapeType, this);
+		if (figure != null)
+		{
+			setScaleShape(true);
+		}
 	}
  	// **-------------------------------------------------------------------------------
 
@@ -416,10 +457,21 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (s.contains("TOP")) 		return -nodeHeight / 2;
 		if (s.contains("BOTTOM")) 	return nodeHeight / 2;
 		return 0;
-}//		x += getAdjustmentX(srcPosition, nodeWidth);
-//	y += getAdjustmentY(srcPosition, nodeHeight);
+} 
 
-	
+	public Point2D getAdjustedPoint(GPMLPoint gpmlPt) {
+		Point2D center = center();
+		if (gpmlPt == null)  return center;
+		double relX = gpmlPt.getRelX();
+		double relY = gpmlPt.getRelY();
+		double width = getWidth();
+		double height = getHeight();
+		double x = center.getX() + relX * width / 2;
+		double y = center.getY() + relY * height / 2;
+		return new Point2D(x, y);
+	}
+ 	// **-------------------------------------------------------------------------------
+
 	public String getLayerName() 		{	return getAttributes().get("Layer");	}
 	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}
 	public boolean isLayerLocked() 		{	LayerRecord rec = getLayer(); return rec == null || rec.getLock();	}
@@ -437,18 +489,16 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void extractPosition()
 	{
 		Bounds b = getBoundsInParent();
-		double minX = b.getMinX();
-		double minY = b.getMinY();
-		double oldMinX = getAttributes().getDouble("X");
-		double oldMinY = getAttributes().getDouble("Y");
-		double offsetX = minX - oldMinX;
-		double offsetY = minY - oldMinY;
+		double minX = getLayoutX();
+		double minY = getLayoutY();
+		double w = getWidth();
+		double h = getHeight();
 		getAttributes().putDouble("X", minX);
 		getAttributes().putDouble("Y", minY);
-		getAttributes().putDouble("CenterX", (minX + b.getMaxX()) / 2);
-		getAttributes().putDouble("CenterY", (minY + b.getMaxY()) / 2);
-		getAttributes().putDouble("Width",b.getWidth());
-		getAttributes().putDouble("Height",b.getHeight());
+		getAttributes().putDouble("CenterX", minX + w / 2);
+		getAttributes().putDouble("CenterY", minY + h / 2);
+		getAttributes().putDouble("Width", w);
+		getAttributes().putDouble("Height", h);
 		getController().redrawEdgesToMe(this);
 	}
 	
@@ -507,54 +557,48 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 
 	// **-------------------------------------------------------------------------------
+	public void addText(String s, String fontWeight, String fontSize, String alignl)
+	{
+		addText(s);
+		double size = 14;
+		if (fontSize != null) 
+			size = Double.parseDouble(fontSize);
+		FontWeight style = FontWeight.NORMAL;
+		if (fontWeight != null && fontWeight.toLowerCase().contains("bold"))
+			style = FontWeight.EXTRA_BOLD;
+		Font f = Font.font(Font.getDefault().getFamily(), style, size);
+		text.setFont(f);
+	}
 	public void addText(String textLabel)
 	{
-//		boolean showAlignmentSpots = false;
-//		if (showAlignmentSpots )		// DEBUG-------------------
-//		{
-//			for (int i=0; i< 9 ; i++)
-//			{
-//				Pos pos = Pos.values()[i];
-//				String posName = pos.name();
-//				final Label label = new Label(posName);
-//				label.setFont(new Font(12));
-//				label.setMouseTransparent(true);
-//				setAlignment(label, pos);
-//				label.setTextAlignment(TextAlignment.CENTER);
-//				getChildren().add(label);
-//			}
-//		}								// End DEBUG-------------------
 		Pos pos = Pos.CENTER;
 		text = new Label(textLabel);
-		text.setMinWidth(180);
-		text.setMinHeight(32);
-		text.setPrefWidth(220);
-		text.setPrefHeight(40);
+		text.setMinWidth(180); 		text.setMinHeight(32);
+		text.setPrefWidth(220); 	text.setPrefHeight(40);
 		text.setMouseTransparent(true);
 		text.setBackground(Backgrounds.transparent());   
 		text.setFont(new Font(18));
 		setAlignment(text, pos);
 		text.setAlignment(pos);
 		getChildren().add(text);
-//		setBorder(Borders.greenBorder);
 	}
 
-public void addBadge(String letter)
-{
-	StackPane badge = new StackPane();
-	final Circle circle = new Circle(6);
-	badge.setTranslateX(getWidth() / 2.);
-	badge.setTranslateY(getHeight() / -2.);
-	circle.setFill(Color.WHITE);
-	circle.setStroke(Color.BLACK);
-	Label label = new Label(letter);
-	label.setTextFill(Color.VIOLET);
-	badge.getChildren().add(circle);
-	badge.getChildren().add(label);
-	getChildren().add(badge);
-	
-}
-  	List<Shape> ports = new ArrayList<Shape>();
+	public void addBadge(String letter)		// phosphorylization, etc.
+	{
+		StackPane badge = new StackPane();
+		final Circle circle = new Circle(6);
+		badge.setTranslateX(getWidth() / 2.);
+		badge.setTranslateY(getHeight() / -2.);
+		circle.setFill(Color.WHITE);
+		circle.setStroke(Color.BLACK);
+		Label label = new Label(letter);
+		label.setTextFill(Color.VIOLET);
+		badge.getChildren().add(circle);
+		badge.getChildren().add(label);
+		getChildren().add(badge);
+	}
+ 
+	private List<Shape> ports = new ArrayList<Shape>();
 
   	public void addPorts()
 	{
@@ -575,24 +619,6 @@ public void addBadge(String letter)
 			port.setVisible(false);
 			port.setId(""+(i+1));
 		}
-
-//		for (int i=0; i< 2 ; i++)
-//		{
-//			if (i == 4) continue;			//skip center
-////			if (i % 2 == 0) continue;
-//			Pos pos = (i==0) ? Pos.CENTER_LEFT : Pos.CENTER_RIGHT;
-//			
-//			final Circle port = new Circle(4.8);
-//			port.setFill(portFillColor(EState.STANDBY));
-//			port.setStroke(Color.MEDIUMAQUAMARINE);
-//			addPortHandlers(port);
-//			setAlignment(port, pos);
-//			getChildren().add(port);
-//			ports.add(port);
-//			port.setVisible(false);
-//			port.setId(""+i);
-//		}
-
 	}
 	
 	public void showPorts(boolean vis)
@@ -638,18 +664,7 @@ public void addBadge(String letter)
      *
      * @param event {@link MouseEvent}
      */
-//	protected void handleMouseEntered(MouseEvent event) 
-//	{
-//		showPorts(pasteboard.getDragLine() != null && isConnectable());
-//		System.out.println("enter");
-//	}
-//
-//	protected void handleMouseExited(MouseEvent event) 
-//	{
-//		System.out.println("exit");
-//		showPorts(false);
-//	}
-//
+
 	protected void handleMouseReleased(final MouseEvent event) {
 		if (pasteboard.getDragLine() != null && isConnectable()) {
 			VNode starter = pasteboard.getDragSource();
@@ -671,57 +686,58 @@ public void addBadge(String letter)
 
 	double prevMouseX, prevMouseY;
 	protected void handleMousePressed(final MouseEvent event) {
-
-
-		if (event.getClickCount() > 1)
-		   {
-			   getInfo();
-			   event.consume();
-			   return;
-		   }
-		   if (event.isPopupTrigger())
-		   {
-			   doContextMenu(event);
-			   event.consume();
-			   return;
-		   }
-		   if (pasteboard.getDragLine() != null)
-		   {
-			   double halfWidth = getWidth() / 2.0;
-			   double halfHeight = getHeight() / 2.0;
-			   double x = event.getSceneX();
-			   double y = event.getSceneY();
-			   double centerX = getLayoutX() + halfWidth ;
-			   double centerY = getLayoutY() + halfHeight;
-			   Point2D local = pasteboard.sceneToLocal(new Point2D(x,y));
-			   
-			   
-				double relX = (local.getX() - centerX)  / halfWidth;
-				double relY = (local.getY() - centerY)  / halfHeight;
-				RelPosition pos =  new RelPosition(relX,relY);
-			   finishDragLine(this, pos);
-				event.consume();
-				return;
-		   }
-
-		   Tool curTool = pasteboard.getTool();
-		   if (curTool != null && !curTool.isArrow()) return;
+		if (event.getClickCount() > 1)	   {	getInfo(); 	event.consume();   return; }
+		if (event.isPopupTrigger())	   {	doContextMenu(event);	event.consume();	 return;	   }
+		if (pasteboard.getDragLine() != null)
+		{
+		   double halfWidth = getWidth() / 2.0;
+		   double halfHeight = getHeight() / 2.0;
+		   double x = event.getSceneX();
+		   double y = event.getSceneY();
+		   double centerX = getLayoutX() + halfWidth ;
+		   double centerY = getLayoutY() + halfHeight;
+		   Point2D local = pasteboard.sceneToLocal(new Point2D(x,y));
 		   
-		   if (event.isAltDown())
-			   selection.duplicateSelection();
-		   
-		   prevMouseX = event.getSceneX();
-		   prevMouseY = event.getSceneY();
-			boolean wasSelected = selection.isSelected(this);
-			if (event.isControlDown() || event.isShiftDown())			//TODO -- configurable?
-				selection.select(this, !wasSelected);
-			else if (!wasSelected)
-				selection.selectX(this);
+			double relX = (local.getX() - centerX)  / halfWidth;
+			double relY = (local.getY() - centerY)  / halfHeight;
+			RelPosition pos =  new RelPosition(relX,relY);
+		   finishDragLine(this, pos);
 			event.consume();
+			return;
+		}
+
+	   Tool curTool = pasteboard.getTool();
+	   if (curTool != null && !curTool.isArrow()) return;
+	   
+	   if (event.isAltDown())
+		   selection.duplicateSelection();
+	   
+	   
+	   prevMouseX = event.getSceneX();
+	   prevMouseY = event.getSceneY();
+	   boolean inCorner = ptInCorner(prevMouseX, prevMouseY);
+	   if (inCorner)
+		   handleResize(event);
+	   else
+	   {
+		boolean wasSelected = selection.isSelected(this);
+		if (event.isControlDown() || event.isShiftDown())			//TODO -- configurable?
+			selection.select(this, !wasSelected);
+		else if (!wasSelected)
+			selection.selectX(this);
+	   }
+	   event.consume();
 	}
+	private boolean ptInCorner(double x, double y) {
+		
+		boolean xOnEdge = near(x, getLayoutX()) || near(x, getLayoutX() + getWidth());
+		boolean yOnEdge = near(y, getLayoutY()) || near(y, getLayoutY() + getHeight());
+		return xOnEdge && yOnEdge;
+	}
+	
+	private boolean near(double a, double b)	{		return Math.abs(a-b) < 10;   }
 	// **------------------------------------------------------------------------------
 	private void getInfo() {		
-		String name = getText();
 		String biopaxRef = getAttributes().get("BiopaxRef");
 		if (biopaxRef != null)
 		{
@@ -732,12 +748,6 @@ public void addBadge(String letter)
 				return;
 			}
 		}
-//		Gene gene =  modelNode().getModel().findGene(name);
-//		if (gene != null)
-//		{	
-//			gene.getInfo();
-//			return;
-//		}
 		String s = modelNode().getInfoStr();
 		   if (StringUtil.hasText(s))
 		   {  
@@ -754,11 +764,12 @@ public void addBadge(String letter)
 	public void rememberPositionEtc(int offset) 			
 	{		
 		AttributeMap attributes = getAttributes();
+		
 		Bounds bounds = getBoundsInParent();
-		attributes.putDouble("X",  bounds.getMinX() + offset);	
-		attributes.putDouble("Y",  bounds.getMinY() + offset);	
-		attributes.putDouble("Width",  bounds.getWidth());	
-		attributes.putDouble("Height",   bounds.getHeight());
+		attributes.putDouble("X",  getLayoutX()+ offset);   //bounds.getMinX() + offset);	
+		attributes.putDouble("Y",  getLayoutY() + offset);	
+		attributes.putDouble("Width",  getWidth());	
+		attributes.putDouble("Height",   getHeight());
 		attributes.putDouble("ZOrder",   pasteboard.getChildren().indexOf(this));
 		Shape shape = getShape();
 		if (shape == null) shape = getFigure();
@@ -801,14 +812,13 @@ public void addBadge(String letter)
 		AttributeMap attr = modelNode();
 		StringBuilder bldr = new StringBuilder();
 
-//		double fontsize = attr.getDouble("FontSize");
 		FontWeight wt =  FontWeight.NORMAL;
 		FontPosture posture =  FontPosture.REGULAR;
 		double size = 12;
 		
 		String fontweight = attr.get("FontWeight");		// Bold or nothing
 		if ("Bold".equals(fontweight))		
-			wt = FontWeight.BOLD;
+			wt = FontWeight.EXTRA_BOLD;
 			//bldr.append("-fx-font-weight: bolder; ");
 		String style = attr.get("FontStyle");			// Italic or nothing
 		if ("Italic".equals(style))			
@@ -819,8 +829,6 @@ public void addBadge(String letter)
 		String fontsize = attr.get("FontSize");
 			if (fontsize != null) 
 				size = StringUtil.toDouble(fontsize);
-
-		
 		
 		String colorTag = dataNode.get("Color");
 		if (colorTag != null)
@@ -839,11 +847,7 @@ public void addBadge(String letter)
 //		bldr.append(makeStyleString("Opacity"));
 		bldr.append(makeStyleString("LineThickness"));
 		str = bldr.toString();
-		if (getFigure()!= null)
-		{	
-			getFigure().setStyle(str);	    
-		
-		}
+		if (getFigure()!= null)			getFigure().setStyle(str);	    
 	}
 	
 	private String makeStyleString(String gpmlTag) {
@@ -854,39 +858,6 @@ public void addBadge(String letter)
 		if ("FillColor".equals(gpmlTag) || "Color".equals(gpmlTag))
 			val = "#" + val;
 		return fxml + ":" + val + "; ";
-	}
-	
-	//--------------------------------------------------------
-	public String asGPML()
-	{
-		ObservableMap<Object, Object> pro = getProperties();
-		Object o = pro.get("TextLabel");
-		String textLabel = o == null ? "" : o.toString();
-		o = pro.get("Type");
-		String type = o == null ? "" : o.toString();
-		String header = "<DataNode TextLabel=\"%s\" GraphId=\"%s\" Type=\"%s\" >\n";
-		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, getGraphId(), type));
-
-		String[] tokens = toString().split(" ");
-		String shape = tokens.length > 1 ? tokens[1] : "Error";
-		double w = getLayoutBounds().getWidth();
-		double h = getLayoutBounds().getHeight();
-		double cx = getLayoutX() + w / 2;
-		double cy = getLayoutY() + h / 2;
-		if (getShape() instanceof Rectangle)
-		{
-			Rectangle sh = (Rectangle) getShape();
-			cx = sh.getX() + w / 2;
-			cy = sh.getY() + h / 2;
-			if (sh.getArcWidth() > 0)
-				shape = "RoundedRectangle";
-		}
-		String graphics1 = String.format("  <Graphics CenterX=\"%.2f\" CenterY=\"%.2f\" Width=\"%.2f\" Height=\"%.2f\" ZOrder=\"32768\" ", cx, cy, w, h);
-		String graphics2 = String.format("FontWeight=\"%s\" FontSize=\"%d\" Valign=\"%s\" ShapeType=\"%s\"", "Bold", 12, "Middle", shape);
-		buffer.append(graphics1).append(graphics2).append(" />\n") ;
-		buffer.append("  <Xref Database=\"\" ").append("ID=\"\"").append("/>\n") ;
-		buffer.append("</DataNode>\n");
-		return buffer.toString();
 	}
 	// **-------------------------------------------------------------------------------
 	protected void doContextMenu(MouseEvent event) {
@@ -916,15 +887,13 @@ public void addBadge(String letter)
 		Menu toLayer = 	makeLayerMenu();
 		MenuItem dup = 		makeItem("Duplicate", a -> 	{		controller.duplicateSelection();	});
 		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
-		list.addAll(toFront, toBack, toLayer, dup, del);   
-
+		MenuItem ungroup = 		makeItem("Ungroup", a -> 	{		controller. ungroup();	});
+		list.addAll(toFront, toBack, toLayer, dup, del); 
 //		Selection selection = pasteboard.getSelectionMgr();
 		if (selection.isGroupable())	list.add(makeItem("Group", e ->  	{	controller.group();    }));   
-		if (isUngroupable())			list.add(makeItem("Ungroup", e -> 	{ 	controller.ungroup();  }));   
+		if (isGroup())			list.add(makeItem("Ungroup", e -> 	{ 	controller.ungroup();  }));   
 		return list;
 	}
-	
-	private boolean isUngroupable() {		return false;	}
 
 	private MenuItem makeItem(String name, EventHandler<ActionEvent> foo) {
 		MenuItem item = new MenuItem(name);
@@ -957,7 +926,7 @@ public void addBadge(String letter)
 	public LayerRecord getLayer()
 	{
 		String layername = getAttributes().get("Layer");
-		if (layername == null) return null;
+		if (layername == null) return pasteboard.getContentLayerRecord();
 		return getController().getLayerRecord(layername);
 	}
 	
@@ -983,5 +952,18 @@ public void addBadge(String letter)
 	public void addState(DataNodeState statenode) {
 		String label = statenode.get("TextLabel");		// getName includes "State:"
 		addBadge(label);
+	}
+	
+	public void deselect() {
+		setEffect(null);	
+		showPorts(false);
+		ObservableMap<Object, Object> properties = getProperties(); 
+		BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
+		if (selectedProperty == null)
+		{
+			selectedProperty = new SimpleBooleanProperty(Boolean.FALSE);
+			properties.put("selected", selectedProperty );
+		}
+		else selectedProperty.set(Boolean.FALSE);	
 	}
 }

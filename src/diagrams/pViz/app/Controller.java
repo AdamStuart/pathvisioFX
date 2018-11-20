@@ -25,6 +25,7 @@ import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.WebUtil;
+import diagrams.pViz.view.GroupMouseHandler;
 import diagrams.pViz.view.Inspector;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.LayerController;
@@ -46,6 +47,7 @@ import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.geometry.BoundingBox;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Side;
@@ -69,6 +71,7 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.image.Image;
+import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.DataFormat;
 import javafx.scene.input.Dragboard;
@@ -141,7 +144,7 @@ public class Controller implements Initializable, IController
 	        Dragboard db = b.startDragAndDrop(TransferMode.COPY);
 	        db.setDragView(b.snapshot(null, null), e.getX(), e.getY());
 	        ClipboardContent cc = new ClipboardContent();
-	        cc.putString(b.getText());
+	        cc.putString("SHAPE:" + b.getText());
 	        db.setContent(cc);
 		}
 	}
@@ -347,6 +350,8 @@ public class Controller implements Initializable, IController
 		bottomSideBarButton.fire();
 	}
 	// **-------------------------------------------------------------------------------
+	public void modelChanged() 			{		updateTreeTable(); }
+		
 	GPMLTreeTableView nodeTreeTable;
 	public GPMLTreeTableView getTreeTableView() { return nodeTreeTable; }
 	public void updateTreeTable()	{ nodeTreeTable.updateTreeTable();  }
@@ -614,9 +619,17 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	public void setState(String s)
 	{
-		pasteboard.clear();
-//		pasteboard.getChildren().addAll(pasteboard.getGrid().getNodes());
-		model.setState(s);
+		try
+		{
+			pasteboard.clear();
+			org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
+			if (doc != null)
+				addXMLDoc(doc);					
+		}
+		catch (Exception e) 
+		{
+			e.printStackTrace();
+		}
 	}
 	//-----------------------------------------------------------------------------
 	public void addXMLDoc(org.w3c.dom.Document doc)
@@ -631,7 +644,7 @@ public class Controller implements Initializable, IController
 		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
 		{
 			redrawAllEdges();	
-			updateTreeTable();
+			modelChanged();
 		} )  );
 		postponed.start();  
 	}
@@ -646,7 +659,26 @@ public class Controller implements Initializable, IController
 	}
 	//-----------------------------------------------------------------------------
 	public void doPaste()// TODO 
-	{	}
+	{	
+	     final Clipboard clipboard = Clipboard.getSystemClipboard();
+	     if (clipboard.hasString())
+	     {
+	    	String s =  clipboard.getString();
+	    	String[] lines = s.split("\n|\r");
+	    	int nLines = lines.length;
+	    	if (nLines > s.length() / 10)		// looks like a gene set
+	    	{
+    			Point2D pt = new Point2D(200,200);
+    			for (String line : lines)
+    			{
+    				pasteboard.addNodeAt(line, pt);
+    				pt = pt.add(0,40);
+    			}
+
+	    	}	
+	     }
+		
+	}
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
 	{
@@ -705,15 +737,23 @@ public class Controller implements Initializable, IController
 	
 	// **-------------------------------------------------------------------------------
 	public void remove(Node n)						
-	{		
+	{
 		pasteboard.getChildren().remove(n);	
 	}
 	public void remove(VNode n)						
 	{		
+		n.modelNode().removeSelf();
 		getModel().removeNode(n);
 		String layer = n.getLayerName();
 		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
 		content.remove(n);
+	}
+	public void remove(Edge e)						
+	{		
+		getModel().removeEdge(e);
+		String layer = e.getLayer();
+		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
+		content.remove(e.getEdgeLine());
 	}
 	// **-------------------------------------------------------------------------------
 	public String getState()					{ 	return model.saveState();  }
@@ -787,7 +827,7 @@ public class Controller implements Initializable, IController
 	public void redrawAllEdges() {
 	for (Interaction edge : model.getEdges())
 		{
-			edge.rebind();
+//			edge.rebind();
 			edge.connect();
 		}
 	}
@@ -810,7 +850,7 @@ public class Controller implements Initializable, IController
 				String groupRef = nod.get("GroupRef");
 				if (groupId.equals(groupRef))
 				{
-					groupNode.addToGroup(nod);
+					groupNode.addMember(nod);
 					vnodes.add(stack);
 					pasteboard.getContentLayer().remove(stack);
 					stack.setMouseTransparent(true);
@@ -835,7 +875,7 @@ public class Controller implements Initializable, IController
 		if (node.getStack() == null)
 			new VNode(node, pasteboard);
 		model.addResource(node);
-		updateTreeTable();
+		modelChanged();
 	}
 
 	public void addShapeNode(DataNode shapeNode) {
@@ -864,20 +904,62 @@ public class Controller implements Initializable, IController
 		e.setName(e.get("Name"));
 //		if (!model.containsEdge(e)) 
 		model.addEdge(e);
-		EdgeLine artifact = e.getEdgeLine();
-		pasteboard.add(0, artifact, e.getLayer());
+		EdgeLine edgeLine = e.getEdgeLine();
+		pasteboard.add(0, edgeLine, e.getLayer());
 	}
 
 	public void addInteraction(VNode starter, VNode end) {		
 		Interaction i = model.addIteraction(starter, end);
 //		i.rebind();
-		updateTreeTable();
+		modelChanged();
 	}
-	public void addGroup(DataNodeGroup grp) {
-		pasteboard.setActiveLayer("Background");	
-		new VNode(grp, pasteboard);
+	
+	public void addGroup(DataNodeGroup grp) {		// from parser
+		grp.getStack().addEventHandler(MouseEvent.ANY, new GroupMouseHandler(pasteboard));
 		model.addGroup(grp);
-//		nodeTreeTable.addBranch(grp);
+		BoundingBox bounds = grp.getBounds();
+		grp.getStack().setBounds(bounds);
+	}
+	
+	public DataNodeGroup addGroup(List<VNode> selectedItems) {// from GUI selection
+		getUndoStack().push(ActionType.Group);
+
+		pasteboard.setActiveLayer("Background");	
+		AttributeMap map = new AttributeMap();
+		map.put("Type", "Group");
+		map.put("ShapeType", "Octagon");
+		map.put("Color", "FF00FF");
+		map.put("TextLabel", "Complex");
+		map.put("Name", "Complex");
+		map.put("Layer", "Background");
+		DataNodeGroup group = new DataNodeGroup(map, getModel());
+		VNode stack = group.getStack();
+		for (VNode item : selectedItems)
+		{
+			item.setMouseTransparent(true);
+			item.modelNode().rememberPosition();
+			group.addMember(item.modelNode());
+		}
+		group.calcBounds();
+		double groupWidth = group.getDouble("Width");
+		double groupHeight = group.getDouble("Height");
+		double minX = group.getDouble("X");
+		double minY = group.getDouble("Y");
+		for (VNode item : selectedItems)
+		{
+			stack.getChildren().add(item);
+			double hw = item.getWidth() /2;
+			double hh = item.getHeight()/2;
+			item.setTranslateX(item.getLayoutX() - minX - groupWidth /4);
+			item.setTranslateY(item.getLayoutY() - minY- groupHeight /4 );
+			item.deselect();
+//			AnchorPane.setLeftAnchor(item, item.getLayoutX() - minX);
+//			AnchorPane.setTopAnchor(item, item.getLayoutY() - minY);
+		}
+		group.setName("Complex");
+		group.setGraphId(group.get("GraphId"));
+		addGroup(group);
+		return group;
 
 	} 
 	public void addStateNode(DataNodeState statenode) {

@@ -112,7 +112,7 @@ public class GPMLPoint {
 
 
 	
-	public String toString()
+	public String toGPML()
 	{
 		String firstPart = String.format("<Point X=\"%.2f\" Y=\"%.2f\" ", x, y);
 		String secondPart = String.format("GraphRef=\"%s\" RelX=\"%.2f\" RelY=\"%.2f\" ArrowHead=\"%s\" />\n", getGraphRef(), getRelX(), getRelY(), getArrowType());

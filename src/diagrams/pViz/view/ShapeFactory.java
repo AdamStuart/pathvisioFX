@@ -9,7 +9,6 @@ import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.CellShapeFactory;
 import diagrams.pViz.model.DataNode;
-import diagrams.pViz.model.Model;
 import gui.Action.ActionType;
 import gui.UndoStack;
 import javafx.collections.ObservableList;
@@ -64,7 +63,9 @@ public class ShapeFactory {
 	/*
 	 * makeNewShape returns the shape but also adds it to stack's children
 	 */
-	static public Shape makeNewShape(String s, Point2D center, DataNode modelNode, VNode stack) {
+	static public Shape makeNewShape(String s,  VNode stack) {
+		DataNode modelNode = stack.modelNode();
+		Point2D center = modelNode.getPosition();
 		Shape newShape= null;
 		Tool tool = Tool.lookup(s);
 //		AttributeMap attrMap = modelNode;
@@ -75,10 +76,11 @@ public class ShapeFactory {
 			case Metabolite:		newShape = new Rectangle();	break;
 			case Protein:			newShape = new Rectangle();	break;
 			case Pathway:			newShape = new Rectangle();	break;
-			case GroupComponent:	newShape = new Rectangle();	break;
+			case GroupComponent:	newShape = new Polygon();	break;
 
 			case Rectangle:			newShape = new Rectangle();	break;
 			case RoundedRectangle:	newShape = new Rectangle();	break;
+			case Octagon:			newShape = new Polygon();	break;
 			case Polygon:			newShape = new Polygon();	break;
 			case Polyline:			newShape = new Polyline();	break;
 			case Line:				newShape = new Line();		break;
@@ -140,7 +142,7 @@ public class ShapeFactory {
 	        r.setX(center.getX() - w /2 ); 
 	        r.setY(center.getY() - h /2 ); 
         }
-        else if (newShape instanceof Polygon)
+        else if (newShape instanceof Polygon || tool == Tool.GroupComponent)
         {
         	Polygon p = (Polygon) newShape;
         	double x0 = center.getX() - w /2;

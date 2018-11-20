@@ -70,13 +70,13 @@ public class Inspector extends HBox implements Initializable {
 		fillLabel.setText("");		fillLabel.setMinWidth(30);		fillLabel.setAlignment(Pos.BASELINE_CENTER);
 		strokeLabel.setText(""); 	strokeLabel.setMinWidth(30);	strokeLabel.setAlignment(Pos.BASELINE_CENTER);
 		
-		fillColor.setOnAction(evt -> fillChanged(true));
-		lineColor.addEventHandler(ActionEvent.ACTION, evt -> strokeChanged(true));
+		fillColor.setOnAction(evt -> fillChanged());
+		lineColor.addEventHandler(ActionEvent.ACTION, evt -> strokeChanged());
 
-		scale.valueProperty().addListener((ov, old, val) ->   {  	scaleChanged(true);        });	
-		weight.valueProperty().addListener((ov, old, val) ->    {   weightChanged(false);   });	
-		rotation.valueProperty().addListener((ov, old, val) ->  {   rotationChanged(false);  });	
-		opacity.valueProperty().addListener((ov, old, val) ->  {   opacityChanged(false);  });	
+		scale.valueProperty().addListener((ov, old, val) ->   	{  	scaleChanged();   	});	
+		weight.valueProperty().addListener((ov, old, val) ->    {   weightChanged();   	});	
+		rotation.valueProperty().addListener((ov, old, val) ->  {   rotationChanged();  });	
+		opacity.valueProperty().addListener((ov, old, val) ->  	{   opacityChanged();  	});	
 		
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
 		EventHandler<Event> evH = event -> {	controller.getUndoStack().push(ActionType.Property);  };
@@ -125,51 +125,52 @@ public class Inspector extends HBox implements Initializable {
 		return buff.toString();
 	}
 	// **-------------------------------------------------------------------------------
-	private void fillChanged(boolean undoable)							
+	private void fillChanged()							
 	{ 	 			
-		if (undoable) 
+		if (controller.getUndoStack().peek() != ActionType.Property ) 
 			controller.getUndoStack().push(ActionType.Property); 
 		selection.applyStyle(getStyleSettings(fillColor));	
 		selection.putColor("Color", fillColor.getValue());	
 	}
 	
-	private void weightChanged(boolean undoable)							
+	private void weightChanged()							
 	{ 	 			
-		if (undoable) 
+		if (controller.getUndoStack().peek() != ActionType.Property ) 
 			controller.getUndoStack().push(ActionType.Property); 
 		selection.applyStyle(getStyleSettings(weight));	
 		selection.putDouble("LineThickness", weight.getValue());	
 	}
 	
 	
-	private void scaleChanged(boolean undoable)							
+	private void scaleChanged()							
 	{ 	 			
-		if (undoable) 
-			controller.getUndoStack().push(ActionType.Property); 
-		selection.applyStyle(getStyleSettings(weight));	
-		selection.putDouble("Scale", weight.getValue());	
+		if (controller.getUndoStack().peek() != ActionType.Scale ) 
+			controller.getUndoStack().push(ActionType.Scale); 
+		selection.applyStyle(getStyleSettings(scale));	
+		selection.putDouble("Scale", scale.getValue());	
+		selection.resetScale(scale.getValue());	
 	}
 	
-	private void strokeChanged(boolean undoable)							
+	private void strokeChanged()							
 	{ 	 			
-		if (undoable) 
+		if (controller.getUndoStack().peek() != ActionType.Property ) 
 			controller.getUndoStack().push(ActionType.Property); 
 		selection.applyStyle(getStyleSettings(lineColor));	
 		selection.putColor("LineColor", lineColor.getValue());	
 
 	}
 	
-	private void opacityChanged(boolean undoable)							
+	private void opacityChanged()							
 	{ 	 			
-		if (undoable) 
+		if (controller.getUndoStack().peek() != ActionType.Opacity ) 
 			controller.getUndoStack().push(ActionType.Opacity); 
 		selection.applyStyle(getStyleSettings(opacity));	
 		selection.putDouble("Opacity", opacity.getValue() / 100.);	
 	}
 	
-	private void rotationChanged(boolean undoable)							
+	private void rotationChanged()							
 	{ 	 			
-		if (undoable) 
+		if (controller.getUndoStack().peek() != ActionType.Rotate ) 
 			controller.getUndoStack().push(ActionType.Rotate); 
 		selection.applyStyle(getStyleSettings(rotation));	
 		selection.putDouble("Rotation", rotation.getValue() / 100.);	
@@ -252,7 +253,7 @@ public class Inspector extends HBox implements Initializable {
 // unused		
 	}
 		
-
+// KeyFrame list is removed for now
 //		@FXML private TableView<KeyFrameRecord> keyFramesTable;
 //		@FXML private TableColumn<KeyFrameRecord, String> keyFrameNameColumn;
 //		@FXML private TableColumn<KeyFrameRecord, Double> keyFrameHoldColumn;

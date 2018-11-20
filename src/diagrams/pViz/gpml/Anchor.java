@@ -57,7 +57,7 @@ public class Anchor extends XRefable {		// extends DataNode
 	{
 		String shape = get("Shape");
 		if (shape == null) shape = "Oval";
-		return String.format("<Anchor Position=(%.2f, %.2f) Shape=\"%s\" GraphId=\"%s\" />\n", getPosition().getX(), getPosition().getY(), shape, getGraphId());
+		return String.format("<Anchor Position=\"%.2f\" Shape=\"%s\" GraphId=\"%s\" />\n", getAnchorPosition(), shape, getGraphId());
 	}
 
 //	public void setAnchorPosition(Interaction i) {		resetPosition(i);	}

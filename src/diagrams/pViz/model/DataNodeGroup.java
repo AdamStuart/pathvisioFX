@@ -3,32 +3,32 @@ package diagrams.pViz.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import diagrams.pViz.app.Controller;
 import diagrams.pViz.view.VNode;
 import javafx.geometry.BoundingBox;
-import javafx.scene.shape.Shape;
+import javafx.scene.layout.AnchorPane;
 import model.AttributeMap;
-import model.bio.XRefable;
-import util.StringUtil;
 
 
 @SuppressWarnings("serial")
 public class DataNodeGroup extends DataNode {
 
-	protected VNode stack;
-	protected Model model;
+//	protected VNode stack;
+//	AnchorPane anchorPane;
 	private double minX = Double.MAX_VALUE;
 	private double maxX = Double.MIN_VALUE;
 	private double minY = Double.MAX_VALUE;
 	private double maxY = Double.MIN_VALUE;
 	private List<DataNode> members = new ArrayList<DataNode>();
 //	public List<DataNode> getChildren() { return children ; } 
-	public void addToGroup(DataNode child)	{		members.add(child);	}
+	public void addMember(DataNode child)	{		members.add(child);	}
 	public void clearMembers() 				{		members.clear();	}
-	
+	public List<DataNode> getMembers() 		{		return members;	}
+//	public AnchorPane getAnchorPane()		{ 		return anchorPane;	}
 	public DataNodeGroup(AttributeMap map, Model m)
 	{
 		super(map,m);
+//		anchorPane = new AnchorPane();
+//		stack.getChildren().add(anchorPane);
 	}	
 
 	public void calcBounds()
@@ -46,6 +46,12 @@ public class DataNodeGroup extends DataNode {
 			if (centerY - halfheight < minY)  minY = centerY - halfheight;
 			if (centerY + halfheight > maxY)  maxY = centerY + halfheight;
 		}
+		putDouble("X", minX);
+		putDouble("Y", minY);
+		putDouble("CenterX", (minX + maxX) / 2.0);
+		putDouble("CenterY", (minY + maxY) / 2.0);
+		putDouble("Width",  maxX - minX);
+		putDouble("Height",  maxY - minY);
 	}
 
 	public BoundingBox getBounds() {
@@ -80,7 +86,7 @@ public class DataNodeGroup extends DataNode {
 	String elementType = "Group";
 	String[]  nodeAttrs = {  "TextLabel", "GroupId", "GraphId", "Style"};
 	private void buildNodeOpen(StringBuilder bldr) {
-		bldr.append("<Group" + attributeList(nodeAttrs) + ">\n");
+		bldr.append("<Group " + attributeList(nodeAttrs) + " >\n");
 	}
 	private void buildNodeClose(StringBuilder bldr) {		bldr.append("</Group>\n");	}
 

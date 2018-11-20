@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.model.DataNode;
+import diagrams.pViz.model.DataNodeGroup;
+import diagrams.pViz.model.Edge;
 import diagrams.pViz.model.EdgeLine;
+import diagrams.pViz.model.Interaction;
 import diagrams.pViz.model.Model;
-import diagrams.pViz.view.GroupMouseHandler;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.Shape1;
@@ -27,7 +29,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -49,8 +50,8 @@ public class Selection
 		items = FXCollections.observableArrayList(); 
 		items.addListener( (ListChangeListener<Node>)c ->  { root.getController().resynch(items);	 });
 	}
-	private Model getModel()	{ return getController().getModel();  } 
-	private Controller getController() { return root.getController();	}
+	public Model getModel()	{ return getController().getModel();  } 
+	public Controller getController() { return root.getController();	}
 //	private NodeFactory getNodeFactory() { return getController().getNodeFactory();	}
 	private Pasteboard root;
 	private ObservableList<VNode> items;
@@ -58,8 +59,12 @@ public class Selection
 	public ObservableList<VNode> getAll()				{ return items;	}
 
 	public VNode first()			{ return count() == 0 ? null : items.get(0);	}
-	public void clear()				{ for (int i= items.size()-1; i>= 0; i--)
+	public void clear()				{ 
+										for (int i= items.size()-1; i>= 0; i--)
 											deselect(items.get(i));  
+										for (Interaction e : getModel().getEdges())
+											if (e.isSelected())
+												e.select(false);
 									}
 	public int count()				{ return items.size();	}
 	public boolean isGroupable()	{ return count() > 1;	}
@@ -94,17 +99,8 @@ public class Selection
 	public void select(VNode s, boolean b)	{  if (b) select(s); else deselect(s);	}
 	public void deselect(VNode s)	
 	{ 
-		items.remove(s);	
-		s.setEffect(null);	
-		s.showPorts(false);
-		ObservableMap<Object, Object> properties = s.getProperties(); 
-		BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
-		if (selectedProperty == null)
-		{
-			selectedProperty = new SimpleBooleanProperty(Boolean.FALSE);
-			properties.put("selected", selectedProperty );
-		}
-		else selectedProperty.set(Boolean.FALSE);	
+		items.remove(s);
+		s.deselect();
 	}
 	public boolean isSelected(Node s)		{ return items.contains(s);	}
 	//--------------------------------------------------------------------------
@@ -130,12 +126,14 @@ public class Selection
 		{
 			VNode node = items.get(i);
 			if (isGrid(node)) continue;
-			
 			getController().remove(node);
-			node.getLayer().remove(node);
-			items.remove(node);
 		}
-		getController().getTreeTableView().updateTreeTable();
+		for (Edge e : getModel().getEdges())
+			if (e.isSelected())
+				getController().remove(e);
+			
+		items.clear();
+		getController().modelChanged();  
 	}
 	//--------------------------------------------------------------------------
 	boolean isGrid(VNode node) { return node != null && node.getId() != null && node.getId().contains("grid"); }
@@ -184,25 +182,12 @@ public class Selection
 	//--------------------------------------------------------------------------
 	public void doGroup()
 	{
-		getUndoStack().push(ActionType.Group);
-		Group group = new Group();
-		group.addEventHandler(MouseEvent.ANY, new GroupMouseHandler(root));
-		group.getChildren().addAll(items);
-		deleteSelection();
-		getController().addExternalNode(group);
-		group.setTranslateX(10);
+		DataNodeGroup g = getController().addGroup(items);
+		items.clear();
+		getController().modelChanged();  
+		select(g.getStack()); 
 	}
-	//--------------------------------------------------------------------------
-	public void connect()
-	{
-		getModel().connectSelectedNodes();
-	}
-	
-	public void connect(VNode a, VNode b)
-	{
-//		getModel().co
-	}
-	
+
 	private UndoStack getUndoStack() {		return getController().getUndoStack();	}
 	//--------------------------------------------------------------------------
 	public void applyStyle(String styleSettings)
@@ -251,7 +236,7 @@ public class Selection
 	public void translate(KeyCode key)		
 	{
 		getUndoStack().push(ActionType.Move);	
-		double amount = 30;
+		double amount = 1;
 		double dx = 0, dy = 0;
 		if (key == KeyCode.LEFT)		dx = amount;
 		else if (key == KeyCode.RIGHT)	dx = -amount;
@@ -332,14 +317,10 @@ public class Selection
 			if (n instanceof StackPane)
 			{
 				StackPane r = (StackPane) n;
-//				r.tra
-//				double width = r.getWidth();
-//				double height = r.getHeight();
 				double x = r.getLayoutX() - dx;
 				double y = r.getLayoutY() - dy;
 				r.setLayoutX(x);
 				r.setLayoutY(y);
-//				RectangleUtil.setRect(r, x, y, width, height);
 			}
 			if (n instanceof VBox)
 			{
@@ -375,9 +356,9 @@ public class Selection
 					{
 						if (node instanceof VNode)
 							select((VNode)node);
+						if (node instanceof EdgeLine)	
+							((EdgeLine)node).select(true);
 					}
-					if (node instanceof EdgeLine)	
-						((EdgeLine)node).select(true);
 				}
 			}
 			if (n instanceof VNode)	
@@ -405,31 +386,24 @@ public class Selection
 	public void toFront()	{	for (Node n : items)	n.toFront();	}
 	public void toBack()	{	for (Node n : items)	n.toBack();		}
 	
-	//--------------------------------------------------------------------------
-//	public void group()
-//	{
-//		Group group = new Group();
-//		for (Node n : items)
-//			group.getChildren().addAll(n);
-//		
-//		deleteSelection();
-//		AttributeMap attr = new AttributeMap("ShapeType:Group");
-//		MNode model = new MNode(attr, getController().getDrawModel());
-//		getController().add(model.getStack());
-//		select(model.getStack());
-//	}	
+	//-------------------------------------------------------------------------
 	
 	public void ungroup()
 	{
-		// TODO items.stream().filter(n instanceof Group).forEach
+		List<VNode> toAdd = new ArrayList<VNode>();
 		for (VNode n : items)
 			if (n.isGroup())
 			{
-				Controller c = getController();
-				List<VNode> kids = n.ungroup();
-				c.addAll(kids);
-//				c.selectAll(kids);
+				toAdd.addAll(n.ungroup());
+				root.getBackgroundLayer().remove(n);
 			}
+		
+		items.clear();
+		for (VNode n : toAdd)
+		{
+			root.getContentLayer().add( n);
+			select(n);
+		}
 	}
 	boolean NO_UNDO = false;
 	//--------------------------------------------------------------------------
@@ -491,6 +465,16 @@ public class Selection
 			if (n instanceof VNode)
 				((VNode)n).getAttributes().putDouble(string, value);	
 	}
+	public void resetScale(Double value) {
+		double scale = Math.exp(value-2);
+		for (Node n : items)
+			if (n instanceof VNode)
+			{
+				((VNode)n).setScaleX(scale);	
+				((VNode)n).setScaleY(scale);	
+			}
+	}
+
 	public void put(String string, String value) {
 		for (Node n : items)
 			if (n instanceof VNode)

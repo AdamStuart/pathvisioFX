@@ -3,7 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.launching.macosx.MacOSXType/Java SE 8 [1.8.0_171]"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/libFX"/>
-	<classpathentry kind="lib" path="/Users/adamtreister/git/javaFX/appFX/libs/stanford-corenlp-3.5.2.jar"/>
 	<classpathentry kind="lib" path="/Users/adamtreister/javafx/poi-3.16-beta2/lib/junit-4.12.jar" sourcepath="/Users/adamtreister/.m2/repository/junit/junit/4.10/junit-4.10-sources.jar">
 		<attributes>
 			<attribute name="maven.pomderived" value="true"/>

@@ -119,9 +119,11 @@ private void addCenterPointListeners() {
 			pt = new GPMLPoint(e.getX(), e.getY());
 			pt.setInteraction(interaction);
 			points.add(1,pt);			/// TODO  fix index
+			// add two more midpoint circles
 		}
 		setEdgeType(EdgeType.polyline);
 		connect();
+		e.consume();
 	} );
 	centerPoint.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> 
 	{ 	
@@ -147,7 +149,7 @@ private void addCenterPointListeners() {
 
 	boolean nearby(GPMLPoint pt, double x, double y)
 	{
-		double epsilon = 5;
+		double epsilon = 12;
 		return Math.abs(pt.getX() - x) < epsilon && Math.abs(pt.getY() - y) < epsilon;
 	}
 	
@@ -280,7 +282,9 @@ private void addCenterPointListeners() {
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
 	public void addAnchors(List<Anchor> a) 	{ 	if (a != null) anchors.addAll(a);	}
 	public void removeAnchor(Anchor a) 	{ 	anchors.remove(a);	}
-	public boolean getSelected()		{ 	return selected;	}
+
+	private boolean selected;
+	public boolean isSelected()		{ 	return selected;	}
 
 	public void select(boolean b)		
 	{ 	
@@ -289,6 +293,7 @@ private void addCenterPointListeners() {
 		if (line != null) line.setStroke(c);
 		if (polyline != null) polyline.setStroke(c);
 		if (curve != null) curve.setStroke(c);
+		if (head != null) {		head.setStroke(c);  head.setFill(c);  }
 	}
 	
 	Color lineColor(boolean selected)
@@ -296,7 +301,6 @@ private void addCenterPointListeners() {
 		return selected ? Color.RED : Color.BLACK; 
 	}
 	
-	boolean selected;
 	//----------------------------------------------------------------------
 	public Point2D getPointAlongLine(double position) {
 		Point2D startPt = getStartPoint();   //firstPoint();
@@ -369,6 +373,7 @@ private void addCenterPointListeners() {
 	//----------------------------------------------------------------------
 	public void dispose()
 	{
+		if (head != null) 	getChildren().remove(head);
 		getChildren().clear();	
 	}
 	
@@ -386,17 +391,13 @@ private void addCenterPointListeners() {
 		{
 			case polyline:	polylineConnect(); 		break;
 			case elbow:		elbowConnect(); 		break;
-			case curved:	
-				if (curve != null) 	getChildren().remove(curve);
-				if (line != null) line.setVisible(false);
-					curveConnect(); 	
-				break;
-			default: 		 linearConnect();
+			case curved: 	curveConnect(); 	 	break;
+			default: 		linearConnect();
 		}
 		
 		if (head != null) 	getChildren().remove(head);
 		head = makeArrowhead();
-	 	if (head != null) 	getChildren().add(head);
+//	 	if (head != null) 	getChildren().add(head);
 	 	
 		Point2D pt = getPointAlongLine(0.5);
 		setLabelPosition(pt);
@@ -507,6 +508,7 @@ private void addCenterPointListeners() {
 				if (BADPOINT(lastPt)) 		return;
 				Line refline = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
 				lastPt= LineUtil.getIntersection(refline, endNode, shorten);
+				setLastPoint(lastPt);
 			}
 		}     
 		Point2D start = new Point2D(0,0);
@@ -562,6 +564,8 @@ private void addCenterPointListeners() {
 	//----------------------------------------------------------------------
 
 	private void curveConnect() {
+		if (curve != null) 	getChildren().remove(curve);
+		if (line != null) line.setVisible(false);
 		int nPoints = getPoints().size();
 		Point2D line1End = new Point2D(0,0);
 		for (int i=0; i < nPoints-1; i++)
@@ -613,11 +617,11 @@ private void addCenterPointListeners() {
 		polyline.getPoints().clear();
 		GPMLPoint last = points.get(sz - 1);
 		for (int i = 0; i < sz - 1; i++) {
-			GPMLPoint pt = points.get(i);
+			GPMLPoint pt = points.get(i);	
 			polyline.getPoints().addAll(pt.getX() + pt.getRelX(), pt.getY() + pt.getRelY());
 		}
 		// shorten the last segment if endNode is defined
-		Node endNode = interaction.getEndNode().getStack();
+		Node endNode = interaction == null ? null : interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead??
 		if (shorten) {
 			GPMLPoint prev = points.get(sz - 2);
@@ -668,6 +672,7 @@ private void addCenterPointListeners() {
 	}
 
    //----------------------------------------------------------------------
+
 	public Shape makeArrowhead()
 	{	
 		if (points != null && points.size() > 1)
@@ -681,7 +686,9 @@ private void addCenterPointListeners() {
 				prev = new Point2D(last.getX(), prev.getY());
 //			Point2D lastpoint2D = last.getPoint();
 //			System.out.println("makeArrowhead: " + lastpoint2D);
-			return makeArrowHead(arrowhead.toString(), prev, last.getPoint(), strokeColor);
+			Shape aHead = makeArrowHead(arrowhead.toString(), prev, last.getPoint(), strokeColor);
+			getChildren().add(aHead);
+			return aHead;
 		}
 		return null;
 	}
@@ -746,4 +753,16 @@ private void addCenterPointListeners() {
 	}
 	  
 	//----------------------------------------------------------------------
+	public ArrowType getArrowType()
+	{
+		if (points == null || points.size() < 1) return ArrowType.arrow;
+		GPMLPoint last = points.get(points.size()-1);
+		return last.getArrowType();
+	}
+	public void setArrowType(ArrowType arrow) {
+		if (points == null || points.size() < 1) return;
+		GPMLPoint last = points.get(points.size()-1);
+		last.setArrowType(arrow);
+		
+	}
 }

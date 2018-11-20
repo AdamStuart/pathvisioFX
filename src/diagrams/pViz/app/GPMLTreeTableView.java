@@ -246,21 +246,25 @@ System.out.println("stateChanged " + e.toString());
 		if (model.getDataNodeMap().size() > 0) { nodes.getChildren().clear();   root.getChildren().add(nodes);  }
 		if (model.getShapes().size() > 0)  
 		{ 
-			shapes.getChildren().clear(); root.getChildren().add(shapes); }
+			shapes.getChildren().clear(); 
+			root.getChildren().add(shapes); 
+		}
 		if (model.getLabels().size() > 0) 
 		{ 
-			labels.getChildren().clear(); root.getChildren().add(labels);
+			labels.getChildren().clear(); 
+			root.getChildren().add(labels);
 		}
 		if (model.getGroups().size() > 0)  
 		{ 
-			groups.getChildren().clear(); root.getChildren().add(groups);
+			groups.getChildren().clear(); 
+			root.getChildren().add(groups);
 		}
 		orphans.getChildren().clear(); 		// only add it if it gets children from the interaction processing
 		
-//		root.getChildren().addAll(nodes, shapes, labels, groups);
-		ObservableList<TreeItem<XRefable>> kids =  nodes.getChildren();
-		kids.clear();
-
+////		root.getChildren().addAll(nodes, shapes, labels, groups);
+//		ObservableList<TreeItem<XRefable>> kids =  nodes.getChildren();
+//		kids.clear();
+		nodes.setExpanded(true);
 		model.getNodes().stream().forEach((node) -> {			addBranch(node);        });
 		
 		model.getEdges().stream().forEach((interaction) -> {
@@ -309,7 +313,7 @@ System.out.println("stateChanged " + e.toString());
 		model.getGroups().stream().forEach((group) -> {
 			addBranch(group);
         });
-		
+		 
 		System.out.println("======================\n\n\n");
 		dumpDeep(nodes, "", 0);
 //		model.resetEdgeTable();

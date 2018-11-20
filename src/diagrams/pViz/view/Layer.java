@@ -22,6 +22,7 @@ public class Layer extends Group {
 	public List<Node> getNodes() 		{ return getChildren();	}
 
 	public void clear()					{ getChildren().clear();	}
+	public void sort()					{ getChildren().sort(null);	}
 	
 	public Layer(String s)
 	{
@@ -51,7 +52,7 @@ public class Layer extends Group {
 	{
 		if (locked) return;
 		getChildren().remove(node);
-		node.setVisible(vis);
+		node.setVisible(false);
 	}
 	
 	public void remove(Node node)
