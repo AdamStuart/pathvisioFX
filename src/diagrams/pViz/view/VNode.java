@@ -7,7 +7,6 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPML;
-import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
@@ -22,12 +21,10 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.BoundingBox;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
@@ -44,7 +41,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.ClosePath;
-import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -54,8 +50,6 @@ import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
-import javafx.scene.text.TextAlignment;
-import javafx.util.Pair;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.stat.RelPosition;
@@ -73,14 +67,17 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	private String title;
 	private boolean movable;
 	private boolean resizable;
-	private boolean editable;
+	private boolean selectable;
 	private boolean connectable;
 //	private TooltipBehavior myTTB = new TooltipBehavior(
 //	        new Duration(1000), new Duration(5000), new Duration(200), false);
 	
 	private Pasteboard pasteboard = null;
+	public Pasteboard getPasteboard() {		return pasteboard;	}
 	private Selection selection = null;
 	private ControlFactory controlFactory;
+
+	
 	public VNode clone()
 	{
 		return new VNode(this);
@@ -109,10 +106,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setId(id);
 		title = modelNode.get("TextLabel");
 		if (title == null)
-			{
+		{
 			title = id;
 			modelNode.put("TextLabel", id);
-			}
+		}
 		String fontWeight = dataNode.get("FontWeight");
 		String fontSize = dataNode.get("FontSize");
 		String vAlign = dataNode.get("Valign");
@@ -144,32 +141,25 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         setResize(resizable);
         modelNode.putBool("Resizable", resizable);
 
-        editable = modelNode.getBool("Editable", true);
+        selectable = modelNode.getBool("Selectable", true);
        
-        connectable = modelNode.getBool("Connectable", true);
-        if ("Label".equals(type) || "Shape".equals(type))   connectable = false;
-        setConnectable(connectable);
-//        if ("Label".equals(modelNode.get("Type"))) 	connectable = false;
-//        if (shapeType.equals("Mitochondria)")) 	connectable = false;
-//        if (shapeType.equals("Oval)"))        	connectable = false;
-//        if (shapeType.equals("Cell)"))        	connectable = false;
-        modelNode.putBool("Connectable", connectable);
+//        connectable = modelNode.getBool("Connectable", true);
+//        if ("Label".equals(type) || "Shape".equals(type))   connectable = false;
+//        setConnectable(connectable);
+//        modelNode.putBool("Connectable", connectable);
          
-
         Tooltip tooltip = new Tooltip();
         tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
         Tooltip.install(this,  tooltip);
-
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
  		pasteboard.add(this);
 	}
-
 	// **-------------------------------------------------------------------------------
 	public void addGraphIdDisplay()
 	{
 		String id = modelNode().get("GraphId");
 		graphIdLabel = new Label(id);
-		addAnnotation(graphIdLabel, getController().graphIdsVisibleProperty(),Pos.TOP_LEFT, -getWidth()/4, -getHeight()/4-10);
+		addAnnotation(graphIdLabel, getController().getInspector().graphIdsVisibleProperty(),Pos.TOP_LEFT, -getWidth()/4, -getHeight()/4-10);
 	}	
 	public void setZOrder()
 	{
@@ -178,12 +168,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void addZOrderDisplay()
 	{
 		zOrderLabel = new Label("Z");
-		addAnnotation(zOrderLabel, getController().zOrderVisibleProperty(),Pos.TOP_RIGHT, getWidth()/4, -getHeight()/4-10);
+		addAnnotation(zOrderLabel, getController().getInspector().zOrderVisibleProperty(),Pos.TOP_RIGHT, getWidth()/4, -getHeight()/4-10);
 	}	
 	public void addLockDisplay()
 	{
 		lockLabel = new Label("Z");
-		addAnnotation(lockLabel, getController().lockVisibleProperty(),Pos.BOTTOM_RIGHT, 0, -10);
+		addAnnotation(lockLabel, getController().getInspector().lockVisibleProperty(),Pos.BOTTOM_RIGHT, 0, -10);
 	}	
 	
 	public void addAnnotation(Label label, BooleanProperty visibility, Pos align, double offsetX, double offsetY)
@@ -214,6 +204,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return s;
 	}
 	// **-------------------------------------------------------------------------------
+	
 	public boolean isSelected()
 	{
 		ObservableMap<Object, Object> properties = getProperties(); 
@@ -234,7 +225,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void handleResize(MouseEvent event)
 	{
 		if (resizable)
+		{
 			super.handleResize(event.getSceneX(), event.getSceneY());
+			ShapeFactory.resizeFigureToNode(this);
+		}
 	}
 
 	public void setResize(boolean enable)
@@ -247,40 +241,42 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 	static InnerShadow effect = new InnerShadow();
 	
-	   protected void processMousePosition(final MouseEvent event) {
+   protected void processMousePosition(final MouseEvent event) {
 
-	       super.processMousePosition(event);
-	        if (event.getEventType().equals(MouseEvent.MOUSE_ENTERED))
-	        {
-	        	boolean live = true;  //isSelected() || pasteboard.getDragLine() != null;
-	        	setEffect(live ? effect : null);
-	        	showPorts(isConnectable());
-	        }
-	        if (event.getEventType().equals(MouseEvent.MOUSE_MOVED))
-	        {
-	        	boolean live = isConnectable();  //= isSelected() || pasteboard.getDragLine() != null;
-	        	setEffect(live ? effect : null);
-	        	showPorts(live);
-	        }
-	        if (event.getEventType().equals(MouseEvent.MOUSE_EXITED))
-	        {
-	        	setEffect(isSelected() ? effect : null);
-	        	showPorts(false);
-	        }
-	    }
-	// **-------------------------------------------------------------------------------
-	public boolean isMovable()	{	return movable;	}
-	public void setMovable(boolean b)	{ movable = b;	}
-	public boolean isEditable()	{	return editable;}
-	public void setEditable(boolean b)	{ editable = b;	}
-	public boolean isConnectable()	{	return connectable;}
-	public void setConnectable(boolean b)	{ connectable = b;	}
+       super.processMousePosition(event);
+       if (event.getEventType().equals(MouseEvent.MOUSE_ENTERED))
+        {
+        	boolean live = true;  //isSelected() || pasteboard.getDragLine() != null;
+        	setEffect(live ? effect : null);
+        	boolean showPorts = dataNode.isConnectable() || dataNode.isResizable();
+        	showPorts(showPorts);
+        }
+        if (event.getEventType().equals(MouseEvent.MOUSE_MOVED))
+        {
+        	boolean live = dataNode.isConnectable() || dataNode.isResizable();  //= isSelected() || pasteboard.getDragLine() != null;
+        	setEffect(live ? effect : null);
+        	showPorts(live);
+        }
+        if (event.getEventType().equals(MouseEvent.MOUSE_EXITED))
+        {
+        	setEffect(isSelected() ? effect : null);
+        	showPorts(isSelected());
+        }
+    }
+//	// **-------------------------------------------------------------------------------
+//	public boolean isMovable()	{	return movable;	}
+//	public void setMovable(boolean b)	{ movable = b;	}
+//	public boolean isSelectable()	{	return selectable;}
+//	public void setSelectable(boolean b)	{ selectable = b;	}
+//	public boolean isConnectable()	{	return connectable;}
+//	public void setConnectable(boolean b)	{ connectable = b;	}
 	// **-------------------------------------------------------------------------------
 	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
-		setMovable(mov);
+		dataNode.setMovable(mov);
+		dataNode.setResizable(resiz);
 		setResize(resiz);
-		setEditable(edit);
-		setConnectable(connect);
+		dataNode.setSelectable(edit);
+		dataNode.setConnectable(connect);
 	}
 	// **-------------------------------------------------------------------------------
 	public Point2D boundsCenter()	{
@@ -312,11 +308,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		tag.setFill(color);
 		getChildren().add(tag);
 		StackPane.setAlignment(tag, position);
-		
-        Tooltip tooltip = new Tooltip();
+
+		Tooltip tooltip = new Tooltip();
         tooltip.setOnShowing(v -> { tooltip.setText("BioPax Reference: " + ref);});
         Tooltip.install(this,  tooltip);
-	
 	}
 	// **-------------------------------------------------------------------------------
 	public String getShapeType(){ return modelNode().getShapeType(); 	}
@@ -350,38 +345,37 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return futureItems;
 	}			// TODO
 	
-//	private double PIN(double v, double min, double max) { return (v < min)  ? min : ((v > max) ?  max : v);	}
-
-	@Override
-	protected void handleMouseDragged(final MouseEvent event) {
+	@Override 	protected void handleMouseDragged(final MouseEvent event) {
 		
 		if (!isMovable()) return;
-		
-		boolean isaGroup = modelNode() instanceof DataNodeGroup;
-		boolean isInGroup = (getParent() instanceof Group);
-			
-//		if (isInGroup && !isaGroup)
-//		{
-//			Group g = (Group) getParent();
-//			return;
-//		}
+		double ex = event.getSceneX();
+		double ey = event.getSceneY();
+				
+    	if (event.isShiftDown())
+    	{
+    		// TODO  if there are edges connected to this node, constrain the coordinates to the other sides
+    		ex = ey;
+    	}
 		super.handleMouseDragged(event);
-        if (isSelected())
+		 handleResize(ex, ey);
+		
+		 if (isSelected())
         {	
+        		
+        		
            	double dx = 0;
         	double dy = 0;
         	if (localLastMouseX > 0 && localLastMouseY > 0)
         	{
-        		dx = localLastMouseX - event.getSceneX();
-        		dy = localLastMouseY - event.getSceneY();
+        		dx = localLastMouseX - ex;
+        		dy = localLastMouseY - ey;
         	}
         	
         	selection.translate(dx,dy, this);
         	selection.extract();
-        	localLastMouseX = event.getSceneX();
-        	localLastMouseY = event.getSceneY();
+        	localLastMouseX = ex;
+        	localLastMouseY = ey;
         }
-  
 	}
 	double localLastMouseX = -1; 
 	double localLastMouseY = -1; 
@@ -390,6 +384,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	{	
 		String shapeType = dataNode.getShapeType();
 		if ("None".equals(shapeType)) return;
+		if ("GroupComponent".equals(shapeType))
+		{
+			String type = dataNode.get("Style");
+			if ("Complex".equals(type))
+				shapeType = "ComplexComponent";
+		}
 		if (shapeType == null) shapeType = "Rectangle";			// TODO
 		Tool tool = Tool.lookup(shapeType);
 		if (tool == null) return ;
@@ -400,14 +400,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		}
 		else figure = ShapeFactory.makeNewShape(shapeType, this);
 		if (figure != null)
-		{
 			setScaleShape(true);
-		}
 	}
  	// **-------------------------------------------------------------------------------
 
-	private double getCenterX() {		return modelNode().getDouble("CenterX");	}
-	private double getCenterY() {		return modelNode().getDouble("CenterY");	}
+	public double getCenterX() {		return modelNode().getDouble("CenterX");	}
+	public double getCenterY() {		return modelNode().getDouble("CenterY");	}
 
 	public Point2D center() {
     	Bounds bounds = getBoundsInParent();
@@ -432,7 +430,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return new Point2D(center.getX()+x, center.getY()+y);
 	}
 
-
 	public Point2D getRelativePosition(double relX, double relY) {
 		Point2D center = center();
 		double dx = relX * getWidth() / 2;
@@ -445,33 +442,19 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 
 	private double getAdjustmentX(Pos srcPosition, double nodeWidth) {
-	
 		String s = srcPosition.name();
 		if (s.contains("LEFT")) 	return -nodeWidth / 2;
 		if (s.contains("RIGHT")) 	return nodeWidth / 2;
 		return 0;
-}
+	}
 	private double getAdjustmentY(Pos srcPosition, double nodeHeight) {
-		
 		String s = srcPosition.name();
 		if (s.contains("TOP")) 		return -nodeHeight / 2;
 		if (s.contains("BOTTOM")) 	return nodeHeight / 2;
 		return 0;
-} 
+	} 
 
-	public Point2D getAdjustedPoint(GPMLPoint gpmlPt) {
-		Point2D center = center();
-		if (gpmlPt == null)  return center;
-		double relX = gpmlPt.getRelX();
-		double relY = gpmlPt.getRelY();
-		double width = getWidth();
-		double height = getHeight();
-		double x = center.getX() + relX * width / 2;
-		double y = center.getY() + relY * height / 2;
-		return new Point2D(x, y);
-	}
  	// **-------------------------------------------------------------------------------
-
 	public String getLayerName() 		{	return getAttributes().get("Layer");	}
 	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}
 	public boolean isLayerLocked() 		{	LayerRecord rec = getLayer(); return rec == null || rec.getLock();	}
@@ -502,44 +485,9 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		getController().redrawEdgesToMe(this);
 	}
 	
-	public void setWidth(double w)	{	super.setWidth(w);		resizeFigureToNode();	}
-	public void setHeight(double h)	{	super.setHeight(h);		resizeFigureToNode();	}
-	
+	public void setWidth(double w)	{	super.setWidth(w);		}  // 	ShapeFactory.resizeFigureToNode(this);
+	public void setHeight(double h)	{	super.setHeight(h);		} //ShapeFactory.resizeFigureToNode(this);
  	// **-------------------------------------------------------------------------------
-	private void resizeFigureToNode() {
-		if (figure != null)
-		{
-			if (figure instanceof Rectangle)
-			{
-				Rectangle r = (Rectangle) figure;
-				r.setWidth(getWidth());	
-				r.setHeight(getHeight());
-			}
-			if (figure instanceof Circle)
-			{
-				Circle c = (Circle) figure;
-				c.setCenterX(getCenterX()); 
-				c.setCenterY(getCenterY());
-				c.setRadius(Math.min(getHeight(),getWidth())/2);
-			}
-			if (figure instanceof Ellipse)
-			{
-				Ellipse e = (Ellipse) figure;
-				e.setCenterX(getCenterX()); 
-				e.setCenterY(getCenterY());
-				e.setRadiusX(getWidth()/2);
-				e.setRadiusY(getHeight()/2);
-			}
-			if (figure instanceof Path)
-			{
-				Path p = (Path) figure;
-				double scale = Math.min(getWidth() / 400, getHeight() / 300);
-				p.setScaleX(5 * scale);
-				p.setScaleY(5 * scale);
-			}
-		}
-	}
-	// **-------------------------------------------------------------------------------
 	public String toString()
 	{
 		Shape shape = getFigure();
@@ -555,7 +503,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setAlignment(content, Pos.BOTTOM_CENTER);
 	    setMargin(content, new Insets(25,0,0,0));
 	}
-
 	// **-------------------------------------------------------------------------------
 	public void addText(String s, String fontWeight, String fontSize, String alignl)
 	{
@@ -569,20 +516,26 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		Font f = Font.font(Font.getDefault().getFamily(), style, size);
 		text.setFont(f);
 	}
+	
 	public void addText(String textLabel)
 	{
 		Pos pos = Pos.CENTER;
 		text = new Label(textLabel);
-		text.setMinWidth(180); 		text.setMinHeight(32);
-		text.setPrefWidth(220); 	text.setPrefHeight(40);
+		text.setMinWidth(80); 		text.setMinHeight(18);
+		text.setPrefWidth(120); 	text.setPrefHeight(40);
 		text.setMouseTransparent(true);
 		text.setBackground(Backgrounds.transparent());   
 		text.setFont(new Font(18));
 		setAlignment(text, pos);
 		text.setAlignment(pos);
+		text.setId("T"+getId());
 		getChildren().add(text);
 	}
 
+	public void addState(DataNodeState statenode) {
+		String label = statenode.get("TextLabel");		// getName includes "State:"
+		addBadge(label);
+	}
 	public void addBadge(String letter)		// phosphorylization, etc.
 	{
 		StackPane badge = new StackPane();
@@ -594,7 +547,9 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		Label label = new Label(letter);
 		label.setTextFill(Color.VIOLET);
 		badge.getChildren().add(circle);
+		circle.setId("C"+getId());
 		badge.getChildren().add(label);
+		label.setId("B"+getId());
 		getChildren().add(badge);
 	}
  
@@ -645,7 +600,40 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		port.addEventHandler(MouseEvent.MOUSE_MOVED, e ->  { 	if (pasteboard.getDragLine() != null) return; 	port.setFill(portFillColor( EState.ACTIVE)); });
 		port.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {	port.setFill(portFillColor( EState.OFF)); } );
 		port.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {  	port.setFill(portFillColor( EState.STANDBY));  	 finishDragLine(port, this); });
-		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> { 	pasteboard.startPortDrag(e, this, port);} );
+		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> { 	startPortDrag(e, this, port);} );
+		port.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> { 	portDrag(e, this, port);} );
+	}
+
+	public void startPortDrag(MouseEvent e, VNode node, Shape port) 
+	{
+		if (pasteboard.getDragLine()!= null)  // finish an ongoing drag
+		{
+			RelPosition pos = port == null ? RelPosition.ZERO : RelPosition.idToRelPosition(port.getId());
+			pasteboard.connectTo(node,pos);
+			port.setFill(node.portFillColor(EState.FILLED)); 
+			e.consume();
+			return;
+		}
+		
+		if (pasteboard.getTool() == Tool.Polyline)
+		{
+			port.setFill(Color.AQUAMARINE); 
+			String id = port.getId();
+			Pos pos = RelPosition.idToPosition(id);
+			pasteboard.startDragLine(node, pos, node.getLayoutX(), node.getLayoutY());
+		}
+
+		if (pasteboard.getTool().isArrow())
+			handleResize(e);
+		
+		e.consume();
+	}
+	
+	public void portDrag(MouseEvent e, VNode node, Shape port) 
+	{
+		if (pasteboard.getTool().isArrow())
+			handleResize(e);
+		e.consume();
 	}
 
 	private void finishDragLine(Node port, VNode target)
@@ -661,24 +649,20 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	  /**
      * Handles mouse events.
-     *
      * @param event {@link MouseEvent}
      */
-
 	protected void handleMouseReleased(final MouseEvent event) {
-		if (pasteboard.getDragLine() != null && isConnectable()) {
+		if (pasteboard.getDragLine() != null && dataNode.isConnectable()) {
 			VNode starter = pasteboard.getDragSource();
 			if (starter != this)
 			{	
 				getController().getUndoStack().push(ActionType.AddEdge);
 				getController().addInteraction(starter, this);
 				pasteboard.removeDragLine();
-		
 			}
 			event.consume();
 			return;
 		}
-
 		getController().getUndoStack().push(ActionType.Move);
 		pasteboard.getSelectionMgr().extract();
 		super.handleMouseReleased(event);
@@ -686,6 +670,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 	double prevMouseX, prevMouseY;
 	protected void handleMousePressed(final MouseEvent event) {
+		super.handleMousePressed(event);
 		if (event.getClickCount() > 1)	   {	getInfo(); 	event.consume();   return; }
 		if (event.isPopupTrigger())	   {	doContextMenu(event);	event.consume();	 return;	   }
 		if (pasteboard.getDragLine() != null)
@@ -705,13 +690,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			event.consume();
 			return;
 		}
-
-	   Tool curTool = pasteboard.getTool();
+		Tool curTool = pasteboard.getTool();
 	   if (curTool != null && !curTool.isArrow()) return;
 	   
 	   if (event.isAltDown())
 		   selection.duplicateSelection();
-	   
 	   
 	   prevMouseX = event.getSceneX();
 	   prevMouseY = event.getSceneY();
@@ -764,8 +747,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void rememberPositionEtc(int offset) 			
 	{		
 		AttributeMap attributes = getAttributes();
-		
-		Bounds bounds = getBoundsInParent();
 		attributes.putDouble("X",  getLayoutX()+ offset);   //bounds.getMinX() + offset);	
 		attributes.putDouble("Y",  getLayoutY() + offset);	
 		attributes.putDouble("Width",  getWidth());	
@@ -785,13 +766,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		String id = attrMap.get("GraphId");
 		double x = attrMap.getDouble("X");
 		double y = attrMap.getDouble("Y");
-		double centerx = attrMap.getDouble("CenterX");
-		double centery = attrMap.getDouble("CenterY");
-		double w = attrMap.getDouble("Width", 100) ;
+		double centerx = attrMap.getDouble("CenterX", 50);
+		double centery = attrMap.getDouble("CenterY", 50);
+		double w = attrMap.getDouble("Width", 50) ;
 		String type = attrMap.get("ShapeType");
-		double h = attrMap.getDouble("Height", 150);
+		double h = attrMap.getDouble("Height", 50);
 		if ("GeneProduct".equals(type)) h = 50;
-		
 		String title = attrMap.get("TextLabel");
 		if (Double.isNaN(x)) {	x = centerx - w / 2;	attrMap.putDouble("X", x);  }
 		if (Double.isNaN(y)) { y = centery - h / 2;		attrMap.putDouble("Y", y);  }
@@ -801,13 +781,16 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void fill(double x, double y, double w, double h, String title, String id)
 	{
 		setId(id);
+		if (Double.isNaN(x)) x = 20;
+		if (Double.isNaN(y)) y = 20;
 		if (Double.isNaN(w)) w = 20;
 		if (Double.isNaN(h)) h = 20;
 	
 		setLayoutX(x);
 		setLayoutY(y);
-		setWidth(w);	prefWidth(w);	setMinWidth(w);  
-		setHeight(h);	prefHeight(h);	setMinHeight(h); 
+		setWidth(w);	prefWidth(w);	//setMinWidth(w);  
+		setHeight(h);	prefHeight(h);	//setMinHeight(h); 
+		ShapeFactory.resizeFigureToNode(this);
 		System.out.println(String.format("[@%3.1f, %3.1f; %3.1f x %3.1f ]", x, y, w, h));
 		AttributeMap attr = modelNode();
 		StringBuilder bldr = new StringBuilder();
@@ -882,16 +865,16 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 				list.addAll(new MenuItem[] {scatter, timeseries, sep});
 			}
 		}
-		MenuItem toFront = makeItem("Bring To Front", e -> {   	controller.toFront();   });
+		MenuItem toFront = 	makeItem("Bring To Front", e -> {   controller.toFront();   });
 		MenuItem toBack = 	makeItem("Send To Back", e -> {   	controller.toBack();   });
-		Menu toLayer = 	makeLayerMenu();
+		Menu toLayer = 		makeLayerMenu();
 		MenuItem dup = 		makeItem("Duplicate", a -> 	{		controller.duplicateSelection();	});
 		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
-		MenuItem ungroup = 		makeItem("Ungroup", a -> 	{		controller. ungroup();	});
+		MenuItem group = 	makeItem("Group", e ->		{		controller.group();    });
+		MenuItem ungroup = 	makeItem("Ungroup", a -> 	{		controller. ungroup();	});
 		list.addAll(toFront, toBack, toLayer, dup, del); 
-//		Selection selection = pasteboard.getSelectionMgr();
-		if (selection.isGroupable())	list.add(makeItem("Group", e ->  	{	controller.group();    }));   
-		if (isGroup())			list.add(makeItem("Ungroup", e -> 	{ 	controller.ungroup();  }));   
+		if (selection.isGroupable())	list.add(group);   
+		if (isGroup())					list.add(ungroup);   
 		return list;
 	}
 
@@ -914,14 +897,19 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		}
 		return menu;
 	}
-	
 	// **-------------------------------------------------------------------------------
-	public void setBounds(BoundingBox bounds) {
-		setLayoutX(bounds.getMinX());
-		setLayoutY(bounds.getMinY());
-		setWidth(bounds.getWidth());
-		setHeight(bounds.getHeight());
-	}
+//	public void setBounds(BoundingBox bounds) {
+//		setLayoutX(bounds.getMinX());
+//		setLayoutY(bounds.getMinY());
+//		setWidth(bounds.getWidth());
+//		setHeight(bounds.getHeight());
+//	}
+	public void setRect(double x, double y, double w, double h) {
+		setLayoutX(x);
+		setLayoutY(y);
+		setWidth(w);
+		setHeight(h);
+	}	
 	// **-------------------------------------------------------------------------------
 	public LayerRecord getLayer()
 	{
@@ -948,10 +936,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double a = getAttributes().getDouble("ZOrder",0);
 		double b = ((VNode)other).getAttributes().getDouble("ZOrder",0);
 		return a == b ? 0 : (a > b ? 1 : -1);
-	}
-	public void addState(DataNodeState statenode) {
-		String label = statenode.get("TextLabel");		// getName includes "State:"
-		addBadge(label);
 	}
 	
 	public void deselect() {

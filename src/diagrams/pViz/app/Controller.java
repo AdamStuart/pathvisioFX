@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 import animation.BorderPaneAnimator;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.GPML;
+import diagrams.pViz.gpml.GPMLTreeTableView;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.GeneModel;
 import diagrams.pViz.model.Model;
@@ -287,29 +288,8 @@ public class Controller implements Initializable, IController
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
 	@FXML private Button toggleGridButton;
-	
-	//-------------------------------------------------------------
-	@FXML private CheckBox showGraphId;	
-	@FXML private CheckBox snapToGrid;	
-	@FXML private CheckBox showZOrder;	
-	@FXML private CheckBox showAnchors;	
-	@FXML private CheckBox showLocks;	
-	@FXML private void	showZOrder() 	{		zOrderVisible.set(showZOrder.isSelected());	}
-	@FXML private void	setSnapToGrid() {		snapToGridProperty.set(snapToGrid.isSelected());  }
-	@FXML private void	showGraphId() 	{		graphIdsVisible.set(showGraphId.isSelected());	} 
-	@FXML private void	showAnchors() 	{		anchorVisibleProperty.set(showAnchors.isSelected());	}
-	@FXML private void	showLocks() 	{		lockVisibleProperty.set(showLocks.isSelected());	}
 
-	SimpleBooleanProperty graphIdsVisible = new SimpleBooleanProperty(false);
-	public SimpleBooleanProperty graphIdsVisibleProperty() { return graphIdsVisible; }
-	SimpleBooleanProperty zOrderVisible = new SimpleBooleanProperty(false);
-	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
-	SimpleBooleanProperty snapToGridProperty = new SimpleBooleanProperty(false);
-	public SimpleBooleanProperty snapToGridProperty() { return snapToGridProperty; }
-	SimpleBooleanProperty anchorVisibleProperty = new SimpleBooleanProperty(false);
-	public SimpleBooleanProperty anchorVisibleProperty() { return anchorVisibleProperty; }
-	SimpleBooleanProperty lockVisibleProperty = new SimpleBooleanProperty(false);
-	public SimpleBooleanProperty lockVisibleProperty() { return lockVisibleProperty; }
+	//-------------------------------------------------------------
 //-------------------------------------------------------------
 	@FXML private MenuItem annotate;
 	@FXML private void	annotate() 	{	model.annotateIdentifiers(); 	}
@@ -362,9 +342,10 @@ public class Controller implements Initializable, IController
 		model = new Model(this);
 		geneModel = new GeneModel(this);
 		pasteboard = new Pasteboard(this);
+		setupInspector();		
+		pasteboard.bindGridProperties();
 		drawPane.getChildren().add(pasteboard);
 		doc = new Document(this);
-		setupInspector();		
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
 		pasteboard.getStylesheets().add(cssURL);
 		stage = App.getInstance().getStage();
@@ -517,6 +498,8 @@ public class Controller implements Initializable, IController
 	@FXML private void test1()	{		Test.test1(this);	}
 	 @FXML private void test2()	{		Test.test2(this);	}
 	 @FXML private void test3()	{		Test.test3(this);	}
+	 @FXML private void hiliteEnter()	{	System.out.println("entering continuous variable space");		}
+	 @FXML private void hiliteExit()	{	System.out.println("exiting continuous variable space");	}
 
 	// **-------------------------------------------------------------------------------
 	private void setGraphic(ToggleButton b, Tool t, GlyphIcons i)
@@ -570,11 +553,11 @@ public class Controller implements Initializable, IController
 		@FXML private ToggleButton arrow6;
 
 		// **-------------------------------------------------------------------------------
-
+//circle, 
 	private void setupPalette()	
 	{
 		paletteGroup = new ToggleGroup();
-		paletteGroup.getToggles().addAll(arrow, rectangle, circle, text, polygon, polyline, line, gene, metabolite, pathway, protein, rna);
+		paletteGroup.getToggles().addAll(arrow, rectangle, text, polyline, gene, metabolite, pathway, protein, rna);
 		lineTypeGroup = new ToggleGroup();
 		lineTypeGroup.getToggles().addAll(straight, curved, elbowed);
 		straight.setSelected(true);
@@ -584,12 +567,14 @@ public class Controller implements Initializable, IController
 
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
-		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
-		setGraphic(polygon, Tool.Polygon, FontAwesomeIcons.STAR);
 		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
-		setGraphic(line, Tool.Line, FontAwesomeIcons.LONG_ARROW_RIGHT);
-		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.HEART);
+
+		
+		//		setGraphic(line, Tool.Line, FontAwesomeIcons.LONG_ARROW_RIGHT);
+//		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.HEART);
 //		setGraphic(shape2, Tool.Brace, FontAwesomeIcons.BARCODE);
+//		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
+//		setGraphic(polygon, Tool.Polygon, FontAwesomeIcons.STAR);
 	
 		IController.setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
@@ -639,14 +624,14 @@ public class Controller implements Initializable, IController
 		getPasteboard().restoreBackgroundOrder();
 		assignDataNodesToGroups();
 		resetEdgeTable();
+//		redrawAllEdges();	
 		nodeTreeTable.resumeUpdates();
 		
-//		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
-//		{
-			redrawAllEdges();	
+		Thread postponed =  new Thread(() -> Platform.runLater(() -> 
+		{
 			modelChanged();
-//		} )  );
-//		postponed.start();  
+		} )  );
+		postponed.start();  
 	}
 			
 	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}
@@ -826,40 +811,16 @@ public class Controller implements Initializable, IController
 	}
 	public void redrawAllEdges() {
 	for (Interaction edge : model.getEdges())
-		{
-//			edge.rebind();
 			edge.connect();
-		}
 	}
 	
 	public void assignDataNodesToGroups() {
+//		if (true) return;
 		Map<String, DataNodeGroup> groupMap = model.getGroupMap();
-		Map<String, DataNode> nodes = model.getDataNodeMap();
 		for (String key : groupMap.keySet())
 		{
-			List<VNode> vnodes = new ArrayList<VNode>();
 			DataNodeGroup groupNode = groupMap.get(key);
-			String groupId = groupNode.get("GroupId");
-			if (groupId == null) 		return;		//ERROR
-			groupNode.clearMembers();
-			vnodes.add(groupNode.getStack());
-			for (String nodeKey : nodes.keySet())
-			{
-				DataNode nod = nodes.get(nodeKey);
-				VNode stack = nod.getStack();
-				String groupRef = nod.get("GroupRef");
-				if (groupId.equals(groupRef))
-				{
-					groupNode.addMember(nod);
-					vnodes.add(stack);
-					pasteboard.getContentLayer().remove(stack);
-					stack.setMouseTransparent(true);
-				}
-			}
-			groupNode.calcBounds();
-			Group group = new Group();
-			group.getChildren().addAll(vnodes);
-			pasteboard.getContentLayer().add(group);
+			groupNode.assignMembers();
 		}
 	}
 
@@ -878,10 +839,11 @@ public class Controller implements Initializable, IController
 		modelChanged();
 	}
 
-	public void addShapeNode(DataNode shapeNode) {
+	public void addShapeNode(DataNode shapeNode, String shapeType) {
 	pasteboard.setActiveLayer("Background");	
 		shapeNode.setType("Shape");
 		shapeNode.put("Type", "Shape");
+		shapeNode.put("ShapeType", shapeType);
 		shapeNode.setName(shapeNode.get("ShapeType"));
 		VNode stack = new VNode(shapeNode, pasteboard);
 		model.addResource(shapeNode);
@@ -915,10 +877,12 @@ public class Controller implements Initializable, IController
 	}
 	
 	public void addGroup(DataNodeGroup grp) {		// from parser
+		if (grp == null) return;
 		grp.getStack().addEventHandler(MouseEvent.ANY, new GroupMouseHandler(pasteboard));
 		model.addGroup(grp);
-		BoundingBox bounds = grp.getBounds();
-		grp.getStack().setBounds(bounds);
+//		BoundingBox bounds = grp.getBounds();
+//		grp.getStack().setBounds(bounds);
+		pasteboard.getContentLayer().add(grp.getStack());
 	}
 	
 	public DataNodeGroup addGroup(List<VNode> selectedItems) {// from GUI selection

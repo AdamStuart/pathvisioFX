@@ -151,8 +151,11 @@ public class Model
 	}
 	private void serializeNodes(StringBuilder saver) {
 		for (DataNode node : getNodes())
+		{	
+			if (node instanceof DataNodeGroup) continue;
 			saver.append(node.toGPML());
 		}
+	}
 	private void serializeStates(StringBuilder saver) {
 		for (DataNodeState s : getStates())
 			saver.append(s.toGPML());
@@ -366,6 +369,13 @@ public class Model
 		 return n;
 	}
 	
+	public DataNode find(String key)				
+	{
+		 DataNode n = getDataNode(key);	
+		 if (n != null) return n;
+		return null;
+	}
+	
 	public String cloneResourceId(String oldId)
 	{
 		return gensym(oldId.substring(0,1));
@@ -375,6 +385,7 @@ public class Model
 	// move to GPML
 	public void addGroup(DataNodeGroup grp) {
 		groupMap.put(grp.getGraphId(),grp);
+		dataNodeMap.put(grp.getGraphId(),grp);
 	}
 //	public Collection<GPMLGroup> getGroups() { return groups.values();	}
 	
@@ -494,7 +505,7 @@ public class Model
 			for (Node n : ((Parent) node).getChildrenUnmodifiable())
 			{
 				String id = n.getId();
-				if (id == null)					continue;			// only propagate thru nodes with ids
+//				if (id == null)					continue;			// only propagate thru nodes with ids
 				if ("Marquee".equals(id) )		continue;
 				
 				if (n instanceof Text)

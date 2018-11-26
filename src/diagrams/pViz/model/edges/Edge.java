@@ -148,49 +148,57 @@ abstract public class Edge extends XRefable {
     }
 
 	public void connect() {
-		if (startNode == null || edgeLine == null)
-			return;
-		Point2D pt = new Point2D(0, 0);
-		Point2D startPt = startNode.getAdjustedPoint(getEdgeLine().firstGPMLPoint());
-//		System.out.println(String.format("Start: [ %.2f, %.2f]",startPt.getX(), startPt.getY()));
+		if (edgeLine == null)
+			return;  // error?
+		GPMLPoint gpt = getEdgeLine().firstGPMLPoint();
+		Point2D startPt = gpt.getPoint();
+		if (startNode != null)
+			startPt = startNode.getAdjustedPoint(gpt);
 		edgeLine.setStartPoint(startPt);
-		pt = new Point2D(0, 0);
-		if (endNode == null) {
-			String val = get("targetid");
-			DataNode mNode = startNode.getModel().getResourceByKey(val);
-			if (mNode != null)	
-				endNode = mNode;
-		if (endNode == null)
-		{
-			Anchor anch = startNode.getModel().findAnchorById(val);
-			System.out.println("anch " + anch);
-		}
-			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
-//					startNode.getModel().findShape(edgeLine.endGraphId()) : 
-			if (shape != null) 
-				pt = boundsCenter(shape);
-			else 
-				System.out.println("no shape");
-		} else
-		pt = endNode.getAdjustedPoint(getEdgeLine().lastGPMLPoint());
-		if (pt.getX() < 1)
-		{
-			edgeLine.setVisible(false);
-			System.out.println("zerro");
-		}
-//		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
-		edgeLine.setEndPoint(pt);
-//		Shape head = edgeLine.makeArrowhead();
-
-
-		if (verbose)
-		{
-			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
-			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
-			System.out.println("connect " + startStr + " to " + endStr);
-		}
+			
+		GPMLPoint lastpt = getEdgeLine().lastGPMLPoint();
+		Point2D endpt = lastpt.getPoint();
+		if (endNode != null)
+		 endpt = endNode.getAdjustedPoint(lastpt);
+		edgeLine.setEndPoint(endpt);
 		edgeLine.connect();
+
 	}
+//		
+//		
+//		if (endNode == null) {
+//			String val = get("targetid");
+//			DataNode mNode = startNode.getModel().getResourceByKey(val);
+//			if (mNode != null)	
+//				endNode = mNode;
+//		if (endNode == null)
+//		{
+//			Anchor anch = startNode.getModel().findAnchorById(val);
+//			System.out.println("anch " + anch);
+//		}
+//			Shape shape = getEdgeLine().getHead();  //getShape();  //endNode == null ? null : endNode.getStack().getFigure();
+////					startNode.getModel().findShape(edgeLine.endGraphId()) : 
+//			if (shape != null) 
+//				pt = boundsCenter(shape);
+//			else 
+//				System.out.println("no shape");
+//		} else
+//		if (pt.getX() < 1)
+//		{
+////			edgeLine.setVisible(false);
+//			System.out.println("zerro");
+//		}
+////		System.out.println(String.format("End: [ %.2f, %.2f]",pt.getX(), pt.getY()));
+////		Shape head = edgeLine.makeArrowhead();
+//
+//
+//		if (verbose)
+//		{
+//			String startStr = startNode == null ? "NULL" : startNode.getStack().getText();
+//			String endStr = endNode == null ? "NULL" : endNode.getStack().getText();
+//			System.out.println("connect " + startStr + " to " + endStr);
+//		}
+//	}
 	boolean verbose = false;
 	
 	public Point2D boundsCenter(Shape s)	{
@@ -354,6 +362,7 @@ abstract public class Edge extends XRefable {
 	public void setEndNode(DataNode dn)		{  endNode = dn;	}
 	public DataNode getStartNode()		{ 	return startNode;	}
 	public DataNode getEndNode()		{ 	return endNode;	}
+
 	public Model getModel()		{ 	return model;	}
 	protected Model model = null;
 	protected int zOrder;

@@ -10,6 +10,8 @@ import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.view.Arrow;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
+import javafx.beans.property.BooleanProperty;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -48,14 +50,15 @@ public class EdgeLine extends Group {
 	   	head =  tail = null;
 		interaction = null;			
 //		arrowType = ArrowType.arrow;			// kept in last GPMLPoint
-		centerPoint = new Circle(10);
+		centerPoint = new Circle(3);
 		centerPoint.setFill(Color.HOTPINK);
+		centerPoint.setVisible(false);
 	}
-	public EdgeLine(EdgeType edgeType, Point2D start, ArrowType arrow)
-	{
-		this(edgeType, start);
-//		arrowType = arrow;
-	}
+//	public EdgeLine(EdgeType edgeType, Point2D start, ArrowType arrow)
+//	{
+//		this(edgeType, start);
+////		arrowType = arrow;
+//	}
 	public EdgeLine(EdgeType edgeType, Point2D start)
 	
 	{
@@ -103,7 +106,10 @@ public class EdgeLine extends Group {
 //	public void setStartY(double y) { srcY = y; }
 	
 private void addCenterPointListeners() {
-
+	ObservableMap<Object, Object> properties = getProperties(); 
+	BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
+	if (selectedProperty != null) 
+		centerPoint.visibleProperty().bind(selectedProperty);
 	centerPoint.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> 
 	{ 	
 		if (polyline == null)
@@ -182,7 +188,7 @@ private void addCenterPointListeners() {
 		graphIdLabel.setFont(new Font(9));
 		graphIdLabel.setAlignment(Pos.TOP_LEFT);
 //		graphIdLabel.setTranslateY(-20);
-		graphIdLabel.visibleProperty().bind(interaction.getModel().getController().graphIdsVisibleProperty());
+		graphIdLabel.visibleProperty().bind(interaction.getModel().getController().getInspector().graphIdsVisibleProperty());
 		
 		getChildren().add(graphIdLabel);
 	}	
@@ -382,8 +388,8 @@ private void addCenterPointListeners() {
   //----------------------------------------------------------------------
 	public void connect()
 	{
-		for (GPMLPoint pt : points)
-			pt.setXYFromNode();
+//		for (GPMLPoint pt : points)
+//			pt.setXYFromNode();
 		
 		for (Anchor a : anchors)
 			a.resetPosition(interaction);
@@ -567,6 +573,7 @@ private void addCenterPointListeners() {
 
 	private void curveConnect() {
 		if (curve != null) 	getChildren().remove(curve);
+		else curve  = new CubicCurve();
 		if (line != null) line.setVisible(false);
 		int nPoints = getPoints().size();
 		Point2D line1End = new Point2D(0,0);
@@ -649,19 +656,16 @@ private void addCenterPointListeners() {
 		poly.getPoints().clear();
 		if (line != null) line.setVisible(false);
 		int sz  = points.size();
-		for (int i = 0; i < sz - 1; i++) {
+		for (int i = 0; i < sz ; i++) {
 			GPMLPoint current = points.get(i);
-			GPMLPoint next = points.get(i + 1);
-			// mid.setX(next.getX());
-			// mid.setY(current.getY());
-			poly.getPoints().addAll(current.getX(), current.getY(), next.getX(), current.getY());
+			poly.getPoints().addAll(current.getX(), current.getY());
 		}
 		Point2D last = lastPoint();
 		Node endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead != null??
 		if (shorten) {
 			GPMLPoint prev = points.get(sz - 2);
-			Line line = new Line(last.getX(), prev.getY(), last.getX(), last.getY());
+			Line line = new Line(prev.getX(), prev.getY(), last.getX(), last.getY());
 			Point2D shortStopPt = LineUtil.getIntersection(line, endNode);
 			Point2D correctedPt = new Point2D(last.getX(), shortStopPt.getY());			//  hack
 			poly.getPoints().addAll(correctedPt.getX(), correctedPt.getY());
@@ -682,6 +686,7 @@ private void addCenterPointListeners() {
 			GPMLPoint last = points.get(points.size()-1);
 			Color strokeColor = interaction.getColor();
 			ArrowType arrowhead = last.getArrowType();
+			if (arrowhead == null)	return null;
 			if (arrowhead == ArrowType.none) return null;
 			Point2D prev = forelastPoint();
 			if (type == EdgeType.elbow)
@@ -724,32 +729,34 @@ private void addCenterPointListeners() {
 		if (interaction == null || interaction.getEndNode() == null) return "NO TARGET";
 		VNode end = interaction.getEndNode().getStack();
 		String endID = end == null ? endGraphId() : end.getId();
-		Bounds b = start.getBoundsInParent();
-		double startCenterX = 0;
-		double startCenterY = 0;
-		if (start != null)
-		{
-			Point2D p = start.boundsCenter();
-			startCenterX = p.getX();
-			startCenterY = p.getY();
-		}
-		double endCenterX = 0;
-		double endCenterY = 0;
-		if (end != null)
-		{
-			Point2D p = end.boundsCenter();
-			endCenterX = p.getX();
-			endCenterY = p.getY();
-		}
-		else
-		{
-			endCenterX = b.getMinX() + (b.getWidth() / 2);
-			endCenterY = b.getMinY() + (b.getHeight() / 2);
-		}
-	
+//		Bounds b = start.getBoundsInParent();
+//		double startCenterX = 0;
+//		double startCenterY = 0;
+//		if (start != null)
+//		{
+//			Point2D p = start.boundsCenter();
+//			startCenterX = p.getX();
+//			startCenterY = p.getY();
+//		}
+//		double endCenterX = 0;
+//		double endCenterY = 0;
+//		if (end != null)
+//		{
+//			Point2D p = end.boundsCenter();
+//			endCenterX = p.getX();
+//			endCenterY = p.getY();
+//		}
+//		else
+//		{
+//			endCenterX = b.getMinX() + (b.getWidth() / 2);
+//			endCenterY = b.getMinY() + (b.getHeight() / 2);
+//		}		
+//		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
+//				startID, startCenterX, startCenterY, 
+//				endID, endCenterX, endCenterY, getPoints().size());
 		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
-				startID, startCenterX, startCenterY, 
-				endID, endCenterX, endCenterY, getPoints().size());
+				startID, getStartX(), getStartY(), 
+				endID, getEndX(), getEndY(), getPoints().size());
 				
 		return s;
 	}
@@ -830,8 +837,7 @@ private void addCenterPointListeners() {
 	    if (Math.abs(val) < 0.01) return 0;  // colinear 
 	    return (val > 0) ? 1: 2; // clock or counterclock wise 
 	} 
-	// Given three colinear points p, q, r, the function checks if 
-	// point q lies on line segment 'pr' 
+	// check if point q lies on line segment 'p- r' 
 	boolean onSegment(Point2D p, Point2D q, Point2D r) 
 	{ 
 	    if (q.getX() <= Math.max(p.getX(), r.getX()) && q.getX() >= Math.min(p.getX(), r.getX()) && 

@@ -19,8 +19,6 @@ import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
@@ -109,10 +107,10 @@ public class GPML {
 		parseDataNodes(doc.getElementsByTagName("DataNode"));
 		parseLabels(doc.getElementsByTagName("Label"));
 		parseBiopax(doc.getElementsByTagName("Biopax"));
-		parseShapes(doc.getElementsByTagName("Shape"));
+		parseShapes(doc.getElementsByTagName("Shape"), "Shape");
+		parseShapes(doc.getElementsByTagName("GraphicalLine"),"GraphicalLine");
 		parseStateNodes(doc.getElementsByTagName("State"));
 		parseGroups(doc.getElementsByTagName("Group"));
-//		handleLabels(doc.getElementsByTagName("InfoBox"));
 		parseInteractions(doc.getElementsByTagName("Interaction"));
 //		List<Node> sorted = getController().getPasteboard().getChildren().stream()
 //        	.sorted(Comparator.comparing(null).reversed())
@@ -144,17 +142,11 @@ public class GPML {
 		Controller controller = getController();
 		for (int i=0; i<nodes.getLength(); i++)
 		{
-			AttributeMap attrMap = new AttributeMap();
 			org.w3c.dom.Node child = nodes.item(i);
-			String name = child.getNodeName();
-			NamedNodeMap map = child.getAttributes();
-			put(attrMap, "GraphRef", map);
-			put(attrMap, "TextLabel",map);
-			put(attrMap, "GraphId", map);
-			if ("Graphics".equals(name))
-				attrMap.add(map);
-			DataNodeState sstate = new DataNodeState(attrMap, model);
+			DataNodeState sstate = parseGPMLDataNodeState(child, model);
 			controller.addStateNode(sstate);
+			System.out.println("adding: " + child + "\n");
+		
 		}
 	}
 	
@@ -176,7 +168,7 @@ public class GPML {
 		}
 	}
 	boolean verbose = true;
-	private void parseShapes(NodeList shapes) {
+	private void parseShapes(NodeList shapes, final String shapeType) {
 		Controller controller = getController();
 		for (int i=0; i<shapes.getLength(); i++)
 		{
@@ -184,18 +176,17 @@ public class GPML {
 			if (verbose)
 				System.out.println("");
 			DataNode node = parseGPMLDataNode(child, model, "Background");
+			String s= shapeType;
+			if ("Shape".equals(shapeType))
+				s = node.get("ShapeType");
 			if (node != null)
-				controller.addShapeNode(node);
+				controller.addShapeNode(node,s);
 		}
 	}
-	// **-------------------------------------------------------------------------------
-	/*
-	 * 	convert an org.w3c.dom.Node to a local MNode.  
-	 * 
-	 */
-	public DataNode parseGPMLDataNode(org.w3c.dom.Node datanode, Model m, String activeLayer) {
-		DataNode node = new DataNode(m);
-		 node.put("Layer", activeLayer);
+	
+	// TODO should be override of DataNode
+	public DataNodeState parseGPMLDataNodeState(org.w3c.dom.Node datanode, Model m) {
+		DataNodeState node = new DataNodeState(m);
 		node.add(datanode.getAttributes());
 		
 		NodeList elems = datanode.getChildNodes();
@@ -209,6 +200,12 @@ public class GPML {
 				String ref = child.getTextContent();
 				if (!StringUtil.isEmpty(ref))
 					node.put("BiopaxRef", ref);
+			}
+			if ("Comment".equals(name))
+			{
+				String ref = child.getTextContent();
+				if (!StringUtil.isEmpty(ref))
+					node.put("Comment", ref);
 			}
 			if ("Attribute".equals(name))
 			{
@@ -227,9 +224,86 @@ public class GPML {
 					 node.put(key, val);
 					
 			}
-			node.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
+			if ("Graphics".equals(name))
+			{
+				node.add(child.getAttributes());
+			}
+		node.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
-			node.copyAttributesToProperties();
+//			node.copyAttributesToProperties();
+		}
+		String type = node.get("Type");
+		if (isFixed(type))  node.put("Resizable", "false");
+		node.copyAttributesToProperties();
+		return node;
+	}
+
+	// **-------------------------------------------------------------------------------
+	/*
+	 * 	convert an org.w3c.dom.Node to a local MNode.  
+	 * 
+	 */
+	public DataNode parseGPMLDataNode(org.w3c.dom.Node datanode, Model m, String activeLayer) {
+		DataNode node = new DataNode(m);
+		node.put("Layer", activeLayer);
+		node.add(datanode.getAttributes());
+		
+		NodeList elems = datanode.getChildNodes();
+		for (int i=0; i<elems.getLength(); i++)
+		{
+			org.w3c.dom.Node child = elems.item(i);
+			String name = child.getNodeName();
+			if ("#text".equals(name)) continue;
+			if ("BiopaxRef".equals(name))
+			{
+				String ref = child.getTextContent();
+				if (!StringUtil.isEmpty(ref))
+					node.put("BiopaxRef", ref);
+			}
+			if ("Comment".equals(name))
+			{
+				String ref = child.getTextContent();
+				if (!StringUtil.isEmpty(ref))
+					node.put("Comment", ref);
+			}
+			if ("Attribute".equals(name))
+			{
+				String key = null;
+				String val = null;
+				for (int j=0; j<child.getAttributes().getLength(); j++)
+				{
+					org.w3c.dom.Node grandchild = child.getAttributes().item(j);
+					if ("Key".equals(grandchild.getNodeName()))
+						key = grandchild.getTextContent();
+					else 
+						val = grandchild.getTextContent();
+					System.out.println(grandchild.getNodeName() + " " + key + val );
+				}
+				if (key != null && val != null)
+					 node.put(key, val);
+					
+			}
+			if ("Graphics".equals(name))
+			{
+				node.add(child.getAttributes());
+				NodeList pts = child.getChildNodes();
+				List<GPMLPoint> points = new ArrayList<GPMLPoint>();
+				for (int j=0; j<pts.getLength(); j++)
+				{
+					org.w3c.dom.Node pt = pts.item(j);
+					if ("Point".equals(pt.getNodeName()))
+					{
+						GPMLPoint gpt = new GPMLPoint(pt);
+						points.add(gpt);
+						ArrowType type = gpt.getArrowType();
+						if (type != null)
+							node.put("ArrowHead", type.toString());
+					}
+				}
+			}
+		node.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
+//			System.out.println(name);
+//			node.copyAttributesToProperties();
 		}
 		String type = node.get("Type");
 		if (isFixed(type))  node.put("Resizable", "false");
@@ -299,6 +373,7 @@ public class GPML {
 			GPMLPoint lastPt = points.get(z-1);
 			endId = lastPt.getGraphRef();
 			attrib.put("targetid", endId);
+			attrib.put("ArrowHead", lastPt.getArrowType().toString());
 			endNode = m.getDataNode(endId);
 			double thickness = attrib.getDouble("LineThickness");
 			attrib.putDouble("LineThickness", thickness);
@@ -478,7 +553,8 @@ public class GPML {
 			graphId = attrs.getNamedItem("GraphId").getNodeValue();
 		}
 		AttributeMap attrMap = new AttributeMap();
-		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "Style", style, "Fill", "808080", "LineStyle", "Broken", "ShapeType", "Octagon");
+		String shapeType = "Complex".equals(style) ? "ComplexComponent" : "GroupComponent";
+		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "ShapeType", shapeType, "Style", style, "Fill", "808080", "LineStyle", "Broken");
 		DataNodeGroup newGroup = new DataNodeGroup(attrMap,model);
 
 		newGroup.copyAttributesToProperties();
@@ -498,34 +574,28 @@ public class GPML {
 			System.out.println(name);
 			if ("#text".equals(name)) continue;
 			if ("Group".equals(name))
-			{
-				DataNodeGroup group = parseGPMLGroup(child, attrs);
-				if (group != null)
-					getController().addGroup(group);
-			}
+				getController().addGroup(parseGPMLGroup(child, attrs));	
 		}
-		
-		for (DataNodeGroup group : model.getGroups())
-		{
-			String id = group.get("GroupId");
-			if (id != null)
-			for (DataNode node : model.getNodes())
-				if (id.equals(node.get("GroupRef")))
-					group.addMember(node);
-			group.calcBounds();
-			VNode stack = group.getStack();
-			
-			stack.setBounds(group.getBounds());
-			model.getController().add(stack);
-			Shape shape = group.getStack().getFigure();
-			if (shape != null)
-			{
-				shape.setStyle("-fx-stroke-dash-array: 10 10;");
-				shape.setFill(Color.LIGHTGRAY);
-			}
-			stack.toFront();
-			
-		}
+//		
+//		for (DataNodeGroup group : model.getGroups())
+//		{
+//			String id = group.get("GroupId");
+//			if (id != null)
+//			for (DataNode node : model.getNodes())
+//				if (id.equals(node.get("GroupRef")))
+//					group.addMember(node);
+//			group.calcBounds();
+//			VNode stack = group.getStack();
+//			model.getController().add(stack);
+//			Shape shape = group.getStack().getFigure();
+//			if (shape != null)
+//			{
+//				shape.setStyle("-fx-stroke-dash-array: 10 10;");
+//				shape.setFill(Color.LIGHTGRAY);
+//			}
+//			stack.toFront();
+//			
+//		}
 	}
 //	
 	//----------------------------------------------------------------------------

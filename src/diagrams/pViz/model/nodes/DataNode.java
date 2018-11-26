@@ -125,18 +125,27 @@ public class DataNode extends XRefable {
 		return bldr.toString();
 	}
 	String elementType;
-	String[]  nodeAttrs = {  "TextLabel", "GraphId", "Type"};
-	String[]  dataNodeTypes = {  "Gene", "GeneProduct", "Protein", "Metabolite", "RNA"};
+	String[]  nodeAttrs = {  "TextLabel", "GraphId", "GroupRef", "Type"};
+	String[]  dataNodeTypes = {  "gene", "geneproduct", "protein", "metabolite", "rna"};
 	boolean isDataNode(String typ) {
 		if (typ == null) return false;
+		typ = typ.toLowerCase();
 		for (String t : dataNodeTypes)
 			if (t.equals(typ))  return true;
 		return false;
 	}
 	private void buildNodeOpen(StringBuilder bldr) {
-		String typ = get("ShapeType");
-		if ("Shape".equals(typ)) elementType = "Shape";
-		else elementType = (isDataNode(typ)) ? "DataNode" : "Label"; 
+		String typ = get("Type");
+		String shapetyp = get("ShapeType");
+		String label = get("TextLabel");
+		if ("GraphicalLine".equals(shapetyp)) elementType = "GraphicalLine";
+		else if ("Shape".equals(typ)) elementType = "Shape";
+		else if ("Label".equals(typ)) elementType = "Label";
+//		else if ("Pathway".equals(typ)) elementType = "Pathway";
+		else if (isDataNode(typ))		elementType =  "DataNode";
+		else
+			elementType ="Unknown";
+		
 		bldr.append("<" + elementType + " " + attributeList(nodeAttrs) + ">\n");
 	}
 	private void buildNodeClose(StringBuilder bldr) {
@@ -163,7 +172,25 @@ public class DataNode extends XRefable {
 
 	public Point2D  getAdjustedPoint(GPMLPoint gpmlPt)
 	{
-		return getStack().getAdjustedPoint( gpmlPt);
+		if (gpmlPt == null) return new Point2D(0,0);
+		double relX = gpmlPt.getRelX();
+		double relY = gpmlPt.getRelY();
+		double cx = getDouble("CenterX");
+		double cy = getDouble("CenterY");
+		double width = getDouble("Width", 0);
+		double height = getDouble("Height", 0);
+		double x = cx + relX * width / 2;
+		double y = cy + relY * height / 2;
+		return new Point2D(x, y);
 	}
+	public boolean isResizable() {		return getBool("Resizable");	}
+	public boolean isConnectable() {		return getBool("Connectable");	}
+	public boolean isSelectable() {		return getBool("Selectable");	}
+	public boolean isMovable() {		return getBool("Movable");	}
+	
+	public void setResizable(boolean b) {		 putBool("Resizable",b);	}
+	public void setConnectable(boolean b) {		 putBool("Connectable",b);	}
+	public void setSelectable(boolean b) {		 putBool("Selectable",b);	}
+	public void setMovable(boolean b)	 {		 putBool("Movable",b);	}
 
 }

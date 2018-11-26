@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.app.GPMLRecord;
+import diagrams.pViz.gpml.GPMLRecord;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;

@@ -11,6 +11,8 @@ import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.XrefListController;
+import diagrams.pViz.view.PanningCanvas;
+import diagrams.pViz.view.SceneGestures;
 import gui.Log;
 //import edu.stanford.nlp.util.ArrayUtils;
 import javafx.application.Application;
@@ -23,6 +25,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -292,7 +296,17 @@ import util.FileUtil;
 	//---------------------------------------------------------------------------------------
 	public static void showImage(String title, WritableImage wimg) {
 		ImageView view = new ImageView(wimg);
-		Stage stage = buildStage( title, new HBox(view), 800, 650);
+		PanningCanvas canvas = new PanningCanvas(null);
+		canvas.getChildren().add(view);
+		view.scaleXProperty().bind(canvas.scaleXProperty());
+		view.scaleYProperty().bind(canvas.scaleYProperty());
+
+        SceneGestures sceneGestures = new SceneGestures(canvas);
+        view.addEventFilter( MouseEvent.MOUSE_PRESSED, sceneGestures.getOnMousePressedEventHandler());
+        view.addEventFilter( MouseEvent.MOUSE_DRAGGED, sceneGestures.getOnMouseDraggedEventHandler());
+        view.addEventFilter( ScrollEvent.ANY, sceneGestures.getOnScrollEventHandler());
+
+        Stage stage = buildStage( title, canvas, 800, 650);
         stage.setX(20);
 	}
 

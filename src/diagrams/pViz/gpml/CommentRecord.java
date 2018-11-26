@@ -1,6 +1,5 @@
 package diagrams.pViz.gpml;
 
-import diagrams.pViz.app.GPMLRecord;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.input.DataFormat;

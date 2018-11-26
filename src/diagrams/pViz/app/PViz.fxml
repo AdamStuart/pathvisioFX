@@ -1,20 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.input.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.ToggleButton?>
@@ -30,7 +23,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
    <items>
       <BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0">
          <top>
@@ -427,7 +420,7 @@
                                  <children>
                                     <ToggleButton fx:id="arrow" mnemonicParsing="false" onAction="#setArrow" />
                                     <ToggleButton fx:id="rectangle" mnemonicParsing="false" onAction="#setRectangle" />
-                                    <ToggleButton fx:id="circle" mnemonicParsing="false" onAction="#setOval" />
+                                    <ToggleButton fx:id="polyline" mnemonicParsing="false" onAction="#setPolyline" />
                                     <ToggleButton fx:id="text" layoutX="46.0" layoutY="10.0" mnemonicParsing="false" onAction="#setText" text="T" />
                                  </children>
                               </HBox>
@@ -455,9 +448,11 @@
                               </ToggleButton>
                            </children>
                         </VBox>
+                        <Separator prefHeight="0.0" prefWidth="5.0" />
                      </items>
                   </ToolBar>
-                  <HBox>
+                  <Label text="Components" />
+                  <HBox alignment="CENTER">
                      <children>
                         <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
                            <font>
@@ -471,12 +466,21 @@
                         </Button>
                      </children>
                   </HBox>
-                  <Button fx:id="mitochondria" layoutX="14.0" layoutY="90.0" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-                  <HBox spacing="2.0">
+                  <HBox alignment="CENTER">
+                     <children>
+                        <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                        <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
+                           <font>
+                              <Font size="9.0" />
+                           </font>
+                        </Button>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER" spacing="2.0">
                      <children>
                         <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
                            <font>
@@ -488,11 +492,6 @@
                               <Font size="9.0" />
                            </font>
                         </Button>
-                        <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
                         <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
                            <font>
                               <Font size="9.0" />
@@ -500,6 +499,8 @@
                         </Button>
                      </children>
                   </HBox>
+                  <Separator prefHeight="4.0" />
+                  <Label layoutX="14.0" layoutY="195.0" text="Interactions" />
                   <ToolBar layoutX="14.0" layoutY="14.0" orientation="VERTICAL" prefHeight="310.0" prefWidth="122.0">
                      <items>
                         <VBox spacing="20.0">
@@ -624,20 +625,6 @@
                         </VBox>
                      </items>
                   </ToolBar>
-                  <HBox>
-                     <children>
-                        <ToggleButton fx:id="polygon" mnemonicParsing="false" onAction="#setPolygon" />
-                        <ToggleButton fx:id="shape1" mnemonicParsing="false" onAction="#setShape1" />
-                        <ToggleButton fx:id="line" mnemonicParsing="false" onAction="#setLine" />
-                        <ToggleButton fx:id="polyline" mnemonicParsing="false" onAction="#setPolyline" />
-                     </children>
-                  </HBox>
-                  <CheckBox fx:id="showGraphId" mnemonicParsing="false" onAction="#showGraphId" text="Show GraphId" />
-                  <CheckBox fx:id="showZOrder" layoutX="14.0" layoutY="593.0" mnemonicParsing="false" onAction="#showZOrder" text="Show Z Order" />
-                  <CheckBox fx:id="snapToGrid" layoutX="14.0" layoutY="593.0" mnemonicParsing="false" onAction="#setSnapToGrid" text="Snap To Grid" />
-                  <CheckBox fx:id="showAnchors" layoutX="14.0" layoutY="633.0" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
-                  <CheckBox fx:id="showLocks" layoutX="14.0" layoutY="653.0" mnemonicParsing="false" onAction="#showLocks" text="Show Locks" />
-                  <CheckBox fx:id="debug" layoutX="14.0" layoutY="653.0" mnemonicParsing="false" onAction="#setSnapToGrid" text="Debug" />
                </children>
                <padding>
                   <Insets left="4.0" top="4.0" />

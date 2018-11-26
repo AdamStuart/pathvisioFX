@@ -1,6 +1,7 @@
 package diagrams.pViz.app;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import diagrams.pViz.model.Model;
@@ -9,6 +10,7 @@ import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
+import diagrams.pViz.view.PanningCanvas;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.Shape1;
@@ -44,7 +46,7 @@ import util.StringUtil;
 
 public class Selection
 {
-	public Selection(Pasteboard layer)
+	public Selection(PanningCanvas layer)
 	{
 		root = layer;
 		items = FXCollections.observableArrayList(); 
@@ -53,7 +55,7 @@ public class Selection
 	public Model getModel()	{ return getController().getModel();  } 
 	public Controller getController() { return root.getController();	}
 //	private NodeFactory getNodeFactory() { return getController().getNodeFactory();	}
-	private Pasteboard root;
+	private PanningCanvas root;
 	private ObservableList<VNode> items;
 	//--------------------------------------------------------------------------
 	public ObservableList<VNode> getAll()				{ return items;	}
@@ -79,7 +81,7 @@ public class Selection
 //		if (s.isLayerLocked()) return;
 		items.add(s);	
 		s.setEffect(new DropShadow()); 
-		s.showPorts(s.isConnectable());
+		s.showPorts(s.modelNode().isConnectable() || s.modelNode().isResizable());
 		
 		ObservableMap<Object, Object> properties = s.getProperties(); 
 		BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
@@ -128,7 +130,8 @@ public class Selection
 			if (isGrid(node)) continue;
 			getController().remove(node);
 		}
-		for (Edge e : getModel().getEdges())
+		Collection<Interaction> edges = getModel().getInteractions().values(); // getEdges().toArray(edges);
+		for (Edge e : edges)
 			if (e.isSelected())
 				getController().remove(e);
 			
@@ -192,20 +195,26 @@ public class Selection
 	//--------------------------------------------------------------------------
 	public void applyStyle(String styleSettings)
 	{
+//		if (styleSettings.length() > 0 ) return;
 		for (VNode n : items)
 		{
 			String id = n.getId();
+			boolean rectangular = (n.getFigure() instanceof Rectangle);
 			if ((id == null) || ("Marquee".equals(id)))	continue;
 			AttributeMap attr = new AttributeMap(styleSettings, true);
 			String fill = attr.get("-fx-fill");
 			if (fill != null)
 				attr.put("-fx-background-color", fill);
-			String stroke = attr.get("-fx-stroke");
-			if (stroke != null)
-				attr.put("-fx-border-color", stroke);
-			String w = attr.get("-fx-stroke-width");
-			if (w != null)
-				attr.put("-fx-border-width", w);
+			
+			if (rectangular)
+			{
+				String stroke = attr.get("-fx-stroke");
+				if (stroke != null)
+					attr.put("-fx-border-color", stroke);
+				String w = attr.get("-fx-stroke-width");
+				if (w != null)
+					attr.put("-fx-border-width", w);
+			}
 			styleSettings = attr.getStyleString();
 				
 			if (n != null)
@@ -441,17 +450,22 @@ public class Selection
 	public void setMovable(boolean b)	{ 
 		for (Node n : items)
 			if (n instanceof VNode)
-				((VNode)n).setMovable(b);	
+				((VNode)n).modelNode().setMovable(b);	
 		}
-	public void setEditable(boolean b)	{ 
+	public void setSelectable(boolean b)	{ 
 		for (Node n : items)
 			if (n instanceof VNode)
-				((VNode)n).setEditable(b);	
+				((VNode)n).modelNode().setSelectable(b);	
 	}
 	public void setResizable(boolean b){
 		for (Node n : items)
 			if (n instanceof VNode)
-				((VNode)n).setResize(b);	
+				((VNode)n).modelNode().setResizable(b);	
+	}
+	public void setConnectable(boolean b){
+		for (Node n : items)
+			if (n instanceof VNode)
+				((VNode)n).modelNode().setConnectable(b);	
 	}
 	public void setLayer(String layername) {
 		for (Node n : items)

@@ -1,15 +1,17 @@
 package diagrams.pViz.view;
 
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
+import diagrams.pViz.model.nodes.DataNode;
 import gui.Action.ActionType;
+import gui.Borders;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphsDude;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.event.EventHandler;
@@ -18,21 +20,17 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.control.SelectionMode;
 import javafx.scene.control.Slider;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
-import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.input.DataFormat;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
 
@@ -41,11 +39,19 @@ public class Inspector extends HBox implements Initializable {
 	Controller controller;
 	Selection selection;
 	
-	@FXML private HBox inspectTop;
+	@FXML private HBox inspectTop;	
 	@FXML private CheckBox resizable;
 	@FXML private CheckBox movable;
-	@FXML private CheckBox editable;
+	@FXML private CheckBox selectable;
 	@FXML private CheckBox connectable;
+
+	
+	@FXML private VBox fillCV;
+	@FXML private VBox opacCV;
+	@FXML private VBox strokeCV;
+	@FXML private VBox rotatCV;
+	@FXML private VBox weightCV;
+	@FXML private VBox scaleCV;
 
 	@FXML private ColorPicker fillColor;
 	@FXML private ColorPicker lineColor;
@@ -55,6 +61,8 @@ public class Inspector extends HBox implements Initializable {
 	@FXML private Slider scale;
 	@FXML private Slider rotation;
 	@FXML private Slider opacity;
+	@FXML private Slider fillSlider;
+	@FXML private Slider strokeSlider;
 //	@FXML private Label status1;
 //	@FXML private Label status2;
 //	@FXML private Label status3;
@@ -77,7 +85,15 @@ public class Inspector extends HBox implements Initializable {
 		weight.valueProperty().addListener((ov, old, val) ->    {   weightChanged();   	});	
 		rotation.valueProperty().addListener((ov, old, val) ->  {   rotationChanged();  });	
 		opacity.valueProperty().addListener((ov, old, val) ->  	{   opacityChanged();  	});	
+		fillSlider.valueProperty().addListener((ov, old, val) ->  	{   fillChanged();  	});	
+		strokeSlider.valueProperty().addListener((ov, old, val) ->  	{   strokeChanged();  	});	
 		
+		fillCV.setBorder(Borders.etchedBorder);
+		opacCV.setBorder(Borders.etchedBorder);
+		rotatCV.setBorder(Borders.etchedBorder);
+		scaleCV.setBorder(Borders.etchedBorder);
+		weightCV.setBorder(Borders.thinEtchedBorder);
+		strokeCV.setBorder(Borders.greenBorder);
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
 		EventHandler<Event> evH = event -> {	controller.getUndoStack().push(ActionType.Property);  };
 //		opacity.setOnMousePressed(evH); 
@@ -176,30 +192,50 @@ public class Inspector extends HBox implements Initializable {
 		selection.putDouble("Rotation", rotation.getValue() / 100.);	
 	}
 	
+	
+	//-------------------------------------------------------------
+	@FXML private CheckBox showGraphId;	
+	@FXML private CheckBox snapToGrid;	
+	@FXML private CheckBox showZOrder;	
+	@FXML private CheckBox showAnchors;	
+	@FXML private CheckBox showLocks;	
+	@FXML private void	showZOrder() 	{		zOrderVisible.set(showZOrder.isSelected());	}
+	@FXML private void	setSnapToGrid() {		snapToGridProperty.set(snapToGrid.isSelected());  }
+	@FXML private void	showGraphId() 	{		graphIdsVisible.set(showGraphId.isSelected());	} 
+	@FXML private void	showAnchors() 	{		anchorVisibleProperty.set(showAnchors.isSelected());	}
+	@FXML private void	showLocks() 	{		lockVisibleProperty.set(showLocks.isSelected());	}
+
+	SimpleBooleanProperty graphIdsVisible = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty graphIdsVisibleProperty() { return graphIdsVisible; }
+	SimpleBooleanProperty zOrderVisible = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
+	SimpleBooleanProperty snapToGridProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty snapToGridProperty() { return snapToGridProperty; }
+	SimpleBooleanProperty anchorVisibleProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty anchorVisibleProperty() { return anchorVisibleProperty; }
+	SimpleBooleanProperty lockVisibleProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty lockVisibleProperty() { return lockVisibleProperty; }
 	// **-------------------------------------------------------------------------------
 	public void applyLocks()
 	{
-		selection.applyLocks(movable.isSelected(), resizable.isSelected(), editable.isSelected(), connectable.isSelected());
+		selection.applyLocks(movable.isSelected(), resizable.isSelected(), selectable.isSelected(), connectable.isSelected());
 	}
 	
-	@FXML private void setMovable(ActionEvent ev)	
-	{	
-		selection.setMovable(movable.isSelected());
-	}	
+	@FXML private void setMovable(ActionEvent ev)		{	 selection.setMovable(movable.isSelected());	}	
 	
 	@FXML private void setResizable(ActionEvent ev)	
 	{
 		selection.setResizable(resizable.isSelected());		
 	}
 	
-	@FXML private void setEditable(ActionEvent ev)	
+	@FXML private void setSelectable(ActionEvent ev)	
 	{	
-		selection.setEditable(editable.isSelected());	
+		selection.setSelectable(selectable.isSelected());	
 	}
 
 	@FXML private void setConnectable(ActionEvent ev)	
 	{	
-		selection.setEditable(connectable.isSelected());	
+		selection.setSelectable(connectable.isSelected());	
 	}
 
 	// **-------------------------------------------------------------------------------
@@ -209,15 +245,17 @@ public class Inspector extends HBox implements Initializable {
 		{
 			
 			VNode firstNode = selection.first();
-			
-			resizable.setSelected(firstNode.canResize());
-			movable.setSelected(firstNode.isMovable());
-			editable.setSelected(firstNode.isEditable());
-			connectable.setSelected(firstNode.isConnectable());
+			DataNode dataNode = firstNode.modelNode();
+			resizable.setSelected(dataNode.isResizable());
+			movable.setSelected(dataNode.isMovable());
+			selectable.setSelected(dataNode.isSelectable());
+			connectable.setSelected(dataNode.isConnectable());
 
 			Shape n = firstNode.getFigure();
+			boolean rectangular = (n instanceof Rectangle);
 			if  (n != null)
 			{
+//				String shapeType = firstNode.modelNode().get("ShapeType");
 				Paint fill = n.getFill();
 				Paint stroke = n.getStroke();
 				double wt = n.getStrokeWidth();
@@ -225,10 +263,13 @@ public class Inspector extends HBox implements Initializable {
 				double rot = n.getRotate();
 				
 				fillColor.setValue((Color) fill);
-				lineColor.setValue((Color) stroke);
-				weight.setValue(wt);
 				opacity.setValue(100 * opac);
 				rotation.setValue(rot);
+				if (rectangular)
+				{
+					lineColor.setValue((Color) stroke);
+					weight.setValue(wt);
+				}
 			}
 			if (firstNode instanceof StackPane)
 			{
@@ -241,10 +282,13 @@ public class Inspector extends HBox implements Initializable {
 				double wt = attr.getDouble("-fx-border-width", 12);
 				double rot = attr.getDouble("-fx-rotate", 0);			
 				fillColor.setValue(fill);
-				lineColor.setValue(stroke);
-				weight.setValue(wt);
 				rotation.setValue(rot);
 				opacity.setValue(100 * opac);
+				if (rectangular)
+				{
+					lineColor.setValue(stroke);
+					weight.setValue(wt);
+				}
 			}
 			
 		}

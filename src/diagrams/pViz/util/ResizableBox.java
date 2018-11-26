@@ -20,7 +20,7 @@ import javafx.scene.layout.Region;
  */
 public class ResizableBox extends DraggableBox {
 
-    private static final int DEFAULT_RESIZE_BORDER_TOLERANCE = 8;
+    private static final int DEFAULT_RESIZE_BORDER_TOLERANCE = 18;
 
     private final BooleanProperty resizeEnabledNorthProperty = new SimpleBooleanProperty(true);
     private final BooleanProperty resizeEnabledSouthProperty = new SimpleBooleanProperty(true);
@@ -183,19 +183,19 @@ public class ResizableBox extends DraggableBox {
             setCursor(null);
             return;
         }
-
+        	storeClickValuesForResize(event.getSceneX(), event.getSceneY());
         if (!dragActive) {
             storeClickValuesForDrag(event.getSceneX(), event.getSceneY());
             storeClickValuesForResize(event.getX(), event.getY());
         }
 
-        if (lastMouseRegion.equals(RectangleMouseRegion.INSIDE)) 
+        if (RectangleMouseRegion.INSIDE.equals(lastMouseRegion)) 
         {
         	if (isMovable())	
             	super.handleMouseDragged(event);
         	
         }
-       else if (!lastMouseRegion.equals(RectangleMouseRegion.OUTSIDE)) 
+       else if (!RectangleMouseRegion.OUTSIDE.equals(lastMouseRegion)) 
             if (canResize())	
             	handleResize(event.getSceneX(), event.getSceneY());
 
@@ -247,6 +247,7 @@ public class ResizableBox extends DraggableBox {
     protected void handleResize(final double x, final double y) {
 
     	if (!canResize()) return;
+    	if (lastMouseRegion == null )return;
         switch (lastMouseRegion) {
         case NORTHEAST:    handleResizeNorth(y);            handleResizeEast(x);            break;
         case NORTHWEST:    handleResizeNorth(y);            handleResizeWest(x);            break;

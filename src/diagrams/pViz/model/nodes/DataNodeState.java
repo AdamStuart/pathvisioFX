@@ -29,7 +29,6 @@ public class DataNodeState extends XRefable {
 		model = m;
 	}	
 
-
 	public DataNodeState(AttributeMap am, Model m)
 	{
 		super(am);
@@ -59,7 +58,7 @@ public class DataNodeState extends XRefable {
 	
 		
 	String elementType = "State";
-	String[]  nodeAttrs = {  "TextLabel", "GraphId", "Type"};
+	String[]  nodeAttrs = {  "TextLabel", "GraphId", "GraphRef", "Type"};
 	private void buildNodeOpen(StringBuilder bldr) {
 		bldr.append("<State " + attributeList(nodeAttrs) + " >\n");
 	}

@@ -64,7 +64,7 @@ public class Arrow extends Polygon {
     boolean useElbowConnection = false;
     public void updateLine() {
         if (line == null) return;
-    	double ang2 = (useElbowConnection) ? 90 : LineUtil.getEndAngle(line);
+    	double ang2 = (useElbowConnection) ? 0 : LineUtil.getEndAngle(line);
 //    	System.out.println(String.format("updateLine: (%.2f, %.2f) %.2f", line.getEndX(), line.getEndY(), Math.toDegrees(ang2)));
     	Point2D midpt = LineUtil.midPoint(line, 0.90);
         setTranslateX(midpt.getX());
@@ -72,7 +72,7 @@ public class Arrow extends Polygon {
            // arrow origin is top => apply offset
 //        translateXProperty().bind(line.endXProperty());
 //        translateYProperty().bind(line.endYProperty());
-        double offset = ( t > 0.5) ? 90 : -90;
+        double offset = 0; // ( t > 0.5) ? 90 : -90;
         rotZ.setAngle(Math.toDegrees(-ang2) + offset);
    }
     

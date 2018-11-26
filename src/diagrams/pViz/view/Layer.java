@@ -52,7 +52,7 @@ public class Layer extends Group {
 	{
 		if (locked) return;
 		getChildren().remove(node);
-		node.setVisible(false);
+//		node.setVisible(false);
 	}
 	
 	public void remove(Node node)

@@ -2,7 +2,7 @@ package diagrams.pViz.view;
 
 import java.util.Collections;
 
-import diagrams.pViz.app.GPMLRecord;
+import diagrams.pViz.gpml.GPMLRecord;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;

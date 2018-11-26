@@ -76,7 +76,8 @@ public class ShapeFactory {
 			case Metabolite:		newShape = new Rectangle();	break;
 			case Protein:			newShape = new Rectangle();	break;
 			case Pathway:			newShape = new Rectangle();	break;
-			case GroupComponent:	newShape = new Polygon();	break;
+			case GroupComponent:	newShape = new Rectangle();	break;
+			case ComplexComponent:	newShape = new Polygon();	break;
 
 			case Rectangle:			newShape = new Rectangle();	break;
 			case RoundedRectangle:	newShape = new Rectangle();	break;
@@ -133,6 +134,7 @@ public class ShapeFactory {
         	c.setRadiusY(Math.min(w, h)/ 2); 
         	c.setCenterX(center.getX());
         	c.setCenterY(center.getY());
+        	newShape.setVisible(true);
         }
         else if (newShape instanceof Rectangle)
         {
@@ -142,7 +144,7 @@ public class ShapeFactory {
 	        r.setX(center.getX() - w /2 ); 
 	        r.setY(center.getY() - h /2 ); 
         }
-        else if (newShape instanceof Polygon || tool == Tool.GroupComponent)
+        else if (newShape instanceof Polygon || tool == Tool.ComplexComponent)
         {
         	Polygon p = (Polygon) newShape;
         	double x0 = center.getX() - w /2;
@@ -163,11 +165,21 @@ public class ShapeFactory {
 
         }
 		stack.getChildren().add(0, newShape);
-		for (Node n : stack.getChildren())
-			System.out.println(n.getId());
+//		for (Node n : stack.getChildren())
+//			System.out.println(n.getId());
 		return newShape;
 	}
 	
+
+	static public Rectangle makeMarquee() {
+		Rectangle marquee = new Rectangle();
+		marquee.setId("Marquee");
+		marquee.setStroke(Color.GREEN);
+		marquee.setFill(Color.TRANSPARENT);
+		marquee.setStrokeWidth(1.6);
+		marquee.getStrokeDashArray().addAll(3.0, 7.0, 3.0, 7.0);
+		return marquee;
+	}
 	// **-------------------------------------------------------------------------------
 	static private void setDefaultAttributes(Shape newShape) {
 		newShape.setFill(Color.WHITE);
@@ -199,7 +211,7 @@ public class ShapeFactory {
 			if ("Cell".equals(shapeType))
 			{	
 				r.setArcWidth(100);			r.setArcHeight(100);
-				r.setStroke(Color.GOLD);	r.setStrokeWidth(8.0);
+				r.setStroke(Color.GOLD);	r.setStrokeWidth(5.0);
 			}
 			if ("Pathway".equals(shapeType))
 			{	
@@ -273,7 +285,131 @@ public class ShapeFactory {
 			catch (Exception e) {		System.err.println("Parse errors: " + k);	}
 		}
 	}
-	// **-------------------------------------------------------------------------------
+	public static void setBounds(Pasteboard pasteboard, VNode activeStack, Point2D start, Point2D end ) {
+		double w = Math.max(20,Math.abs(end.getX() - start.getX()));
+		double h = Math.max(20,Math.abs(end.getY() - start.getY()));
+		setBounds( pasteboard, activeStack, activeStack.getFigure(), start, end, w, h );
+	}
+
+	public static void setBounds(Pasteboard pasteboard, VNode activeStack, Shape activeShape, Point2D start, Point2D end, double w, double h ) {
+
+		if (activeShape instanceof Rectangle)
+		{
+			Rectangle r = (Rectangle) activeShape;
+//			r.setVisible(true);
+//			RectangleUtil.setRect(r, left, top ,w, h);
+			activeStack.setWidth(w);
+			activeStack.setHeight(h);
+		}
+		if (activeShape instanceof Circle)
+		{
+			Circle c = (Circle) activeShape;
+//			c.setVisible(true);
+			c.setCenterX(end.getX());
+			c.setCenterY(end.getY());
+			double rad = Math.sqrt(w * w + h * h);
+			c.setRadius(rad);
+			activeStack.setWidth(2*rad);
+			activeStack.setHeight(2*rad);
+		}
+		
+		if (activeShape instanceof Polygon)
+		{
+			Polygon p = (Polygon) activeShape;
+//			p.setVisible(true);
+			int nPts = p.getPoints().size();
+			if (nPts > 1)
+			{
+				p.getPoints().set(nPts-2, end.getX());
+				p.getPoints().set(nPts-1, end.getY());
+			}
+		}
+		
+		if (activeShape instanceof Polyline)
+		{
+			Polyline p = (Polyline) activeShape;
+//			p.setVisible(true);
+			p.setFill(null);
+			int nPts = p.getPoints().size();
+			if (nPts > 1)
+			{
+				p.getPoints().set(nPts-2, end.getX());
+				p.getPoints().set(nPts-1, end.getY());
+			}
+		}
+		
+		if (activeShape instanceof Line)
+		{
+			Line p = (Line) activeShape;
+			p.setEndX(end.getX());
+			p.setEndY(end.getY());
+		}
+	}
+
+	static public void resizeFigureToNode(VNode stack) {
+		Shape figure = stack.getFigure();
+		if (figure != null)
+		{
+			if (figure instanceof Rectangle)
+			{
+				Rectangle r = (Rectangle) figure;
+				r.setWidth(stack.getWidth());	
+				r.setHeight(stack.getHeight());
+			}
+			if (figure instanceof Circle)
+			{
+				Circle c = (Circle) figure;
+				c.setCenterX(stack.getCenterX()); 
+				c.setCenterY(stack.getCenterY());
+				c.setRadius(Math.min(stack.getHeight(),stack.getWidth())/2);
+			}
+			if (figure instanceof Ellipse)
+			{
+				Ellipse e = (Ellipse) figure;
+				e.setCenterX(stack.getCenterX()); 
+				e.setCenterY(stack.getCenterY());
+				e.setRadiusX(stack.getWidth()/2);
+				e.setRadiusY(stack.getHeight()/2);
+			}
+			if (figure instanceof Path)
+			{
+				Path p = (Path) figure;
+				double scale = Math.min(stack.getWidth() / 400, stack.getHeight() / 300);
+				p.setScaleX(5 * scale);
+				p.setScaleY(5 * scale);
+			}
+			if (figure instanceof Polygon)
+			{	double pad = 8;
+				ShapeFactory.sizeFigureToBounds(stack.getPasteboard(),stack, figure, 
+						stack.getLayoutX()-pad, stack.getLayoutY()-pad, stack.getWidth()+ 2* pad, stack.getHeight()+ 2* pad);
+			}
+		}
+	}
+
+public static void sizeFigureToBounds(Pasteboard pasteboard, VNode vNode, Shape figure, double layoutX,
+		double layoutY, double w, double h) {
+
+	String type = vNode.getShapeType();
+
+	if (figure instanceof Polygon)  // && "ComplexComponent".equals(type)
+	{
+		double centerX = layoutX + w /2;
+		double centerY = layoutY + h /2;
+      	Polygon p = (Polygon) figure;
+    	double x0 = centerX - w /2;
+    	double x1 = x0 + (w / 3);
+    	double x2 = x0 + (2 * w / 3);
+    	double x3 = x0 + w;
+       	double y0 = centerY -h /2;
+    	double y1 = y0 + (h / 3);
+    	double y2 = y0 + (2 * h / 3);
+    	double y3 = y0 + h;
+    	p.getPoints().clear();
+    	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
+		
+	}
+}
+// **-------------------------------------------------------------------------------
 
 	private static void parsePolygonPoints(Polygon poly, String string) {	parsePoints(poly.getPoints(), string);	}
 
@@ -870,4 +1006,24 @@ public class ShapeFactory {
 		}
 	}
 
+		public static void addPoint(Shape activeShape, double x, double y) {
+			if (activeShape instanceof Polygon)
+			{
+				Polygon p = (Polygon) activeShape;
+				p.getPoints().addAll(x, y);
+			}
+			if (activeShape instanceof Polyline)
+			{
+				Polyline p = (Polyline) activeShape;
+				p.getPoints().addAll(x, y);
+			}
+			if (activeShape instanceof Line)
+			{
+				Line p = (Line) activeShape;
+				p.setStartX(x);
+				p.setStartY(y);
+				p.setEndX(x);
+				p.setEndY(y);
+			}
+		}
 }

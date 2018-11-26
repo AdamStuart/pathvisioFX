@@ -1,11 +1,11 @@
-package diagrams.pViz.app;
+package diagrams.pViz.gpml;
 
 import java.util.List;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import diagrams.pViz.gpml.Anchor;
+import diagrams.pViz.app.Controller;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;

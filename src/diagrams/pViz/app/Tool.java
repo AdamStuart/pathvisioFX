@@ -8,7 +8,7 @@ public enum Tool {
 
 	Arrow,
 	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Pentagon, Hexagon, Octagon, Polyline, Line, Brace, Shape1,   // Shapes
-	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent,
+	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,			// Controls
 	;
@@ -78,6 +78,7 @@ public enum Tool {
 		if ("Cell".equals(type)) 		return Cell;
 		if ("Brace".equals(type)) 		return Brace;
 		if ("GroupComponent".equals(type)) return GroupComponent;
+		if ("ComplexComponent".equals(type)) return ComplexComponent;
 		if ("Mitochondria".equals(type)) return Mitochondria;
 		if ("Protein".equals(type)) 	return Protein;
 		if ("Pathway".equals(type)) 	return Pathway;

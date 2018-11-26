@@ -1,4 +1,4 @@
-package diagrams.pViz.app;
+package diagrams.pViz.gpml;
 
 import javafx.scene.input.DataFormat;
 

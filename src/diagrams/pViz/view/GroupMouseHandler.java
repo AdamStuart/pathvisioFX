@@ -13,8 +13,8 @@ public class GroupMouseHandler extends BasicMouseHandler {
 
 	@Override protected void doMousePressed(final MouseEvent event)
 	{
-		if (verbose>3)	
-			System.out.println("GroupMousePressedHandler, Target: " + event.getTarget());
+//		if (verbose>3)	
+//			System.out.println("GroupMousePressedHandler, Target: " + event.getTarget());
 		
 		EventTarget target = event.getTarget();
 		currentPoint = new Point2D(event.getX(), event.getY());
@@ -47,8 +47,8 @@ public class GroupMouseHandler extends BasicMouseHandler {
 	// **-------------------------------------------------------------------------------
 	@Override protected void doMouseDragged(final MouseEvent event)
 	{
-		if (verbose>3)	
-			System.out.println("GroupMouseDraggedHandler, Target: " + event.getTarget());
+//		if (verbose>3)	
+//			System.out.println("GroupMouseDraggedHandler, Target: " + event.getTarget());
 		// do nothing for a right-click
 		if (event.isSecondaryButtonDown())			return;
 		

@@ -15,7 +15,7 @@ public class GPMLPoint {
 	private double y = 0;
 	private double relX = 0;
 	private double relY = 0;
-	private ArrowType head = ArrowType.none;
+	private ArrowType head = null;
 	private String graphRef;
 	private Interaction interaction;
 	public void setInteraction(Interaction s)	{ interaction = s;	}
@@ -118,7 +118,11 @@ public class GPMLPoint {
 		String secondPart = String.format("GraphRef=\"%s\" RelX=\"%.2f\" RelY=\"%.2f\" ArrowHead=\"%s\" />\n", getGraphRef(), getRelX(), getRelY(), getArrowType());
 		return firstPart + secondPart;
 	}
+public String toString()
+{
+	return String.format("<Point X=\"%.2f\" Y=\"%.2f\" ", x, y);
 
+}
 
 	
 	
@@ -186,7 +190,6 @@ public class GPMLPoint {
 	public static void setInteraction(List<GPMLPoint> pts, Interaction edge) {
 		for (GPMLPoint pt : pts)
 			pt.setInteraction(edge);
-		
 	}
 
 	public void setRelPosition(Pos srcPosition) {

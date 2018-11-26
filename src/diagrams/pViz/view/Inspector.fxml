@@ -1,79 +1,155 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import java.lang.Double?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
+<?import javafx.scene.shape.Polygon?>
+<?import javafx.scene.shape.Rectangle?>
 
-<HBox fx:id="inspectTop" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="145.0" prefWidth="881.0" spacing="8.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.Inspector">
+<HBox fx:id="inspectTop" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="145.0" prefWidth="881.0" spacing="8.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.Inspector">
    <children>
-      <VBox prefHeight="123.0" prefWidth="151.0">
+      <VBox fx:id="fillCV">
          <children>
-            <Label text="Weight" />
-            <Slider fx:id="weight" blockIncrement="2.0" majorTickUnit="5.0" max="30.0" minorTickCount="1" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" value="1.0" />
-            <Label layoutX="10.0" layoutY="10.0" text="Opacity" />
-            <Slider fx:id="opacity" blockIncrement="25.0" layoutX="10.0" layoutY="27.0" minorTickCount="5" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" value="100.0" />
+            <Label text="Fill Color" VBox.vgrow="NEVER" />
+            <HBox>
+               <children>
+                  <Rectangle fx:id="fillGradient" arcHeight="5.0" arcWidth="5.0" height="112.0" stroke="BLACK" strokeType="INSIDE" width="12.0">
+                     <fill>
+                        <LinearGradient endY="0.875">
+                           <stops>
+                              <Stop color="#0f0bf2" />
+                              <Stop color="#eff0f200" offset="1.0" />
+                           </stops>
+                        </LinearGradient>
+                     </fill></Rectangle>
+                  <Slider fx:id="fillSlider" blockIncrement="0.25" majorTickUnit="1.0" max="1.0" min="-1.0" minorTickCount="5" orientation="VERTICAL" prefHeight="141.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </HBox>
          </children>
       </VBox>
+      <VBox fx:id="weightCV" prefHeight="137.0" prefWidth="63.0">
+         <children>
+            <Label text="Weight" />
+            <HBox>
+               <children>
+                  <Polygon stroke="BLACK" strokeType="INSIDE">
+                    <points>
+                      
+                       <Double fx:value="0.0" />
+                      <Double fx:value="0.0" />
+  						 <Double fx:value="0.0" />
+                      <Double fx:value="118.0" />
+			<Double fx:value="-20.0" />
+                      <Double fx:value="0.0" />
+                                <Double fx:value="0.0" />
+                      <Double fx:value="0.0" />
+           </points>
+                     <fill>
+                        <LinearGradient endX="1.0" endY="1.0">
+                           <stops>
+                              <Stop color="BLACK" />
+                              <Stop color="WHITE" offset="1.0" />
+                           </stops>
+                        </LinearGradient>
+                     </fill>
+                  </Polygon>
+                  <Slider fx:id="weight" blockIncrement="2.0" majorTickUnit="5.0" max="30.0" minorTickCount="1" orientation="VERTICAL" showTickLabels="true" showTickMarks="true" value="1.0" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <VBox fx:id="scaleCV">
+         <children>
+            <Label text="Scale" VBox.vgrow="NEVER" />
+            <Slider fx:id="scale" blockIncrement="0.25" majorTickUnit="1.0" max="2.0" min="-2.0" minorTickCount="5" orientation="VERTICAL" prefHeight="86.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS" />
+         </children>
+      </VBox>
+      <VBox fx:id="opacCV">
+         <children>
+            <Label text="Opacity" />
+            <Slider fx:id="opacity" blockIncrement="25.0" minorTickCount="5" orientation="VERTICAL" showTickLabels="true" showTickMarks="true" value="100.0" />
+         </children>
+      </VBox>
+      <VBox fx:id="strokeCV">
+         <children>
+            <Label text="Stroke" VBox.vgrow="NEVER" />
+            <HBox VBox.vgrow="ALWAYS">
+               <children>
+                  <Rectangle fx:id="strokeGradient" arcHeight="5.0" arcWidth="5.0" height="112.0" stroke="BLACK" strokeType="INSIDE" width="8.0">
+                     <fill>
+                        <LinearGradient endY="1.0">
+                           <stops>
+                              <Stop color="#ff1f1f" />
+                              <Stop color="WHITE" offset="1.0" />
+                           </stops>
+                        </LinearGradient>
+                     </fill></Rectangle>
+                  <Slider fx:id="strokeSlider" blockIncrement="0.25" majorTickUnit="1.0" max="1.0" min="-1.0" minorTickCount="5" orientation="VERTICAL" prefHeight="86.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+      <VBox fx:id="rotatCV">
+         <children>
+            <Label text="Rotation" VBox.vgrow="NEVER" />
+            <Slider fx:id="rotation" majorTickUnit="90.0" max="180.0" min="-180.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS" />
+         </children>
+      </VBox>
+      <Separator orientation="VERTICAL" prefHeight="200.0" />
       <VBox spacing="6.0">
          <children>
             <HBox>
                <children>
-                  <Label fx:id="fillLabel" alignment="CENTER_RIGHT" text="Fill" />
+                  <Label fx:id="fillLabel" prefWidth="50.0" text="Fill" />
                   <ColorPicker fx:id="fillColor" style="-fx-color-label-visible: false;" />
                </children>
             </HBox>
             <HBox>
                <children>
-                  <Label fx:id="strokeLabel" text="Stroke" />
+                  <Label fx:id="strokeLabel" prefWidth="50.0" text="Stroke" />
                   <ColorPicker fx:id="lineColor" style="-fx-color-label-visible: false;" />
                </children>
             </HBox>
             <HBox layoutX="10.0" layoutY="36.0">
                <children>
-                  <Label fx:id="strokeLabel1" text="Shape" />
+                  <Label fx:id="strokeLabel1" prefWidth="50.0" text="Shape" />
                   <ColorPicker fx:id="lineColor1" style="-fx-color-label-visible: false;" />
                </children>
             </HBox>
             <HBox layoutX="10.0" layoutY="62.0">
                <children>
-                  <Label fx:id="strokeLabel11" text="Style" />
+                  <Label fx:id="strokeLabel11" prefWidth="50.0" text="Style" />
                   <ColorPicker fx:id="lineColor11" style="-fx-color-label-visible: false;" />
                </children>
             </HBox>
          </children>
       </VBox>
-      <HBox>
+      <Separator orientation="VERTICAL" prefHeight="200.0" />
+      <VBox prefHeight="137.0" prefWidth="154.0" spacing="6.0">
          <children>
-            <VBox>
-               <children>
-                  <Label text="Rotate" VBox.vgrow="NEVER" />
-                  <Slider fx:id="rotation" majorTickUnit="90.0" max="180.0" min="-180.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS" />
-               </children>
-            </VBox>
-            <VBox>
-               <children>
-                  <Label text="Scale" VBox.vgrow="NEVER" />
-                  <Slider fx:id="scale" blockIncrement="0.25" majorTickUnit="1.0" max="2.0" min="-2.0" minorTickCount="5" orientation="VERTICAL" prefHeight="86.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS" />
-               </children>
-            </VBox>
-         </children>
-      </HBox>
-      <VBox prefHeight="137.0" prefWidth="103.0" spacing="6.0">
-         <children>
-            <Label text="Other" VBox.vgrow="NEVER" />
+            <Label text=" Node Locking" VBox.vgrow="NEVER" />
             <CheckBox fx:id="resizable" mnemonicParsing="false" onAction="#setResizable" text="Resizable" />
             <CheckBox fx:id="movable" layoutX="10.0" layoutY="33.0" mnemonicParsing="false" onAction="#setMovable" text="Movable" />
-            <CheckBox fx:id="editable" layoutX="10.0" layoutY="57.0" mnemonicParsing="false" onAction="#setEditable" text="Editable" />
+            <CheckBox fx:id="selectable" layoutX="10.0" layoutY="57.0" mnemonicParsing="false" onAction="#setSelectable" text="Selectable" />
             <CheckBox fx:id="connectable" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setConnectable" text="Connectable" />
+         </children>
+      </VBox>
+      <Separator orientation="VERTICAL" prefHeight="200.0" />
+      <VBox spacing="6.0">
+         <children>
+            <CheckBox fx:id="showGraphId" mnemonicParsing="false" onAction="#showGraphId" text="Show GraphId" />
+            <CheckBox fx:id="showZOrder" mnemonicParsing="false" onAction="#showZOrder" text="Show Z Order" />
+            <CheckBox fx:id="snapToGrid" mnemonicParsing="false" onAction="#setSnapToGrid" text="Snap To Grid" />
+            <CheckBox fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
+            <CheckBox fx:id="showLocks" mnemonicParsing="false" onAction="#showLocks" text="Show Locks" />
          </children>
       </VBox>
        </children>
