@@ -183,9 +183,9 @@ public class ResizableBox extends DraggableBox {
             setCursor(null);
             return;
         }
-        	storeClickValuesForResize(event.getSceneX(), event.getSceneY());
+        	storeClickValuesForResize(event.getX(), event.getY());
         if (!dragActive) {
-            storeClickValuesForDrag(event.getSceneX(), event.getSceneY());
+            storeClickValuesForDrag(event.getX(), event.getY());
             storeClickValuesForResize(event.getX(), event.getY());
         }
 

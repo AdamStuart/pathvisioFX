@@ -234,7 +234,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void setResize(boolean enable)
 	{
 		setResizeEnabledNorth(enable);
-		setResizeEnabledEast(enable);
+		setResizeEnabledEast(enable);   
 		setResizeEnabledWest(enable);
 		setResizeEnabledSouth(enable);
 		resizable = enable;	
@@ -264,12 +264,14 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         }
     }
 //	// **-------------------------------------------------------------------------------
-//	public boolean isMovable()	{	return movable;	}
-//	public void setMovable(boolean b)	{ movable = b;	}
-//	public boolean isSelectable()	{	return selectable;}
-//	public void setSelectable(boolean b)	{ selectable = b;	}
-//	public boolean isConnectable()	{	return connectable;}
-//	public void setConnectable(boolean b)	{ connectable = b;	}
+	public boolean isResizble()			{	return resizable;	}
+	public void setResizble(boolean b)	{ 	resizable = b;	}
+	public boolean isMovable()			{	return movable;	}
+	public void setMovable(boolean b)	{ 	movable = b;	}
+	public boolean isSelectable()		{	return selectable;}
+	public void setSelectable(boolean b){ 	selectable = b;	}
+	public boolean isConnectable()		{	return connectable;}
+	public void setConnectable(boolean b){ 	connectable = b;	}
 	// **-------------------------------------------------------------------------------
 	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
 		dataNode.setMovable(mov);
@@ -424,10 +426,13 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 
 	public Point2D getPortPosition(Pos pos) {
-		Point2D center = center();
-		double x = getAdjustmentX(pos, getWidth());
-		double y = getAdjustmentY(pos, getHeight());
-		return new Point2D(center.getX()+x, center.getY()+y);
+		String s = pos.name();
+		 double dx = 0, dy = 0;
+		if (s.contains("LEFT")) 	dx = -1;
+		else if (s.contains("RIGHT")) 	dx = 1;
+		if (s.contains("TOP")) 		dy =  -1;
+		else if (s.contains("BOTTOM")) 	dy =  1;
+		return getRelativePosition(dx, dy);
 	}
 
 	public Point2D getRelativePosition(double relX, double relY) {
@@ -440,20 +445,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public Point2D getRelativePosition(RelPosition rel) {
 		return getRelativePosition(rel.x(), rel.y());
 	}
-
-	private double getAdjustmentX(Pos srcPosition, double nodeWidth) {
-		String s = srcPosition.name();
-		if (s.contains("LEFT")) 	return -nodeWidth / 2;
-		if (s.contains("RIGHT")) 	return nodeWidth / 2;
-		return 0;
-	}
-	private double getAdjustmentY(Pos srcPosition, double nodeHeight) {
-		String s = srcPosition.name();
-		if (s.contains("TOP")) 		return -nodeHeight / 2;
-		if (s.contains("BOTTOM")) 	return nodeHeight / 2;
-		return 0;
-	} 
-
  	// **-------------------------------------------------------------------------------
 	public String getLayerName() 		{	return getAttributes().get("Layer");	}
 	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}

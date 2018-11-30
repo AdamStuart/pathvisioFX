@@ -486,16 +486,17 @@ private void addCenterPointListeners() {
 	}
 
 	private void linearConnect() {
+		GPMLPoint last = lastGPMLPoint();
 		Point2D lastPt = lastPoint();
 //		if (lastPt != null) return;
 		
-		if (interaction == null)			// error state
-		{
-			setEndPoint(new Point2D(0,0));
-			LineUtil.set(getLine(), new Point2D(0,0), new Point2D(230,30));
-			return;
-			
-		}
+//		if (interaction == null)			// error state
+//		{
+//			setEndPoint(new Point2D(0,0));
+//			LineUtil.set(getLine(), new Point2D(0,0), new Point2D(230,30));
+//			return;
+//			
+//		}
 		VNode startNode = interaction.getStartNode() == null ? null : interaction.getStartNode().getStack();
 		VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 		Shape shape = null;
@@ -519,7 +520,7 @@ private void addCenterPointListeners() {
 				setLastPoint(lastPt);
 			}
 		}     
-		Point2D start = new Point2D(0,0);
+		Point2D start = firstGPMLPoint().getPoint();
 		if (startNode == null)
 		{
 			String startId = interaction.get("start");
@@ -533,7 +534,7 @@ private void addCenterPointListeners() {
 		else start = startNode.modelNode().getAdjustedPoint(firstGPMLPoint());
 		setStartPoint(start);
 		
-		Point2D end = new Point2D(0,0);
+		Point2D end = last.getPoint();
 		if (endNode == null)		// TODO -- and arrowhead??
 		{
 			String endId = interaction.get("end");

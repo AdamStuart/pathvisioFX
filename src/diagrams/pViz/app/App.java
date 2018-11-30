@@ -178,7 +178,7 @@ import util.FileUtil;
 		{
 			browserStage.setTitle("Pathway Browser");
 			FXMLLoader fxmlLoader = new FXMLLoader();
-			String fullname = "../tables/PathwayList.fxml";
+			String fullname = "../gpml/PathwayList.fxml";
 		    URL url = getInstance().getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
 		    if (url == null)
 		    {

@@ -334,7 +334,6 @@ public class GPML {
 			{
 				attrib.add(n.getAttributes());
 				NodeList pts = n.getChildNodes();
-				boolean sourceAssigned = false;
 				for (int j=0; j<pts.getLength(); j++)
 				{
 					org.w3c.dom.Node pt = pts.item(j);
@@ -342,8 +341,7 @@ public class GPML {
 					{
 						GPMLPoint gpt = new GPMLPoint(pt);
 						points.add(gpt);
-						String key = sourceAssigned ? "targetid" : "sourceid";
-						sourceAssigned = true;
+						String key = j > 0 ? "targetid" : "sourceid";
 						attrib.put(key, gpt.getGraphRef());
 						ArrowType type = gpt.getArrowType();
 						if (type != null)
@@ -373,7 +371,8 @@ public class GPML {
 			GPMLPoint lastPt = points.get(z-1);
 			endId = lastPt.getGraphRef();
 			attrib.put("targetid", endId);
-			attrib.put("ArrowHead", lastPt.getArrowType().toString());
+			if ( lastPt.getArrowType() != null)
+				attrib.put("ArrowHead", lastPt.getArrowType().toString());
 			endNode = m.getDataNode(endId);
 			double thickness = attrib.getDouble("LineThickness");
 			attrib.putDouble("LineThickness", thickness);
@@ -392,11 +391,11 @@ public class GPML {
 		interaction.add(edgeML.getAttributes());
 		interaction.copyAttributesToProperties();		// copy attributes into properties for tree table editing
 		
-		if (startNode != null && endNode != null)
-		{
-			interaction.setStartNode(startNode);
-			interaction.setEndNode(endNode);
-		}
+//		if (startNode != null && endNode != null)
+//		{
+//			interaction.setStartNode(startNode);
+//			interaction.setEndNode(endNode);
+//		}
 		return interaction;
 	}
 	catch(Exception e)
