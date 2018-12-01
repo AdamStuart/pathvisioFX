@@ -235,13 +235,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         	showPorts(isSelected());
         }
     }
-//	// **-------------------------------------------------------------------------------
-//	public boolean isMovable()	{	return movable;	}
-//	public void setMovable(boolean b)	{ movable = b;	}			DO THIS IN MODEL NODE
-//	public boolean isSelectable()	{	return selectable;}
-//	public void setSelectable(boolean b)	{ selectable = b;	}
-//	public boolean isConnectable()	{	return connectable;}
-//	public void setConnectable(boolean b)	{ connectable = b;	}
+
 	// **-------------------------------------------------------------------------------
 	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
 		dataNode.setMovable(mov);
@@ -340,7 +334,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (figure != null)
 			setScaleShape(true);
 	}
-  	// **-------------------------------------------------------------------------------
+ 	// **-------------------------------------------------------------------------------
+
 	public String getLayerName() 		{	return getAttributes().get("Layer");	}
 	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}
 	public boolean isLayerLocked() 		{	LayerRecord rec = getLayer(); return rec == null || rec.getLock();	}

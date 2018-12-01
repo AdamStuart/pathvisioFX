@@ -334,7 +334,6 @@ public class GPML {
 			{
 				attrib.add(n.getAttributes());
 				NodeList pts = n.getChildNodes();
-				boolean sourceAssigned = false;
 				for (int j=0; j<pts.getLength(); j++)
 				{
 					org.w3c.dom.Node pt = pts.item(j);
@@ -342,8 +341,7 @@ public class GPML {
 					{
 						GPMLPoint gpt = new GPMLPoint(pt);
 						points.add(gpt);
-						String key = sourceAssigned ? "targetid" : "sourceid";
-						sourceAssigned = true;
+						String key = j > 0 ? "targetid" : "sourceid";
 						attrib.put(key, gpt.getGraphRef());
 						ArrowType type = gpt.getArrowType();
 						if (type != null)

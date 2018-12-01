@@ -97,15 +97,15 @@ public class GPMLPoint {
 	{
 		if (interaction != null)		// the dragLine has no interaction defined
 		{
-			DataNode endNode = interaction.getModel().findDataNode(graphRef);
-			if (endNode != null)
-				setXY(endNode, relX, relY);
+			DataNode dataNode = interaction.getModel().findDataNode(graphRef);
+			if (dataNode != null)
+				setXY(dataNode, relX, relY);
 		}
 	}
 	
-	public void setXY(DataNode endNode, double relX, double relY)
+	public void setXY(DataNode dataNode, double relX, double relY)
 	{
-		Point2D position = endNode.getStack().getRelativePosition(relX, relY);
+		Point2D position = dataNode.getStack().getRelativePosition(relX, relY);
 		x = position.getX();
 		y = position.getY();
 	}
