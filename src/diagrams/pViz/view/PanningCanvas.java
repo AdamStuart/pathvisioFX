@@ -28,9 +28,12 @@ public class PanningCanvas extends Pane {
 	static public int CANVAS_WIDTH = 5000;
 	static public int CANVAS_HEIGHT = 5000;
 	protected Controller controller;
-	public PanningCanvas(Controller ctrl) {
+	protected Label zoomScale;
+	
+	public PanningCanvas(Controller ctrl, Label zoom) {
 		setWidth(CANVAS_WIDTH);
 		setHeight(CANVAS_HEIGHT);
+		zoomScale = zoom;
 		setId("root");
 		controller = ctrl;
 		editorProperties = new GraphEditorProperties();
@@ -145,12 +148,14 @@ public class PanningCanvas extends Pane {
 		}
 	}
 	
+	//-----------------------------------------------------------------------------
 
     DoubleProperty myScale = new SimpleDoubleProperty(1.0);
 
   
+    public void updateScaleFeedback()	{ 		if (zoomScale != null) zoomScale.setText((int) (getScale()*100) + "%"); }
     public double getScale() 			{        return myScale.get();    }
-    public void setScale( double scale) {        myScale.set(scale);    }
+    public void setScale( double scale) {        myScale.set(scale);  updateScaleFeedback(); }
 
     public void setPivot( double x, double y) {
         setTranslateX(getTranslateX()-x);
@@ -166,13 +171,9 @@ public class PanningCanvas extends Pane {
 		
 		if (getScale() > 0.0125)
 			setScale(getScale() / 2);		
-
-	
 	}
 
-	public void add(Node node)				{	getActiveLayer().add(node);	}
-	public void remove(Node node)			{	getActiveLayer().remove(node);	}
-
+	//-----------------------------------------------------------------------------
 	public void clear()						
 	{ 	
 		for (LayerRecord lay : allLayers) 
@@ -181,6 +182,10 @@ public class PanningCanvas extends Pane {
 	}
 	public void clearLayer()				{ 	getActiveLayer().clear();	}
 	
+	//-----------------------------------------------------------------------------
+	public void add(Node node)				{	getActiveLayer().add(node);	}
+	public void remove(Node node)			{	getActiveLayer().remove(node);	}
+
 	public void add(int idx, Node node, String layername)		
 	{	
 		node.getProperties().put("Layer", layername); 	
@@ -196,9 +201,11 @@ public class PanningCanvas extends Pane {
 	public void addAllVNodes(VNode[] n) 	{	for (VNode node : n) add(node);	}
 	public void addAllVNodes(List<VNode> n) {	for (VNode node : n) add(node);	}
 	
+	//-----------------------------------------------------------------------------
 	private String activeLayerName = "Content";
 	public String activeLayerName()			{ 	return activeLayerName; }
 	public void setActiveLayer(String s)	{  	activeLayerName = s; }
+
 	Layer getActiveLayer() 					
 	{ 	
 		LayerRecord rec =  controller.getLayerRecord(activeLayerName);
@@ -234,6 +241,7 @@ public class PanningCanvas extends Pane {
 		}
 		return nodeLayer.toString();
 	}
+
 	public void resetLayerOrder(ObservableList<LayerRecord> items) {
 		for (LayerRecord rec : items)
 		{

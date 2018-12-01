@@ -103,11 +103,7 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 			doContextMenu(event);
             return;
 		}
-		if (event.isSecondaryButtonDown())			// middle or mouse wheel click
-		{
-//					return;
-		}
-		
+
 		boolean wasSelected = pasteboard.getSelectionMgr().isSelected(node);
 		if (event.isControlDown())
 			pasteboard.getSelectionMgr().select(node, !wasSelected);
@@ -133,6 +129,7 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 		ContextMenu menu = new ContextMenu();
 		menu.getItems().addAll(target.getMenuItems(event));
 		menu.show(pasteboard, event.getScreenX(), event.getScreenY());		
+		event.consume();
 	}
 
 	// **-------------------------------------------------------------------------------

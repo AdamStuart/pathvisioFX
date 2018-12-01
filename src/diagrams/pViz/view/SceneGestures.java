@@ -20,17 +20,9 @@ public class SceneGestures {
         this.canvas = canvas;
     }
 
-    public EventHandler<MouseEvent> getOnMousePressedEventHandler() {
-        return onMousePressedEventHandler;
-    }
-
-    public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {
-        return onMouseDraggedEventHandler;
-    }
-
-    public EventHandler<ScrollEvent> getOnScrollEventHandler() {
-        return onScrollEventHandler;
-    }
+    public EventHandler<MouseEvent> getOnMousePressedEventHandler() {  return onMousePressedEventHandler;   }
+    public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {  return onMouseDraggedEventHandler;     }
+    public EventHandler<ScrollEvent> getOnScrollEventHandler() 		{  return onScrollEventHandler;    }
 
     private EventHandler<MouseEvent> onMousePressedEventHandler = new EventHandler<MouseEvent>() {
 
@@ -72,7 +64,7 @@ public class SceneGestures {
         @Override
         public void handle(ScrollEvent event) {
 
-            double delta = 1.2;
+            double delta = 1.1;
 
             double scale = canvas.getScale(); // currently we only use Y, same value is used for X
             double oldScale = scale;
@@ -82,7 +74,7 @@ public class SceneGestures {
             else
                 scale *= delta;
 
-            scale = clamp( scale, MIN_SCALE, MAX_SCALE);
+            scale = pin( scale, MIN_SCALE, MAX_SCALE);
 
             double f = (scale / oldScale)-1;
 
@@ -90,7 +82,7 @@ public class SceneGestures {
             double dy = (event.getSceneY() - (canvas.getBoundsInParent().getHeight()/2 + canvas.getBoundsInParent().getMinY()));
 
             canvas.setScale( scale);
-System.out.println(scale);
+//System.out.println(scale);
             // note: pivot value must be untransformed, i. e. without scaling
             canvas.setPivot(f*dx, f*dy);
 
@@ -101,7 +93,7 @@ System.out.println(scale);
     };
 
 
-    public static double clamp( double value, double min, double max) {
+    public static double pin( double value, double min, double max) {
 
         if( Double.compare(value, min) < 0)
             return min;

@@ -8,6 +8,7 @@ import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.util.ResizableBox;
 import diagrams.pViz.view.VNode;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -32,7 +33,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	public void setInteractionType(String s)  { interactionType.set(s);}
 	public  String getInterType()  { return interactionType.get();}
 
-	public void dump()	{ System.out.println(get("GraphId") + toString());	}
+	public void dump()	{ System.out.println( toString());	}		//get("GraphId") +
 	public Interaction(Model inModel)
 	{
 		super(inModel);
@@ -54,8 +55,8 @@ public class Interaction extends Edge implements Comparable<Interaction>
 //		edgeLine = new EdgeLine(this, pts, anchors);
 //	}
 	
-	public Interaction(Model model, VNode src, Pos srcPosition, 
-			VNode vNode, RelPosition targPosition, ArrowType arrow, EdgeType edge) 
+	public Interaction(Model model, ResizableBox src, Pos srcPosition, 
+			ResizableBox vNode, RelPosition targPosition, ArrowType arrow, EdgeType edge) 
 	{
 		this(model,src,vNode, null);
 		setInteractionType(edge.toString());
@@ -80,21 +81,12 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	}	
 
 	
-	public Interaction(Model inModel, VNode start, VNode end, AttributeMap attr) 		//, List<GPMLPoint> pts, List<Anchor> anchors
+	public Interaction(Model inModel, ResizableBox start, ResizableBox end, AttributeMap attr) 		//, List<GPMLPoint> pts, List<Anchor> anchors
 	{
-    	super( inModel,  start,  end,  attr);	
+    	super( inModel, (VNode) start,  (VNode) end,  attr);	
      }
 	
-	@Override public String toString()
-	{
-		String name =  getName();
-		if (StringUtil.isEmpty(name)) name = "#"; 
-		String id =  getGraphId();
-		if (StringUtil.isEmpty(id)) id = "*"; 
-		String str = (edgeLine == null) ? "X" : edgeLine.toString();
-		return name + " " + id + " " + str;
-	}
-
+	   //------------------------------------------------------------------------------------------
 	public int compareTo(Interaction other)
 	{
 		return getName().compareToIgnoreCase(other.getName());
@@ -108,6 +100,16 @@ public class Interaction extends Edge implements Comparable<Interaction>
 //		repostionAnchors();
 	}
 	   //------------------------------------------------------------------------------------------
+	@Override public String toString()
+	{
+		String name =  getName();
+		if (StringUtil.isEmpty(name)) name = "#"; 
+		String id =  getGraphId();
+		if (StringUtil.isEmpty(id)) id = "*"; 
+		String str = (edgeLine == null) ? "X" : edgeLine.toString();
+		return name + " " + id + " " + str;
+	}
+
     public String toGPML()
    {
 		StringBuffer b = new StringBuffer(String.format("<Interaction GraphId=\"%s\" >\n", getSafe("GraphId")));
@@ -166,8 +168,5 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		return getEndNode() == null ? get("targetid") : getEndNode().getName();
 	}
 
-
-	public Anchor findAnchorById(String targId) {
-		return getModel().findAnchorById(targId);
-	}
+	public Anchor findAnchorByRef(String targRef) {		return getModel().findAnchorByRef(targRef);	}
 }

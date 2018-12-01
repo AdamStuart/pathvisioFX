@@ -57,10 +57,10 @@ abstract public class Edge extends XRefable {
     	DataNode target = model.getDataNode(get("targetid"));
     	if (target == null)
     	{
-    		String id = get("targetid");
+    		String ref = get("targetid");
     		if (startNode != null)
     		{
-    			Anchor anch = model.findAnchorById(id);
+    			Anchor anch = model.findAnchorByRef(ref);
         		if (anch != null)
         			setTargetid(anch.getGraphId());
     		}
@@ -71,6 +71,7 @@ abstract public class Edge extends XRefable {
     		setTarget(target.getLabel()); 
     		setTargetid(target.getGraphId());
     	}
+    	
       }
  
 //    public Edge(GPMLPoint startPt, GPMLPoint endPt, double thickness, Model inModel) 
@@ -114,7 +115,7 @@ abstract public class Edge extends XRefable {
     {
 		
 		edgeLine = new EdgeLine(this, pts, anchors);
-		setInteraction(get("ArrowHead"));
+		setInteractionProperty(get("ArrowHead"));
 	   EdgeType edgeType = EdgeType.simple;
 		String type = get("ConnectorType");
 		if (type != null)  
@@ -161,6 +162,8 @@ abstract public class Edge extends XRefable {
 		if (endNode != null)
 		 endpt = endNode.getAdjustedPoint(lastpt);
 		edgeLine.setEndPoint(endpt);
+		ArrowType typ = lastpt.getArrowType();
+//		edgeLine.setArrowType(lastpt.getArrowType());
 		edgeLine.connect();
 
 	}
@@ -250,18 +253,18 @@ abstract public class Edge extends XRefable {
     public boolean isEndpoint(DataNode n)	{  return isStart(n) || isEnd(n);	}
 
 	//------------------------------------------------------------------------------------------
-//	
-//	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
-//	{ 
-//		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-//		{ connect(); }  //false
-//	};
-//
-//	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
-//	{ 
-//		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
-//		{ connect(); }   //true
-//	};
+	
+	ChangeListener<Bounds> startbounds = new ChangeListener<Bounds>()
+	{ 
+		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
+		{ connect(); }  //false
+	};
+
+	ChangeListener<Bounds> endbounds = new ChangeListener<Bounds>()
+	{ 
+		@Override public void changed(ObservableValue<? extends Bounds> observable, Bounds oldValue, Bounds newValue)
+		{ connect(); }   //true
+	};
 
 	ChangeListener<Number> startposition = new ChangeListener<Number>()
 	{ 
@@ -280,7 +283,7 @@ abstract public class Edge extends XRefable {
 	{
 		if (startNode != null)
 		{
-//			startNode.getStack().layoutBoundsProperty().addListener(startbounds);
+			startNode.getStack().layoutBoundsProperty().addListener(startbounds);
 			startNode.getStack().layoutXProperty().addListener(startposition);
 		}
 		if (endNode == null){
@@ -294,7 +297,7 @@ abstract public class Edge extends XRefable {
 		}
 		if (endNode != null)
 		{	
-//			endNode.getStack().layoutBoundsProperty().addListener(endbounds);
+			endNode.getStack().layoutBoundsProperty().addListener(endbounds);
 			endNode.getStack().layoutXProperty().addListener(endposition);
 		}
 	}
@@ -302,12 +305,12 @@ abstract public class Edge extends XRefable {
 	{
 		if (startNode != null)
 		{
-//			startNode.getStack().layoutBoundsProperty().removeListener(startbounds);
+			startNode.getStack().layoutBoundsProperty().removeListener(startbounds);
 			startNode.getStack().layoutXProperty().removeListener(startposition);
 		}
 		if (endNode != null)
 		{	
-//			endNode.getStack().layoutBoundsProperty().removeListener(endbounds);
+			endNode.getStack().layoutBoundsProperty().removeListener(endbounds);
 			endNode.getStack().layoutXProperty().removeListener(endposition);
 		}
 	}
@@ -416,7 +419,7 @@ abstract public class Edge extends XRefable {
 	private SimpleStringProperty interaction = new SimpleStringProperty();	
 	public StringProperty  interactionProperty()  { return interaction;}
 	public String getInteraction()  { return interaction.get();}
-	public void setInteraction(String s)  { interaction.set(s);}
+	public void setInteractionProperty(String s)  { interaction.set(s);}
 
 }
 

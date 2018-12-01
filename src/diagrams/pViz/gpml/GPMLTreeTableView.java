@@ -410,7 +410,7 @@ System.out.println("stateChanged " + e.toString());
 	{
 		String id = xref.getGraphId();
 		if (id == null)  id = xref.get("GraphId");
-		System.out.println(prefix + xref.getName() + " " + xref.get("Type") + " " + id + " " + depth);
+		System.out.println(prefix + xref.getName() + " " +  id + " ");		//xref.get("Type") + " " +
 		
 	}
 }

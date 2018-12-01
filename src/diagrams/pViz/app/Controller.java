@@ -304,6 +304,7 @@ public class Controller implements Initializable, IController
 	//------------------------------------------
 	@FXML private Label select;
 	@FXML private Label size;
+	@FXML private Label scale;
 	@FXML private SplitPane hsplitter;
 	
 
@@ -341,7 +342,7 @@ public class Controller implements Initializable, IController
 		assert(drawPane != null);
 		model = new Model(this);
 		geneModel = new GeneModel(this);
-		pasteboard = new Pasteboard(this);
+		pasteboard = new Pasteboard(this, scale);
 		setupInspector();		
 		pasteboard.bindGridProperties();
 		drawPane.getChildren().add(pasteboard);

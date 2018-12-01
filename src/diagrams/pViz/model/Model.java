@@ -276,11 +276,11 @@ public class Model
 	private void readEdges(String state) {
 	}
 	// **-------------------------------------------------------------------------------
-	public Anchor findAnchorById(String graphId)
+	public Anchor findAnchorByRef(String graphRef)
 	{
 		for (Interaction inter : interactionMap.values())
 		{
-			Anchor a = inter.getEdgeLine().findAnchor(graphId);
+			Anchor a = inter.getEdgeLine().findAnchor(graphRef);
 			if (a != null) 
 				return a;
 		}

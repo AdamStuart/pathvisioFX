@@ -373,7 +373,9 @@ public class GPML {
 			GPMLPoint lastPt = points.get(z-1);
 			endId = lastPt.getGraphRef();
 			attrib.put("targetid", endId);
-			attrib.put("ArrowHead", lastPt.getArrowType().toString());
+			ArrowType arwType = lastPt.getArrowType();
+			if (arwType != null)
+				attrib.put("ArrowHead", arwType.toString());
 			endNode = m.getDataNode(endId);
 			double thickness = attrib.getDouble("LineThickness");
 			attrib.putDouble("LineThickness", thickness);

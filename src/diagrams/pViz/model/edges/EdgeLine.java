@@ -136,7 +136,7 @@ private void addCenterPointListeners() {
 	centerPoint.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> 
 	{ 	
 		points.get(1).setX(e.getX());
-		points.get(1).setY(e.getY());	
+		points.get(1).setY(e.getY());				// TODO only works once
 		
 		centerPoint.setCenterX(e.getX());
 		centerPoint.setCenterY(e.getY());
@@ -167,7 +167,11 @@ private void addCenterPointListeners() {
 //	public double getStartY(double y) { return srcY; }
 	Color stroke = Color.AQUA;
 	double strokeWidth = 2;
-	public void setStroke(Color c) { stroke = c; getLine().setStroke(c);}
+	public void setStroke(Color c)
+	{ 
+		stroke = c; 
+		getLine().setStroke(c);
+	}
 	public void setStrokeWidth(double w) { strokeWidth = w; getLine().setStrokeWidth(w);}
 	public double getStrokeWidth() { return strokeWidth; }
 	 //----------------------------------------------------------------------
@@ -214,12 +218,16 @@ private void addCenterPointListeners() {
 	private List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 	private List<Anchor> anchors = new ArrayList<Anchor>();
  
-	public Anchor findAnchor(String graphId)
+	public Anchor findAnchor(String graphRef)
     {
-	  if (graphId == null) return null;
+	  if (graphRef == null) return null;
+	  System.out.println("searching anchors " + getAnchors().size() + " " + graphRef);
 	  for (Anchor a : getAnchors())
-		   if (graphId.equals(a.getGraphId()))
+	  {
+		  System.out.println("anchor " + a.getGraphId());
+		  if (graphRef.equals(a.getGraphId()))
 			   return a;
+	  }
 	   return null;
     }
 
@@ -390,11 +398,13 @@ private void addCenterPointListeners() {
 	{
 //		for (GPMLPoint pt : points)
 //			pt.setXYFromNode();
+
+		if (head != null) 	
+			getChildren().remove(head);
 		
 		for (Anchor a : anchors)
 			a.resetPosition(interaction);
 	
-		
 		switch (type)
 		{
 			case polyline:	polylineConnect(); 		break;
@@ -403,9 +413,7 @@ private void addCenterPointListeners() {
 			default: 		linearConnect();
 		}
 		
-		if (head != null) 	getChildren().remove(head);
 		head = makeArrowhead();
-//	 	if (head != null) 	getChildren().add(head);
 	 	
 		Point2D pt = getPointAlongLine(0.5);
 		setLabelPosition(pt);
@@ -502,7 +510,7 @@ private void addCenterPointListeners() {
 		if (endNode == null) 
 		{
 			String targId = interaction.get("targetid");
-			Anchor a =interaction.findAnchorById(targId);
+			Anchor a =interaction.findAnchorByRef(targId);
 			if (a != null)
 				shape = a.getShape();
 		}
@@ -519,6 +527,7 @@ private void addCenterPointListeners() {
 				setLastPoint(lastPt);
 			}
 		}     
+
 		Point2D start = new Point2D(0,0);
 		if (startNode == null)
 		{
@@ -533,7 +542,8 @@ private void addCenterPointListeners() {
 		else start = startNode.modelNode().getAdjustedPoint(firstGPMLPoint());
 		setStartPoint(start);
 		
-		Point2D end = new Point2D(0,0);
+		GPMLPoint lastGPMLPt = lastGPMLPoint();
+		Point2D end = lastGPMLPt.getPoint();
 		if (endNode == null)		// TODO -- and arrowhead??
 		{
 			String endId = interaction.get("end");
@@ -544,19 +554,24 @@ private void addCenterPointListeners() {
 					endNode =	modeNode.getStack();
 			}
 		}
-		else end = endNode.modelNode().getAdjustedPoint(lastGPMLPoint());
+		else 
+			end = endNode.modelNode().getAdjustedPoint(lastGPMLPoint());
 		setEndPoint(end);
 		setArrowPt(end);
-//		if (isZero(start) || isZero(end)) 
+
+		//		if (isZero(start) || isZero(end)) 
 //			return;
 		
-			LineUtil.set(line, start, end);
+		if (isZero(end) || isZero(start))
+		{
+			System.out.println("zeroooo ");
+		}
+		LineUtil.set(line, start, end);
 		line.setStroke(interaction.getColor());
 		double width = interaction.getStrokeWidth();
 		getLine().setStrokeWidth(width);
 		if (strokeDashArray != null)
 		{
-			
 			if (curve != null)
 				curve.getStrokeDashArray().setAll(strokeDashArray);
 			else if (polyline != null)
@@ -609,13 +624,31 @@ private void addCenterPointListeners() {
 	                control2.getX(), control2.getY(), 
 	                line2Start.getX(), line2Start.getY());
 	
-	        curve.setStroke(Color.GREEN);
-	        curve.setFill(null);
-	        curve.setStrokeWidth(interaction.getStrokeWidth());
-			if (strokeDashArray != null)
-				curve.getStrokeDashArray().setAll(strokeDashArray);
-			getChildren().add(curve);
+	        boolean showControlPoints = true;
+	        if (showControlPoints)
+	        {
+	    		{
+	    			Circle c1 = new Circle(3);
+	    			c1.setFill(Color.BLANCHEDALMOND);
+	    			c1.setStroke(Color.DARKGREEN);
+	    			c1.setCenterX(control1.getX());
+	    			c1.setCenterY(control1.getY());
+	    			Circle c2 = new Circle(3);
+	    			c2.setFill(Color.BLANCHEDALMOND);
+	    			c2.setStroke(Color.DARKBLUE);
+	    			c2.setCenterX(control2.getX());
+	    			c2.setCenterY(control2.getY());
+	    			getChildren().addAll(c1,c2);
+	    		}
+
+	        }
+//	        curve.setStroke(Color.GREEN);
 		}
+        curve.setFill(null);
+        curve.setStrokeWidth(2 * interaction.getStrokeWidth());
+		if (strokeDashArray != null)
+			curve.getStrokeDashArray().setAll(strokeDashArray);
+		getChildren().add(curve);
 		setArrowPt(line1End);
 
 	}
@@ -650,16 +683,35 @@ private void addCenterPointListeners() {
 			polyline.getStrokeDashArray().setAll(strokeDashArray);
 	}
 
+	private boolean isOrthog(GPMLPoint a, GPMLPoint b)
+	{
+		double epsilon = 0.01;
+		if (Math.abs(a.getX() - b.getX()) < epsilon) return true;
+		if (Math.abs(a.getY() - b.getY()) < epsilon) return true;
+		return false;
+	}
 //----------------------------------------------------------------------
 	private void elbowConnect() {
 		Polyline poly = getPolyline();
 		poly.getPoints().clear();
 		if (line != null) line.setVisible(false);
 		int sz  = points.size();
+		GPMLPoint prevPt = null;
 		for (int i = 0; i < sz ; i++) {
 			GPMLPoint current = points.get(i);
+			if (prevPt != null)
+			{
+				boolean turnLeft = true;			// TODO
+				if (! isOrthog(prevPt, current))
+					if (turnLeft )
+						poly.getPoints().addAll(current.getX(), prevPt.getY());
+					else
+						poly.getPoints().addAll(current.getX(), prevPt.getY());
+			}
 			poly.getPoints().addAll(current.getX(), current.getY());
+			prevPt = current;
 		}
+		
 		Point2D last = lastPoint();
 		Node endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead != null??
@@ -680,24 +732,22 @@ private void addCenterPointListeners() {
    //----------------------------------------------------------------------
 
 	public Shape makeArrowhead()
-	{	
-		if (points != null && points.size() > 1)
-		{
-			GPMLPoint last = points.get(points.size()-1);
-			Color strokeColor = interaction.getColor();
-			ArrowType arrowhead = last.getArrowType();
-			if (arrowhead == null)	return null;
-			if (arrowhead == ArrowType.none) return null;
-			Point2D prev = forelastPoint();
-			if (type == EdgeType.elbow)
-				prev = new Point2D(last.getX(), prev.getY());
+	{			GPMLPoint last = lastGPMLPoint();
+		if (last == null) 		return null;
+
+		Color strokeColor = interaction.getColor();
+		ArrowType arrowhead1 = getArrowType();
+		ArrowType arrowhead = last.getArrowType();
+		if (arrowhead == null)	return null;
+		if (arrowhead == ArrowType.none) return null;
+		Point2D prev = forelastPoint();
+		if (type == EdgeType.elbow)
+			prev = new Point2D(last.getX(), prev.getY());
 //			Point2D lastpoint2D = last.getPoint();
 //			System.out.println("makeArrowhead: " + lastpoint2D);
-			Shape aHead = makeArrowHead(arrowhead.toString(), prev, last.getPoint(), strokeColor);
-			getChildren().add(aHead);
-			return aHead;
-		}
-		return null;
+		Shape aHead = makeArrowHead(arrowhead.toString(), prev, last.getPoint(), strokeColor);
+		getChildren().add(aHead);
+		return aHead;
 	}
 
    private Shape makeArrowHead(String shape, Point2D mid, Point2D last, Color color)
@@ -721,58 +771,17 @@ private void addCenterPointListeners() {
 		return arrowhead;
    }
 	//----------------------------------------------------------------------
-	public String toString()
-	{
-		if (interaction == null || interaction.getStartNode() == null) return "NO START";
-		VNode start = interaction.getStartNode().getStack();
-		String startID = start == null ? startGraphId() : start.getId();
-		if (interaction == null || interaction.getEndNode() == null) return "NO TARGET";
-		VNode end = interaction.getEndNode().getStack();
-		String endID = end == null ? endGraphId() : end.getId();
-//		Bounds b = start.getBoundsInParent();
-//		double startCenterX = 0;
-//		double startCenterY = 0;
-//		if (start != null)
-//		{
-//			Point2D p = start.boundsCenter();
-//			startCenterX = p.getX();
-//			startCenterY = p.getY();
-//		}
-//		double endCenterX = 0;
-//		double endCenterY = 0;
-//		if (end != null)
-//		{
-//			Point2D p = end.boundsCenter();
-//			endCenterX = p.getX();
-//			endCenterY = p.getY();
-//		}
-//		else
-//		{
-//			endCenterX = b.getMinX() + (b.getWidth() / 2);
-//			endCenterY = b.getMinY() + (b.getHeight() / 2);
-//		}		
-//		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
-//				startID, startCenterX, startCenterY, 
-//				endID, endCenterX, endCenterY, getPoints().size());
-		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
-				startID, getStartX(), getStartY(), 
-				endID, getEndX(), getEndY(), getPoints().size());
-				
-		return s;
-	}
-	  
-	//----------------------------------------------------------------------
 	public ArrowType getArrowType()
 	{
 		if (points == null || points.size() < 1) return ArrowType.arrow;
 		GPMLPoint last = points.get(points.size()-1);
 		return last.getArrowType();
 	}
-	public void setArrowType(ArrowType arrow) {
-		if (points == null || points.size() < 1) return;
-		GPMLPoint last = points.get(points.size()-1);
-		last.setArrowType(arrow);
-	}
+//	public void setArrowType(ArrowType arrow) {
+//		if (points == null || points.size() < 1) return;
+//		GPMLPoint last = points.get(points.size()-1);
+//		last.setArrowType(arrow);
+//	}
 	
 	//-----------------------------------------------------------------------------------
 	// does any segment intersect the rectangle
@@ -798,8 +807,7 @@ private void addCenterPointListeners() {
 	// The main function that returns true if line segment 'p1q1' and 'p2q2' intersect. 
 	boolean doIntersect(Point2D p1, Point2D q1, Point2D p2, Point2D q2) 
 	{ 
-	    // Find the four orientations needed for general and 
-	    // special cases 
+	    // Find the four orientations needed for general and special cases 
 	    int o1 = orientation(p1, q1, p2); 
 	    int o2 = orientation(p1, q1, q2); 
 	    int o3 = orientation(p2, q2, p1); 
@@ -809,19 +817,11 @@ private void addCenterPointListeners() {
 	    if (o1 != o2 && o3 != o4)  		     return true; 
 	  
 	    // Special Cases 
-	    // p1, q1 and p2 are colinear and p2 lies on segment p1q1 
-	    if (o1 == 0 && onSegment(p1, p2, q1)) return true; 
-	  
-	    // p1, q1 and q2 are colinear and q2 lies on segment p1q1 
-	    if (o2 == 0 && onSegment(p1, q2, q1)) return true; 
-	  
-	    // p2, q2 and p1 are colinear and p1 lies on segment p2q2 
-	    if (o3 == 0 && onSegment(p2, p1, q2)) return true; 
-	  
-	     // p2, q2 and q1 are colinear and q1 lies on segment p2q2 
-	    if (o4 == 0 && onSegment(p2, q1, q2)) return true; 
-	  
-	    return false; // Doesn't fall in any of the above cases 
+	    if (o1 == 0 && onSegment(p1, p2, q1)) return true;  // p1, q1 and p2 are colinear and p2 lies on segment p1q1 
+	    if (o2 == 0 && onSegment(p1, q2, q1)) return true;  // p1, q1 and q2 are colinear and q2 lies on segment p1q1 
+	    if (o3 == 0 && onSegment(p2, p1, q2)) return true;  // p2, q2 and p1 are colinear and p1 lies on segment p2q2 
+	    if (o4 == 0 && onSegment(p2, q1, q2)) return true;  // p2, q2 and q1 are colinear and q1 lies on segment p2q2 
+	    return false; 	// Doesn't fall in any of the above cases 
 	} 	
 	
 	// To find orientation of ordered triplet (p, q, r). 
@@ -845,4 +845,28 @@ private void addCenterPointListeners() {
 	       return true; 
 	    return false; 
 	} 
+	//----------------------------------------------------------------------
+	public String toString()
+	{
+		String startID;
+		if (interaction == null || interaction.getStartNode() == null) startID =  "NO START";
+		else 
+		{
+			VNode start = interaction.getStartNode().getStack();
+			startID = start == null ? startGraphId() : start.getId();
+		}
+		String endID;
+		if (interaction == null || interaction.getEndNode() == null) endID = "NO TARGET";
+		else 
+		{
+			VNode end = interaction.getEndNode().getStack();
+			endID = end == null ? endGraphId() : end.getId();
+		}
+		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
+				startID, getStartX(), getStartY(), 
+				endID, getEndX(), getEndY(), getPoints().size());
+				
+		return s;
+	}
+	  
 }

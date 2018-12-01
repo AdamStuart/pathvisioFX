@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.List;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
@@ -13,9 +12,8 @@ import diagrams.pViz.model.edges.EdgeType;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.tables.PathwayController;
-import diagrams.pViz.util.GraphEditorProperties;
+import diagrams.pViz.util.ResizableBox;
 import gui.Action.ActionType;
-import gui.Backgrounds;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
@@ -24,6 +22,7 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextArea;
 import javafx.scene.effect.InnerShadow;
@@ -71,7 +70,7 @@ public class Pasteboard extends PanningCanvas
 	//@formatter:off
 	private static final String INFO_LABEL_ID = "infoLabel";
 	private static final String ELEMENT_NAME = "Pasteboard";
-	
+	private SceneGestures zoomScrollGestures;
 	//@formatter:on
 	/**-------------------------------------------------------------------------------
 	/**Canvas (Pane pane, Controller ctrl
@@ -79,14 +78,15 @@ public class Pasteboard extends PanningCanvas
 	 * @param pane
 	 *            the pane on which the selection rectangle will be drawn.
 	 */
-	public Pasteboard(Controller ctrl) 
+	public Pasteboard(Controller ctrl, Label label) 
 	{
-		super(ctrl);
+		super(ctrl, label);
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
 		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
         scaleXProperty().bind(myScale);
         scaleYProperty().bind(myScale);
+        zoomScrollGestures = new SceneGestures(this);
 }
 public void bindGridProperties()
 {
@@ -304,11 +304,11 @@ public void bindGridProperties()
 		addEventHandler(MouseEvent.MOUSE_DRAGGED, new MouseDraggedHandler());
 		addEventHandler(MouseEvent.MOUSE_RELEASED, new MouseReleasedHandler());
 		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
-        setOnScroll((ScrollEvent event) -> {
-            double deltaY = event.getDeltaY();
-        	double zoomFactor = 1.05 * deltaY;
-            if (deltaY < 0)
-                zoomFactor = 1 / zoomFactor;
+        setOnScroll((ScrollEvent event) -> { zoomScrollGestures.getOnScrollEventHandler().handle(event);
+//            double deltaY = event.getDeltaY();
+//        	double zoomFactor = 1.05 * deltaY;
+//            if (deltaY < 0)
+//                zoomFactor = 1 / zoomFactor;
         });
 	}
 
@@ -332,7 +332,7 @@ public void bindGridProperties()
 		if (source != null)
 			source.getPortPosition( srcPosition);
 		dragLine = new EdgeLine(edgeType, startPt);
-		dragLine.setArrowType(arrow);
+//		dragLine.setArrowType(arrow);
 		dragLineSource = source;
 		dragLinePosition = srcPosition;
 
@@ -437,6 +437,7 @@ public void bindGridProperties()
 				push(ActionType.New, getTool().name());
 				getSelectionMgr().select(activeStack);
 			}
+			zoomScrollGestures.getOnMousePressedEventHandler().handle(event);			
 			event.consume();
 		}
 
@@ -510,6 +511,7 @@ public void bindGridProperties()
 			}
 			else if ((activeStack != null) && activeStack.isResizable()) 
 				ShapeFactory.setBounds(Pasteboard.this, activeStack, startPoint, curPoint);
+//			zoomScrollGestures.getOnMouseDraggedEventHandler().handle(event);			
 			event.consume();
 		}
 	}
@@ -541,7 +543,7 @@ public void bindGridProperties()
 	//---------------------------------------------------------------------------
 	private final class MouseMovedHandler implements EventHandler<MouseEvent> 
 	{
-		@Override public void handle(final MouseEvent event) 	{		setDragLine(event);	}
+		@Override public void handle(final MouseEvent event) 	{		setDragLine(event);	}   // TODO report position?
 	}
 	//---------------------------------------------------------------------------
 	/** 
@@ -694,7 +696,7 @@ public void bindGridProperties()
 	}
 	public void selectByType(String s) {	System.out.println("selectByType " + s); 			}
 
-	public void connectTo(VNode vNode, RelPosition relPos ) {
+	public void connectTo(ResizableBox vNode, RelPosition relPos ) {
 		if (dragLine == null) return;  	// shouldn't happen
 		VNode src = getDragSource();
 		Pos srcPos = getDragSourcePosition();
@@ -710,7 +712,7 @@ public void bindGridProperties()
 			controller.addInteraction(i);
 //			i.rebind();
 			removeDragLine();
-			controller.redrawEdgesToMe(vNode);
+			controller.redrawEdgesToMe((VNode) vNode);
 			controller.modelChanged();
 		}
 	}

@@ -28,7 +28,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
@@ -178,7 +177,7 @@ import util.FileUtil;
 		{
 			browserStage.setTitle("Pathway Browser");
 			FXMLLoader fxmlLoader = new FXMLLoader();
-			String fullname = "../tables/PathwayList.fxml";
+			String fullname = "../gpml/PathwayList.fxml";
 		    URL url = getInstance().getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
 		    if (url == null)
 		    {
@@ -296,7 +295,7 @@ import util.FileUtil;
 	//---------------------------------------------------------------------------------------
 	public static void showImage(String title, WritableImage wimg) {
 		ImageView view = new ImageView(wimg);
-		PanningCanvas canvas = new PanningCanvas(null);
+		PanningCanvas canvas = new PanningCanvas(null, null);
 		canvas.getChildren().add(view);
 		view.scaleXProperty().bind(canvas.scaleXProperty());
 		view.scaleYProperty().bind(canvas.scaleYProperty());
