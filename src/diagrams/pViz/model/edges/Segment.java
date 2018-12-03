@@ -3,6 +3,7 @@ package diagrams.pViz.model.edges;
 import java.util.List;
 
 import javafx.geometry.Point2D;
+import javafx.scene.shape.Line;
 
 
 //UNUSED AT THIS TIME----??
@@ -22,7 +23,8 @@ public class Segment {
 	public Point2D getStart() { return start;	}
 	public Point2D getCenter()	{ return new Point2D((end.getX() + start.getX()) / 2., (end.getY() + start.getY()) / 2.); }
 	double length() { return distance(end, start);	}
-	public String toString() { return "(" + (int) getStart().getX() + ", " +  (int) getStart().getY() +  " -> " + (int) getEnd().getX() + ", " +  (int) getStart().getY() + ")"; }
+	public String toString() { return "(" + (int) getStart().getX() + ", " +  (int) getStart().getY() +  " -> " + (int) getEnd().getX() + ", " +  (int) getEnd().getY() + ")"; }
+	public Line getLine()	{ return new Line(start.getX(), start.getY(), end.getX(), end.getY());  }
 	
 	static public Segment createStraightSegment(Point2D start, Point2D end, int axis) {
 		double ex = end.getX();
@@ -165,6 +167,7 @@ BUG:  	There should be some cases where 4 is returned !!
 		}
 
 
+
 	/** @returns sum of the lengths of the segments */
 	static public double getTotalLength (List<Segment> segments) 
 	{
@@ -172,8 +175,7 @@ BUG:  	There should be some cases where 4 is returned !!
 		for (Segment seg : segments)
 			totLength += seg.length();
 		return totLength;
-	}
-	//-----------------------------------------------
+	}//-----------------------------------------------
 	static public Point2D centerPoint(Point2D start, Point2D end) 
 	{
 		return new Point2D( (start.getX() + end.getX() ) / 2, (start.getY() + end.getY()) / 2 );
@@ -185,5 +187,4 @@ BUG:  	There should be some cases where 4 is returned !!
 		double dy = a.getY() - b.getY();
 		return (Math.sqrt(dx*dx + dy*dy));
 	}
-
 }

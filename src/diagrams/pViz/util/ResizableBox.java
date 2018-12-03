@@ -18,6 +18,7 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.effect.InnerShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Region;
@@ -212,6 +213,8 @@ abstract public class ResizableBox extends DraggableBox {
             setCursor(null);
             return;
         }
+        Point2D evPt = new Point2D(event.getX(), event.getY());
+        Point2D local =  sceneToLocal(evPt);
         	storeClickValuesForResize(event.getX(), event.getY());
         if (!dragActive) {
             storeClickValuesForDrag(event.getX(), event.getY());
@@ -365,15 +368,16 @@ abstract public class ResizableBox extends DraggableBox {
      *
      * @param event the latest {@link MouseEvent} for the mouse entering or moving inside the rectangle
      */
-    protected void processMousePosition(final MouseEvent event) {
+	static InnerShadow effect = new InnerShadow();
+	
+	   protected void processMousePosition(final MouseEvent event) {
 
-        if (event.isPrimaryButtonDown())            return;
-        final RectangleMouseRegion mouseRegion = getMouseRegion(event.getX(), event.getY());
-        mouseInPositionForResize = !mouseRegion.equals(RectangleMouseRegion.INSIDE);
-        updateCursor(mouseRegion);
-    }
-
-    /**
+	    if (event.isPrimaryButtonDown())            return;
+	    final RectangleMouseRegion mouseRegion = getMouseRegion(event.getX(), event.getY());
+	    mouseInPositionForResize = !mouseRegion.equals(RectangleMouseRegion.INSIDE);
+	    updateCursor(mouseRegion);
+	}
+   /**
      * Stores relevant layout values at the time of the last mouse click (mouse-pressed event).
      *
      * @param x the x position of the click event

@@ -72,7 +72,7 @@ public class Arrow extends Polygon {
            // arrow origin is top => apply offset
 //        translateXProperty().bind(line.endXProperty());
 //        translateYProperty().bind(line.endYProperty());
-        double offset = 0; // ( t > 0.5) ? 90 : -90;
+        double offset =  ( t > 0.5) ? 90 : -90;
         rotZ.setAngle(Math.toDegrees(-ang2) + offset);
    }
     

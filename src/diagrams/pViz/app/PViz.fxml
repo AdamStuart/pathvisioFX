@@ -659,7 +659,7 @@
                            <children>
                               <HBox>
                                  <children>
-                                    <Label fx:id="select" prefHeight="22.0" prefWidth="40.0" textAlignment="RIGHT">
+                                    <Label fx:id="select" prefHeight="25.0" prefWidth="50.0" textAlignment="RIGHT">
                                        <font>
                                           <Font name="System Bold" size="11.0" />
                                        </font>

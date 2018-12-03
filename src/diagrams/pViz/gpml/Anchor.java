@@ -71,7 +71,7 @@ public class Anchor extends XRefable {		// extends DataNode
 		Point2D pt = edgeLine.getPointAlongLine(position);
 		if (!edgeLine.getChildren().contains(myShape))
 			edgeLine.getChildren().add(myShape);
-		String myId = get("GraphId");
+//		String myId = get("GraphId");
 //		System.out.println(String.format("position: %.2f id: %s @ [ %.2f, %.2f] ",position, myId,  pt.getX(), pt.getY()));
 		if (myShape instanceof Circle) 
 		{
@@ -80,7 +80,7 @@ public class Anchor extends XRefable {		// extends DataNode
 			c.setCenterY(pt.getY());
 		}
 		Interaction e  = getInteraction();
-			if (e != caller)
-				e.connect();
+		if (e != caller)
+			e.connect();
 	}
 }

@@ -375,8 +375,8 @@ public class GPML {
 			if (arwType != null)
 				attrib.put("ArrowHead", arwType.toString());
 			endNode = m.getDataNode(endId);
-			double thickness = attrib.getDouble("LineThickness");
-			attrib.putDouble("LineThickness", thickness);
+//			double thickness = attrib.getDouble("LineThickness");
+//			attrib.putDouble("LineThickness", thickness);
 //			if (startNode != null && endNode != null) 
 //				return interaction;	
 //			else if (startPt != null && lastPt != null) 

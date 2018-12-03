@@ -221,10 +221,10 @@ private void addCenterPointListeners() {
 	public Anchor findAnchor(String graphRef)
     {
 	  if (graphRef == null) return null;
-	  System.out.println("searching anchors " + getAnchors().size() + " " + graphRef);
+//	  System.out.println("searching anchors " + getAnchors().size() + " " + graphRef);
 	  for (Anchor a : getAnchors())
 	  {
-		  System.out.println("anchor " + a.getGraphId());
+//		  System.out.println("anchor " + a.getGraphId());
 		  if (graphRef.equals(a.getGraphId()))
 			   return a;
 	  }
@@ -241,6 +241,7 @@ private void addCenterPointListeners() {
 		for (Anchor a: anchors) 
 			a.getShape().setVisible(visible);
 	}
+	
 	public Polyline getPolyline()	
 	{
 		if (polyline == null)
@@ -251,6 +252,7 @@ private void addCenterPointListeners() {
 		}
 		return polyline;	
 	}
+	
 	public Line getLine()			
 	{
 		if (line == null)
@@ -473,7 +475,8 @@ private void addCenterPointListeners() {
 	public void setLastPoint(Point2D pt)
 	{ 
 		if (points.size() == 0) return;
-		points.set(points.size()-1, new GPMLPoint(pt)); 
+		GPMLPoint gpt = points.get(points.size()-1); 
+		gpt.setPoint(pt);
 	}
 	double length()		// TODO assumes straight edges
 	{ 
@@ -505,16 +508,16 @@ private void addCenterPointListeners() {
 //			return;
 //			
 //		}
-		VNode startNode = interaction.getStartNode() == null ? null : interaction.getStartNode().getStack();
-		VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
-		Shape shape = null;
-		if (endNode == null) 
-		{
-			String targId = interaction.get("targetid");
-			Anchor a =interaction.findAnchorByRef(targId);
-			if (a != null)
-				shape = a.getShape();
-		}
+//		VNode startNode = interaction.getStartNode() == null ? null : interaction.getStartNode().getStack();
+//		VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
+//		Shape shape = null;
+//		if (endNode == null) 
+//		{
+//			String targId = interaction.get("targetid");
+//			Anchor a =interaction.findAnchorByRef(targId);
+//			if (a != null)
+//				shape = a.getShape();
+//		}
 		int shorten = SHORTEN ? 10 : 0;
 		
 		if (shorten > 0) {
@@ -523,62 +526,56 @@ private void addCenterPointListeners() {
 			{
 				if (BADPOINT(prev))			return;
 				if (BADPOINT(lastPt)) 		return;
+				VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 				Line refline = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
 				lastPt= LineUtil.getIntersection(refline, endNode, shorten);
 				setLastPoint(lastPt);
 			}
 		}     
-		Point2D start = firstGPMLPoint().getPoint();
-		if (startNode == null)
-		{
-			String startId = interaction.get("start");
-			if (startId != null)
-			{
-				DataNode modeNode = interaction.getModel().getDataNode(startId);
-				if (modeNode != null) 
-					startNode =	modeNode.getStack();
-			}
-		}
-		else start = startNode.modelNode().getAdjustedPoint(firstGPMLPoint());
-		setStartPoint(start);
-		
-
-		Point2D end = last.getPoint();
-		if (endNode == null)		// TODO -- and arrowhead??
-		{
-			String endId = interaction.get("end");
-			if (endId != null)
-			{
-				DataNode modeNode = interaction.getModel().getDataNode(endId);
-				if (modeNode != null) 
-					endNode =	modeNode.getStack();
-			}
-		}
-		else 
-			end = endNode.modelNode().getAdjustedPoint(lastGPMLPoint());
-		setEndPoint(end);
-		setArrowPt(end);
-
+//		Point2D start = firstGPMLPoint().getPoint();
+//		if (startNode == null)
+//		{
+//			String startId = interaction.get("start");
+//			if (startId != null)
+//			{
+//				DataNode modeNode = interaction.getModel().getDataNode(startId);
+//				if (modeNode != null) 
+//					startNode =	modeNode.getStack();
+//			}
+//		}
+//		else start = startNode.modelNode().getAdjustedPoint(firstGPMLPoint());
+//		setStartPoint(start);
+//		
+//
+//		Point2D end = last.getPoint();
+//		if (endNode == null)		// TODO -- and arrowhead??
+//		{
+//			String endId = interaction.get("end");
+//			if (endId != null)
+//			{
+//				DataNode modeNode = interaction.getModel().getDataNode(endId);
+//				if (modeNode != null) 
+//					endNode =	modeNode.getStack();
+//			}
+//		}
+//		else 
+//			end = endNode.modelNode().getAdjustedPoint(lastGPMLPoint());
+////		setEndPoint(end);
+		setArrowPt(lastPt);
+//
 		//		if (isZero(start) || isZero(end)) 
 //			return;
 		
-		if (isZero(end) || isZero(start))
+		if (isZero(lastPt) || isZero(getStartPoint()))
 		{
 			System.out.println("zeroooo ");
 		}
-		LineUtil.set(line, start, end);
+		LineUtil.set(line, getStartPoint(), getEndPoint());
 		line.setStroke(interaction.getColor());
 		double width = interaction.getStrokeWidth();
-		getLine().setStrokeWidth(width);
+		line.setStrokeWidth(width);
 		if (strokeDashArray != null)
-		{
-			if (curve != null)
-				curve.getStrokeDashArray().setAll(strokeDashArray);
-			else if (polyline != null)
-				getPolyline().getStrokeDashArray().setAll(strokeDashArray);
-			else if (line != null) 
-				getLine().getStrokeDashArray().setAll(strokeDashArray);
-		}
+			line.getStrokeDashArray().setAll(strokeDashArray);
 	}
 	
 	  private boolean isZero(Point2D pt) {
@@ -590,20 +587,28 @@ private void addCenterPointListeners() {
 		if (curve != null) 	getChildren().remove(curve);
 		else curve  = new CubicCurve();
 		if (line != null) line.setVisible(false);
-		int nPoints = getPoints().size();
+		int nPoints = points.size();
+		
+		SegmentList segments = new SegmentList(interaction.getModel(), points);
+		
 		Point2D line1End = new Point2D(0,0);
-		for (int i=0; i < nPoints-1; i++)
+		for (int i=0; i < segments.size()-1; i++)
 		{
-			Point2D a = points.get(i).getPoint();
-			Point2D b = points.get(i+1).getPoint();
-			Line line1 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
-			Line line2 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
+//			Point2D a = points.get(i).getPoint();
+//			Point2D b = points.get(i+1).getPoint();
+//			Line line1 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
+//			Line line2 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
 	//		Point2D lastPt = lastPoint();
-	        Point2D line1Start = new Point2D(line1.getStartX(), line1.getStartY());
-	         line1End = new Point2D(line1.getEndX(), line1.getEndY());
-	        Point2D line2Start = new Point2D(line2.getStartX(), line2.getStartY());
-	        Point2D line2End = new Point2D(line2.getEndX(), line2.getEndY());
 	
+			Segment seg = segments.get(i);
+			Point2D line1Start = seg.getStart();
+			line1End = seg.getEnd();
+			
+			Segment nextseg = segments.get(i+1);
+	        Point2D line2Start = nextseg.getStart();
+	        Point2D line2End = nextseg.getEnd();
+
+	        getChildren().addAll(seg.getLine(), nextseg.getLine());
 	        double line1Length = line1End.subtract(line1Start).magnitude();
 	        double line2Length = line2End.subtract(line2Start).magnitude();
 	
@@ -625,33 +630,42 @@ private void addCenterPointListeners() {
 	                line2Start.getX(), line2Start.getY());
 	
 	        boolean showControlPoints = true;
+			if (controlPt1 != null && controlPt2 != null)
+				getChildren().removeAll(controlPt1,controlPt2);
 	        if (showControlPoints)
 	        {
 	    		{
-	    			Circle c1 = new Circle(3);
-	    			c1.setFill(Color.BLANCHEDALMOND);
-	    			c1.setStroke(Color.DARKGREEN);
-	    			c1.setCenterX(control1.getX());
-	    			c1.setCenterY(control1.getY());
-	    			Circle c2 = new Circle(3);
-	    			c2.setFill(Color.BLANCHEDALMOND);
-	    			c2.setStroke(Color.DARKBLUE);
-	    			c2.setCenterX(control2.getX());
-	    			c2.setCenterY(control2.getY());
-	    			getChildren().addAll(c1,c2);
+    			
+	    			controlPt1 = new Circle(3);
+	    			controlPt1.setFill(Color.BLANCHEDALMOND);
+	    			controlPt1.setStroke(Color.DARKGREEN);
+	    			controlPt1.setCenterX(control1.getX());
+	    			controlPt1.setCenterY(control1.getY());
+	    			
+	    			controlPt2 = new Circle(3);
+	    			controlPt2.setFill(Color.BLANCHEDALMOND);
+	    			controlPt2.setStroke(Color.DARKBLUE);
+	    			controlPt2.setCenterX(control2.getX());
+	    			controlPt2.setCenterY(control2.getY());
+	    			getChildren().addAll(controlPt1,controlPt2);
 	    		}
 
 	        }
 //	        curve.setStroke(Color.GREEN);
 		}
         curve.setFill(null);
-        curve.setStrokeWidth(2 * interaction.getStrokeWidth());
+        curve.setStroke(interaction.getColor());
+		double width = interaction.getStrokeWidth();
+		curve.setStrokeWidth(width);
+//        curve.setStroke(Color.RED);
+//        curve.setStrokeWidth(2 * interaction.getStrokeWidth());
 		if (strokeDashArray != null)
 			curve.getStrokeDashArray().setAll(strokeDashArray);
-		getChildren().add(curve);
+//		getChildren().add(curve);
 		setArrowPt(line1End);
-
 	}
+	
+	Circle controlPt1, controlPt2;
 	boolean SHORTEN = true;
 	  //----------------------------------------------------------------------
 	private void polylineConnect() {
@@ -732,7 +746,8 @@ private void addCenterPointListeners() {
    //----------------------------------------------------------------------
 
 	public Shape makeArrowhead()
-	{			GPMLPoint last = lastGPMLPoint();
+	{	
+		GPMLPoint last = lastGPMLPoint();
 		if (last == null) 		return null;
 
 		Color strokeColor = interaction.getColor();

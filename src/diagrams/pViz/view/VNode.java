@@ -20,6 +20,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
@@ -44,7 +45,6 @@ import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
 import javafx.scene.shape.PathElement;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
@@ -66,16 +66,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	private Label zOrderLabel;
 	private Label lockLabel;
 	private String title;
-//	private boolean movable;
-//	private boolean resizable;
-//	private boolean selectable;
-//	private boolean connectable;
 //	private TooltipBehavior myTTB = new TooltipBehavior(
 //	        new Duration(1000), new Duration(5000), new Duration(200), false);
 	
 	private Pasteboard pasteboard = null;
 	public Pasteboard getPasteboard() {		return pasteboard;	}
-	private Selection selection = null;
 	private ControlFactory controlFactory;
 	private VNodeGestures gestures;
 	
@@ -97,11 +92,9 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		dataNode.setStack(this);
 		pasteboard = p;
 		gestures = new VNodeGestures(this, pasteboard);
-//		setOnMouseDragged(gestures.getOnMouseDraggedEventHandler());
-//		setOnMousePressed(gestures.getOnMousePressedEventHandler());
-		selection = pasteboard.getSelectionMgr();
-		controlFactory = new ControlFactory(this);	
-//		AttributeMap attributes = modelNode;
+		setOnMouseDragged(gestures.getOnMouseDraggedEventHandler());
+		setOnMousePressed(gestures.getOnMousePressedEventHandler());
+		controlFactory = new ControlFactory(this);		// this creates browsers, imageview, rich text, etc.
 		if (modelNode instanceof DataNodeGroup)
 		{
 			System.out.println("GROUP");
@@ -213,36 +206,25 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	static InnerShadow effect = new InnerShadow();
 	
-   protected void processMousePosition(final MouseEvent event) {
-
-       super.processMousePosition(event);
-       if (event.getEventType().equals(MouseEvent.MOUSE_ENTERED))
-        {
-        	boolean live = true;  //isSelected() || pasteboard.getDragLine() != null;
-        	setEffect(live ? effect : null);
-        	boolean showPorts = dataNode.isConnectable() || dataNode.isResizable();
-        	showPorts(showPorts);
-        }
-        if (event.getEventType().equals(MouseEvent.MOUSE_MOVED))
-        {
-        	boolean live = dataNode.isConnectable() || dataNode.isResizable();  //= isSelected() || pasteboard.getDragLine() != null;
-        	setEffect(live ? effect : null);
-        	showPorts(live);
-        }
-        if (event.getEventType().equals(MouseEvent.MOUSE_EXITED))
-        {
-        	setEffect(isSelected() ? effect : null);
-        	showPorts(isSelected());
-        }
-    }
+   protected void processMousePosition(final MouseEvent event) 
+   {
+		super.processMousePosition(event);
+		boolean showPorts = dataNode.isConnectable() || dataNode.isResizable();
+		boolean selected = isSelected();
+		EventType<? extends MouseEvent> type = event.getEventType();
+		boolean inside = type.equals(MouseEvent.MOUSE_ENTERED) || type.equals(MouseEvent.MOUSE_MOVED);
+		setEffect((selected || inside) ? effect : null);
+		showPorts(showPorts && inside);
+	}
 
 	// **-------------------------------------------------------------------------------
 	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
-		dataNode.setMovable(mov);
-		dataNode.setResizable(resiz);
+		dataNode.applyLocks(mov, resiz, edit, connect);
 		setResize(resiz);
-		dataNode.setSelectable(edit);
-		dataNode.setConnectable(connect);
+	}
+	public boolean canResize()
+	{
+		return dataNode.isResizable(); // super.canResize();
 	}
 	// **-------------------------------------------------------------------------------
 	public Point2D boundsCenter()	{
@@ -353,16 +335,16 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void extractPosition()
 	{
 		Bounds b = getBoundsInParent();
-		double minX = getLayoutX();
-		double minY = getLayoutY();
+		double minX = b.getMinX();
+		double minY = b.getMinY();
 		double w = getWidth();
 		double h = getHeight();
-		getAttributes().putDouble("X", minX);
-		getAttributes().putDouble("Y", minY);
-		getAttributes().putDouble("CenterX", minX + w / 2);
-		getAttributes().putDouble("CenterY", minY + h / 2);
-		getAttributes().putDouble("Width", w);
-		getAttributes().putDouble("Height", h);
+		dataNode.putDouble("X", minX);
+		dataNode.putDouble("Y", minY);
+		dataNode.putDouble("CenterX", minX + w / 2);
+		dataNode.putDouble("CenterY", minY + h / 2);
+		dataNode.putDouble("Width", w);
+		dataNode.putDouble("Height", h);
 		getController().redrawEdgesToMe(this);
 	}
 	public double getCenterX()	{ return dataNode.getDouble("CenterX");	}

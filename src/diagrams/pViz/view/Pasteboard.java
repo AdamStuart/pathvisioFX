@@ -700,6 +700,7 @@ public void bindGridProperties()
 		if (dragLine == null) return;  	// shouldn't happen
 		VNode src = getDragSource();
 		Pos srcPos = getDragSourcePosition();
+		if (src == null) return;  	// shouldn't happen
 		
 		if (relPos.isInside()) 
 			relPos = relPos.moveToEdge();

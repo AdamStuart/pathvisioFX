@@ -23,7 +23,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextInputDialog;
 import model.AttributeValue;
-import model.dao.ResultsRecord;
+import model.SourceAttributeValue;
 import util.FileUtil;
 import util.StringUtil;
 
@@ -40,7 +40,7 @@ public class BridgeDbController implements Initializable
 	@FXML private CheckBox allRows;
 	@FXML private CheckBox allColumns;
 	@FXML private TextArea inputText; 
-	@FXML private TableView<AttributeValue> resultsTable; 
+	@FXML private TableView<SourceAttributeValue> resultsTable; 
 
 //	@FXML ChoiceBox<String> system;
 	@FXML TableView<DataSourceRecord> sourceTable;
@@ -59,8 +59,9 @@ public class BridgeDbController implements Initializable
 	@FXML TableColumn<DataSourceRecord, String> targetsCol;
 	@FXML TableColumn<DataSourceRecord, String> gravityStrCol;
 	
-	@FXML TableColumn<AttributeValue, String> attributeCol;
-	@FXML TableColumn<AttributeValue, String> valueCol;
+	@FXML TableColumn<SourceAttributeValue, String> attributeCol;
+	@FXML TableColumn<SourceAttributeValue, String> sourceCol;
+	@FXML TableColumn<SourceAttributeValue, String> valueCol;
 
 	//----------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
@@ -97,6 +98,7 @@ public class BridgeDbController implements Initializable
 
 		attributeCol.setCellValueFactory( cell -> cell.getValue().attributeProperty());
 		valueCol.setCellValueFactory( cell -> cell.getValue().valueProperty());
+		sourceCol.setCellValueFactory( cell -> cell.getValue().sourceProperty());
      	}
 	//----------------------------------------------------------------------------------
 	
@@ -193,30 +195,34 @@ public class BridgeDbController implements Initializable
 //				testStringOnAllPatterns(line);
 				String urlStr = BDB + species + "/xrefs/" + nameToSystemLookup.get(source) + "/" + line;
 				String response = StringUtil.callURL(urlStr, true);
+				System.out.println(urlStr);
+				System.out.println(response);
 				for (String target : targets)
-				{	String mappedId = lookup(response, target);
-					resultsTable.getItems().add(new AttributeValue(line, mappedId));
+				{	
+					String mappedId = lookup(response, target);
+					if (mappedId != null)
+					resultsTable.getItems().add(new SourceAttributeValue( target, line, mappedId));
 				}
 			}
 		}
 	}
 	@FXML private void addRow()
 	{
-		TextInputDialog dialog = new TextInputDialog("LPK");
-		dialog.setTitle("ID Entry");
-		dialog.setHeaderText("This is the name of the new row");
-		dialog.setContentText("Please enter your gene:");
-
-		// Traditional way to get the response value.
-		Optional<String> result = dialog.showAndWait();
-		if (result.isPresent())
-		{
-			System.out.println("Your gene: " + result.get());
-		}
-
-		// The Java 8 way to get the response value (with lambda expression).
-		result.ifPresent(name -> resultsTable.getItems().add(
-				new AttributeValue(getSpecies(), name)));
+//		TextInputDialog dialog = new TextInputDialog("LPK");
+//		dialog.setTitle("ID Entry");
+//		dialog.setHeaderText("This is the name of the new row");
+//		dialog.setContentText("Please enter your gene:");
+//
+//		// Traditional way to get the response value.
+//		Optional<String> result = dialog.showAndWait();
+//		if (result.isPresent())
+//		{
+//			System.out.println("Your gene: " + result.get());
+//		}
+//
+//		// The Java 8 way to get the response value (with lambda expression).
+//		result.ifPresent(name -> resultsTable.getItems().add(
+//				new AttributeValue(getSpecies(), name)));
 	}
 
 	private String lookup(String response, String target) {
@@ -232,10 +238,10 @@ public class BridgeDbController implements Initializable
 	}
 	
 	
-	private String getSelectedTarget() {
-		return targetList.getSelectionModel().getSelectedItem();
-	}
-	
+//	private String getSelectedTarget() {
+//		return targetList.getSelectionModel().getSelectedItem();
+//	}
+//	
 	private List<String> getSelectedTargets() {
 		return targetList.getSelectionModel().getSelectedItems();
 	}
@@ -279,7 +285,7 @@ public class BridgeDbController implements Initializable
 		for (String line : lines)			// read in all DataSourceRecords unfiltered
 		{
 			if (line.trim().length() == 0) continue;
-			if (line.startsWith("name\tsystem")) continue;		// ignore first line as column heads
+			if (line.startsWith("datasource_name")) continue;		// ignore first line as column heads
 			DataSourceRecord rec= new DataSourceRecord(line);
 			allDataSources.add(rec);
 		}
@@ -342,15 +348,15 @@ public class BridgeDbController implements Initializable
 //		return builder.toString();
 //	}
 	//--------------------------------------------------------------------------------
-	private String bridgeDbcall(String command)
-	{
-//		System.out.println(command);
-		String species = organism.getValue();
-		int idx = species.indexOf(" (");
-		if (idx > 0) species = species.substring(0, idx);
-		String urlStr =BDB + species + "/" + command;
-		return StringUtil.callURL(urlStr, true);
-	}
+//	private String bridgeDbcall(String command)
+//	{
+////		System.out.println(command);
+//		String species = organism.getValue();
+//		int idx = species.indexOf(" (");
+//		if (idx > 0) species = species.substring(0, idx);
+//		String urlStr =BDB + species + "/" + command;
+//		return StringUtil.callURL(urlStr, true);
+//	}
 
 	//--------------------------------------------------------------------------------
 	HashMap<String, String> systemToNameLookup;

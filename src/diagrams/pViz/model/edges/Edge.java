@@ -162,7 +162,7 @@ abstract public class Edge extends XRefable {
 		if (endNode != null)
 		 endpt = endNode.getAdjustedPoint(lastpt);
 		edgeLine.setEndPoint(endpt);
-		ArrowType typ = lastpt.getArrowType();
+//		ArrowType typ = lastpt.getArrowType();
 //		edgeLine.setArrowType(lastpt.getArrowType());
 		edgeLine.connect();
 

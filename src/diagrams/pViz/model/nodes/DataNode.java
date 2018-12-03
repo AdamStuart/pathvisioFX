@@ -183,14 +183,22 @@ public class DataNode extends XRefable {
 		double y = cy + relY * height / 2;
 		return new Point2D(x, y);
 	}
-	public boolean isResizable() {		return getBool("Resizable");	}
-	public boolean isConnectable() {		return getBool("Connectable");	}
-	public boolean isSelectable() {		return getBool("Selectable");	}
-	public boolean isMovable() {		return getBool("Movable");	}
+	// **-------------------------------------------------------------------------------
+	public boolean isResizable() 	{	return getBool("Resizable", true);	}
+	public boolean isConnectable() 	{	return getBool("Connectable", true);	}
+	public boolean isSelectable() 	{	return getBool("Selectable", true);	}
+	public boolean isMovable() 		{	return getBool("Movable", true);	}
 	
 	public void setResizable(boolean b) {		 putBool("Resizable",b);	}
 	public void setConnectable(boolean b) {		 putBool("Connectable",b);	}
 	public void setSelectable(boolean b) {		 putBool("Selectable",b);	}
 	public void setMovable(boolean b)	 {		 putBool("Movable",b);	}
+
+	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
+		setMovable(mov);
+		setResizable(resiz);
+		setSelectable(edit);
+		setConnectable(connect);
+	}
 
 }

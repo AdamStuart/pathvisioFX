@@ -15,7 +15,7 @@ public class GPMLPoint {
 	private double y = 0;
 	private double relX = 0;
 	private double relY = 0;
-	private ArrowType head = null;
+	private ArrowType head = ArrowType.none;
 	private String graphRef;
 	private Interaction interaction;
 	public void setInteraction(Interaction s)	{ interaction = s;	}
@@ -27,6 +27,7 @@ public class GPMLPoint {
 	public void setY(double s)			{ y = s;	}
 
 	public Point2D getPoint()			{ return new Point2D(x,y);	}
+	public void setPoint(Point2D p)		{ if (p != null) { setX(p.getX()); setY(p.getY()); }  }
 
 	public String getGraphRef()			{ return graphRef;	}
 	public void setGraphRef(String s)	{ graphRef = s;	}
@@ -77,7 +78,7 @@ public class GPMLPoint {
 			else if ("GraphRef".equals(name))  graphRef = val;
 			else if ("ArrowHead".equals(name))  head = ArrowType.lookup(val);
 		}
-//		System.out.println("(" + x + ", " + y + ")"); 
+		System.out.println(head.toString() + " (" + x + ", " + y + ")"); 
 	}
 	
 //	Pair<Double, Double > portToRelXY(String portId)

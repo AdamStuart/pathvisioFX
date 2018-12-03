@@ -3,6 +3,9 @@ package diagrams.pViz.model.edges;
 import java.util.ArrayList;
 import java.util.List;
 
+import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.model.Model;
+import diagrams.pViz.model.nodes.DataNode;
 import javafx.geometry.Point2D;
 
 
@@ -13,21 +16,29 @@ public class SegmentList extends ArrayList<Segment> {
 	 */
 	private static final long serialVersionUID = 1L;
 	//----------------------------------------------------------------------
-	public SegmentList(List<Point2D> points)
+	public SegmentList(Model model, List<GPMLPoint> points)
 	{
 	  	int len = points.size();
-		Point2D mStart = points.get(0);
-	  	Point2D mEnd = points.get(len-1);
+	  	GPMLPoint mStart = points.get(0);
+	  	GPMLPoint mEnd = points.get(len-1);
 //	  	if (verbose)	  	System.out.println("length: " + len + " points");
 	  	
-		double startRelX = 0; // mStart.getRelX();
-		double startRelY = 0; //mStart.getRelY();
-		double endRelX = 0; //mEnd.getRelX();
-		double endRelY = 0; //mEnd.getRelY();
+		double startRelX = mStart.getRelX();
+		double startRelY = mStart.getRelY();
+		double endRelX = mEnd.getRelX();
+		double endRelY = mEnd.getRelY();
 	  	Point2D startPt =  new Point2D(mStart.getX(), mStart.getY());
 	  	Point2D endPt =  new Point2D(mEnd.getX(), mEnd.getY());
   	
-		int startSide = Segment.getSide(startRelX, startRelY);
+	  	DataNode startNode = model.find(mStart.getGraphRef());
+	  	DataNode endNode = model.find(mEnd.getGraphRef());
+	  	if (startNode != null)
+	  		startPt = startNode.getAdjustedPoint(mStart);
+	  	if (endNode != null)
+	  		endPt = endNode.getAdjustedPoint(mEnd);
+	  	
+
+	  	int startSide = Segment.getSide(startRelX, startRelY);
 		if (startSide < 0)
 			startSide = getNearestSide(startPt, endPt);
 		int endSide = Segment.getSide(endRelX, endRelY);
@@ -36,8 +47,20 @@ public class SegmentList extends ArrayList<Segment> {
 		
 	  	Point2D[] wps = calculateWayPoints(startPt, endPt, startSide, endSide);
 	    calculateSegments(startPt, endPt, startSide, endSide, wps);
+	    
+//	    dump(wps);
 	}
 	
+	
+	private void dump(Point2D[] wps) {
+		for (Point2D pt : wps)
+			System.out.println(pt.toString());
+		for (Segment seg : this)
+			System.out.println(seg.toString());
+		
+	}
+
+
 	//----------------------------------------------------------------------
 	private int getNearestSide(Point2D startPt, Point2D endPt) {
 		double dx = endPt.getX() - startPt.getX();
@@ -52,24 +75,24 @@ public class SegmentList extends ArrayList<Segment> {
 
 	protected Point2D[] calculateWayPoints(Point2D start, Point2D end, int startSide, int endSide) {
 		int nrSegments = getNrSegments( start, end, startSide, endSide);
+		int	nWaypoints = nrSegments - 2;
 
 		//Else, calculate the default waypoints
-		Point2D[] waypoints = new Point2D[nrSegments - 2];
+		Point2D[] waypoints = new Point2D[nWaypoints];
 
 		int startAxis = Segment.getSegmentAxis(startSide);
 		int startDirection = Segment.getSegmentDirection(startSide);
 		int endAxis = Segment.getSegmentAxis(endSide);
 		int endDirection = Segment.getSegmentDirection(endSide);
-
-
-		if(nrSegments - 2 == 1) {
+		
+		if(nWaypoints == 1) {
 			/*
 			 * [S]---
 			 * 		|
 			 * 		---[S]
 			 */
 			waypoints[0] = calculateWayPoint(start, end, startAxis, startDirection);
-		} else if(nrSegments - 2 == 2) {
+		} else if(nWaypoints == 2) {
 			/*
 			* [S]---
 			* 		| [S]
@@ -81,7 +104,7 @@ public class SegmentList extends ArrayList<Segment> {
 			waypoints[0] = calculateWayPoint(start, pt, startAxis, startDirection);
 
 			waypoints[1] = calculateWayPoint(end, waypoints[0], endAxis, endDirection);
-		} else if(nrSegments - 2 == 3) {
+		} else if(nWaypoints == 3) {
 			/*  -----
 			 *  |   |
 			 * [S]  | [S]
@@ -93,7 +116,7 @@ public class SegmentList extends ArrayList<Segment> {
 			waypoints[0] = calculateWayPoint(start, waypoints[1], startAxis, startDirection);
 			waypoints[2] = calculateWayPoint(end, waypoints[1], endAxis, endDirection);
 		}
-		 else if(nrSegments - 2 == 4) {			// NEW code UNTESTED
+		 else if(nWaypoints == 4) {			// NEW code UNTESTED
 		/*   ---------
 		 *   |       |
 		 *   ---[S]  | [S]
@@ -125,26 +148,37 @@ public class SegmentList extends ArrayList<Segment> {
 	protected void calculateSegments(Point2D start, Point2D end, int startSide, int endSide, Point2D[] waypts) {
 		int nrSegments = getNrSegments(start, end, startSide, endSide);
 		Segment[] segments = new Segment[nrSegments];
-
+		Segment prevSegment;
+		
 		int startAxis = Segment.getSegmentAxis(startSide);
 		if(nrSegments == 2) { //No waypoints
 			segments[0] = Segment.createStraightSegment(start, end, startAxis);
 			segments[1] = Segment.createStraightSegment(segments[0].getEnd(), end, Segment.getOppositeAxis(startAxis));
 		} else 
 		{
-			segments[0] = Segment.createStraightSegment(start, waypts[0], startAxis );
-			int axis = 1 - startAxis;
-			for(int i = 0; i < waypts.length - 1; i++) {
-				segments[i + 1] = Segment.createStraightSegment( segments[i].getEnd(), waypts[i + 1], axis );
-				axis = Segment.getOppositeAxis(axis);
+			prevSegment = segments[0] = Segment.createStraightSegment(start, waypts[0], startAxis );
+			int axis = Segment.getOppositeAxis(startAxis);
+			prevSegment = segments[1] = Segment.createStraightSegment(prevSegment.getEnd(), waypts[0], axis );
+//			axis = Segment.getOppositeAxis(axis);
+			
+			prevSegment = segments[2] = Segment.createStraightSegment(prevSegment.getEnd(), end, startAxis );
+//
+//			for(int i = 1; i < waypts.length; i++) {
+//				prevSegment = segments[2*i] = Segment.createStraightSegment( prevSegment.getEnd(), waypts[i], axis );
+//				int otheraxis = Segment.getOppositeAxis(axis);
+//				prevSegment = segments[2*i+1] = Segment.createStraightSegment( prevSegment.getEnd(), waypts[i], otheraxis );
+//			}
+			
+//			segments[segments.length - 2] = Segment.createStraightSegment( prevSegment.getEnd(), end, axis);
+//			segments[segments.length - 1] = Segment.createStraightSegment( prevSegment.getEnd(), end, Segment.getSegmentAxis(endSide));
 		}
-		segments[segments.length - 2] = Segment.createStraightSegment( segments[segments.length -3].getEnd(), end, axis);
-		segments[segments.length - 1] =Segment. createStraightSegment(
-					segments[segments.length - 2].getEnd(), end, Segment.getSegmentAxis(endSide));
-		}
+		
 		for (Segment s : segments) 
-			add(s);
+			if (s.length() > 0.01)
+				add(s);
+			else System.out.println("Bad Segment: " + s);
 	}
+	
 	protected int getNrSegments(Point2D start, Point2D end, int startSide, int endSide) {
 
 		boolean leftToRight = getDirectionX(start, end) > 0;

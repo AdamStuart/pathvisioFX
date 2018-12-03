@@ -27,51 +27,51 @@ public class VNodeGestures {
 
     }
 
-//    public EventHandler<MouseEvent> getOnMousePressedEventHandler() {   return mousePressedHandler;    }
+    public EventHandler<MouseEvent> getOnMousePressedEventHandler() {   return mousePressedHandler;    }
     public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {   return mouseDraggedHandler;  }
 
     //-------------------------------------------------------------------------------
-//    private EventHandler<MouseEvent> mousePressedHandler = new EventHandler<MouseEvent>() {
-//
-//        public void handle(MouseEvent event) {
-//
-//            // left mouse button => dragging
-//            if( !event.isPrimaryButtonDown())
-//                return;
-//
-//            nodeDragContext.mouseAnchorX = event.getSceneX();
-//            nodeDragContext.mouseAnchorY = event.getSceneY();
-//
-//            Node node = (Node) event.getSource();
-//
-//            nodeDragContext.translateAnchorX = node.getTranslateX();
-//            nodeDragContext.translateAnchorY = node.getTranslateY();
-//    		if (event.getClickCount() > 1)	   {	vNode.getInfo(); 	event.consume();   return; }
-//    		if (event.isPopupTrigger())	   {	vNode.doContextMenu(event); return;	   }
-//    		Tool curTool = canvas.getTool();
-//    		vNode.finishDragLine(event);
-//    	   if (curTool != null && !curTool.isArrow()) return;
-//    	   
-//    	   Selection selection = getController().getSelectionManager();
-//    	   if (event.isAltDown())
-//    		   selection.duplicateSelection();
-//    	   
-//    	   prevMouseX = event.getSceneX();
-//    	   prevMouseY = event.getSceneY();
-//    	   boolean inCorner = vNode.ptInCorner(prevMouseX, prevMouseY);
-//    	   if (inCorner)
-//    		   vNode.handleResize(event);
-//    	   else
-//    	   {
-//    		boolean wasSelected = selection.isSelected(vNode);
-//    		if (event.isControlDown() || event.isShiftDown())			//TODO -- configurable?
-//    			selection.select(vNode, !wasSelected);
-//    		else if (!wasSelected)
-//    			selection.selectX(vNode);
-//    	   }
-//    	   event.consume();
-//        }
-//    };
+    private EventHandler<MouseEvent> mousePressedHandler = new EventHandler<MouseEvent>() {
+
+        public void handle(MouseEvent event) {
+
+            // left mouse button => dragging
+            if( !event.isPrimaryButtonDown())
+                return;
+
+            nodeDragContext.mouseAnchorX = event.getSceneX();
+            nodeDragContext.mouseAnchorY = event.getSceneY();
+
+            Node node = (Node) event.getSource();
+
+            nodeDragContext.translateAnchorX = node.getTranslateX();
+            nodeDragContext.translateAnchorY = node.getTranslateY();
+    		if (event.getClickCount() > 1)	   {	vNode.getInfo(); 	event.consume();   return; }
+    		if (event.isPopupTrigger())	   {	vNode.doContextMenu(event); return;	   }
+    		Tool curTool = canvas.getTool();
+    		vNode.finishDragLine(event);
+    	   if (curTool != null && !curTool.isArrow()) return;
+    	   
+    	   Selection selection = getController().getSelectionManager();
+    	   if (event.isAltDown())
+    		   selection.duplicateSelection();
+    	   
+    	   prevMouseX = event.getSceneX();
+    	   prevMouseY = event.getSceneY();
+    	   boolean inCorner = vNode.ptInCorner(prevMouseX, prevMouseY);
+    	   if (inCorner)
+    		   vNode.handleResize(event);
+    	   else
+    	   {
+    		boolean wasSelected = selection.isSelected(vNode);
+    		if (event.isControlDown() || event.isShiftDown())			//TODO -- configurable?
+    			selection.select(vNode, !wasSelected);
+    		else if (!wasSelected)
+    			selection.selectX(vNode);
+    	   }
+    	   event.consume();
+        }
+    };
 
     private EventHandler<MouseEvent> mouseDraggedHandler = new EventHandler<MouseEvent>() {
         public void handle(MouseEvent event) {
@@ -87,8 +87,8 @@ public class VNodeGestures {
             node.setTranslateX(nodeDragContext.translateAnchorX + (( event.getSceneX() - nodeDragContext.mouseAnchorX) / scale));
             node.setTranslateY(nodeDragContext.translateAnchorY + (( event.getSceneY() - nodeDragContext.mouseAnchorY) / scale));
 
-        	double ex = event.getSceneX();
-    		double ey = event.getSceneY();
+        	double ex = event.getX();
+    		double ey = event.getY();
     				
         	if (event.isShiftDown())
         	{

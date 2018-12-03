@@ -30,8 +30,8 @@ public class Interaction extends Edge implements Comparable<Interaction>
 
 	private SimpleStringProperty interactionType = new SimpleStringProperty();		
 	public StringProperty  interactionTypeProperty()  { return interactionType;}
-	public void setInteractionType(String s)  { interactionType.set(s);}
-	public  String getInterType()  { return interactionType.get();}
+	public void setInteractionType(String s) 	 	{ interactionType.set(s);}
+	public  String getInterType()  					{ return interactionType.get();}
 
 	public void dump()	{ System.out.println( toString());	}		//get("GraphId") +
 	public Interaction(Model inModel)
@@ -46,7 +46,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	public Interaction(AttributeMap attr, Model inModel, List<GPMLPoint> pts, List<Anchor> anchors)
 	{
 		super(attr, inModel, pts, anchors);
-		interactionType.set("arrow");
+		interactionType.set(attr.get("ArrowHead"));
 		GPMLPoint.setInteraction(pts, this);
 	}
 
@@ -107,7 +107,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		String id =  getGraphId();
 		if (StringUtil.isEmpty(id)) id = "*"; 
 		String str = (edgeLine == null) ? "X" : edgeLine.toString();
-		return name + " " + id + " " + str;
+		return name + " " + id + " " + str + " " + getInterType();
 	}
 
     public String toGPML()
