@@ -15,6 +15,7 @@ import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.CommentRecord;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
+import diagrams.pViz.gpml.GPMLTreeTableView;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
@@ -44,6 +45,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Text;
 import model.AttributeMap;
+import model.QuadValue;
 import model.bio.BiopaxRecord;
 import model.bio.Species;
 import model.bio.XRefableSetRecord;
@@ -64,10 +66,6 @@ public class Model
 	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
 	public Map<String, DataNode> getDataNodeMap() {		return dataNodeMap;	}
 
-//	private Map<String, DataNodeState> stateMap = FXCollections.observableHashMap();
-//	public Collection<DataNodeState> getStates()			{ return stateMap.values();	}
-//	public Map<String, DataNodeState> getStatesNodeMap() {		return stateMap;	}
-
 	private Map<String, DataNodeGroup> groupMap = FXCollections.observableHashMap();
 	public Collection<DataNodeGroup> getGroups()			{ return groupMap.values();	}
 	public Map<String, DataNodeGroup> getGroupMap() {		return groupMap;	}
@@ -75,10 +73,7 @@ public class Model
 	private Map<String, DataNodeState> stateMap = FXCollections.observableHashMap();
 	public Collection<DataNodeState> getStates()			{ return stateMap.values();	}
 	public Map<String, DataNodeState> getStateMap() {		return stateMap;	}
-	public void addState(String graphRef, DataNodeState statenode) {
-		stateMap.put(graphRef, statenode);
-		
-	}
+	public void addState(String graphRef, DataNodeState statenode) {		stateMap.put(graphRef, statenode);	}
 
 	public Collection<Interaction> getEdges()			{ return interactionMap.values();	}
 	private Map<String, Interaction> interactionMap = FXCollections.observableHashMap();
@@ -169,24 +164,20 @@ public class Model
 		for (String key : groupMap.keySet())
 			bldr.append(groupMap.get(key).toGPML());
 	}
-	//---------------------------------------------------------
-	public void setState(String s)
-	{
-//		readNodes(s.);
-//		readReferences(saver);h
-//		readEdges(saver);
-//		readComments(saver);
-		try
-		{
-		org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
-		if (doc != null)
-			controller.addXMLDoc(doc);	
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-		}
-	}
+//	//---------------------------------------------------------
+//	public void setState(String s)
+//	{
+//		try
+//		{
+//		org.w3c.dom.Document doc = FileUtil.convertStringToDocument(s);	//  parse string to XML
+//		if (doc != null)
+//			controller.addXMLDoc(doc);	
+//		}
+//		catch (Exception e)
+//		{
+//			e.printStackTrace();
+//		}
+//	}
 	// **-------------------------------------------------------------------------------
 	
 	List<CommentRecord> comments = new ArrayList<CommentRecord>();
@@ -216,8 +207,6 @@ public class Model
 	public BiopaxRecord getReference(int i) {	return references.get(i);	}
 	public void clearRefs() 				{	references.clear();	}
 	public List<BiopaxRecord> getReferences() { return references;	}
-	private void readReferences(String state) {
-	}
 	// **-------------------------------------------------------------------------------
 		public void addResource(DataNode mnode)		
 	{  
@@ -231,8 +220,6 @@ public class Model
 			dataNodeMap.put(key, n);
 	}
 
-	private void readNodes(String state) {
-	}
 	public DataNode findDataNode(String nameOrId)
 	{
 		if (nameOrId == null) return null;
@@ -243,6 +230,19 @@ public class Model
 			if (name.equalsIgnoreCase(g.getGraphId())) return g;
 		}
 		return null;
+	}
+	public List<DataNode> findByDBID(String db, String id)
+	{
+		if (db == null || id == null) return null;
+		List<DataNode> hits = new ArrayList<DataNode>();
+		
+		for (DataNode g : getNodes())
+		{
+			if (db.equals(g.get("Database"))) 
+				if (id.equals(g.get("ID"))) 
+					hits.add(g);
+		}
+		return hits;
 	}
 	// **-------------------------------------------------------------------------------
 	public Interaction addInteraction(DataNode start, DataNode end, String activeLayer)		
@@ -602,7 +602,19 @@ public class Model
 		}	
 	}
 
-	
+	public String getXRefs() {
+		
+		StringBuilder bldr = new StringBuilder();
+		for (DataNode node : getDataNodeMap().values())
+		{
+			String db = node.get("Database");
+			String id = node.get("ID");
+			if(!(StringUtil.isEmpty(db) || StringUtil.isEmpty(id)))
+				bldr.append(db).append('\t').append(id).append('\n');
+		}
+		return bldr.toString();
+	}
+
 	public void setColorByValue() {
 //		clearColors();
 		for (DataNode node : getDataNodeMap().values())
@@ -771,7 +783,37 @@ public class Model
 			String idlist = idListToString(match);
 		}
 	}
+	public void addFields(List<QuadValue> records) {
+		Set<String> targets = new HashSet<String>();
+		for (QuadValue r : records)
+			targets.add(r.getTarget());
+		
+		if (verbose>0)
+		{
+			System.out.println("Targets: ");
+			for (String t : targets)
+				System.out.println(t);
+		}
+		
+		GPMLTreeTableView table = controller.getTreeTableView();
+		
+		for (String s : targets)
+			if (!table.columnExists(s))
+				table.addColumn(s);
 
+		for (QuadValue r : records)
+		{
+			List<DataNode> nodes = findByDBID(r.getSource(), r.getAttribute());
+			for (DataNode node : nodes)
+			{
+				String val = r.getValue();
+				String extant = node.get(r.getTarget());
+				if (extant != null && !extant.contains(val)) 
+					val += extant + ", " + r.getValue();
+				node.put( r.getTarget(), val);
+			}
+		}
+	}
 	
 }
 

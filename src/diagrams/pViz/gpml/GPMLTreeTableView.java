@@ -413,4 +413,25 @@ System.out.println("stateChanged " + e.toString());
 		System.out.println(prefix + xref.getName() + " " +  id + " ");		//xref.get("Type") + " " +
 		
 	}
+	public boolean columnExists(String s) {
+
+		for (TreeTableColumn<XRefable, ?> col : treeView.getColumns())
+			if (s.equals(col.getText()))
+			return true;
+		return false;
+	}
+	
+	public void addColumn(String s) {
+
+		TreeTableColumn<XRefable, String> col = new TreeTableColumn<XRefable, String>();
+		col.setText(s);
+		col.setCellValueFactory(
+                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
+        		{
+        			XRefable g = param.getValue().getValue();
+        			String name = g == null ? "" : g.get(col.getText());
+        	        return  new ReadOnlyStringWrapper(name);
+      		} );
+		 treeView.getColumns().add(col);
+	}
 }

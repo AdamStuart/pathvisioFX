@@ -2,17 +2,18 @@ package diagrams.pViz.app;
 
 import java.io.File;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
+import diagrams.pViz.dialogs.EnrichmentController;
+import diagrams.pViz.dialogs.EnrichmentDialog;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.GPML;
-import diagrams.pViz.gpml.GPMLTreeTableView;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
+import diagrams.pViz.gpml.GPMLTreeTableView;
 import diagrams.pViz.model.GeneModel;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.Edge;
@@ -42,21 +43,18 @@ import icon.GlyphIcon;
 import icon.GlyphIcons;
 import icon.GlyphsDude;
 import javafx.application.Platform;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.event.EventTarget;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.geometry.BoundingBox;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Side;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
@@ -279,6 +277,7 @@ public class Controller implements Initializable, IController
 //	private GeneListTable geneListTable = null;
 	@FXML private BorderPane container;			// root of fxml	
 	@FXML private Button tableOptions;
+	@FXML private MenuItem enrich;
 	@FXML private ToggleButton gene;	
 	@FXML private ToggleButton metabolite;	
 	@FXML private ToggleButton protein;		
@@ -466,6 +465,17 @@ public class Controller implements Initializable, IController
 //		dlog.showAndWait();
 	}
 	//-----------------------------------------------------------------------
+	@FXML private void doEnrich() 
+	{		
+		System.out.println("Enrich");	
+		EnrichmentDialog dlog = new EnrichmentDialog(model);
+		EnrichmentController ctrol = dlog.getController();
+		Optional<ButtonType> result = dlog.showAndWait();
+		if ("Enrich".equals(result.get().getText()))
+			ctrol.doSearch();
+
+	
+	}
 	@FXML private void addLegend() {		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);	}
 	@FXML private void doNewMultiGeneList()  { 	App.doNewMultiGeneList(); 	}
 	@FXML private void addLegendDlog()

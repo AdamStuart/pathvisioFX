@@ -95,6 +95,8 @@ public class GPML {
 					model.addComment(key, val);
 				if ("Name".equals(key)) 
 					model.setTitle(val);
+				if ("Organism".equals(key)) 
+					model.setSpecies(Species.lookup(val));
 				System.out.println(key + ": " + val);
 			}
 		

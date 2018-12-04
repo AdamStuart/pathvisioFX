@@ -179,10 +179,16 @@ public class BridgeDbController implements Initializable
 	
 	@FXML public void doSearch()
 	{
-		String input = inputText.getText(); 		if (input.trim().length() == 0) return;
-		String species = getSpeciesShort();			if (StringUtil.isEmpty(species)) return;
-		String source = getSelectedSource();		if (StringUtil.isEmpty(source)) return;
-		List<String> targets = getSelectedTargets();	if (targets.isEmpty()) return;
+		String error = "";
+		String input = inputText.getText(); 		if (input.trim().length() == 0) 	error += " NoInput";
+		String species = getSpeciesShort();			if (StringUtil.isEmpty(species)) 	error += " NoSpecies";
+		String source = getSelectedSource();		if (StringUtil.isEmpty(source)) 	error += " NoSource";
+		List<String> targets = getSelectedTargets();	if (targets.isEmpty()) 			error += " NoTarget";
+		if (!StringUtil.isEmpty(error))
+		{
+			System.err.println("doSearch encounted errors: " + error);
+			return;
+		}
 		resultsTable.getItems().clear();
 		String lines[] = input.split("\n");
 		for (String line : lines)		
