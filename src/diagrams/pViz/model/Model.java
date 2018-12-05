@@ -345,16 +345,17 @@ public class Model
 		groupMap.remove(id);
 	}
 
-	public DataNode getResourceByKey(String key)				
+	public List<DataNode> getResourceByKey(String key)				
 	{
-		 if (key == null) return null;
+		List<DataNode> hits = new ArrayList<DataNode>();
+		if (key == null) return null;
 		 for (DataNode n : dataNodeMap.values())
 		 {
 			 String name = "" +n.get("TextLabel");
-			if (name.equals(key)) return n;
+			if (name.equals(key)) hits.add(n);
 		 }
-		 DataNode n = dataNodeMap.get(key);	
-		 return n;
+//		 DataNode n = dataNodeMap.get(key);	
+		 return hits;
 	}
 
 	public DataNode getDataNode(String key)				

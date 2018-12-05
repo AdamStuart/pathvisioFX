@@ -1,5 +1,6 @@
 package diagrams.pViz.gpml;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.event.ChangeEvent;
@@ -324,6 +325,40 @@ System.out.println("stateChanged " + e.toString());
 		
 	}
 	// **-------------------------------------------------------------------------------
+	public boolean columnExists(String s) {
+
+		for (TreeTableColumn<XRefable, ?> col : treeView.getColumns())
+			if (s.equals(col.getText()))
+			return true;
+		return false;
+	}
+	
+	public void addColumn(String s) {
+
+		TreeTableColumn<XRefable, String> col = new TreeTableColumn<XRefable, String>();
+		col.setText(s);
+		col.setCellValueFactory(
+                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
+        		{
+        			XRefable g = param.getValue().getValue();
+        			String name = g == null ? "" : g.get(col.getText());
+        	        return  new ReadOnlyStringWrapper(name);
+      		} );
+		 treeView.getColumns().add(col);
+	}
+	
+	public List<String> getNumericColumns()
+	{
+		List<String>cols = new ArrayList<String>();
+		List<TreeTableColumn<XRefable, ?>>all =  treeView.getColumns();
+		for (TreeTableColumn col : all)
+			cols.add(col.getText());
+//		if (col instanceof TreeTableColumn<XRefable, String>)
+//				cols.add(col);
+		return cols;	
+	}
+
+	// **-------------------------------------------------------------------------------
 
 	public void addBranch(DataNode node) {
 		String type = node.get("Type");
@@ -412,26 +447,5 @@ System.out.println("stateChanged " + e.toString());
 		if (id == null)  id = xref.get("GraphId");
 		System.out.println(prefix + xref.getName() + " " +  id + " ");		//xref.get("Type") + " " +
 		
-	}
-	public boolean columnExists(String s) {
-
-		for (TreeTableColumn<XRefable, ?> col : treeView.getColumns())
-			if (s.equals(col.getText()))
-			return true;
-		return false;
-	}
-	
-	public void addColumn(String s) {
-
-		TreeTableColumn<XRefable, String> col = new TreeTableColumn<XRefable, String>();
-		col.setText(s);
-		col.setCellValueFactory(
-                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
-        		{
-        			XRefable g = param.getValue().getValue();
-        			String name = g == null ? "" : g.get(col.getText());
-        	        return  new ReadOnlyStringWrapper(name);
-      		} );
-		 treeView.getColumns().add(col);
 	}
 }

@@ -580,13 +580,6 @@ public class Controller implements Initializable, IController
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
 		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
 
-		
-		//		setGraphic(line, Tool.Line, FontAwesomeIcons.LONG_ARROW_RIGHT);
-//		setGraphic(shape1, Tool.Shape1, FontAwesomeIcons.HEART);
-//		setGraphic(shape2, Tool.Brace, FontAwesomeIcons.BARCODE);
-//		setGraphic(circle, Tool.Circle, FontAwesomeIcons.CIRCLE);
-//		setGraphic(polygon, Tool.Polygon, FontAwesomeIcons.STAR);
-	
 		IController.setGraphic(leftSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_O_RIGHT);
 		IController.setGraphic(bottomSideBarButton, FontAwesomeIcons.ARROW_CIRCLE_DOWN);
 		IController.setGraphic(toggleGridButton, FontAwesomeIcons.TH);
@@ -622,10 +615,7 @@ public class Controller implements Initializable, IController
 			if (doc != null)
 				addXMLDoc(doc);					
 		}
-		catch (Exception e) 
-		{
-			e.printStackTrace();
-		}
+		catch (Exception e) 		{ 	e.printStackTrace();		}
 	}
 	//-----------------------------------------------------------------------------
 	public void addXMLDoc(org.w3c.dom.Document doc)
@@ -781,18 +771,21 @@ public class Controller implements Initializable, IController
 			}
 	}
 	public void assignDataFile(File f) {
-			System.out.println("assignDataFile");		
+			System.out.println("assignDataFile " + f.getName());		
 			List<String> lines = FileUtil.readFileIntoStringList(f.getAbsolutePath());
 			for (String s : lines)
 			{
 				String[] parts = s.split("\t");
 				if (parts.length == 2)
 				{
-					DataNode node = model.getResourceByKey(parts[0]);
-					if (node != null)
+					List<DataNode> nodes = model.getResourceByKey(parts[0]);
+					for (DataNode node : nodes)
 						node.put("value", parts[1]);
 				}
 			}
+			GPMLTreeTableView table = getTreeTableView();
+				if (!table.columnExists("value"))
+					table.addColumn("value");
 			model.setColorByValue();
 	}
 	
@@ -954,7 +947,6 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	public void setGeneSet(GeneSetRecord rec) {
 		geneModel.setGeneList(rec, rec.getGeneSet());
-		
 	}
 	public void addGeneSet(File f, Point2D dropPt) {
 		addGeneSet( f, dropPt.getX(), dropPt.getY());
@@ -985,7 +977,5 @@ public class Controller implements Initializable, IController
 		}
 	}
 
-	public GeneSetRecord getGeneSetRecord() {
-		return geneSetRecord;
-	}
+	public GeneSetRecord getGeneSetRecord() {		return geneSetRecord;	}
 }

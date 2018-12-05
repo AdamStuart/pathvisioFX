@@ -1,6 +1,8 @@
 package diagrams.pViz.view;
 
 import java.net.URL;
+import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import diagrams.pViz.app.Controller;
@@ -20,11 +22,16 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Control;
+import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -121,7 +128,37 @@ public class Inspector extends HBox implements Initializable {
 	}
 	
 	// **------------------------------------------------------------------------------
-
+	@FXML private void fillClick(MouseEvent ev)
+	{
+		if (ev.getClickCount() > 1)
+		{
+			Dialog alert = new Dialog();
+			DialogPane dpane = alert.getDialogPane();
+			alert.setWidth(240);
+			alert.setHeight(240);
+			ChoiceBox<String> choices =  new ChoiceBox<String> ();
+			List<String> numCols = controller.getTreeTableView().getNumericColumns();
+			choices.getItems().addAll(numCols);
+			choices.getSelectionModel().select(0);
+			Label label = new Label("Map a column to a grayscale");
+			VBox vbox = new VBox(label, choices );
+			label.setMinWidth(200);
+			dpane.setMinHeight(200);
+			dpane.setMinWidth(240);
+			choices.setMinHeight(30);
+			choices.setMinWidth(200);
+			vbox.setMinHeight(200);
+			vbox.setPrefHeight(200);
+			dpane.getChildren().add(vbox);
+			
+			dpane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+			Optional<ButtonType> result = alert.showAndWait();
+			if (result.get() == ButtonType.OK)
+			{
+				System.out.println("MAP " + choices.getSelectionModel().getSelectedItem());
+			}
+		}
+	}
 	// **------------------------------------------------------------------------------
 
 	private String getStyleSettings(Control src)
