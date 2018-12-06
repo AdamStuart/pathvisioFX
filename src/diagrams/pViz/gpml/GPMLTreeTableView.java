@@ -375,7 +375,6 @@ System.out.println("stateChanged " + e.toString());
 //				XRefable row = rowItem.getValue();
 				rowItem.getValue().put(colName, val);
 				rowItem.getValue().copyAttributesToProperties();
-				System.out.println(obj);
 			}
 		}
 	}
