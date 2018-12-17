@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPML;
+import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
@@ -41,6 +41,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.ClosePath;
+import javafx.scene.shape.Line;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -104,7 +105,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		title = modelNode.get("TextLabel");
 		if (title == null)
 		{
-			title = id;
+			title = "";
 			modelNode.put("TextLabel", id);
 		}
 		String fontWeight = dataNode.get("FontWeight");
@@ -129,7 +130,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         if (type == null) type = "";
 
         
-        readGeometry(modelNode, this);
+//        readGeometry(modelNode, this);
         modelNode.putDouble("CenterX", getLayoutX() + .5 * getWidth());
         modelNode.putDouble("CenterY", getLayoutY() + .5 * getHeight());
         Tooltip tooltip = new Tooltip();
@@ -305,6 +306,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 				shapeType = "ComplexComponent";
 		}
 		if (shapeType == null) shapeType = "Rectangle";			// TODO
+		
 		Tool tool = Tool.lookup(shapeType);
 		if (tool == null) return ;
 		if (tool.isControl())
@@ -314,7 +316,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		}
 		else figure = ShapeFactory.makeNewShape(shapeType, this);
 		if (figure != null)
-			setScaleShape(true);
+			setScaleShape(false);
 	}
  	// **-------------------------------------------------------------------------------
 
@@ -521,16 +523,18 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			attributes.putColor("Stroke",   (Color) shape.getStroke());	
 			attributes.putDouble("LineThickness",   shape.getStrokeWidth());	
 		}
+		
 	}
 	public void readGeometry(AttributeMap attrMap, Node content)
 	{
 		String id = attrMap.get("GraphId");
+		String type = attrMap.get("ShapeType");
+		
 		double x = attrMap.getDouble("X");
 		double y = attrMap.getDouble("Y");
 		double centerx = attrMap.getDouble("CenterX", 50);
 		double centery = attrMap.getDouble("CenterY", 50);
 		double w = attrMap.getDouble("Width", 50) ;
-		String type = attrMap.get("ShapeType");
 		double h = attrMap.getDouble("Height", 50);
 		if ("GeneProduct".equals(type)) h = 50;
 		String title = attrMap.get("TextLabel");
@@ -673,17 +677,25 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			RelPosition pos = new RelPosition(relX, relY);
 			finishDragLine(this, pos);
 			event.consume();
-			return;
 		}
 	}
+	
 	public void finishDragLine(Node port, ResizableBox target)
 	{
 		String id = port.getId();
 		RelPosition relPos = RelPosition.idToRelPosition(id);
 		finishDragLine(target, relPos);
 	}
+	
 	public void finishDragLine( ResizableBox target, RelPosition relPos)
 	{
 		pasteboard.connectTo(target, relPos);
 	}
+	
+	public boolean isInCompoundNode() {
+		DataNodeGroup gp = modelNode().getGroup();
+		return gp!=null && gp.isCompoundNode();
+	}
+	
+	public DataNodeGroup getGroup() {		return modelNode().getGroup();	}
 }

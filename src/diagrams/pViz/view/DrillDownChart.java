@@ -1,4 +1,4 @@
-package diagrams.pViz.model;
+package diagrams.pViz.view;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

@@ -1,7 +1,6 @@
 package diagrams.pViz.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,15 +11,15 @@ import java.util.Set;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.Anchor;
-import diagrams.pViz.gpml.CommentRecord;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
-import diagrams.pViz.gpml.GPMLTreeTableView;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
+import diagrams.pViz.tables.CommentRecord;
+import diagrams.pViz.tables.GPMLTreeTableView;
 import diagrams.pViz.view.Layer;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
@@ -49,7 +48,6 @@ import model.QuadValue;
 import model.bio.BiopaxRecord;
 import model.bio.Species;
 import model.bio.XRefableSetRecord;
-import util.FileUtil;
 import util.StringUtil;
 
 public class Model
@@ -385,7 +383,7 @@ public class Model
 //	Map<String, GPMLGroup> groups = new HashMap<String, GPMLGroup>();
 	// move to GPML
 	public void addGroup(DataNodeGroup grp) {
-		groupMap.put(grp.getGraphId(),grp);
+		groupMap.put(grp.getGroupId(),grp);
 		dataNodeMap.put(grp.getGraphId(),grp);
 	}
 //	public Collection<GPMLGroup> getGroups() { return groups.values();	}
@@ -746,6 +744,7 @@ public class Model
 		 }
 	 };
 	 
+	//---------------------------------------------------------------------------------------------
 	 List<Reference> filterByDB(List<Reference> inList, String db)
 	 {
 		 List<Reference> subset = new ArrayList<Reference>();		
@@ -784,6 +783,8 @@ public class Model
 			String idlist = idListToString(match);
 		}
 	}
+
+	//---------------------------------------------------------------------------------------------
 	public void addFields(List<QuadValue> records) {
 		Set<String> targets = new HashSet<String>();
 		for (QuadValue r : records)

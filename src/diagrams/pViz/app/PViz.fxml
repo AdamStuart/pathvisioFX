@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.input.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
@@ -23,7 +30,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
    <items>
       <BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0">
          <top>
@@ -131,30 +138,45 @@
                               <MenuItem mnemonicParsing="false" onAction="#deleteSelection" text="Delete" />
                            </items>
                         </Menu>
-                        <Menu id="View" mnemonicParsing="false" text="View">
+                        <Menu id="Select" mnemonicParsing="false" text="Select">
                            <items>
-                              <MenuItem fx:id="group1" mnemonicParsing="false" onAction="#group" text="Show Info">
+                              <MenuItem id="getinfo" fx:id="showInfo" mnemonicParsing="false" onAction="#getInfo" text="Show Info">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="I" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
+                           <MenuItem id="Group" fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem id="Compound" fx:id="compoundNode" mnemonicParsing="false" onAction="#compoundNode" text="Make Compound Node">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="DOWN" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem id="Ungroup" fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem fx:id="tofront1" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
+                              <MenuItem fx:id="tofront" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="tofront11" mnemonicParsing="false" onAction="#toFront" text="Bring Forward">
+                              <MenuItem fx:id="forward" mnemonicParsing="false" onAction="#forward" text="Bring Forward">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="toback1" mnemonicParsing="false" onAction="#toBack" text="Send Backward">
+                              <MenuItem fx:id="backward" mnemonicParsing="false" onAction="#backward" text="Send Backward">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="toback11" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
+                              <MenuItem fx:id="toback" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
@@ -195,92 +217,11 @@
                                     </MenuItem>
                                  </items>
                               </Menu>
-                              <Menu mnemonicParsing="false" text="Move To Layer">
-                                 <items>
-                                    <MenuItem fx:id="background1" mnemonicParsing="false" onAction="#moveToLayer" text="Background" />
-                                    <MenuItem fx:id="grid1" mnemonicParsing="false" onAction="#moveToLayer" text="Grid">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                 </items>
-                              </Menu>
                               <MenuItem fx:id="connect1" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                              <MenuItem fx:id="zoomIn" mnemonicParsing="false" onAction="#zoomIn" text="Zoom In">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="PLUS" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="zoomOut" mnemonicParsing="false" onAction="#zoomOut" text="Zoom Out">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="MINUS" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                           </items>
-                        </Menu>
-                        <Menu mnemonicParsing="false" text="Select">
-                           <items>
-                           <MenuItem fx:id="group" mnemonicParsing="false" onAction="#group" text="Group">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" text="Ungroup">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="G" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem fx:id="tofront" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="F" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <MenuItem fx:id="toback" mnemonicParsing="false" onAction="#toBack" text="Send To Back">
-                                 <accelerator>
-                                    <KeyCodeCombination alt="UP" code="B" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                 </accelerator>
-                              </MenuItem>
-                              <SeparatorMenuItem mnemonicParsing="false" />
-                              <Menu mnemonicParsing="false" text="Select By Type">
-                                <items>
-                                  <MenuItem fx:id="proteinMenuItem" mnemonicParsing="false" onAction="#selectProtein" text="Protein" />
-                                    <MenuItem fx:id="geneMenuItem" mnemonicParsing="false" onAction="#selectGene" text="Gene">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                    <MenuItem fx:id="metaboliteMenuItem" mnemonicParsing="false" onAction="#selectMetabolite" text="Metabolite">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                    <MenuItem fx:id="rnaMenuItem" mnemonicParsing="false" onAction="#selectRna" text="RNA">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                    <MenuItem fx:id="selectLabels" mnemonicParsing="false" onAction="#selectLabels" text="Labels">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                    <MenuItem fx:id="selectShapes" mnemonicParsing="false" onAction="#selectShapes" text="Shapes">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                    <MenuItem fx:id="selectEdges" mnemonicParsing="false" onAction="#selectEdges" text="Edges">
-                                       <accelerator>
-                                          <KeyCodeCombination alt="UP" code="Y" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                                       </accelerator>
-                                    </MenuItem>
-                                </items>
-                              </Menu>
                               <Menu mnemonicParsing="false" text="Move To Layer">
                                 <items>
                                   <MenuItem fx:id="background" mnemonicParsing="false" onAction="#moveToLayer" text="Background" />
@@ -293,7 +234,20 @@
                               </Menu>
                            </items>
                         </Menu>
-                        <Menu mnemonicParsing="false" text="Nodes">
+                        <Menu id="Pathways" mnemonicParsing="false" text="Pathways">
+                           <items>
+                              <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways..." />
+                              <MenuItem id="Annotate" fx:id="annotate" mnemonicParsing="false" onAction="#annotate" text="Annotate" />
+                              <MenuItem id="Enrich" fx:id="enrich" mnemonicParsing="false" onAction="#doEnrich" text="Enrich..." />
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem fx:id="addLegend" mnemonicParsing="false" onAction="#addLegend" text="Add Legend" />
+                              <MenuItem fx:id="addLegendDlog" mnemonicParsing="false" onAction="#addLegendDlog" text="Add Legend..." />
+                              <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem id="Cytoscape" fx:id="openInCytoscape" mnemonicParsing="false" onAction="#openInCytoscape" text="Open in Cytoscape" />
+                              <MenuItem id="Jupyter" fx:id="showJupyter1" mnemonicParsing="false" onAction="#showJupyter" text="Show Jupyter Notebook" />
+                           </items>
+                        </Menu>
+                        <Menu id="Nodes" mnemonicParsing="false" text="Nodes">
                            <items>
                               <MenuItem fx:id="group2" mnemonicParsing="false" onAction="#group" text="Select Neighbors">
                                  <accelerator>
@@ -340,18 +294,6 @@
                                     <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
-                           </items>
-                        </Menu>
-                        <Menu id="Pathways" mnemonicParsing="false" text="Pathways">
-                           <items>
-                              <MenuItem fx:id="addLegend" mnemonicParsing="false" onAction="#addLegend" text="Add Legend" />
-                              <MenuItem fx:id="addLegendDlog" mnemonicParsing="false" onAction="#addLegendDlog" text="Add Legend..." />
-                              <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways..." />
-                              <SeparatorMenuItem mnemonicParsing="false" />
-                              <MenuItem id="Jupyter" fx:id="showJupyter" mnemonicParsing="false" onAction="#showJupyter" text="Show Jupyter Notebook" />
-                              <MenuItem id="Annotate" fx:id="annotate" mnemonicParsing="false" onAction="#annotate" text="Annotate" />
-                              <MenuItem id="Annotate" fx:id="enrich" mnemonicParsing="false" onAction="#doEnrich" text="Enrich..." />
                            </items>
                         </Menu>
                         <Menu mnemonicParsing="false" text="Tools">
@@ -411,7 +353,7 @@
          <bottom>
            </bottom>
          <left>
-            <VBox fx:id="west" prefHeight="853.0" prefWidth="147.0" spacing="2.0" BorderPane.alignment="CENTER">
+            <VBox fx:id="west" prefWidth="150.0" spacing="2.0" BorderPane.alignment="CENTER">
                <children>
                   <ToolBar orientation="VERTICAL" prefHeight="207.0" prefWidth="122.0">
                      <items>
@@ -453,136 +395,144 @@
                         <Separator prefHeight="0.0" prefWidth="5.0" />
                      </items>
                   </ToolBar>
-                  <HBox alignment="CENTER">
+                  <VBox>
                      <children>
-                        <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
-                        <Button fx:id="mitochondria11" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
+                        <HBox alignment="CENTER">
+                           <children>
+                              <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="mitochondria11" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER">
+                           <children>
+                              <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </HBox>
+                        <HBox alignment="CENTER" spacing="2.0">
+                           <children>
+                              <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                              <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                           </children>
+                        </HBox>
                      </children>
-                  </HBox>
-                  <HBox alignment="CENTER">
-                     <children>
-                        <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
-                        <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
-                     </children>
-                  </HBox>
-                  <HBox alignment="CENTER" spacing="2.0">
-                     <children>
-                        <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
-                        <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
-                        <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
-                           <font>
-                              <Font size="9.0" />
-                           </font>
-                        </Button>
-                     </children>
-                  </HBox>
+                  </VBox>
                   <Separator prefHeight="4.0" />
                   <Label layoutX="14.0" layoutY="195.0" text="Interactions" />
-                  <ToolBar layoutX="14.0" layoutY="14.0" orientation="VERTICAL" prefHeight="310.0" prefWidth="122.0">
+                  <ToolBar layoutX="14.0" layoutY="14.0" orientation="VERTICAL" prefHeight="330.0" prefWidth="122.0">
                      <items>
                         <VBox spacing="20.0">
                            <children>
-                              <VBox spacing="4.0">
+                              <HBox id="all Interactions" fx:id="allInteractions">
                                  <children>
-                                    <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" prefHeight="27.0" prefWidth="107.0" text="Activates">
-                                       <font>
-                                          <Font name="Baskerville Bold" size="12.0" />
-                                       </font>
-                                       <graphic>
-                                          <ImageView>
-                                             <image>
-                                                <Image url="@../view/icons/transports.gif" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </ToggleButton>
-                                    <ToggleButton fx:id="arrow2" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow2" prefHeight="27.0" prefWidth="107.0" text="Inhibits">
-                                       <font>
-                                          <Font name="Baskerville Bold" size="12.0" />
-                                       </font>
-                                       <graphic>
-                                          <ImageView>
-                                             <image>
-                                                <Image url="@../view/icons/inhibits.gif" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </ToggleButton>
-                                    <ToggleButton fx:id="arrow3" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow3" prefHeight="27.0" prefWidth="107.0" text="Converts">
-                                       <font>
-                                          <Font name="Baskerville Bold" size="12.0" />
-                                       </font>
-                                       <graphic>
-                                          <ImageView>
-                                             <image>
-                                                <Image url="@../view/icons/activates.gif" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </ToggleButton>
-                                    <ToggleButton fx:id="arrow4" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow4" prefHeight="27.0" prefWidth="107.0" text="Catalyzes">
-                                       <font>
-                                          <Font name="Baskerville Bold" size="12.0" />
-                                       </font>
-                                       <graphic>
-                                          <ImageView>
-                                             <image>
-                                                <Image url="@../view/icons/catalyzes.gif" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </ToggleButton>
-                                    <ToggleButton fx:id="arrow5" contentDisplay="RIGHT" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" prefHeight="27.0" prefWidth="107.0" text="Transports">
-                                       <font>
-                                          <Font name="Baskerville Bold" size="12.0" />
-                                       </font>
-                                       <graphic>
-                                          <ImageView>
-                                             <image>
-                                                <Image url="@../view/icons/converts.gif" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </ToggleButton>
-                                    <ToggleButton fx:id="arrow6" contentDisplay="RIGHT" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" prefHeight="27.0" prefWidth="107.0" text="Regulates">
-                                       <font>
-                                          <Font name="Baskerville Bold" size="12.0" />
-                                       </font>
-                                       <graphic>
-                                          <ImageView>
-                                             <image>
-                                                <Image url="@../view/icons/stimulates.gif" />
-                                             </image>
-                                          </ImageView>
-                                       </graphic>
-                                    </ToggleButton>
+                                    <VBox id="interactions" spacing="4.0">
+                                       <children>
+                                          <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Interacts">
+                                             <font>
+                                                <Font name="Baskerville Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView>
+                                                   <image>
+                                                      <Image url="@../view/icons/transports.gif" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="arrow2" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow2" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Converts">
+                                             <font>
+                                                <Font name="Baskerville Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView>
+                                                   <image>
+                                                      <Image url="@../view/icons/activates.gif" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="arrow3" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow3" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Inhibits">
+                                             <font>
+                                                <Font name="Baskerville Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView>
+                                                   <image>
+                                                      <Image url="@../view/icons/inhibits.gif" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="arrow4" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow4" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Catalyzes">
+                                             <font>
+                                                <Font name="Baskerville Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView>
+                                                   <image>
+                                                      <Image url="@../view/icons/catalyzes.gif" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="arrow5" contentDisplay="RIGHT" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Stimulates">
+                                             <font>
+                                                <Font name="Baskerville Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView>
+                                                   <image>
+                                                      <Image url="@../view/icons/converts.gif" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </ToggleButton>
+                                          <ToggleButton fx:id="arrow6" contentDisplay="RIGHT" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Binds">
+                                             <font>
+                                                <Font name="Baskerville Bold" size="12.0" />
+                                             </font>
+                                             <graphic>
+                                                <ImageView>
+                                                   <image>
+                                                      <Image url="@../view/icons/stimulates.gif" />
+                                                   </image>
+                                                </ImageView>
+                                             </graphic>
+                                          </ToggleButton>
+                                       </children>
+                                    </VBox>
                                  </children>
-                              </VBox>
-                              <VBox>
+                              </HBox>
+                              <VBox id="line types">
                                  <children>
                                     <ToggleButton fx:id="straight" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setStraight" prefHeight="27.0" prefWidth="107.0" text="Straight">
                                        <font>
@@ -608,6 +558,18 @@
                                           </ImageView>
                                        </graphic>
                                     </ToggleButton>
+                                    <ToggleButton fx:id="segmented" contentDisplay="RIGHT" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#setSegmented" prefHeight="27.0" prefWidth="107.0" text="Segmented">
+                                       <font>
+                                          <Font name="Baskerville Bold" size="12.0" />
+                                       </font>
+                                       <graphic>
+                                          <ImageView>
+                                             <image>
+                                                <Image url="@../view/icons/straight.gif" />
+                                             </image>
+                                          </ImageView>
+                                       </graphic>
+                                    </ToggleButton>
                                     <ToggleButton fx:id="elbowed" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setElbowed" prefHeight="27.0" prefWidth="107.0" text="Elbowed">
                                        <font>
                                           <Font name="Baskerville Bold" size="12.0" />
@@ -626,6 +588,13 @@
                         </VBox>
                      </items>
                   </ToolBar>
+                  <HBox>
+                     <children>
+                        <Button fx:id="zoomin" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomIn" prefHeight="30.0" prefWidth="30.0" text="&lt;" />
+                        <Button fx:id="zoomout" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomOut" prefHeight="30.0" prefWidth="30.0" text="&gt;" />
+                     </children>
+                  </HBox>
+                  <Button fx:id="editPalette" maxHeight="30.0" maxWidth="121.0" mnemonicParsing="false" onAction="#editPalette" prefHeight="30.0" prefWidth="121.0" text="Edit Palette" />
                </children>
                <padding>
                   <Insets left="4.0" top="4.0" />
@@ -640,11 +609,7 @@
                <items>
                   <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true">
                     <content>
-                      <AnchorPane fx:id="drawPane">
-                           <children>
-                              <Button fx:id="zoomin" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomIn" prefHeight="30.0" prefWidth="30.0" text="&lt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" />
-                              <Button fx:id="zoomout" layoutX="10.0" layoutY="831.0" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomOut" prefHeight="30.0" prefWidth="30.0" text="&gt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="30.0" />
-                           </children></AnchorPane>
+                      <AnchorPane fx:id="drawPane" />
                     </content>
                   </ScrollPane>
                   <SplitPane fx:id="vsplitter" orientation="VERTICAL">
@@ -663,7 +628,7 @@
                                           <Font name="System Bold" size="11.0" />
                                        </font>
                                     </Label>
-                                    <Label fx:id="scale" layoutX="50.0" layoutY="10.0" maxWidth="150.0" prefHeight="25.0" prefWidth="50.0" text="100%" textAlignment="RIGHT">
+                                    <Label fx:id="scale" layoutX="50.0" layoutY="10.0" maxWidth="150.0" prefHeight="25.0" prefWidth="50.0" text="100%" textAlignment="CENTER">
                                        <font>
                                           <Font name="System Bold" size="11.0" />
                                        </font>

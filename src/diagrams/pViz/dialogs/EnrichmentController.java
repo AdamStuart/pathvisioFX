@@ -91,8 +91,9 @@ public class EnrichmentController implements Initializable
 				System.out.println(response);
 				for (String target : targets)
 				{	
-					String mappedId = lookup(response, target);
-					if (mappedId != null)
+					List<String> mappedIds = lookup(response, target);
+					for (String mappedId : mappedIds)
+						if (mappedId != null)
 					{	
 						QuadValue record = new QuadValue(source, val, target, mappedId);
 						records.add(record);
@@ -103,16 +104,17 @@ public class EnrichmentController implements Initializable
 		model.addFields(records);
 	}
 
-	private String lookup(String response, String target) {
+	private List<String> lookup(String response, String target) {
+		List<String> hits = new ArrayList<String>();
 		String lines[] = response.split("\n");
 		for (String line : lines)		
 		{
 			String [] flds = line.split("\t");
 			if (flds.length == 2)
 				if (flds[1].equals(target))
-					return flds[0];
+					hits.add(flds[0]);
 		}
-		return null;
+		return hits;
 	}
 	
 	private List<String> getSelectedTargets() {

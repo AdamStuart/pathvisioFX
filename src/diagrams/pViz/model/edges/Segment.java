@@ -1,12 +1,8 @@
 package diagrams.pViz.model.edges;
 
-import java.util.List;
-
 import javafx.geometry.Point2D;
 import javafx.scene.shape.Line;
 
-
-//UNUSED AT THIS TIME----??
 
 public class Segment {
 	//-----------------------------------------------------------
@@ -65,37 +61,6 @@ public class Segment {
 		}
 		return 0;
 	}
-// R=RIGHT, L=LEFT, T=TOP, B=BOTTOM
-// N=NORTH, E=EAST, S=SOUTH, W=WEST
-	/* The number of connector for each side and relative position
-		RN	RE	RS	RW
-BLN		1	2	1	0
-TLN		1	2	3	2
-
-BLE		3	1	0	1
-TLE		0	1	2	1
-
-BLS		3	2	1	2
-TLS		1	2	1	0
-
-BLW		2	3	2	1
-TLW		2	3	2	1
-	There should be some logic behind this, but hey, it's Friday...
-	(so we just hard code the array)
-	
-BUG:  	There should be some cases where 4 is returned !!  
-	 */
-	private int[][][] waypointNumbers;
-
-	private int getNrWaypoints(int x, int y, int z) {
-		waypointNumbers = new int[][][] {
-			{	{ 1, 1 },	{ 2, 2 },	{ 1, 3 },	{ 0, 2 }	},
-			{	{ 2, 0 }, 	{ 1, 1 }, 	{ 0, 2 }, 	{ 1, 1 },	},
-			{	{ 3, 1 },	{ 2, 2 },	{ 1, 1 },	{ 2, 0 },	},
-			{ 	{ 2, 2 },	{ 3, 3 },	{ 2, 2 },	{ 1, 1 },	}
-		};
-		return waypointNumbers[x][y][z];
-	}
 
 	/**
 	 * Get the direction of the line on the x axis
@@ -119,63 +84,7 @@ BUG:  	There should be some cases where 4 is returned !!
 		return (int)Math.signum(end.getY() - start.getY());
 	}
 
-	protected int getNrSegments(Point2D start, Point2D end, int startSide, int endSide) {
-
-		boolean leftToRight = getDirectionX(start, end) > 0;
-
-		Point2D left = leftToRight ? start : end;
-		Point2D right = leftToRight ? end : start;
-		boolean leftBottom = getDirectionY(left, right) < 0;
-
-		int z = leftBottom ? 0 : 1;
-		int x = leftToRight ? startSide : endSide;
-		int y = leftToRight ? endSide : startSide;
-		return getNrWaypoints(x, y, z) + 2;
-	}
-
-    protected Point2D fromLineCoordinate(double l, List<Segment> segments) 
-    {
-		double totalLength = getTotalLength(segments);
-		double pixelsRemaining = totalLength * l;
-		if (pixelsRemaining < 0) pixelsRemaining = 0;
-		if (pixelsRemaining > totalLength) pixelsRemaining = totalLength;
-
-		// count off each segment from pixelsRemaining, until there aren't enough pixels left
-		Segment segment = null;
-		double slength = 0.0;
-		for(Segment s : segments) 
-		{
-			slength = s.length();
-			segment = s;
-			if (pixelsRemaining < slength) 		break; // not enough pixels left, we found our segment.
-			pixelsRemaining -= slength;
-		}
-
-		//Find the location on the segment
-		Point2D s = segment.getStart();
-		Point2D e = segment.getEnd();
-
-		// protection against division by 0
-		if (slength == 0)
-			return new Point2D(s.getX(), s.getY());
-			// start from s, in the direction of e, for pixelRemaining pixels.
-		double deltax = e.getX() - s.getX();
-		double deltay = e.getY() - s.getY();
-
-		return new Point2D(s.getX() + deltax / slength * pixelsRemaining,
-				s.getY() + deltay / slength * pixelsRemaining );
-		}
-
-
-
-	/** @returns sum of the lengths of the segments */
-	static public double getTotalLength (List<Segment> segments) 
-	{
-		double totLength = 0.0;
-		for (Segment seg : segments)
-			totLength += seg.length();
-		return totLength;
-	}//-----------------------------------------------
+//-----------------------------------------------
 	static public Point2D centerPoint(Point2D start, Point2D end) 
 	{
 		return new Point2D( (start.getX() + end.getX() ) / 2, (start.getY() + end.getY()) / 2 );

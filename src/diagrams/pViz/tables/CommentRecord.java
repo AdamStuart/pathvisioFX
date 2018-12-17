@@ -1,10 +1,10 @@
-package diagrams.pViz.gpml;
+package diagrams.pViz.tables;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.input.DataFormat;
 
-public class CommentRecord implements GPMLRecord {
+public class CommentRecord implements TableRecord {
 
 	StringProperty source = new SimpleStringProperty();
 	StringProperty text = new SimpleStringProperty();

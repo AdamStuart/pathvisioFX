@@ -1,4 +1,4 @@
- package diagrams.pViz.gpml;
+ package diagrams.pViz.tables;
 
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;

@@ -83,7 +83,7 @@ public class Pasteboard extends PanningCanvas
 		super(ctrl, label);
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
-		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
+//		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
         scaleXProperty().bind(myScale);
         scaleYProperty().bind(myScale);
         zoomScrollGestures = new SceneGestures(this);

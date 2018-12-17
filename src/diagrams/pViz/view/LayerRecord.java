@@ -2,7 +2,7 @@ package diagrams.pViz.view;
 
 import java.util.Collections;
 
-import diagrams.pViz.gpml.GPMLRecord;
+import diagrams.pViz.tables.TableRecord;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -13,7 +13,7 @@ import javafx.collections.ListChangeListener;
 import javafx.scene.Node;
 import javafx.scene.input.DataFormat;
 
-public class LayerRecord implements GPMLRecord {
+public class LayerRecord implements TableRecord {
 
 	public LayerRecord(Layer layer, boolean visibl, boolean locked)
 	{

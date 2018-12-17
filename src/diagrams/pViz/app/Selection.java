@@ -1,7 +1,7 @@
 package diagrams.pViz.app;
 
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import diagrams.pViz.model.Model;
@@ -10,9 +10,8 @@ import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
-import diagrams.pViz.view.PanningCanvas;
 import diagrams.pViz.view.Layer;
-import diagrams.pViz.view.Pasteboard;
+import diagrams.pViz.view.PanningCanvas;
 import diagrams.pViz.view.Shape1;
 import diagrams.pViz.view.VNode;
 import gui.Action.ActionType;
@@ -58,32 +57,33 @@ public class Selection
 	private PanningCanvas root;
 	private ObservableList<VNode> items;
 	//--------------------------------------------------------------------------
-	public ObservableList<VNode> getAll()				{ return items;	}
+	public ObservableList<VNode> getAll()		{ return items;	}
 
-	public VNode first()			{ return count() == 0 ? null : items.get(0);	}
-	public void clear()				{ 
-										for (int i= items.size()-1; i>= 0; i--)
-											deselect(items.get(i));  
-										for (Interaction e : getModel().getEdges())
-											if (e.isSelected())
-												e.select(false);
-									}
-	public int count()				{ return items.size();	}
+	public VNode first()	{ return count() == 0 ? null : items.get(0);	}
+	public void clear()		{ 
+								for (int i= items.size()-1; i>= 0; i--)
+									deselect(items.get(i));  
+								for (Interaction e : getModel().getEdges())
+									if (e.isSelected())
+										e.select(false);
+							}
+	public int count()		{ 	return items.size();	}
 	public boolean isGroupable()	{ return count() > 1;	}
 
 	//--------------------------------------------------------------------------
 	public void selectX(VNode s)		{ clear(); select(s);	}
 	
 
-	public void select(VNode s)		
+	public void select(VNode vnode)		
 	{
-		if ("Marquee".equals(s.getId())) return;
+		if ("Marquee".equals(vnode.getId())) return;
 //		if (s.isLayerLocked()) return;
-		items.add(s);	
-		s.setEffect(new DropShadow()); 
-		s.showPorts(s.modelNode().isConnectable() || s.modelNode().isResizable());
+		items.add(vnode);	
+		vnode.setEffect(new DropShadow()); 
+		boolean showPorts = vnode.modelNode().isConnectable() || vnode.modelNode().isResizable();
+		vnode.showPorts(showPorts);
 		
-		ObservableMap<Object, Object> properties = s.getProperties(); 
+		ObservableMap<Object, Object> properties = vnode.getProperties(); 
 		BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
 		if (selectedProperty == null)
 		{
@@ -94,7 +94,7 @@ public class Selection
 		Object ref =  properties.get("BiopaxRef");
 		if (ref != null)
 			getController().hiliteByReference("" + ref);
-		if (verbose ) 	System.out.println(s.toString());
+		if (verbose ) 	System.out.println(vnode.toString());
 	}
 	boolean verbose = false;
 
@@ -130,11 +130,14 @@ public class Selection
 			if (isGrid(node)) continue;
 			getController().remove(node);
 		}
-		Collection<Interaction> edges = getModel().getInteractions().values(); // getEdges().toArray(edges);
-		for (Edge e : edges)
+		
+		List<Interaction> edges = new ArrayList<Interaction>(getModel().getInteractions().values());
+		for (int i= edges.size()-1; i>= 0; i--)
+		{
+			Edge e = edges.get(i);
 			if (e.isSelected())
 				getController().remove(e);
-			
+		}	
 		items.clear();
 		getController().modelChanged();  
 	}
@@ -183,13 +186,14 @@ public class Selection
 			select(vnode);  
 	}
 	//--------------------------------------------------------------------------
-	public void doGroup()
+	public void doGroup(boolean isCompoundNode)
 	{
-		DataNodeGroup g = getController().addGroup(items);
+		DataNodeGroup g = getController().addGroup(items, isCompoundNode);
 		items.clear();
 		getController().modelChanged();  
 		select(g.getStack()); 
 	}
+
 
 	private UndoStack getUndoStack() {		return getController().getUndoStack();	}
 	//--------------------------------------------------------------------------
@@ -399,6 +403,13 @@ public class Selection
 	public void toFront()	{	for (Node n : items)	n.toFront();	}
 	public void toBack()	{	for (Node n : items)	n.toBack();		}
 	
+	public void forward()	{	for (Node n : items)	n.toFront();	}// TODO 
+	public void backward()	{	for (Node n : items)	n.toBack();		}// TODO 
+	//-------------------------------------------------------------------------
+	public void getInfo() {
+		// TODO 
+		
+	}
 	//-------------------------------------------------------------------------
 	
 	public void ungroup()

@@ -13,7 +13,6 @@ import diagrams.pViz.dialogs.EnrichmentDialog;
 import diagrams.pViz.dialogs.LegendDialog;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
-import diagrams.pViz.gpml.GPMLTreeTableView;
 import diagrams.pViz.model.GeneModel;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.Edge;
@@ -23,6 +22,7 @@ import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
+import diagrams.pViz.tables.GPMLTreeTableView;
 import diagrams.pViz.tables.LegendRecord;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
@@ -52,8 +52,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Side;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ContextMenu;
@@ -147,6 +149,41 @@ public class Controller implements Initializable, IController
 	        db.setContent(cc);
 		}
 	}
+	//------------------------------------------
+	@FXML private void dragInteraction(MouseEvent e)
+	{
+		if (!paletteEditing) return;
+		EventTarget targ  = e.getTarget();
+		ButtonBase b = null;
+		if (targ instanceof Text)
+		{
+			Text text = (Text) targ;
+			Node parent = text.getParent();
+			if (parent instanceof ButtonBase)
+				b = (ButtonBase) parent;
+		}
+		else if (targ instanceof Button)
+			b = (ButtonBase) targ;
+		else if (targ instanceof ToggleButton)
+			b = (ToggleButton) targ;
+			
+		if (b != null)
+		{
+			System.out.println("drag " + b.getText());
+	        Dragboard db = b.startDragAndDrop(TransferMode.COPY);
+	        db.setDragView(b.snapshot(null, null), e.getX(), e.getY());
+	        ClipboardContent cc = new ClipboardContent();
+	        cc.putString("SHAPE:" + b.getText());
+	        db.setContent(cc);
+	        Parent p = b.getParent();
+	        if (p instanceof VBox)
+	        {
+	        	int idx = ((VBox)p).getChildren().indexOf(b);
+	        	if (idx >= 0)
+	        		((VBox)p).getChildren().remove(idx);
+	        }
+		}
+	}
 	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
@@ -177,6 +214,9 @@ public class Controller implements Initializable, IController
 	@FXML private void save()			{ 	doc.save();	}
 	@FXML private void saveas()			{	doc.saveas();		}
 	@FXML private void submit() 		{ 	doc.submit();		} 
+	@FXML private void getInfo() 		{ getSelectionManager().getInfo();	} 
+	
+	
 	@FXML private void close()			
 	{ 
 		doc.close();	
@@ -189,6 +229,7 @@ public class Controller implements Initializable, IController
 	}
 	static String jupy = "https://nbviewer.jupyter.org/github/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC3.ipynb";
 	@FXML private void showJupyter()	{ 	WebUtil.showURL(jupy);	}
+	@FXML private void openInCytoscape(){ 	System.out.println("openInCytoscape");		}
 	@FXML private void print()			{ 	doc.print();			}
 	@FXML private void quit()			{ 	Platform.exit();			}
 //	@FXML private void clickDrawPane()	{ 	System.out.println("clicked");			}
@@ -208,8 +249,11 @@ public class Controller implements Initializable, IController
 	@FXML private void dumpNodeTable()	{		model.dumpNodeTable();	}
 	@FXML private void showNodeList()	{ 		}
 	// **-------------------------------------------------------------------------------
-	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup();  }
+	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup(false);  }
+	@FXML public  void compoundNode()	{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup(true);  }
 	@FXML public  void ungroup()		{ 	undoStack.push(ActionType.Ungroup);	getSelectionManager().ungroup(); }
+	@FXML public  void forward()		{	undoStack.push(ActionType.Reorder);	getSelectionManager().forward(); 	}
+	@FXML public  void backward()		{	undoStack.push(ActionType.Reorder);	getSelectionManager().backward(); 	}
 	@FXML public  void toFront()		{	undoStack.push(ActionType.Reorder);	getSelectionManager().toFront(); 	}
 	@FXML public  void toBack()			{	undoStack.push(ActionType.Reorder);	getSelectionManager().toBack();  pasteboard.restoreBackgroundOrder();  	}
 	@FXML public  void zoomIn()			{	undoStack.push(ActionType.Zoom);	pasteboard.zoomIn(); 	}
@@ -238,6 +282,7 @@ public class Controller implements Initializable, IController
 	@FXML private void setStraight()	{		activeLineType = "Straight";	}
 	@FXML private void setCurved()		{		activeLineType = "Curved";	}
 	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
+	@FXML private void setSegmented()	{		activeLineType = "Segmented";	}
 	public EdgeType getCurrentLineBend() { return EdgeType.lookup(activeLineType);		}
 	@FXML private void setArrow1()		{		activeArrowType = ArrowType.mimactivation;	}
 	@FXML private void setArrow2()		{		activeArrowType = ArrowType.miminhibition;	}
@@ -245,11 +290,11 @@ public class Controller implements Initializable, IController
 	@FXML private void setArrow4()		{		activeArrowType = ArrowType.mimcatalysis;	}
 	@FXML private void setArrow5()		{		activeArrowType = ArrowType.mimtranslation;	}
 	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	}
+	@FXML private HBox allInteractions;
+	
 	public ArrowType getCurrentArrowType() { return activeArrowType;		}
 	
 	@FXML private MenuItem submit;			// save to server
-
-	
 	@FXML private MenuItem connect;			// TODO bind enableProperty to selection size > 2
 	//@formatter:on
 
@@ -269,7 +314,6 @@ public class Controller implements Initializable, IController
 		}
 	}
 	
-//	@FXML private VBox east;
 	@FXML private VBox south;
 	@FXML private Pane drawPane;
 	@FXML private ScrollPane scrollPane;
@@ -288,7 +332,35 @@ public class Controller implements Initializable, IController
 	@FXML private Button rightSideBarButton;
 	@FXML private Button toggleGridButton;
 
+	boolean paletteEditing = false;
+	VBox unusedInteractions = new VBox(4);
 	//-------------------------------------------------------------
+	@FXML private void editPalette() 	
+	{
+		paletteEditing = !paletteEditing;
+		boolean startEdit = paletteEditing;
+		
+		west.setMinWidth(paletteEditing ? 300 : 150);		// TODO animate
+		
+		if (startEdit)
+		{
+			unusedInteractions.getChildren().clear();
+			ToggleButton cleaves = new ToggleButton("Cleaves");
+			ToggleButton branchLeft = new ToggleButton("Branches Left");
+			ToggleButton branchRight = new ToggleButton("Branches Right");
+			cleaves.setPrefWidth(120);
+			branchLeft.setPrefWidth(120);
+			branchRight.setPrefWidth(120);
+			cleaves.setOnDragDetected(event -> { dragInteraction(event); });
+			branchLeft.setOnDragDetected(event -> { dragInteraction(event); });
+			branchRight.setOnDragDetected(event -> { dragInteraction(event); });
+			unusedInteractions.getChildren().addAll(cleaves,branchLeft,branchRight  );
+			allInteractions.getChildren().add(unusedInteractions);
+		}
+		else
+			allInteractions.getChildren().remove(unusedInteractions);
+
+	} 
 //-------------------------------------------------------------
 	@FXML private MenuItem annotate;
 	@FXML private void	annotate() 	{	model.annotateIdentifiers(); 	}
@@ -323,18 +395,17 @@ public class Controller implements Initializable, IController
 	public Selection getSelectionManager() 		{ 	return pasteboard.getSelectionMgr();  }
 	public ObservableList<VNode> getSelection() { 	return getSelectionManager().getAll();  }
 	private Stage stage;
-	public AnchorPane getProperties() { return propertyPanel;	}
+	public AnchorPane getProperties() 		{ 	return propertyPanel;	}
 	private Inspector inspector;
-	public Inspector getInspector() { return inspector;	}
-	@FXML private void showInspector() {
-		bottomSideBarButton.fire();
-	}
+	public Inspector getInspector()		 	{ 	return inspector;	}
+	@FXML private void showInspector() 		{	bottomSideBarButton.fire();	}
 	// **-------------------------------------------------------------------------------
-	public void modelChanged() 			{		updateTreeTable(); }
+	public void modelChanged() 				{		updateTreeTable(); }
 		
-	GPMLTreeTableView nodeTreeTable;
+	private GPMLTreeTableView nodeTreeTable;
 	public GPMLTreeTableView getTreeTableView() { return nodeTreeTable; }
-	public void updateTreeTable()	{ nodeTreeTable.updateTreeTable();  }
+	public void updateTreeTable()			{ 	nodeTreeTable.updateTreeTable();  }
+	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		undoStack = new UndoStack(this, null);
@@ -472,9 +543,7 @@ public class Controller implements Initializable, IController
 		EnrichmentController ctrol = dlog.getController();
 		Optional<ButtonType> result = dlog.showAndWait();
 		if ("Enrich".equals(result.get().getText()))
-			ctrol.doSearch();
-
-	
+			ctrol.doSearch();	
 	}
 	@FXML private void addLegend() {		LegendRecord.makeLegend("Legend", "", true, true, false, model, this, true);	}
 	@FXML private void doNewMultiGeneList()  { 	App.doNewMultiGeneList(); 	}
@@ -575,7 +644,10 @@ public class Controller implements Initializable, IController
 		arrowGroup = new ToggleGroup();
 		arrowGroup.getToggles().addAll(arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
 		arrow1.setSelected(true);
-
+//		EventHandler<? super MouseEvent> dragHandler = new EventHandler{
+//				
+//		};
+//		arrow1.setOnDragDetected(dragHandler );
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
 		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
@@ -849,7 +921,7 @@ public class Controller implements Initializable, IController
 		shapeNode.put("Type", "Shape");
 		shapeNode.put("ShapeType", shapeType);
 		shapeNode.setName(shapeNode.get("ShapeType"));
-		VNode stack = new VNode(shapeNode, pasteboard);
+		new VNode(shapeNode, pasteboard);
 		model.addResource(shapeNode);
 		model.addShape(shapeNode);
 		
@@ -886,21 +958,22 @@ public class Controller implements Initializable, IController
 		model.addGroup(grp);
 //		BoundingBox bounds = grp.getBounds();
 //		grp.getStack().setBounds(bounds);
-		pasteboard.getContentLayer().add(grp.getStack());
+		pasteboard.getContentLayer().remove(grp.getStack());
+		pasteboard.getContentLayer().add(5, grp.getStack());
 	}
 	
-	public DataNodeGroup addGroup(List<VNode> selectedItems) {// from GUI selection
+	public DataNodeGroup addGroup(List<VNode> selectedItems, boolean isCompound) {// from GUI selection
 		getUndoStack().push(ActionType.Group);
 
 		pasteboard.setActiveLayer("Background");	
 		AttributeMap map = new AttributeMap();
 		map.put("Type", "Group");
 		map.put("ShapeType", "Octagon");
-		map.put("Color", "FF00FF");
+		map.put("Color", "DDDDDD");
 		map.put("TextLabel", "Complex");
 		map.put("Name", "Complex");
 		map.put("Layer", "Background");
-		DataNodeGroup group = new DataNodeGroup(map, getModel());
+		DataNodeGroup group = new DataNodeGroup(map, getModel(), isCompound);
 		VNode stack = group.getStack();
 		for (VNode item : selectedItems)
 		{

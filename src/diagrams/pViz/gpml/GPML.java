@@ -15,6 +15,7 @@ import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
+import diagrams.pViz.tables.VocabRecord;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
@@ -69,8 +70,7 @@ public class GPML {
 		record.setGeneSet(list);
 		return record;
 	}
-
-
+	//----------------------------------------------------------------------------
 
 	public void read(org.w3c.dom.Document doc)
 	{
@@ -151,14 +151,7 @@ public class GPML {
 		
 		}
 	}
-	
-	private void put(AttributeMap attrMap, String key, NamedNodeMap map)
-	{
-		org.w3c.dom.Node  named = map.getNamedItem(key);
-		if (named != null)
-			attrMap.put(named.getNodeName(), named.getNodeValue());
-	}
-	
+
 	private void parseInteractions(NodeList edges) 
 	{
 		Controller controller = getController();
@@ -283,7 +276,6 @@ public class GPML {
 				}
 				if (key != null && val != null)
 					 node.put(key, val);
-					
 			}
 			if ("Graphics".equals(name))
 			{
@@ -302,8 +294,10 @@ public class GPML {
 							node.put("ArrowHead", type.toString());
 					}
 				}
+				if (!points.isEmpty())
+					node.addPointArray(points);
 			}
-		node.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
+			node.add(child.getAttributes());			// NOTE: multiple Attribute elements will get overridden!
 //			System.out.println(name);
 //			node.copyAttributesToProperties();
 		}
@@ -454,6 +448,11 @@ public class GPML {
 			if ("Graphics".equals(name))
 				label.add(child.getAttributes());
 		}
+		if (txt.length() > 10)
+		{
+			double wid = label.getDouble("Width");
+			label.putDouble("Width", wid + 100);
+		}
 //		attrMap.put("ShapeType", "Label");
 		String shapeType = label.get("ShapeType");
 		if (shapeType == null)
@@ -461,39 +460,6 @@ public class GPML {
 				
 		return label;
 	}
-
-
-//	private void applyGraphicsNode(Label label, org.w3c.dom.Node child) {
-//		NamedNodeMap attrs = child.getAttributes();
-//		String name = "";
-//		for (int i=0; i<attrs.getLength(); i++)
-//		{
-//			org.w3c.dom.Node item = attrs.item(i);
-//			String val = item.getNodeValue();
-//			double d = StringUtil.toDouble(val);
-//			name = item.getNodeName();
-//			
-//			if ("CenterX".equals(name)) 		 label.setLayoutX(d);
-//			else if ("CenterY".equals(name)) 	 label.setLayoutY(d);
-//			else if ("Width".equals(name)) 		 {	label.maxWidth(d); label.prefWidth(d);}
-//			else if ("Height".equals(name)) 	{	label.maxHeight(d); label.prefHeight(d);}
-//			else if ("ZOrder".equals(name)) 	{}
-////			else if ("Color".equals(name)) {	label.setBorder(Borders.coloredBorder(val));}
-//			else if ("Color".equals(name)) 		label.setTextFill(Color.web(val));
-//			else if ("FillColor".equals(name)) 	label.setBackground(Backgrounds.colored(val));
-//			else if ("FontSize".equals(name)) 	{}
-//			else if ("FontWeight".equals(name)) {}
-//			else if ("Valign".equals(name)) 	{}
-////			else if ("ShapeType".equals(name)) 	
-////			{	if ("RoundedRectangle".equals(val)) {}		}
-//		}
-//		double w = StringUtil.toDouble(attrs.getNamedItem("Width").getNodeValue());
-//		double h = StringUtil.toDouble(attrs.getNamedItem("Height").getNodeValue());
-////		label.getWidth();
-////		double h = label.getWidth();
-//		label.setLayoutX(label.getLayoutX() - w / 2.);
-//		label.setLayoutY(label.getLayoutY() - h / 2.);
-//	}
 	//----------------------------------------------------------------------------
 
 	private void parseBiopax(NodeList elements) {
@@ -538,8 +504,31 @@ public class GPML {
 			}
 		}
 	}
-//	private void add(Node n)		{ 		controller.add(n);		}
-//	private NodeFactory getNodeFactory() {		return controller.getNodeFactory();	}
+
+	//----------------------------------------------------------------------------
+	
+	private void parseGroups(NodeList elements) {			//TODO
+		for (int i=0; i<elements.getLength(); i++)
+		{
+//if (i >= 0) continue;			//SKIP
+			org.w3c.dom.Node child = elements.item(i);
+			NamedNodeMap attrs = child.getAttributes();
+			String name = child.getNodeName();
+			System.out.println(name);
+			if ("#text".equals(name)) continue;
+			if ("Group".equals(name))
+			{
+				try 
+				{
+					getController().addGroup(parseGPMLGroup(child, attrs));	
+				}
+				catch (Exception e) {
+					System.err.println("parseGroups");
+				}
+			
+			}
+		}
+	}
 	
 	DataNodeGroup parseGPMLGroup(org.w3c.dom.Node child, NamedNodeMap attrs)
 	{
@@ -556,49 +545,16 @@ public class GPML {
 		}
 		AttributeMap attrMap = new AttributeMap();
 		String shapeType = "Complex".equals(style) ? "ComplexComponent" : "GroupComponent";
-		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "ShapeType", shapeType, "Style", style, "Fill", "808080", "LineStyle", "Broken");
-		DataNodeGroup newGroup = new DataNodeGroup(attrMap,model);
+		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "ShapeType", shapeType, "Style", style, "Fill", "d0d0d0", "LineStyle", "Broken");
+		DataNodeGroup newGroup = new DataNodeGroup(attrMap,model, true);
 
 		newGroup.copyAttributesToProperties();
-		newGroup.setName(newGroup.get("Style") + " [" + newGroup.get("GroupId") + "]");
-		System.out.println("Making group with name = " + newGroup.getName());
+//		newGroup.setName(newGroup.get("Style") + " [" + newGroup.get("GroupId") + "]");
+//		System.out.println("Making group with name = " + newGroup.getName());
 		return newGroup;
 	}
 	
-	//----------------------------------------------------------------------------
-	private void parseGroups(NodeList elements) {			//TODO
-		for (int i=0; i<elements.getLength(); i++)
-		{
-//if (i >= 0) continue;			//SKIP
-			org.w3c.dom.Node child = elements.item(i);
-			NamedNodeMap attrs = child.getAttributes();
-			String name = child.getNodeName();
-			System.out.println(name);
-			if ("#text".equals(name)) continue;
-			if ("Group".equals(name))
-				getController().addGroup(parseGPMLGroup(child, attrs));	
-		}
-//		
-//		for (DataNodeGroup group : model.getGroups())
-//		{
-//			String id = group.get("GroupId");
-//			if (id != null)
-//			for (DataNode node : model.getNodes())
-//				if (id.equals(node.get("GroupRef")))
-//					group.addMember(node);
-//			group.calcBounds();
-//			VNode stack = group.getStack();
-//			model.getController().add(stack);
-//			Shape shape = group.getStack().getFigure();
-//			if (shape != null)
-//			{
-//				shape.setStyle("-fx-stroke-dash-array: 10 10;");
-//				shape.setFill(Color.LIGHTGRAY);
-//			}
-//			stack.toFront();
-//			
-//		}
-	}
+
 //	
 	//----------------------------------------------------------------------------
 //	http://fxexperience.com/2011/12/styling-fx-buttons-with-css/
@@ -616,6 +572,9 @@ public class GPML {
 		return null;
 	}
 	
+		//----------------------------------------------------------------------------
+		//----------------------------------------------------------------------------
+		//----------------------------------------------------------------------------
 	// UNUSED ??
 //	
 //	public Shape shapeFromGPML(String gpmlStr,  AttributeMap attrMap, boolean addHandlers) {
@@ -682,4 +641,44 @@ public class GPML {
 //		return new Node[] { a,b,c,d,e,f };
 //	}
 
+
+//		private void applyGraphicsNode(Label label, org.w3c.dom.Node child) {
+//			NamedNodeMap attrs = child.getAttributes();
+//			String name = "";
+//			for (int i=0; i<attrs.getLength(); i++)
+//			{
+//				org.w3c.dom.Node item = attrs.item(i);
+//				String val = item.getNodeValue();
+//				double d = StringUtil.toDouble(val);
+//				name = item.getNodeName();
+//				
+//				if ("CenterX".equals(name)) 		 label.setLayoutX(d);
+//				else if ("CenterY".equals(name)) 	 label.setLayoutY(d);
+//				else if ("Width".equals(name)) 		 {	label.maxWidth(d); label.prefWidth(d);}
+//				else if ("Height".equals(name)) 	{	label.maxHeight(d); label.prefHeight(d);}
+//				else if ("ZOrder".equals(name)) 	{}
+////				else if ("Color".equals(name)) {	label.setBorder(Borders.coloredBorder(val));}
+//				else if ("Color".equals(name)) 		label.setTextFill(Color.web(val));
+//				else if ("FillColor".equals(name)) 	label.setBackground(Backgrounds.colored(val));
+//				else if ("FontSize".equals(name)) 	{}
+//				else if ("FontWeight".equals(name)) {}
+//				else if ("Valign".equals(name)) 	{}
+////				else if ("ShapeType".equals(name)) 	
+////				{	if ("RoundedRectangle".equals(val)) {}		}
+//			}
+//			double w = StringUtil.toDouble(attrs.getNamedItem("Width").getNodeValue());
+//			double h = StringUtil.toDouble(attrs.getNamedItem("Height").getNodeValue());
+////			label.getWidth();
+////			double h = label.getWidth();
+//			label.setLayoutX(label.getLayoutX() - w / 2.);
+//			label.setLayoutY(label.getLayoutY() - h / 2.);
+//		}
+	//	
+//		private void put(AttributeMap attrMap, String key, NamedNodeMap map)
+//		{
+//			org.w3c.dom.Node  named = map.getNamedItem(key);
+//			if (named != null)
+//				attrMap.put(named.getNodeName(), named.getNodeValue());
+//		}
+		
 }

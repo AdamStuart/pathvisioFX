@@ -6,13 +6,11 @@ import java.util.List;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
-import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.view.Arrow;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableMap;
-import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -213,7 +211,7 @@ private void addCenterPointListeners() {
 //	private ArrowType arrowType;
 	private Polyline polyline;
 	private Line line;
-	private CubicCurve curve;
+	private Group curveGroup;
 	private EdgeType type = EdgeType.simple;
 	private List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 	private List<Anchor> anchors = new ArrayList<Anchor>();
@@ -310,7 +308,7 @@ private void addCenterPointListeners() {
 		Color c = lineColor(selected);
 		if (line != null) line.setStroke(c);
 		if (polyline != null) polyline.setStroke(c);
-		if (curve != null) curve.setStroke(c);
+//		if (curveGroup != null) curveGroup.getChildren().forEach(setStroke(c));
 		if (head != null) {		head.setStroke(c);  head.setFill(c);  }
 	}
 	
@@ -323,8 +321,14 @@ private void addCenterPointListeners() {
 	public Point2D getPointAlongLine(double position) {
 		Point2D startPt = getStartPoint();   //firstPoint();
 		Point2D endPt = getEndPoint();  //lastPoint();
-//		System.out.println(String.format("%.2f,  %.2f  --> %.2f %.2f ", startPt.getX(), startPt.getY(), endPt.getX(), endPt.getY())); 
-		// TODO Assuming simple line type!!!
+		if (type == EdgeType.simple) return getPointAlongSegment(position, startPt, endPt);
+	
+		SegmentList segments = new SegmentList(interaction.getModel(), points);
+		return segments.fromLineCoordinate(position);
+		}
+	
+	
+	public Point2D getPointAlongSegment(double position, Point2D startPt, Point2D endPt) {
 		double x = startPt.getX() + ((endPt.getX() - startPt.getX()) * position);
 		double y = startPt.getY() + ((endPt.getY() - startPt.getY()) * position);
 		return new Point2D(x,y);
@@ -584,88 +588,17 @@ private void addCenterPointListeners() {
 	//----------------------------------------------------------------------
 
 	private void curveConnect() {
-		if (curve != null) 	getChildren().remove(curve);
-		else curve  = new CubicCurve();
+		if (curveGroup != null) 	getChildren().remove(curveGroup);
+		
 		if (line != null) line.setVisible(false);
 		int nPoints = points.size();
 		
 		SegmentList segments = new SegmentList(interaction.getModel(), points);
-		
-		Point2D line1End = new Point2D(0,0);
-		for (int i=0; i < segments.size()-1; i++)
-		{
-//			Point2D a = points.get(i).getPoint();
-//			Point2D b = points.get(i+1).getPoint();
-//			Line line1 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
-//			Line line2 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
-	//		Point2D lastPt = lastPoint();
-	
-			Segment seg = segments.get(i);
-			Point2D line1Start = seg.getStart();
-			line1End = seg.getEnd();
-			
-			Segment nextseg = segments.get(i+1);
-	        Point2D line2Start = nextseg.getStart();
-	        Point2D line2End = nextseg.getEnd();
-
-	        getChildren().addAll(seg.getLine(), nextseg.getLine());
-	        double line1Length = line1End.subtract(line1Start).magnitude();
-	        double line2Length = line2End.subtract(line2Start).magnitude();
-	
-	        // average length:
-	        double averLength = (line1Length + line2Length) / 2 ;
-	
-	        // extend line1 in direction of line1 for aveLength:
-	        Point2D control1 = line1End.add(line1End.subtract(line1Start).normalize().multiply(2));
-	        
-	        // extend line2 in (reverse) direction of line2 for aveLength:
-	        Point2D control2 = line2Start.add(line2Start.subtract(line2End).normalize().multiply(averLength));
-		
-	        control1 = new Point2D(line1End.getX() + 10, line1End.getY() + 40);
-	        control2 = new Point2D(line2End.getX() - 10, line2End.getY() - 40);
-	        curve = new CubicCurve(
-	                line1End.getX(), line1End.getY(), 
-	                control1.getX(), control1.getY(), 
-	                control2.getX(), control2.getY(), 
-	                line2Start.getX(), line2Start.getY());
-	
-	        boolean showControlPoints = true;
-			if (controlPt1 != null && controlPt2 != null)
-				getChildren().removeAll(controlPt1,controlPt2);
-	        if (showControlPoints)
-	        {
-	    		{
-    			
-	    			controlPt1 = new Circle(3);
-	    			controlPt1.setFill(Color.BLANCHEDALMOND);
-	    			controlPt1.setStroke(Color.DARKGREEN);
-	    			controlPt1.setCenterX(control1.getX());
-	    			controlPt1.setCenterY(control1.getY());
-	    			
-	    			controlPt2 = new Circle(3);
-	    			controlPt2.setFill(Color.BLANCHEDALMOND);
-	    			controlPt2.setStroke(Color.DARKBLUE);
-	    			controlPt2.setCenterX(control2.getX());
-	    			controlPt2.setCenterY(control2.getY());
-	    			getChildren().addAll(controlPt1,controlPt2);
-	    		}
-
-	        }
-//	        curve.setStroke(Color.GREEN);
-		}
-        curve.setFill(null);
-        curve.setStroke(interaction.getColor());
-		double width = interaction.getStrokeWidth();
-		curve.setStrokeWidth(width);
-//        curve.setStroke(Color.RED);
-//        curve.setStrokeWidth(2 * interaction.getStrokeWidth());
-		if (strokeDashArray != null)
-			curve.getStrokeDashArray().setAll(strokeDashArray);
-//		getChildren().add(curve);
-		setArrowPt(line1End);
+		curveGroup  = segments.makeCurveGroup(interaction, strokeDashArray);
+		setArrowPt(lastPoint());
+		getChildren().add(curveGroup);
 	}
 	
-	Circle controlPt1, controlPt2;
 	boolean SHORTEN = true;
 	  //----------------------------------------------------------------------
 	private void polylineConnect() {
@@ -711,16 +644,17 @@ private void addCenterPointListeners() {
 		if (line != null) line.setVisible(false);
 		int sz  = points.size();
 		GPMLPoint prevPt = null;
+		boolean turnLeft = true;			// TODO
 		for (int i = 0; i < sz ; i++) {
 			GPMLPoint current = points.get(i);
 			if (prevPt != null)
 			{
-				boolean turnLeft = true;			// TODO
 				if (! isOrthog(prevPt, current))
 					if (turnLeft )
-						poly.getPoints().addAll(current.getX(), prevPt.getY());
+						poly.getPoints().addAll(prevPt.getX(), current.getY());
 					else
 						poly.getPoints().addAll(current.getX(), prevPt.getY());
+				turnLeft = !turnLeft;
 			}
 			poly.getPoints().addAll(current.getX(), current.getY());
 			prevPt = current;
@@ -751,7 +685,6 @@ private void addCenterPointListeners() {
 		if (last == null) 		return null;
 
 		Color strokeColor = interaction.getColor();
-		ArrowType arrowhead1 = getArrowType();
 		ArrowType arrowhead = last.getArrowType();
 		if (arrowhead == null)	return null;
 		if (arrowhead == ArrowType.none) return null;
