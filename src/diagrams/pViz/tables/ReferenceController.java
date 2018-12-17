@@ -9,7 +9,6 @@ import java.util.ResourceBundle;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import diagrams.pViz.gpml.EntrezQuery;
 import gui.DraggableTableRow;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;

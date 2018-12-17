@@ -1,4 +1,4 @@
-package diagrams.pViz.gpml;
+package diagrams.pViz.tables;
 
 import java.util.List;
 
