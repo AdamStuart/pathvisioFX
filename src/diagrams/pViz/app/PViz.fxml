@@ -261,6 +261,11 @@
                                     <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                                  </accelerator>
                               </MenuItem>
+                              <MenuItem fx:id="fillDown" mnemonicParsing="false" onAction="#fillDown" text="Fill Down">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
                            </items>
                         </Menu>
                         <Menu id="Edges" mnemonicParsing="false" text="Edges">

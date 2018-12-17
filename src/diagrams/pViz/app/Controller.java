@@ -710,6 +710,7 @@ public class Controller implements Initializable, IController
 	public Layer getActiveLayer() 		{		return getLayerRecord(getActiveLayerName()).getLayer();	}
 	public String getActiveLayerName() 	{		return pasteboard.activeLayerName();	}
 
+	@FXML public void fillDown() {		nodeTreeTable.fillDown();	}
 	//-----------------------------------------------------------------------------
 	public void doCopy()// TODO 
 	{	

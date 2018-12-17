@@ -2,6 +2,8 @@ package diagrams.pViz.tables;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -21,6 +23,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTablePosition;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.control.cell.ComboBoxTreeTableCell;
 import javafx.scene.control.cell.TextFieldTreeTableCell;
@@ -368,7 +371,24 @@ System.out.println("stateChanged " + e.toString());
 //				cols.add(col);
 		return cols;	
 	}
-
+	
+	public void fillDown() {
+		ObservableList<TreeTablePosition<XRefable, ?>> selectedCells = treeView.getSelectionModel().getSelectedCells();
+		TreeTablePosition<XRefable, ?> tablePosition = (TreeTablePosition<XRefable, ?>) selectedCells.get(0);
+		String val = "" + tablePosition.getTableColumn().getCellData(tablePosition.getRow());
+		TreeTableColumn<XRefable, ?> col = tablePosition.getTableColumn();
+		String colName = col.getText();
+		List<Integer> rows = treeView.getSelectionModel().getSelectedCells().stream().map(pos -> pos.getRow()).collect(Collectors.toList());
+		for (TreeTablePosition<XRefable, ?> pos : selectedCells) {
+			if (pos.getTableColumn() == col && pos.getRow() != tablePosition.getRow()) {
+				Object obj = pos.getTableColumn().getCellData(pos.getRow());
+				TreeItem<XRefable> rowItem = treeView.getTreeItem(pos.getRow());
+//				XRefable row = rowItem.getValue();
+				rowItem.getValue().put(colName, val);
+				rowItem.getValue().copyAttributesToProperties();
+			}
+		}
+	}
 	// **-------------------------------------------------------------------------------
 
 	public void addBranch(DataNode node) {
