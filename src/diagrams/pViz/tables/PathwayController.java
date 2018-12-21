@@ -2,6 +2,7 @@ package diagrams.pViz.tables;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -30,7 +31,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
@@ -112,6 +112,12 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		String url = rec.getUrl();
 		String result = StringUtil.callURL(url, false);   // TODO threaded
 		viewPathway(result);
+	}	
+	static public void downloadathway(PathwayRecord rec, File output)		
+	{ 
+		String url = rec.getUrl();
+		String result = StringUtil.callURL(url, false);   // TODO threaded
+		viewPathway(result);
 	}
 	static public void viewPathwayAsImage(PathwayRecord rec)		
 	{ 
@@ -152,9 +158,16 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		catch (Exception e) {}
 	}
 	public void getPathwayAt(Integer o) {
-		
-		
 	}
+	static private void downloadPathway(String inputStr, File output)		
+	{ 		
+		String gpml  =StringUtil.readTag( inputStr, "ns2:gpml");
+		byte[] cleanXML  = Base64.getDecoder().decode(gpml);
+		String str = new String(cleanXML);
+		FileUtil.writeTextFile(output, "out", str);
+	}
+	
+	
 	//---------------------------------------------------------------------------
 //	String allPathwaysCache;
 //	private void getAllPathways(String url) {
@@ -242,8 +255,9 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	{
 		
 	}
+	//---------------------------------------------------------------------------
 	@FXML public void preview()		{	processSelection("PREVIEW");}
-	@FXML public void view()		{	processSelection("VIEW");}
+	@FXML public void download()	{	processSelection("DOWNLOAD");}
 	@FXML public void edit	()		{   processSelection("EDIT");	}
 	
 	private void processSelection(String verb)
@@ -252,8 +266,15 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		for (int idx : selected)
 		{
 			PathwayRecord rec = pathwayTable.getItems().get(idx);
+			boolean download =  "DOWNLOAD".equals(verb);
 			boolean editable = "EDIT".equals(verb);
-			viewPathway( rec, editable);
+			if (download)
+			{
+				String url = rec.getUrl();
+				String result = StringUtil.callURL(url, false);   // TODO threaded
+				downloadPathway(result, new File("~/test.output.gpml"));
+			}
+			else 	viewPathway( rec, editable);
 		}
 	}
 	//---------------------------------------------------------------------------

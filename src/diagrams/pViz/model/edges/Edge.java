@@ -152,6 +152,7 @@ abstract public class Edge extends XRefable {
 		if (edgeLine == null)
 			return;  // error?
 		GPMLPoint gpt = getEdgeLine().firstGPMLPoint();
+		if (gpt == null) return;
 		Point2D startPt = gpt.getPoint();
 		if (startNode != null)
 			startPt = startNode.getAdjustedPoint(gpt);

@@ -37,6 +37,10 @@ import util.LineUtil;
  * representing how far along the path from source to target the anchor is positioned
  *
  *  All edges are directional. We support arrow heads but not tails (or double headed arrows). 
+ *  points is the array of all segment ends.  The straight segments are used to derive the curves.
+ *  There is also a centerPoint object to allow the user to add segments by moving centerPoint.
+ *  There are Shapes defined for head and tail, but only head is used.
+ *  Interaction is the model  that corresponds to this view.
  */
 public class EdgeLine extends Group {
 

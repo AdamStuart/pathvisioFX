@@ -359,7 +359,6 @@ public class Controller implements Initializable, IController
 		}
 		else
 			allInteractions.getChildren().remove(unusedInteractions);
-
 	} 
 //-------------------------------------------------------------
 	@FXML private MenuItem annotate;
@@ -378,9 +377,6 @@ public class Controller implements Initializable, IController
 	@FXML private Label scale;
 	@FXML private SplitPane hsplitter;
 	
-
-	// **-------------------------------------------------------------------------------
-	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	
 	@Override public void resetTableColumns() {	}
@@ -714,7 +710,6 @@ public class Controller implements Initializable, IController
 	//-----------------------------------------------------------------------------
 	public void doCopy()// TODO 
 	{	
-		
 	}
 	//-----------------------------------------------------------------------------
 	public void doPaste()// TODO 
@@ -736,7 +731,6 @@ public class Controller implements Initializable, IController
 
 	    	}	
 	     }
-		
 	}
 	//-----------------------------------------------------------------------------
 	private void setupListviews()
@@ -916,27 +910,6 @@ public class Controller implements Initializable, IController
 		modelChanged();
 	}
 
-	public void addShapeNode(DataNode shapeNode, String shapeType) {
-	pasteboard.setActiveLayer("Background");	
-		shapeNode.setType("Shape");
-		shapeNode.put("Type", "Shape");
-		shapeNode.put("ShapeType", shapeType);
-		shapeNode.setName(shapeNode.get("ShapeType"));
-		new VNode(shapeNode, pasteboard);
-		model.addResource(shapeNode);
-		model.addShape(shapeNode);
-		
-	}
-	public void addLabel(DataNode label) {
-		pasteboard.setActiveLayer("Content");	
-		label.put("Layer", "Background");
-		label.setType("Label");
-		label.put("Type", "Label");
-		new VNode(label, pasteboard);
-		model.addResource(label);
-		model.addLabel(label);
-	}
-
 	public void addInteraction(Interaction e)							
 	{	
 		if (e == null ) return;
@@ -1004,17 +977,7 @@ public class Controller implements Initializable, IController
 		return group;
 
 	} 
-	public void addStateNode(DataNodeState statenode) {
-		pasteboard.setActiveLayer("Content");	
-		String graphRef = statenode.get("GraphRef");
-		DataNode host = model.findDataNode(graphRef);
-		if (host != null)
-		{
-			host.getStack().addState(statenode);
-			model.addState(graphRef, statenode);
-		}
-		
-	}
+
 
 	// **-------------------------------------------------------------------------------
 	// GeneSets

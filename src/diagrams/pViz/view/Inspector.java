@@ -22,6 +22,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -31,6 +32,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -52,7 +54,7 @@ public class Inspector extends HBox implements Initializable {
 	@FXML private CheckBox selectable;
 	@FXML private CheckBox connectable;
 
-	
+	// CV stands for Container VBox - it has a label and slider in it
 	@FXML private VBox fillCV;
 	@FXML private VBox opacCV;
 	@FXML private VBox strokeCV;
@@ -95,12 +97,18 @@ public class Inspector extends HBox implements Initializable {
 		fillSlider.valueProperty().addListener((ov, old, val) ->  	{   fillChanged();  	});	
 		strokeSlider.valueProperty().addListener((ov, old, val) ->  	{   strokeChanged();  	});	
 		
-		fillCV.setBorder(Borders.etchedBorder);
-		opacCV.setBorder(Borders.etchedBorder);
-		rotatCV.setBorder(Borders.etchedBorder);
-		scaleCV.setBorder(Borders.etchedBorder);
+		fillCV.setBorder(Borders.thinEtchedBorder);
+		fillCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(fillCV); }); 
+		opacCV.setBorder(Borders.thinEtchedBorder);
+		opacCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(opacCV); }); 
+		rotatCV.setBorder(Borders.thinEtchedBorder);
+		rotatCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(rotatCV); }); 
+		scaleCV.setBorder(Borders.thinEtchedBorder);
+		scaleCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(scaleCV); }); 
 		weightCV.setBorder(Borders.thinEtchedBorder);
-		strokeCV.setBorder(Borders.greenBorder);
+		weightCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(weightCV); }); 
+		strokeCV.setBorder(Borders.thinEtchedBorder);
+		strokeCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(strokeCV); }); 
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
 		EventHandler<Event> evH = event -> {	controller.getUndoStack().push(ActionType.Property);  };
 //		opacity.setOnMousePressed(evH); 
@@ -119,6 +127,15 @@ public class Inspector extends HBox implements Initializable {
 //		getChildren().addAll( scale, weight, rotation);
 //		setBorder(Borders.redBorder);
 	}
+	private void showSettings(VBox vbox) {
+		   Alert a = new Alert(AlertType.INFORMATION, vbox.getId());
+		   a.setHeaderText("Settings for Mapping Attributes to Visualzation");
+		   a.getDialogPane().setMinWidth(600);
+		   a.setResizable(true);
+		   a.showAndWait();
+	
+	
+}
 	// **-------------------------------------------------------------------------------
 	public void setParentController(Controller c)	
 	{

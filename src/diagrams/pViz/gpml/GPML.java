@@ -11,15 +11,20 @@ import org.w3c.dom.NodeList;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.tables.VocabRecord;
+import diagrams.pViz.view.GroupMouseHandler;
+import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
+import gui.Action.ActionType;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
@@ -30,14 +35,16 @@ import util.StringUtil;
 
 public class GPML {
 
-//	private Controller controller;
+	private Controller controller;
 	private Model model;
+	private Pasteboard pasteboard;
 	String activeLayer = "Content";
 	public GPML(Model m, String layer) {
 		model = m;
+		controller = model.getController();
 		if (layer != null) activeLayer = layer;
 	}
-	private Controller getController() { 	return model.getController();	}
+//	private Controller getController() { 	return model.getController();	}
 	//----------------------------------------------------------------------------
 	public static GeneSetRecord readGeneList(File file, Species inSpecies)
 	{
@@ -76,7 +83,6 @@ public class GPML {
 	{
 //		if (doc != null) return;
 		model.clearComments();
-		Controller controller = getController();
 		NodeList nodes = doc.getElementsByTagName("Pathway");
 		System.out.println(nodes.getLength());
 		for (int i=0; i<nodes.getLength(); i++)
@@ -130,7 +136,6 @@ public class GPML {
 	};
 	
 	private void parseDataNodes(NodeList nodes) {
-		Controller controller = getController();
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = nodes.item(i);
@@ -141,12 +146,11 @@ public class GPML {
 	}
 	
 	private void parseStateNodes(NodeList nodes) {
-		Controller controller = getController();
 		for (int i=0; i<nodes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = nodes.item(i);
 			DataNodeState sstate = parseGPMLDataNodeState(child, model);
-			controller.addStateNode(sstate);
+			addStateNode(sstate);
 			System.out.println("adding: " + child + "\n");
 		
 		}
@@ -154,7 +158,6 @@ public class GPML {
 
 	private void parseInteractions(NodeList edges) 
 	{
-		Controller controller = getController();
 		for (int i=0; i<edges.getLength(); i++)
 		{
 			org.w3c.dom.Node xml = edges.item(i);
@@ -164,7 +167,6 @@ public class GPML {
 	}
 	boolean verbose = true;
 	private void parseShapes(NodeList shapes, final String shapeType) {
-		Controller controller = getController();
 		for (int i=0; i<shapes.getLength(); i++)
 		{
 			org.w3c.dom.Node child = shapes.item(i);
@@ -175,7 +177,7 @@ public class GPML {
 			if ("Shape".equals(shapeType))
 				s = node.get("ShapeType");
 			if (node != null)
-				controller.addShapeNode(node,s);
+				addShapeNode(node,s);
 		}
 	}
 	
@@ -499,7 +501,7 @@ public class GPML {
 			DataNode label = parseGPMLLabel(child);
 			if (label != null)
 			{
-				model.getController().addLabel(label);
+				addLabel(label);
 //				label.getStack().toBack();
 			}
 		}
@@ -520,7 +522,7 @@ public class GPML {
 			{
 				try 
 				{
-					getController().addGroup(parseGPMLGroup(child, attrs));	
+					controller.addGroup(parseGPMLGroup(child, attrs));	
 				}
 				catch (Exception e) {
 					System.err.println("parseGroups");
@@ -573,6 +575,43 @@ public class GPML {
 	}
 	
 		//----------------------------------------------------------------------------
+		//	moved from Controller
+
+
+		public void addShapeNode(DataNode shapeNode, String shapeType) {
+		pasteboard.setActiveLayer("Background");	
+			shapeNode.setType("Shape");
+			shapeNode.put("Type", "Shape");
+			shapeNode.put("ShapeType", shapeType);
+			shapeNode.setName(shapeNode.get("ShapeType"));
+			new VNode(shapeNode, pasteboard);
+			model.addResource(shapeNode);
+			model.addShape(shapeNode);
+			
+		}
+		public void addLabel(DataNode label) {
+			pasteboard.setActiveLayer("Content");	
+			label.put("Layer", "Background");
+			label.setType("Label");
+			label.put("Type", "Label");
+			new VNode(label, pasteboard);
+			model.addResource(label);
+			model.addLabel(label);
+		}
+
+
+		public void addStateNode(DataNodeState statenode) {
+			pasteboard.setActiveLayer("Content");	
+			String graphRef = statenode.get("GraphRef");
+			DataNode host = model.findDataNode(graphRef);
+			if (host != null)
+			{
+				host.getStack().addState(statenode);
+				model.addState(graphRef, statenode);
+			}
+			
+		}
+	
 		//----------------------------------------------------------------------------
 		//----------------------------------------------------------------------------
 	// UNUSED ??

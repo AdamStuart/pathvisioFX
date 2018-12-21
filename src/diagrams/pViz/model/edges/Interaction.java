@@ -42,7 +42,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		interactionType.set("arrow");
 	}
 	
-	
+	//------------------------------------------------------------------------------------------
 	public Interaction(AttributeMap attr, Model inModel, List<GPMLPoint> pts, List<Anchor> anchors)
 	{
 		super(attr, inModel, pts, anchors);
@@ -50,11 +50,6 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		GPMLPoint.setInteraction(pts, this);
 	}
 
-	
-//	@Override public void makeEdgeLine( List<GPMLPoint> pts, List<Anchor> anchors) {
-//		edgeLine = new EdgeLine(this, pts, anchors);
-//	}
-	
 	public Interaction(Model model, ResizableBox src, Pos srcPosition, 
 			ResizableBox vNode, RelPosition targPosition, ArrowType arrow, EdgeType edge) 
 	{
@@ -86,11 +81,12 @@ public class Interaction extends Edge implements Comparable<Interaction>
     	super( inModel, (VNode) start,  (VNode) end,  attr);	
      }
 	
-	   //------------------------------------------------------------------------------------------
+ //------------------------------------------------------------------------------------------
 	public int compareTo(Interaction other)
 	{
 		return getName().compareToIgnoreCase(other.getName());
 	}
+	
 	public void rebind(String sourceId) {
 		if (!isWellConnected()) return; 
 		setSource(getStartNode().getName());
@@ -99,7 +95,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		model.getController().getTreeTableView().addBranch(this, sourceId);
 //		repostionAnchors();
 	}
-	   //------------------------------------------------------------------------------------------
+//------------------------------------------------------------------------------------------
 	@Override public String toString()
 	{
 		String name =  getName();
