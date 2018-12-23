@@ -440,8 +440,8 @@ public class Model
 		AttributeMap attributes = new AttributeMap();
 		String activeLayer = start.getStack().getLayerName();
 		attributes.put("Layer", activeLayer);
-		String linetype = controller.getActiveLineType();
-		ArrowType arrow = controller.getActiveArrowType();
+		String linetype = controller.getPalette().getActiveLineType();
+		ArrowType arrow = controller.getPalette().getActiveArrowType();
 		attributes.put("ArrowType", arrow.toString());
 		attributes.put("LineType", linetype);
 		Interaction edge = new Interaction(this, start.getStack(), end.getStack(), attributes);
