@@ -47,7 +47,7 @@ public class PaletteController implements Initializable {
 		lineTypeGroup = new ToggleGroup();
 		lineTypeGroup.getToggles().addAll(straight, curved, elbowed, segmented);
 		straight.setSelected(true );
-		arrowGroup = new ToggleGroup();
+		arrowGroup = new ToggleGroup();	
 		arrowGroup.getToggles().addAll(arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
 		arrow1.setSelected(true);
 //		EventHandler<? super MouseEvent> dragHandler = new EventHandler{
