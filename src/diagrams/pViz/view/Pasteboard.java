@@ -84,14 +84,12 @@ public class Pasteboard extends PanningCanvas
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
 		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
-        scaleXProperty().bind(myScale);
-        scaleYProperty().bind(myScale);
         zoomScrollGestures = new SceneGestures(this);
 }
 public void bindGridProperties()
 {
 	editorProperties.snapToGridProperty().bind(getController().getInspector().snapToGridProperty());
-	editorProperties.gridSpacingProperty().set(25);
+	editorProperties.gridSpacingProperty().set(25);		//AM grid space setting not in effect right now
 
 }
 	//---------------------------------------------------------------------------------------
@@ -304,12 +302,7 @@ public void bindGridProperties()
 		addEventHandler(MouseEvent.MOUSE_DRAGGED, new MouseDraggedHandler());
 		addEventHandler(MouseEvent.MOUSE_RELEASED, new MouseReleasedHandler());
 		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
-        setOnScroll((ScrollEvent event) -> { zoomScrollGestures.getOnScrollEventHandler().handle(event);
-//            double deltaY = event.getDeltaY();
-//        	double zoomFactor = 1.05 * deltaY;
-//            if (deltaY < 0)
-//                zoomFactor = 1 / zoomFactor;
-        });
+		setOnScroll(e -> zoomScrollGestures.getOnScrollEventHandler().handle(e));
 	}
 
 	private Point2D startPoint = null;		// remember where the mouse was pressed
@@ -355,6 +348,16 @@ public void bindGridProperties()
 		if (dragLine != null)
 			dragLine.setEndPoint(new Point2D(event.getX(), event.getY())); 
 	}
+	
+	public boolean isMousePanEvent(MouseEvent e) {
+		if (e.isSecondaryButtonDown() || e.isMiddleButtonDown())
+			return true;
+		
+		if (e.isControlDown() && e.isAltDown())
+			return true;
+		
+		return false;
+	}
 	//-----------------------------------------------------------------------------------------------------------
 	private final class MousePressedHandler implements EventHandler<MouseEvent> 
 	{
@@ -362,12 +365,15 @@ public void bindGridProperties()
 		{
 			if (verbose)
 				System.out.println("MousePressedHandler, activeStack: " + activeStack);
-			if (event.isSecondaryButtonDown()) 
-			{ 
-				// TODO popup canvas commands
-				event.consume();
-				return;	
-			}
+			
+			if (isMousePanEvent(event))		//AM Panning is handled by the ScrollPane
+				return;
+			
+			zoomScrollGestures.getOnMousePressedEventHandler().handle(event);	
+			
+			if (event.isConsumed())
+				return;
+			
 			Tool tool = getTool();
 			if (tool == Tool.Polyline)
 			{
@@ -437,7 +443,7 @@ public void bindGridProperties()
 				push(ActionType.New, getTool().name());
 				getSelectionMgr().select(activeStack);
 			}
-			zoomScrollGestures.getOnMousePressedEventHandler().handle(event);			
+					
 			event.consume();
 		}
 
@@ -494,7 +500,10 @@ public void bindGridProperties()
 	private final class MouseDraggedHandler implements EventHandler<MouseEvent> {
 		@Override public void handle(final MouseEvent event) {
 
-			if (event.isSecondaryButtonDown())  return;		// do nothing for a right-click drag
+			if (isMousePanEvent(event))		//AM Panning is handled by the ScrollPane
+				return;
+			
+			
 			if (verbose)	
 				System.out.println("Pasteboard.MouseDraggedHandler, activeShape: " + activeStack);
 

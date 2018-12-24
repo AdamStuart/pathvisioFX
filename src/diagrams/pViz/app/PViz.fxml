@@ -21,6 +21,7 @@
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.text.Font?>
 
 <SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
@@ -645,11 +646,7 @@
                <items>
                   <ScrollPane fx:id="scrollPane" fitToHeight="true" fitToWidth="true">
                     <content>
-                      <AnchorPane fx:id="drawPane">
-                           <children>
-                              <Button fx:id="zoomin" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomIn" prefHeight="30.0" prefWidth="30.0" text="&lt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" />
-                              <Button fx:id="zoomout" layoutX="10.0" layoutY="831.0" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomOut" prefHeight="30.0" prefWidth="30.0" text="&gt;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="30.0" />
-                           </children></AnchorPane>
+                      <Group fx:id="drawPane"></Group>
                     </content>
                   </ScrollPane>
                   <SplitPane fx:id="vsplitter" orientation="VERTICAL">

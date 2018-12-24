@@ -51,6 +51,7 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Side;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -79,7 +80,6 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
@@ -271,7 +271,7 @@ public class Controller implements Initializable, IController
 	
 //	@FXML private VBox east;
 	@FXML private VBox south;
-	@FXML private Pane drawPane;
+	@FXML private Group drawPane;
 	@FXML private ScrollPane scrollPane;
 	@FXML private ListView<Action> undoview = null;
 //	private GeneListTable geneListTable = null;
@@ -306,6 +306,10 @@ public class Controller implements Initializable, IController
 	@FXML private Label scale;
 	@FXML private SplitPane hsplitter;
 	
+	
+	public ScrollPane getScrollPane() {
+		return scrollPane;
+	}
 
 	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
@@ -345,15 +349,17 @@ public class Controller implements Initializable, IController
 		setupInspector();		
 		pasteboard.bindGridProperties();
 		drawPane.getChildren().add(pasteboard);
+		
 		doc = new Document(this);
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
 		pasteboard.getStylesheets().add(cssURL);
 		stage = App.getInstance().getStage();
 //		drawContainer.setBorder(Borders.etchedBorder);
-		scrollPane.setOnScroll(ev -> {
-			ev.consume();
-	        if (ev.getDeltaY() == 0)   return;	
-		});
+		scrollPane.setPannable(true);
+//		scrollPane.setOnScroll(ev -> {		//AM is this necessary?
+//			ev.consume();
+//	        if (ev.getDeltaY() == 0)   return;	
+//		});
 //		bottomDash.setBorder(Borders.dashedBorder );
 		if (bottomPadding!= null)
 			bottomPadding.setPadding(new Insets(3,3,4,4));
