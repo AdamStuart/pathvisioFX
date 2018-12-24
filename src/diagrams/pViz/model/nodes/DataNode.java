@@ -89,38 +89,7 @@ public class DataNode extends XRefable {
 		Map<String, DataNodeGroup> map = model.getGroupMap();
 		DataNodeGroup gp = map.get(ref);
 		return gp;
-	}	//--------------------------------------------------------
-//	public String asGPML()
-//	{
-//		ObservableMap<Object, Object> pro = getStack().getProperties();
-//		Object o = pro.get("TextLabel");
-//		String textLabel = o == null ? "" : o.toString();
-//		o = pro.get("Type");
-//		String type = o == null ? "" : o.toString();
-//		String header = "<DataNode TextLabel=\"%s\" GraphId=\"%s\" Type=\"%s\" >\n";
-//		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, getGraphId(), type));
-//
-//		String[] tokens = toString().split(" ");
-//		String shape = tokens.length > 1 ? tokens[1] : "Error";
-//		double w = getStack().getWidth();
-//		double h = getStack().getHeight();
-//		double cx = getStack().getLayoutX() + w / 2;
-//		double cy = getStack().getLayoutY() + h / 2;
-//		if (getShape() instanceof Rectangle)
-//		{
-//			Rectangle sh = (Rectangle) getShape();
-//			cx = sh.getX() + w / 2;
-//			cy = sh.getY() + h / 2;
-//			if (sh.getArcWidth() > 0)
-//				shape = "RoundedRectangle";
-//		}
-//		String graphics1 = String.format("  <Graphics CenterX=\"%.2f\" CenterY=\"%.2f\" Width=\"%.2f\" Height=\"%.2f\" ZOrder=\"32768\" ", cx, cy, w, h);
-//		String graphics2 = String.format("FontWeight=\"%s\" FontSize=\"%d\" Valign=\"%s\" ShapeType=\"%s\"", "Bold", 12, "Middle", shape);
-//		buffer.append(graphics1).append(graphics2).append(" />\n") ;
-//		buffer.append("  <Xref Database=\"\" ").append("ID=\"\"").append("/>\n") ;
-//		buffer.append("</DataNode>\n");
-//		return buffer.toString();
-//	}
+	}	
 	//---------------------------------------------------------------------------------------
 	public String toGPML()	{ 
 		copyPropertiesToAttributes();
@@ -181,7 +150,7 @@ public class DataNode extends XRefable {
 			//must change lines above to terminate after the Points
 		}
 	}
-
+	// **-------------------------------------------------------------------------------
 	public Point2D  getAdjustedPoint(GPMLPoint gpmlPt)
 	{
 		if (gpmlPt == null) return new Point2D(0,0);

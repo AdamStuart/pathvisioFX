@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.app.Test;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
@@ -21,19 +22,14 @@ import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.tables.CommentRecord;
 import diagrams.pViz.tables.GPMLTreeTableView;
 import diagrams.pViz.view.Layer;
-import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
-import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -42,7 +38,6 @@ import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
-import javafx.scene.text.Text;
 import model.AttributeMap;
 import model.QuadValue;
 import model.bio.BiopaxRecord;
@@ -467,54 +462,7 @@ public class Model
 		}
 	}
 	
-// **-------------------------------------------------------------------------------
-	static String XMLHEAD = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-	static String GraphicsHEAD = "<Graphics BoardWidth=\"%d\" BoardHeight=\"%d\" />\n";
-	public StringBuilder traverseSceneGraph(Pane root)
-	{
-		StringBuilder buff = new StringBuilder(XMLHEAD);
-		buff.append("<Pathway>\n");
-//		Pasteboard board  = controller.getPasteboard();
-		int width = (int) root.getWidth();
-		int height = (int) root.getHeight();
-		Bounds b = root.getLayoutBounds();
-		width = (int) b.getWidth();
-		height = (int)  b.getHeight();
-		b = root.getBoundsInParent();
-		width = (int) b.getWidth();
-		height = (int)  b.getHeight();
 
-		buff.append(String.format(GraphicsHEAD,	width, height));
-		traverse(buff, root, 0);
-		for (Edge e : getEdges())
-			buff.append(e.toString() + "\n");
-		buff.append("</Pathway>\n");
-		return buff;
-	}
-	
-	static private void traverse(StringBuilder buff, Node node, int indent)
-	{
-//		VNode stack = node.getStack();
-		if (Pasteboard.isMarquee(node)) return;
-//		if (node instanceof Edge)			buff.append(describe(node));	
-		if (node instanceof Shape)			buff.append(StringUtil.spaces(indent) + describe(node) + "\n");	
-		if (node instanceof Group)			buff.append(StringUtil.spaces(indent) + describe(node) + "\n");	
-		if (node instanceof StackPane)		buff.append(StringUtil.spaces(indent) + describe(node) + "\n");
-		if (node instanceof Parent)
-			for (Node n : ((Parent) node).getChildrenUnmodifiable())
-			{
-				String id = n.getId();
-//				if (id == null)					continue;			// only propagate thru nodes with ids
-				if ("Marquee".equals(id) )		continue;
-				
-				if (n instanceof Text)
-				{
-					String txt = ((Text) n).getText();
-					if (txt.length() < 1) 	continue;				//System.out.println("Don't stream empty text");
-				}
-				traverse(buff, n, indent+1);
-			}
-	}
 	// **-------------------------------------------------------------------------------
 	static public String describe(DataNode node)	{	return node.toGPML();	}
 	static public String describe(Layer node)	{	return node.getName();	}
@@ -670,40 +618,6 @@ public class Model
 			pts.add(StringUtil.toDouble(d));
 	}
 	//-------------------------------------------------------------------------
-	public void dumpNodeTable() {
-		System.out.println(dataNodeMap.keySet().size());
-		for (String key : dataNodeMap.keySet())
-		{
-			String s;
-			DataNode node = dataNodeMap.get(key);
-			if (node != null)
-			{
-				s=  String.format("GraphId: %s \t(%4.1f, %4.1f) \t %s ", node.getGraphId(), 
-						node.getDouble("CenterX"),
-						node.getDouble("CenterY"),
-						node.get("TextLabel"));
-				}
-			else s = key;
-			System.out.println(key + "\n" + s);
-		}
-	}
-
-//	public void dumpAnchorTable() {
-//		for (String key : getA.keySet())
-//		{
-//			String s;
-//			MNode node = resourceMap.get(key);
-//			if (node != null)
-//			{
-//				s=  String.format("%s \t(%4.1f, %4.1f) \t %s ", node.getId(), 
-//						node.getDouble("CenterX"),
-//						node.getDouble("CenterY"),
-//						node.get("TextLabel"));
-//				}
-//			else s = key;
-//			System.out.println(s);
-//		}
-//	}
 
 	public void resetEdgeTable()
 	{
@@ -714,74 +628,10 @@ public class Model
 			inter.connect();		
 		}
 	}
-
-	public void dumpViewHierarchy() {
-		String out = "\n" + traverseSceneGraph( getController().getPasteboard());
-		System.out.println(out);
-	}
-	public void dumpEdgeTable() {
-		System.out.println("\n" + interactionMap.size());
-		for (Edge e : getEdges())
-			System.out.println(e);
-		}
 	public XRefableSetRecord getXRec() {
 		XRefableSetRecord set = new XRefableSetRecord("XREFS");
 		set.getXRefableSet().addAll(getNodes());
 		return set;
-	}
-//---------------------------------------------------------------------------------------------
-	 class Reference
-	 {
-		 String id;
-		 String db;
-		 String dbid;
-		 
-		 Reference(String a, String b, String c)
-		 {
-			 id = a;
-			 db = b;
-			 dbid =c ;
-		 }
-	 };
-	 
-	//---------------------------------------------------------------------------------------------
-	 List<Reference> filterByDB(List<Reference> inList, String db)
-	 {
-		 List<Reference> subset = new ArrayList<Reference>();		
-		 for (Reference r : inList)
-			 if (db.equals(r.db))
-				 subset.add(r);
-		 return subset;
-	 }
-	 
-	 String idListToString(List<Reference> inList)
-	 {
-		 StringBuilder build = new StringBuilder();
-		 for (Reference r : inList)
-			 build.append(r.id).append("\t");
-		 return StringUtil.chopLast(build.toString());
-	 }
-	 
-	public void annotateIdentifiers() {
-		 System.out.println("Annotate");
-		 Set<String> dbs = new HashSet<String>();		
-		 List<Reference> refs = new ArrayList<Reference>();		
-		 for (DataNode n : dataNodeMap.values())
-		 {
-			 String type = n.getType();		if (StringUtil.isEmpty(type)) continue;
-			 String db = n.getDatabase();	if (StringUtil.isEmpty(db)) continue;
-			 String dbid = n.getDbid();	 	if (StringUtil.isEmpty(dbid)) continue;
-			 String id = n.getGraphId();	if (StringUtil.isEmpty(id)) continue;
-			 refs.add(new Reference(id, db, dbid));
-			 dbs.add(db);
-		 }
-		Iterator<String> iter = dbs.iterator();
-		while (iter.hasNext())
-		{
-			String db = iter.next();
-			List<Reference> match = filterByDB(refs, db);
-			String idlist = idListToString(match);
-		}
 	}
 
 	//---------------------------------------------------------------------------------------------

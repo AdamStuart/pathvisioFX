@@ -15,6 +15,7 @@ import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.GeneModel;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.Reference;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.EdgeType;
@@ -55,7 +56,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
@@ -169,9 +169,9 @@ public class Controller implements Initializable, IController
 	@FXML public void clear()			{ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
 	
 	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
-	@FXML private void dumpEdgeTable()	{		model.dumpEdgeTable();	}
-	@FXML private void dumpViewHierarchy()	{	model.dumpViewHierarchy();	}
-	@FXML private void dumpNodeTable()	{		model.dumpNodeTable();	}
+	@FXML private void dumpEdgeTable()	{		Test.dumpEdgeTable(model);	}
+	@FXML private void dumpViewHierarchy()	{	Test.dumpViewHierarchy(model);	}
+	@FXML private void dumpNodeTable()	{		Test.dumpNodeTable(model.getDataNodeMap());	}
 	@FXML private void showNodeList()	{ 		}
 	// **-------------------------------------------------------------------------------
 	@FXML public  void group()			{ 	undoStack.push(ActionType.Group);	getSelectionManager().doGroup(false);  }
@@ -200,7 +200,7 @@ public class Controller implements Initializable, IController
 
 //-------------------------------------------------------------
 	@FXML private MenuItem annotate;
-	@FXML private void	annotate() 	{	model.annotateIdentifiers(); 	}
+	@FXML private void	annotate() 	{	Reference.annotateIdentifiers(model.getDataNodeMap()); 	}
 	@FXML private MenuItem selectEdges;
 	@FXML private MenuItem undo;
 	@FXML private MenuItem redo;
@@ -379,7 +379,6 @@ public class Controller implements Initializable, IController
 	   e.printStackTrace();}
 
 	}
-	public void doNewGeneList()	{		App.doNewGeneList(model, geneModel);	}
 	
 
 	// **-------------------------------------------------------------------------------
@@ -783,6 +782,8 @@ public class Controller implements Initializable, IController
 	// **-------------------------------------------------------------------------------
 	// GeneSets
 	// **-------------------------------------------------------------------------------
+	public void doNewGeneList()	{		App.doNewGeneList(model, geneModel);	}
+
 	public void setGeneSet(GeneSetRecord rec) {
 		geneModel.setGeneList(rec, rec.getGeneSet());
 	}
