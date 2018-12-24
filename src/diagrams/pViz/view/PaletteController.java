@@ -46,7 +46,7 @@ public class PaletteController implements Initializable {
 		paletteGroup.getToggles().addAll(arrow, rectangle, text, polyline, gene, metabolite, pathway, protein, rna);
 		lineTypeGroup = new ToggleGroup();
 		lineTypeGroup.getToggles().addAll(straight, curved, elbowed, segmented);
-		straight.setSelected(true);
+		straight.setSelected(true );
 		arrowGroup = new ToggleGroup();
 		arrowGroup.getToggles().addAll(arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
 		arrow1.setSelected(true);
