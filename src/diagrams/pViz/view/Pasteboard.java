@@ -86,8 +86,6 @@ public class Pasteboard extends PanningCanvas
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
 //		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
-        scaleXProperty().bind(myScale);
-        scaleYProperty().bind(myScale);
         zoomScrollGestures = new SceneGestures(this);
 }
 	public void bindGridProperties()
@@ -306,12 +304,7 @@ public class Pasteboard extends PanningCanvas
 		addEventHandler(MouseEvent.MOUSE_DRAGGED, new MouseDraggedHandler());
 		addEventHandler(MouseEvent.MOUSE_RELEASED, new MouseReleasedHandler());
 		addEventHandler(KeyEvent.KEY_RELEASED, new KeyHandler());
-        setOnScroll((ScrollEvent event) -> { zoomScrollGestures.getOnScrollEventHandler().handle(event);
-//            double deltaY = event.getDeltaY();
-//        	double zoomFactor = 1.05 * deltaY;
-//            if (deltaY < 0)
-//                zoomFactor = 1 / zoomFactor;
-        });
+		setOnScroll(e -> zoomScrollGestures.getOnScrollEventHandler().handle(e));
 	}
 
 	private Point2D startPoint = null;		// remember where the mouse was pressed
@@ -372,34 +365,22 @@ public class Pasteboard extends PanningCanvas
 	
 	private void setDragLine(MouseEvent event) {
 		if (dragLine != null)
-		{
 			dragLine.setEndPoint(new Point2D(event.getX(), event.getY())); 
 			dragLine.connect();
 		}
 	}
-	//---------------------------------------------------------------------------
-	// add the interaction from the stored dragSource and dragSourcePosition to this vNode at relPos
-	public void connectTo(ResizableBox vNode, RelPosition relPos ) {
-		if (dragLine == null) return;  	// shouldn't happen
-		VNode src = getPolyDragSource();
-		Pos srcPos = getPolyDragSourcePosition();
-		if (src == null) return;  	// shouldn't happen
-		
-		if (relPos.isInside()) 
-			relPos = relPos.moveToEdge();
-		
-		if (src != vNode)
-		{
-			ArrowType arrow = getController().getCurrentArrowType();
-			EdgeType edge = getController().getCurrentLineBend();
-			Interaction i = new Interaction(getModel(), src, srcPos, vNode, relPos, arrow, edge );
-			removeDragLine();
-			controller.addInteraction(i);
-			controller.redrawMyEdges((VNode) vNode);
-			controller.modelChanged();
-		}
-	}
 
+
+	
+	public boolean isMousePanEvent(MouseEvent e) {
+		if (e.isSecondaryButtonDown() || e.isMiddleButtonDown())
+			return true;
+		
+		if (e.isControlDown() && e.isAltDown())
+			return true;
+		
+		return false;
+	}
 	//-----------------------------------------------------------------------------------------------------------
 	private final class MousePressedHandler implements EventHandler<MouseEvent> 
 	{
@@ -407,12 +388,15 @@ public class Pasteboard extends PanningCanvas
 		{
 			if (verbose)
 				System.out.println("MousePressedHandler, activeStack: " + activeStack);
-			if (event.isSecondaryButtonDown()) 
-			{ 
-				// TODO popup canvas commands
-				event.consume();
-				return;	
-			}
+			
+			if (isMousePanEvent(event))		//AM Panning is handled by the ScrollPane
+				return;
+			
+			zoomScrollGestures.getOnMousePressedEventHandler().handle(event);	
+			
+			if (event.isConsumed())
+				return;
+			
 			Tool tool = getTool();
 			if (tool == Tool.Polyline)
 			{
@@ -485,7 +469,7 @@ public class Pasteboard extends PanningCanvas
 				push(ActionType.New, getTool().name());
 				getSelectionMgr().select(activeStack);
 			}
-			zoomScrollGestures.getOnMousePressedEventHandler().handle(event);			
+					
 			event.consume();
 		}
 
@@ -542,7 +526,10 @@ public class Pasteboard extends PanningCanvas
 	private final class MouseDraggedHandler implements EventHandler<MouseEvent> {
 		@Override public void handle(final MouseEvent event) {
 
-			if (event.isSecondaryButtonDown())  return;		// do nothing for a right-click drag
+			if (isMousePanEvent(event))		//AM Panning is handled by the ScrollPane
+				return;
+			
+			
 			if (verbose)	
 				System.out.println("Pasteboard.MouseDraggedHandler, activeShape: " + activeStack);
 

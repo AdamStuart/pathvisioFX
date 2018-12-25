@@ -118,7 +118,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         modelNode.putDouble("CenterX", getLayoutX() + .5 * getWidth());
         modelNode.putDouble("CenterY", getLayoutY() + .5 * getHeight());
         Tooltip tooltip = new Tooltip();
-        tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
+//        tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
         Tooltip.install(this,  tooltip);
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
  		pasteboard.add(this);

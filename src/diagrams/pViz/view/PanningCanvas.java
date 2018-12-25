@@ -1,6 +1,5 @@
 package diagrams.pViz.view;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import animation.NodeVisAnimator;
@@ -9,20 +8,17 @@ import diagrams.pViz.app.Selection;
 import diagrams.pViz.util.GraphEditorProperties;
 import gui.Backgrounds;
 import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
-import javafx.scene.shape.Line;
+import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.stage.Screen;
-import util.LineUtil;
 
 public class PanningCanvas extends Pane {
 	static public int CANVAS_WIDTH = 5000;
@@ -42,10 +38,15 @@ public class PanningCanvas extends Pane {
 		getChildren().addAll(getBackgroundLayer(), getGridLayer(), getContentLayer());
 		activeLayerName = "Content";
 		selectionMgr = new Selection(this);
+		
+        scaleYProperty().bind(scaleProperty());
+        scaleProperty().addListener(e -> resetGrid());
 	}
 	
 	private void createBackground() {
-		Rectangle r = new Rectangle(-10, -10, CANVAS_WIDTH + 20, CANVAS_HEIGHT + 20);
+		Rectangle r = new Rectangle(0, 0);
+		r.widthProperty().bind(widthProperty());
+		r.heightProperty().bind(heightProperty());
 		r.setId("Background");
 		r.setFill(Backgrounds.whiteGradient);
 		r.setMouseTransparent(true);
@@ -90,77 +91,92 @@ public class PanningCanvas extends Pane {
 	public GraphEditorProperties getEditorProperties() {	return editorProperties;	}
 	//-------------------------------------------------------------------------------
 	protected Group grid;
+	protected Rectangle vGrid, hGrid;
 //	public Group getGrid()	{  return grid;  }
-	List<Line> hLines;
-	List<Line> vLines;
-	
+//	List<Line> hLines;
+//	List<Line> vLines;
+
 	public void makeGrid(Button toggler, ScrollPane scrlPane)
 	{
 		grid = new Group();
 		grid.setId("grid");
-		double res = Screen.getPrimary().getDpi();			// assumes inches
-		Parent p  = getParent();
-		if (hLines == null) hLines = new ArrayList<Line>();
-		if (vLines == null) vLines = new ArrayList<Line>();
 		
-		if (scrlPane != null)
-		{
-			double canvasWidth = getWidth();
-			double canvasHeight = getHeight();
-			double nLines = Math.max(canvasWidth, canvasHeight) / res;
-			for (int i = 0; i< nLines; i++)
-			{
-				Line vert = new Line();
-				vert.setStrokeWidth(0.25);
-				vLines.add(vert);
-				LineUtil.set(vert, res * i, 0, res * i, canvasHeight);
-				
-				Line horz = new Line();
-				horz.setStrokeWidth(0.25);
-				hLines.add(horz);
-				LineUtil.set(horz, 0, res * i, canvasWidth, res * i);
-				grid.getChildren().addAll(vert, horz);
-			}		
-			grid.setMouseTransparent(true);
-			getController().addExternalNode(grid);
-		}
+		
+		//AM a way to make grid without lines, using gradients.
+		//Avoids issues with grid lines influencing canvas size
+		//Vertical grid lines
+		vGrid = new Rectangle(0, 0);
+		vGrid.widthProperty().bind(widthProperty());
+		vGrid.heightProperty().bind(heightProperty());
+		
+		
+		//Horizontal grid lines
+		hGrid = new Rectangle(0, 0);
+		hGrid.widthProperty().bind(widthProperty());
+		hGrid.heightProperty().bind(heightProperty());
+		
+		
+		grid.getChildren().add(vGrid);
+		grid.getChildren().add(hGrid);
+		
+		
+		
+//		if (hLines == null) hLines = new ArrayList<Line>();
+//		if (vLines == null) vLines = new ArrayList<Line>();
+		
+		resetGrid();
+		grid.setMouseTransparent(true);
+		getController().addExternalNode(grid);
 		gridLayer.add(grid);
 		new NodeVisAnimator(grid, toggler);
 
 	}
 	public void showGrid(boolean vis)	{	grid.setVisible(vis);	}
 	public boolean isGridVisible()		{	return	grid.isVisible();	}
-	public void resetGrid()		
-	{	
-		double res = 100;  // Screen.getPrimary().getDpi();			// assumes inches
-		double canvasWidth = getWidth();
-		double canvasHeight = getHeight();
-		double nLines = Math.max(canvasWidth, canvasHeight) / res;
-		while (hLines.size() < nLines)
-			hLines.add(new Line());
-		while (vLines.size() < nLines)
-			vLines.add(new Line());
+	
+	public void resetGrid()	
+	{
+		int res = (int) Screen.getPrimary().getDpi();			// assumes inches
 		
-		for (int i = 0; i< nLines; i++)
-		{
-			LineUtil.set(vLines.get(i), res * i, 0, res * i, canvasHeight);
-			LineUtil.set(hLines.get(i), 0, res * i, canvasWidth, res * i);
-		}
+		//AM for alternate gradient gridline method
+		hGrid.setFill(Backgrounds.getGridLinesPaint(res, .5 / getScale(), Color.GRAY, false));
+		vGrid.setFill(Backgrounds.getGridLinesPaint(res, .5 / getScale(), Color.GRAY, true));
+		
+		
+		//AM using Line objects for the grid is causing the canvas to expand to fit the lines
+//		double canvasWidth = getWidth();
+//		double canvasHeight = getHeight();
+//		int numVLines = (int) (canvasWidth / res);
+//		int numHLines = (int) (canvasHeight / res);
+//		
+//		for (int i = 1; i<=numVLines; i++)
+//		{
+//			if (i > vLines.size())
+//				vLines.add(makeGridLine());
+//			LineUtil.set(vLines.get(i-1), res * i, 0, res * i, canvasHeight - 1);
+//		}
+//		for (int i=1; i<=numHLines; i++) {
+//			if (i > hLines.size())
+//				hLines.add(makeGridLine());
+//			LineUtil.set(hLines.get(i-1), 0, res * i, canvasWidth - 1, res * i);
+//		}
 	}
 	
+//	protected Line makeGridLine() {
+//		Line line = new Line();
+//		grid.getChildren().add(line);
+//		line.strokeWidthProperty().bind(new SimpleDoubleProperty(.25).divide(scaleProperty()));
+//		return line;
+//	}
+	
 	//-----------------------------------------------------------------------------
-
-    DoubleProperty myScale = new SimpleDoubleProperty(1.0);
-
-  
+	
+	//AM scaleY is bound to scaleX in the constructor
+	public DoubleProperty scaleProperty() { return scaleXProperty();	}
+    public double getScale() 			{        return getScaleX();    }
+    public void setScale( double scale) {        setScaleX(scale);  updateScaleFeedback(); }
     public void updateScaleFeedback()	{ 		if (zoomScale != null) zoomScale.setText((int) (getScale()*100) + "%"); }
-    public double getScale() 			{        return myScale.get();    }
-    public void setScale( double scale) {        myScale.set(scale);  updateScaleFeedback(); }
-
-    public void setPivot( double x, double y) {
-        setTranslateX(getTranslateX()-x);
-        setTranslateY(getTranslateY()-y);
-    }
+    
 
 	public void zoomIn() {
 		
