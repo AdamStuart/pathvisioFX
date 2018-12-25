@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.gpml.GPMLRecord;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;
@@ -33,7 +32,7 @@ import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.MIM;
 
-public class LegendRecord implements GPMLRecord {
+public class LegendRecord implements TableRecord {
 
 	StringProperty id = new SimpleStringProperty();
 	StringProperty type = new SimpleStringProperty();

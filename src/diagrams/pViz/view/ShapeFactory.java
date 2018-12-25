@@ -8,6 +8,7 @@ import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.CellShapeFactory;
+import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.nodes.DataNode;
 import gui.Action.ActionType;
 import gui.UndoStack;
@@ -85,6 +86,7 @@ public class ShapeFactory {
 			case Polygon:			newShape = new Polygon();	break;
 			case Polyline:			newShape = new Polyline();	break;
 			case Line:				newShape = new Line();		break;
+			case GraphicalLine:		newShape = new Line();		break;
 			case Shape1:			newShape = Shape1.getHeartPath();	break;
 			case Oval:				newShape = new Ellipse();	break;
 			case Circle:			newShape = new Ellipse();	break;
@@ -105,7 +107,8 @@ public class ShapeFactory {
 		stack.getProperties().putAll(modelNode);
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, modelNode);
-		
+	
+
 		if ("Line".equals(s))
 		{
 			Arrow a = new Arrow((Line) newShape, 0.7f);
@@ -130,8 +133,8 @@ public class ShapeFactory {
         else if (newShape instanceof Ellipse)
         {
         	Ellipse c = (Ellipse) newShape;
-        	c.setRadiusX(Math.min(w, h)/ 2); 
-        	c.setRadiusY(Math.min(w, h)/ 2); 
+        	c.setRadiusX(w/ 2); 
+        	c.setRadiusY(h/ 2); 
         	c.setCenterX(center.getX());
         	c.setCenterY(center.getY());
         	newShape.setVisible(true);
@@ -146,15 +149,17 @@ public class ShapeFactory {
         }
         else if (newShape instanceof Polygon || tool == Tool.ComplexComponent)
         {
+        	double barrelWidth = w / 8;
+        	double barrelHeight = h / 8;
         	Polygon p = (Polygon) newShape;
         	double x0 = center.getX() - w /2;
-        	double x1 = x0 + (w / 3);
-        	double x2 = x0 + (2 * w / 3);
+        	double x1 = x0 + barrelWidth;  //(w / 3);
         	double x3 = x0 + w;
-           	double y0 = center.getY() -h /2;
-        	double y1 = y0 + (h / 3);
-        	double y2 = y0 + (2 * h / 3);
+        	double x2 = x3 - barrelWidth; 
+          	double y0 = center.getY() -h /2;
+        	double y1 = y0 + barrelHeight; // (h / 3);
         	double y3 = y0 + h;
+        	double y2 = y3 - barrelHeight;
         	p.getPoints().clear();
         	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
          }
@@ -164,6 +169,30 @@ public class ShapeFactory {
 //			p.scaleXProperty().bind(widthProperty());
 
         }
+       else if ("GraphicalLine".equals(tool.name()))
+		{
+			List<GPMLPoint> pts = modelNode.getGPMLPoints();
+			if (pts != null && !pts.isEmpty())
+			{
+				Line line = (Line) newShape;
+				GPMLPoint start = pts.get(0);
+				GPMLPoint end = pts.get(pts.size()-1);
+				line.setStartX(start.getX());
+				line.setStartY(start.getY());
+				line.setEndX(end.getX());
+				line.setEndY(end.getY());
+				stack.setLayoutX(start.getX());
+				stack.setLayoutY(start.getY());
+				double wid = Math.abs(start.getX() - end.getX());
+				double hght = Math.abs(start.getY() - end.getY());
+				stack.setWidth(wid);
+				stack.setHeight(hght);
+				modelNode.putDouble("X", start.getX());
+				modelNode.putDouble("Y", start.getY());
+				modelNode.putDouble("Width",wid);
+				modelNode.putDouble("Height", hght);
+			}		
+		}
 		stack.getChildren().add(0, newShape);
 //		for (Node n : stack.getChildren())
 //			System.out.println(n.getId());
@@ -396,17 +425,19 @@ public static void sizeFigureToBounds(Pasteboard pasteboard, VNode vNode, Shape 
 		double centerX = layoutX + w /2;
 		double centerY = layoutY + h /2;
       	Polygon p = (Polygon) figure;
+		
+       	double barrelWidth = w / 6;
+    	double barrelHeight = h / 6;
     	double x0 = centerX - w /2;
-    	double x1 = x0 + (w / 3);
-    	double x2 = x0 + (2 * w / 3);
+    	double x1 = x0 + barrelWidth;  //(w / 3);
     	double x3 = x0 + w;
-       	double y0 = centerY -h /2;
-    	double y1 = y0 + (h / 3);
-    	double y2 = y0 + (2 * h / 3);
+    	double x2 = x3 - barrelWidth; 
+      	double y0 = centerY -h /2;
+    	double y1 = y0 + barrelHeight; // (h / 3);
     	double y3 = y0 + h;
+    	double y2 = y3 - barrelHeight;
     	p.getPoints().clear();
     	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
-		
 	}
 }
 // **-------------------------------------------------------------------------------

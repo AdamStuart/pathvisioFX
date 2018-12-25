@@ -63,7 +63,7 @@ public class Arrow extends Polygon {
   //--------------------------------------------------------------------
     boolean useElbowConnection = false;
     public void updateLine() {
-        if (line == null) return;
+        if (line == null || !line.isVisible()) return;
     	double ang2 = (useElbowConnection) ? 0 : LineUtil.getEndAngle(line);
 //    	System.out.println(String.format("updateLine: (%.2f, %.2f) %.2f", line.getEndX(), line.getEndY(), Math.toDegrees(ang2)));
     	Point2D midpt = LineUtil.midPoint(line, 0.90);

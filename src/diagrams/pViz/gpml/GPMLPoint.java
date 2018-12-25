@@ -168,6 +168,7 @@ public class GPMLPoint {
 		public  double[] getArrowShape() {
 
 			if (ArrowType.none == this) 					return  new double[]{ };
+	    	if (ArrowType.tbar == this )    				return  new double[]{-10,0,10,0 };
 	    	if (ArrowType.miminhibition == this )    		return  new double[]{-10,0,10,0 };
 	    	if (ArrowType.mimactivation == this )    		return  new double[]{0,0,5,12,-5,12};
 	    	if (ArrowType.mimbinding == this )    			return  new double[]{0,0,5,12,0, 6, -5,12};

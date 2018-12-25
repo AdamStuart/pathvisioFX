@@ -7,7 +7,7 @@ import util.FileUtil;
 public enum Tool {
 
 	Arrow,
-	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Pentagon, Hexagon, Octagon, Polyline, Line, Brace, Shape1,   // Shapes
+	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Pentagon, Hexagon, Octagon, Polyline, Line, GraphicalLine, Brace, Shape1,   // Shapes
 	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,			// Controls
@@ -53,7 +53,7 @@ public enum Tool {
 	}
 	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi", "Brace"};
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
-	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, Brace, Shape1 };
+	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, GraphicalLine, Brace, Shape1 };
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
@@ -77,6 +77,7 @@ public enum Tool {
 		if ("Nucleus".equals(type)) 	return Nucleus;
 		if ("Cell".equals(type)) 		return Cell;
 		if ("Brace".equals(type)) 		return Brace;
+		if ("GraphicalLine".equals(type)) return GraphicalLine;
 		if ("GroupComponent".equals(type)) return GroupComponent;
 		if ("ComplexComponent".equals(type)) return ComplexComponent;
 		if ("Mitochondria".equals(type)) return Mitochondria;

@@ -7,9 +7,12 @@ import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import javafx.geometry.Point2D;
+import javafx.scene.Group;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.CubicCurve;
 
 
-// UNUSED AT THIS TIME----??
 public class SegmentList extends ArrayList<Segment> {
 	/**
 	 * 
@@ -30,13 +33,16 @@ public class SegmentList extends ArrayList<Segment> {
 	  	Point2D startPt =  new Point2D(mStart.getX(), mStart.getY());
 	  	Point2D endPt =  new Point2D(mEnd.getX(), mEnd.getY());
   	
-	  	DataNode startNode = model.find(mStart.getGraphRef());
-	  	DataNode endNode = model.find(mEnd.getGraphRef());
-	  	if (startNode != null)
-	  		startPt = startNode.getAdjustedPoint(mStart);
-	  	if (endNode != null)
-	  		endPt = endNode.getAdjustedPoint(mEnd);
-	  	
+	  	if (model != null)
+	  	{
+	  		DataNode startNode = model.find(mStart.getGraphRef());
+	  	  	DataNode endNode = model.find(mEnd.getGraphRef());
+		  	if (startNode != null)
+		  		startPt = startNode.getAdjustedPoint(mStart);
+		  	if (endNode != null)
+		  		endPt = endNode.getAdjustedPoint(mEnd);
+	  	}
+		  	
 
 	  	int startSide = Segment.getSide(startRelX, startRelY);
 		if (startSide < 0)
@@ -135,16 +141,20 @@ public class SegmentList extends ArrayList<Segment> {
 	String[] sides = {  "North", "East", "South", "West" };
 	protected Point2D calculateWayPoint(Point2D start, Point2D end, int axis, int direction) {
 		double x,y = 0;
-		if(axis == Segment.AXIS_Y) {
-			x = start.getX() + (end.getX() - start.getX()) / 2;
+		if(axis == Segment.AXIS_Y) {	
+//			x = start.getX() + (end.getX() - start.getX()) / 2;			// AST hacked for WP4, is pbly conditional on if there are more waypoints
+			x = end.getX();
 			y = start.getY() + SEGMENT_OFFSET * direction;
 		} else {
 			x = start.getX() + SEGMENT_OFFSET * direction;
-			y = start.getY() + (end.getY() - start.getY()) / 2;
+//			y = start.getY() + (end.getY() - start.getY()) / 2;
+			y = end.getY();
 		}
 		return new Point2D(x, y);
 	}
 
+	
+	
 	protected void calculateSegments(Point2D start, Point2D end, int startSide, int endSide, Point2D[] waypts) {
 		int nrSegments = getNrSegments(start, end, startSide, endSide);
 		Segment[] segments = new Segment[nrSegments];
@@ -157,27 +167,30 @@ public class SegmentList extends ArrayList<Segment> {
 		} else 
 		{
 			prevSegment = segments[0] = Segment.createStraightSegment(start, waypts[0], startAxis );
-			int axis = Segment.getOppositeAxis(startAxis);
-			prevSegment = segments[1] = Segment.createStraightSegment(prevSegment.getEnd(), waypts[0], axis );
+			int otheraxis = Segment.getOppositeAxis(startAxis);
+//			prevSegment = segments[1] = Segment.createStraightSegment(prevSegment.getEnd(), waypts[0], otheraxis );
 //			axis = Segment.getOppositeAxis(axis);
 			
-			prevSegment = segments[2] = Segment.createStraightSegment(prevSegment.getEnd(), end, startAxis );
-//
-//			for(int i = 1; i < waypts.length; i++) {
-//				prevSegment = segments[2*i] = Segment.createStraightSegment( prevSegment.getEnd(), waypts[i], axis );
-//				int otheraxis = Segment.getOppositeAxis(axis);
-//				prevSegment = segments[2*i+1] = Segment.createStraightSegment( prevSegment.getEnd(), waypts[i], otheraxis );
-//			}
-			
-//			segments[segments.length - 2] = Segment.createStraightSegment( prevSegment.getEnd(), end, axis);
-//			segments[segments.length - 1] = Segment.createStraightSegment( prevSegment.getEnd(), end, Segment.getSegmentAxis(endSide));
+//			prevSegment = segments[2] = Segment.createStraightSegment(prevSegment.getEnd(), end, Segment.getSegmentAxis(endSide) );
+
+// AST hacked for WP4  -- won't work with more than 1 way point  TODO
+
+			for(int i = 1; i < waypts.length; i++) {
+				prevSegment = segments[2*i-1] = Segment.createStraightSegment( prevSegment.getEnd(), waypts[i], startAxis );
+				prevSegment = segments[2*i] = Segment.createStraightSegment( prevSegment.getEnd(), waypts[i], otheraxis );
+			}
+			Point2D lastWayPt =  waypts[waypts.length-1];
+			prevSegment = segments[segments.length - 2] = Segment.createStraightSegment( prevSegment.getEnd(), lastWayPt, otheraxis);
+			segments[segments.length - 1] = Segment.createStraightSegment( prevSegment.getEnd(), end, Segment.getSegmentAxis(endSide));
 		}
 		
 		for (Segment s : segments) 
-			if (s.length() > 0.01)
+			if (s != null && s.length() > 0.01)
 				add(s);
 			else System.out.println("Bad Segment: " + s);
 	}
+
+	
 	
 	protected int getNrSegments(Point2D start, Point2D end, int startSide, int endSide) {
 
@@ -228,8 +241,6 @@ public class SegmentList extends ArrayList<Segment> {
 
 	BLW		2	3	2	1
 	TLW		2	3	2	1
-		There should be some logic behind this, but hey, it's Friday...
-		(so we just hard code the array)
 		
 	BUG:  	There should be some cases where 4 is returned !!  
 		 */
@@ -244,5 +255,125 @@ public class SegmentList extends ArrayList<Segment> {
 			};
 			return waypointNumbers[x][y][z];
 		}
+		
+	double getLength()
+	{
+		double totLength = 0;
+		for (Segment seg : this)
+			totLength += seg.length();
+		return totLength;
+	}
 
+    protected Point2D fromLineCoordinate(double l) 
+    {
+		double totalLength = getLength();
+		double pixelsRemaining = totalLength * l;
+		if (pixelsRemaining < 0) pixelsRemaining = 0;
+		if (pixelsRemaining > totalLength) pixelsRemaining = totalLength;
+
+		// count off each segment from pixelsRemaining, until there aren't enough pixels left
+		Segment segment = null;
+		double slength = 0.0;
+		for(Segment s : this) 
+		{
+			slength = s.length();
+			segment = s;
+			if (pixelsRemaining < slength) 		break; // not enough pixels left, we found our segment.
+			pixelsRemaining -= slength;
+		}
+
+		//Find the location on the segment
+		Point2D s = segment.getStart();
+		Point2D e = segment.getEnd();
+
+		// protection against division by 0
+		if (slength == 0)
+			return new Point2D(s.getX(), s.getY());
+			// start from s, in the direction of e, for pixelRemaining pixels.
+		double deltax = e.getX() - s.getX();
+		double deltay = e.getY() - s.getY();
+
+		return new Point2D(s.getX() + deltax / slength * pixelsRemaining,
+				s.getY() + deltay / slength * pixelsRemaining );
+	}
+
+	 public Group makeCurveGroup(Interaction interaction, Double[] strokeDashArray)
+	{
+	    Group group = new Group();
+		Point2D line2End = new Point2D(0,0);
+		for (int i=0; i < size()-1; i++)
+		{
+//			Point2D a = points.get(i).getPoint();
+//			Point2D b = points.get(i+1).getPoint();
+//			Line line1 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
+//			Line line2 = new Line(a.getX(), a.getY(), b.getX(), b.getY());
+	//		Point2D lastPt = lastPoint();
+	
+			Segment seg = get(i);
+			Point2D line1Start = seg.getStart();
+			Point2D line1End = seg.getEnd();
+			
+			Segment nextseg = get(i+1);
+	        Point2D line2Start = nextseg.getStart();
+	        line2End = nextseg.getEnd();
+
+//	        getChildren().addAll(seg.getLine(), nextseg.getLine());
+//	        double line1Length = line1End.subtract(line1Start).magnitude();
+//	        double line2Length = line2End.subtract(line2Start).magnitude();
+//	
+//	        // average length:
+//	        double averLength = (line1Length + line2Length) / 2 ;
+	
+	        // extend line1 in direction of line1 for aveLength:
+//	        Point2D control1 = line1End.add(line1End.subtract(line1Start).normalize().multiply(2));
+//	        
+//	        // extend line2 in (reverse) direction of line2 for aveLength:
+//	        Point2D control2 = line2Start.add(line2Start.subtract(line2End).normalize().multiply(averLength));
+//		
+//	        control1 = new Point2D(line1End.getX() + 10, line1End.getY() + 40);
+//	        control2 = new Point2D(line2End.getX() - 10, line2End.getY() - 40);
+//	        CubicCurve curve = new CubicCurve(
+//	                line1End.getX(), line1End.getY(), 
+//	                control1.getX(), control1.getY(), 
+//	                control2.getX(), control2.getY(), 
+//	                line2Start.getX(), line2Start.getY());
+//	 2      CubicCurve curve = new CubicCurve(
+//	                line1Start.getX(), line1Start.getY(), 
+//	                line1End.getX(), line1End.getY(), 
+//	                line2Start.getX(), line2Start.getY(), 
+//	                line2End.getX(), line2End.getY());
+	
+	        Point2D mid = new Point2D((line1End.getX() + line2Start.getX()) /2, (line1End.getY() + line2Start.getY()) / 2);
+	        CubicCurve curve = new CubicCurve(
+	                line1Start.getX(), line1Start.getY(), 
+	                mid.getX(), mid.getY(), 
+	                line2Start.getX(), line2Start.getY(), 
+	                line2End.getX(), line2End.getY());
+	
+	        boolean showControlPoints = false;
+	        if (showControlPoints)
+	        {
+    			Circle controlPt1 = new Circle(20);
+    			controlPt1.setFill(Color.BLANCHEDALMOND);
+    			controlPt1.setStroke(Color.DARKGREEN);
+    			controlPt1.setCenterX(line2End.getX());
+    			controlPt1.setCenterY(line2End.getY());
+    			
+    			Circle controlPt2 = new Circle(13);
+    			controlPt2.setFill(Color.ROSYBROWN);
+    			controlPt2.setStroke(Color.DARKBLUE);
+    			controlPt2.setCenterX(line1Start.getX());
+    			controlPt2.setCenterY(line1Start.getY());
+    			group.getChildren().addAll(controlPt1,controlPt2);		//
+	        }
+	        curve.setFill(null);
+	        curve.setStroke(interaction.getColor());
+			double width = interaction.getStrokeWidth();
+			curve.setStrokeWidth(width);
+			if (strokeDashArray != null)
+				curve.getStrokeDashArray().setAll(strokeDashArray);
+			group.getChildren().add(curve);
+		}
+		return group;
+	}
 }

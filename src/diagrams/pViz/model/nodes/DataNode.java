@@ -1,11 +1,13 @@
 package diagrams.pViz.model.nodes;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.VNode;
-import javafx.collections.ObservableMap;
 import javafx.geometry.Point2D;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.XRefable;
@@ -81,38 +83,13 @@ public class DataNode extends XRefable {
 	public String getInfoStr()	{ return "HTML Template for " + getGraphId() + "\n" + toString();	}
 //	@Override public String toString()	{ return getGraphId() + " = " + getName();	}
 	
-	//--------------------------------------------------------
-	public String asGPML()
-	{
-		ObservableMap<Object, Object> pro = getStack().getProperties();
-		Object o = pro.get("TextLabel");
-		String textLabel = o == null ? "" : o.toString();
-		o = pro.get("Type");
-		String type = o == null ? "" : o.toString();
-		String header = "<DataNode TextLabel=\"%s\" GraphId=\"%s\" Type=\"%s\" >\n";
-		StringBuilder buffer = new StringBuilder(String.format(header, textLabel, getGraphId(), type));
-
-		String[] tokens = toString().split(" ");
-		String shape = tokens.length > 1 ? tokens[1] : "Error";
-		double w = getStack().getWidth();
-		double h = getStack().getHeight();
-		double cx = getStack().getLayoutX() + w / 2;
-		double cy = getStack().getLayoutY() + h / 2;
-		if (getShape() instanceof Rectangle)
-		{
-			Rectangle sh = (Rectangle) getShape();
-			cx = sh.getX() + w / 2;
-			cy = sh.getY() + h / 2;
-			if (sh.getArcWidth() > 0)
-				shape = "RoundedRectangle";
-		}
-		String graphics1 = String.format("  <Graphics CenterX=\"%.2f\" CenterY=\"%.2f\" Width=\"%.2f\" Height=\"%.2f\" ZOrder=\"32768\" ", cx, cy, w, h);
-		String graphics2 = String.format("FontWeight=\"%s\" FontSize=\"%d\" Valign=\"%s\" ShapeType=\"%s\"", "Bold", 12, "Middle", shape);
-		buffer.append(graphics1).append(graphics2).append(" />\n") ;
-		buffer.append("  <Xref Database=\"\" ").append("ID=\"\"").append("/>\n") ;
-		buffer.append("</DataNode>\n");
-		return buffer.toString();
-	}
+	public DataNodeGroup getGroup() {
+		String ref = get("GroupRef");
+		if (ref == null) return null;
+		Map<String, DataNodeGroup> map = model.getGroupMap();
+		DataNodeGroup gp = map.get(ref);
+		return gp;
+	}	
 	//---------------------------------------------------------------------------------------
 	public String toGPML()	{ 
 		copyPropertiesToAttributes();
@@ -168,8 +145,12 @@ public class DataNode extends XRefable {
 		String attributes = attributeList(attributeNames);
 		if (StringUtil.hasText(attributes))
 			bldr.append( "<Graphics ").append(attributes).append( " />\n");
+		if (points != null && !points.isEmpty())
+		{	// TODO stream points if its not empty
+			//must change lines above to terminate after the Points
+		}
 	}
-
+	// **-------------------------------------------------------------------------------
 	public Point2D  getAdjustedPoint(GPMLPoint gpmlPt)
 	{
 		if (gpmlPt == null) return new Point2D(0,0);
@@ -200,5 +181,15 @@ public class DataNode extends XRefable {
 		setSelectable(edit);
 		setConnectable(connect);
 	}
+	// **-------------------------------------------------------------------------------
+	// side case:  shapes are dataNodes, but they may be a path or GraphicalLine
+	
+	List<GPMLPoint> points = null;
+	public void addPointArray(List<GPMLPoint> pts) {
+		points = new ArrayList<GPMLPoint>();
+		points.addAll(pts);
+	}
+	public List<GPMLPoint> getGPMLPoints()	{ return points;	}
+
 
 }

@@ -71,6 +71,7 @@ public class Pasteboard extends PanningCanvas
 	private static final String INFO_LABEL_ID = "infoLabel";
 	private static final String ELEMENT_NAME = "Pasteboard";
 	private SceneGestures zoomScrollGestures;
+	private PaletteController palette;
 	//@formatter:on
 	/**-------------------------------------------------------------------------------
 	/**Canvas (Pane pane, Controller ctrl
@@ -81,17 +82,18 @@ public class Pasteboard extends PanningCanvas
 	public Pasteboard(Controller ctrl, Label label) 
 	{
 		super(ctrl, label);
+		palette = ctrl.getPalette();
 		setupMouseKeyHandlers();
 		setupPasteboardDrops();
-		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
+//		layoutBoundsProperty().addListener(e -> { resetGrid(); } ); 
         zoomScrollGestures = new SceneGestures(this);
 }
-public void bindGridProperties()
-{
-	editorProperties.snapToGridProperty().bind(getController().getInspector().snapToGridProperty());
-	editorProperties.gridSpacingProperty().set(25);		//AM grid space setting not in effect right now
-
-}
+	public void bindGridProperties()
+	{
+		editorProperties.snapToGridProperty().bind(getController().getInspector().snapToGridProperty());
+		editorProperties.gridSpacingProperty().set(25);
+	
+	}
 	//---------------------------------------------------------------------------------------
 
 	private Rectangle clipRect = new Rectangle();
@@ -278,7 +280,7 @@ public void bindGridProperties()
 	public void setState(String s)		
 	{
 		AttributeMap map = new AttributeMap(s);
-		controller.setTool(Tool.fromString(map.get("tool")));
+		palette.setTool(Tool.fromString(map.get("tool")));
 		infoLabel.setVisible(map.getBool("infoShown")); 
 		defaultFill = map.getPaint("fill");
 		defaultStroke = map.getPaint("stroke");
@@ -532,7 +534,7 @@ public void bindGridProperties()
 			startPoint = curPoint = null;
 			requestFocus();		// needed for the key event handler to receive events
 			if (!isPoly(getTool()))
-				resetTool();
+				palette.resetTool();
 			event.consume();
 		}
 	}
@@ -545,7 +547,7 @@ public void bindGridProperties()
 			removeMarquee();
 			startPoint = curPoint = null;
 			requestFocus();		// needed for the key event handler to receive events
-			resetTool();
+			palette.resetTool();
 			event.consume();
 		}
 	}
@@ -573,11 +575,11 @@ public void bindGridProperties()
 			else if (KeyCode.DELETE.equals(key)) 		getSelectionMgr().deleteSelection();		// create an undoable action
 			else if (KeyCode.BACK_SPACE.equals(key)) 	getSelectionMgr().deleteSelection();
 			
- 			else if (KeyCode.R.equals(key)) 	controller.setTool(Tool.Rectangle);
-			else if (KeyCode.C.equals(key)) 	controller.setTool(Tool.Circle);
-			else if (KeyCode.P.equals(key)) 	controller.setTool(Tool.Polygon);
-			else if (KeyCode.L.equals(key)) 	controller.setTool(Tool.Line);
-			else if (KeyCode.W.equals(key)) 	controller.setTool(Tool.Polyline);
+ 			else if (KeyCode.R.equals(key)) 	palette.setTool(Tool.Rectangle);
+			else if (KeyCode.C.equals(key)) 	palette.setTool(Tool.Circle);
+			else if (KeyCode.P.equals(key)) 	palette.setTool(Tool.Polygon);
+			else if (KeyCode.L.equals(key)) 	palette.setTool(Tool.Line);
+			else if (KeyCode.W.equals(key)) 	palette.setTool(Tool.Polyline);
 			
 //			else if (KeyCode.X.equals(key)) 	setTool(Tool.Xhair);
 			else if (KeyCode.ESCAPE.equals(key)) {		terminatePoly();  	removeDragLine(); }
@@ -606,8 +608,9 @@ public void bindGridProperties()
 		}
 	}	
 	//---------------------------------------------------------------------------
-	boolean sticky = false;
-	public Tool getTool()	{ return controller.getTool();	}
+	public Tool getTool()	{ return palette.getTool();	}
+	public void resetTool() {		palette.resetTool();		}
+
 	public void addComment(MouseEvent event) {
 		TextArea newText = new TextArea("Comments: ");
 		newText.setBackground(null);
@@ -643,29 +646,12 @@ public void bindGridProperties()
 		newText.setBackground(Background.EMPTY);
 	}
 
-	public void setTool(Tool t)
-	{
-		if (getTool() == t) sticky = true;
-		if (getTool() == Tool.Arrow) sticky = false;
-		controller.setTool(t);
-		activeStack = null;
-		if (verbose) 
-			System.out.println("Tool set to: " + t.toString() + (sticky ? "!!" : ""));
-	}
-	
-	public void resetTool()		
-	{		
-		activeStack = null;
-		if (sticky) return;
-		if (isPoly(getTool())) 	return;
-		controller.setTool(Tool.Arrow);	
-	}
+
 	public void resetPoly()		
 	{		
 		if (dragLine != null && dragLine.isVisible()) 
 			removeDragLine();
-		if (sticky) return;
-		controller.setTool(Tool.Arrow);	
+		palette.setTool(Tool.Arrow);	
 	}
 	
 	boolean isPoly(Tool t)	{		return (Tool.Polyline == t || Tool.Polygon == t);	}

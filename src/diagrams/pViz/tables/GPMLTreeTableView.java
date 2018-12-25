@@ -1,4 +1,4 @@
-package diagrams.pViz.gpml;
+package diagrams.pViz.tables;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,6 +9,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import diagrams.pViz.app.Controller;
+import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
@@ -89,11 +90,13 @@ System.out.println("stateChanged " + e.toString());
 	        TreeTableColumn<XRefable, String> xrefdbCol = new TreeTableColumn<>("Database");
 	        TreeTableColumn<XRefable, String> xrefidCol = new TreeTableColumn<>("ID");
 	        TreeTableColumn<XRefable, String> graphidCol = new TreeTableColumn<>("Graph Id");
+	        TreeTableColumn<XRefable, String> groupRefCol = new TreeTableColumn<>("Group");
 		
 	        nodeCol.setPrefWidth(150);
 	        xrefdbCol.setPrefWidth(80);
 	        xrefidCol.setPrefWidth(125);
 	        graphidCol.setPrefWidth(65);
+	        groupRefCol.setPrefWidth(65);
 	     
 	        nodeCol.setCellValueFactory(
 	                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
@@ -107,6 +110,14 @@ System.out.println("stateChanged " + e.toString());
 	                {
 	                	XRefable g = param.getValue().getValue();
 	        			String s = (g == null) ? "" : g.getGraphId();
+	        	        return  new ReadOnlyStringWrapper(s);
+	                 }
+	                );
+	        groupRefCol.setCellValueFactory(
+	                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
+	                {
+	                	XRefable g = param.getValue().getValue();
+	        			String s = (g == null) ? "" : g.getGroupRef();
 	        	        return  new ReadOnlyStringWrapper(s);
 	                 }
 	                );
@@ -151,7 +162,7 @@ System.out.println("stateChanged " + e.toString());
 			//-------
 //			nodeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 	        treeView.getColumns().clear();		// throw away the definition from the fxml !
-	        treeView.getColumns().setAll(nodeCol, xrefdbCol, xrefidCol, graphidCol);
+	        treeView.getColumns().setAll(nodeCol, xrefdbCol, xrefidCol, graphidCol, groupRefCol);
 //	        treeView.setRowFactory((a) -> {
 //			       return new DraggableTreeTableRow<XRefable>(treeView, Controller.GENE_MIME_TYPE, this, controller.getGeneSetRecord());
 //				});

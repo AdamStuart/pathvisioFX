@@ -3,14 +3,11 @@ package diagrams.pViz.view;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
+import diagrams.pViz.model.nodes.DataNodeGroup;
 import gui.Action.ActionType;
 import javafx.event.EventHandler;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Shape;
-import model.stat.RelPosition;
 
 /**
  * Listeners for making the nodes draggable via left mouse button. Considers if parent is zoomed.
@@ -36,8 +33,11 @@ public class VNodeGestures {
         public void handle(MouseEvent event) {
 
             // left mouse button => dragging
-            if( !event.isPrimaryButtonDown())
-                return;
+            if( event.isSecondaryButtonDown())
+            {
+            	vNode.doContextMenu(event);
+            	return;
+            }
 
             nodeDragContext.mouseAnchorX = event.getSceneX();
             nodeDragContext.mouseAnchorY = event.getSceneY();
@@ -97,11 +97,8 @@ public class VNodeGestures {
         	}
 //    		super.handleMouseDragged(event);
 //    		 vNode.handleResize(ex, ey);
-    		Selection sele = getController().getSelectionManager();
     		 if (vNode.isSelected())
             {	
-            		
-            		
                	double dx = 0;
             	double dy = 0;
             	if (localLastMouseX > 0 && localLastMouseY > 0)
@@ -110,22 +107,31 @@ public class VNodeGestures {
             		dy = localLastMouseY - ey;
             	}
             	
-            	sele.translate(dx,dy, vNode);
+        		Selection sele = getController().getSelectionManager();
+        		sele.translate(dx,dy, vNode);
             	sele.extract();
             	localLastMouseX = ex;
             	localLastMouseY = ey;
+            	if (vNode.modelNode() instanceof DataNodeGroup)
+            		((DataNodeGroup)vNode.modelNode()).moveMembers(dx, dy);
+            	
+            	if (vNode.isInCompoundNode())
+            	{
+            		System.out.println("compund node recalc");
+            		vNode.getGroup().calcBounds();
+            	}
             }
             event.consume();
 
         }
     };
     
-protected void handleMouseDragged(final MouseEvent event) {
-		
-		}
+//protected void handleMouseDragged(final MouseEvent event) {
+//		
+//		}
 
 
-double localLastMouseX = -1; 
+    double localLastMouseX = -1; 
 	double localLastMouseY = -1; 
 	
 
