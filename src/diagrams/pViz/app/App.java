@@ -3,6 +3,7 @@ package diagrams.pViz.app;
 import java.net.URL;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import diagrams.pViz.model.GeneModel;
@@ -23,6 +24,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
@@ -170,6 +172,24 @@ import util.FileUtil;
 	}
 
 //---------------------------------------------------------------------------------------
+// TODO show searchable list as browsePathways does
+	
+	static public  String choosePathway(Controller parent)		
+	{
+		TextInputDialog dialog = new TextInputDialog("WP430");
+		dialog.setTitle("Pathway Information Dialog");
+		dialog.setHeaderText("This connects to WikiPathways.org to search its database");
+		dialog.setContentText("What is the id number?");
+
+		// Traditional way to get the response value.
+		Optional<String> result = dialog.showAndWait();
+		if (result.isPresent())
+		    return result.get();
+
+		return "WP4";
+
+	}
+	
 	static public  void browsePathways(Controller parent)		
 	{
 		Stage browserStage = new Stage();

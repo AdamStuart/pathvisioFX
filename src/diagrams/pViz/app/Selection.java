@@ -142,6 +142,12 @@ public class Selection
 		getController().modelChanged();  
 	}
 	//--------------------------------------------------------------------------
+	public void lockSelection(boolean lock)	
+	{
+		for (VNode n : items)
+			n.applyEditable(!lock, !lock, !lock, !lock);
+	}
+	//--------------------------------------------------------------------------
 	boolean isGrid(VNode node) { return node != null && node.getId() != null && node.getId().contains("grid"); }
 
 	public void duplicateSelection()	
@@ -452,11 +458,12 @@ public class Selection
 	}
 	
 	//--------------------------------------------------------------------------
+// TODO streams
 	@Override	public String toString()	{		return items.size() + " selected";	}
 	public void applyLocks(boolean movable, boolean resizable, boolean editable, boolean connectable) {
 		for (Node n : items)
 			if (n instanceof VNode)
-				((VNode)n).applyLocks(movable, resizable, editable,connectable);
+				((VNode)n).applyEditable(movable, resizable, editable,connectable);
 	}
 	public void setMovable(boolean b)	{ 
 		for (Node n : items)

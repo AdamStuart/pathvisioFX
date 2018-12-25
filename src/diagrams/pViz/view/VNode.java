@@ -3,10 +3,11 @@ package diagrams.pViz.view;
 import java.util.ArrayList;
 import java.util.List;
 
+import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.GPML;
-import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
@@ -15,11 +16,7 @@ import diagrams.pViz.util.ResizableBox;
 import gui.Backgrounds;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
@@ -28,20 +25,15 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
-import javafx.scene.control.TableView;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.InnerShadow;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.ClosePath;
-import javafx.scene.shape.Line;
 import javafx.scene.shape.LineTo;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -75,16 +67,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	private ControlFactory controlFactory;
 	private VNodeGestures gestures;
 	
-	public VNode clone()
-	{
-		return new VNode(this);
-	}
-	public VNode(VNode orig)		 {		 this(orig.modelNode(), orig.pasteboard);	}
-	public void setScale(double x)
-	{
-		setScaleX(x);
-		setScaleY(x);
-	}
+	// **-------------------------------------------------------------------------------
 	public VNode(DataNode modelNode, Pasteboard p)
 	{
 		super(p);
@@ -123,6 +106,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		addGraphIdDisplay();
 		addZOrderDisplay();
 		setZOrder();
+		addLockDisplay();
 		createFigure();
 		String shapeType = dataNode.get("ShapeType");
         if (shapeType == null) shapeType = "";
@@ -140,6 +124,18 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
  		pasteboard.add(this);
 	}
 	// **-------------------------------------------------------------------------------
+	public VNode clone()
+	{
+		Model m = modelNode().getModel();
+		return new VNode(new DataNode(getAttributes(), m), pasteboard);
+	}
+	
+	public void setScale(double x)
+	{
+		setScaleX(x);
+		setScaleY(x);
+	}
+	// **-------------------------------------------------------------------------------
 	public void addGraphIdDisplay()
 	{
 		String id = modelNode().get("GraphId");
@@ -148,7 +144,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}	
 	public void setZOrder()
 	{
-		zOrderLabel.setText(dataNode.get("ZOrder"));
+		String z = dataNode.get("ZOrder");
+		zOrderLabel.setText(z);
 	}
 	public void addZOrderDisplay()
 	{
@@ -157,8 +154,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}	
 	public void addLockDisplay()
 	{
-		lockLabel = new Label("Z");
-		addAnnotation(lockLabel, getController().getInspector().lockVisibleProperty(),Pos.BOTTOM_RIGHT, 0, -10);
+		lockLabel = new Label("");
+		addAnnotation(lockLabel, getController().getInspector().lockVisibleProperty(),Pos.BOTTOM_RIGHT, 0, 20);
 	}	
 	
 	public void addAnnotation(Label label, BooleanProperty visibility, Pos align, double offsetX, double offsetY)
@@ -215,15 +212,25 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		EventType<? extends MouseEvent> type = event.getEventType();
 		boolean inside = type.equals(MouseEvent.MOUSE_ENTERED) || type.equals(MouseEvent.MOUSE_MOVED);
 		setEffect((selected || inside) ? effect : null);
-		showPorts(showPorts && inside);
+		showPorts(showPorts && (selected || inside));
 	}
 
 	// **-------------------------------------------------------------------------------
-	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
-		dataNode.applyLocks(mov, resiz, edit, connect);
+	public void applyEditable(boolean mov, boolean resiz, boolean edit, boolean connect) {
+		dataNode.applyEditable(mov, resiz, edit, connect);
 		setResize(resiz);
+		String s;
+		if (!mov) 			s = "LOCK";
+		else if (!resiz) 	s = "FIX";
+		else s = "";
+		lockLabel.setText(s);
 	}
-	public boolean canResize()
+    @Override public boolean isMovable()	
+    { 
+    	return dataNode.isMovable();	
+    }
+
+    @Override public boolean canResize()
 	{
 		return dataNode.isResizable(); // super.canResize();
 	}
@@ -318,6 +325,13 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (figure != null)
 			setScaleShape(false);
 	}
+	
+	public void setBackgroundImage(Image img)
+	{
+		if (img != null)
+			getChildren().add(0,controlFactory.makeImageView(img));
+	}
+
  	// **-------------------------------------------------------------------------------
 
 	public String getLayerName() 		{	return getAttributes().get("Layer");	}
@@ -333,7 +347,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //		double h = getAttributes().getDouble("Height",20);
 //		fill(x,y,w,h, getText(), getId());
 //	}
-//	
+
+	//	the node has moved onscreen.  suck in the change, write attributes of the model. redraw edges
 	public void extractPosition()
 	{
 		Bounds b = getBoundsInParent();
@@ -347,7 +362,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		dataNode.putDouble("CenterY", minY + h / 2);
 		dataNode.putDouble("Width", w);
 		dataNode.putDouble("Height", h);
-		getController().redrawEdgesToMe(this);
+		getController().redrawMyEdges(this);
 	}
 	public double getCenterX()	{ return dataNode.getDouble("CenterX");	}
 	public double getCenterY()	{ return dataNode.getDouble("CenterY");	}
@@ -398,6 +413,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		getChildren().add(text);
 	}
 
+	// **-------------------------------------------------------------------------------
 	public void addState(DataNodeState statenode) {
 		String label = statenode.get("TextLabel");		// getName includes "State:"
 		addBadge(label);
@@ -420,6 +436,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
  
 
+	// **-------------------------------------------------------------------------------
 	public void getInfo() {		
 		String biopaxRef = getAttributes().get("BiopaxRef");
 		if (biopaxRef != null)
@@ -431,8 +448,13 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 				return;
 			}
 		}
-		String s = modelNode().getInfoStr();
-		   if (StringUtil.hasText(s))
+		DataNode model = modelNode();
+		String s = model.getInfoStr();
+		if ("Pathway".equals(model.getShapeType()))
+		{
+			String id = App.choosePathway(pasteboard.getController());
+		}
+		else   if (StringUtil.hasText(s))
 		   {  
 			   Alert a = new Alert(AlertType.INFORMATION, s);
 			   a.setHeaderText("Other Component Information");
@@ -442,67 +464,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		   }		
 		System.out.println(s);		 	// get as HTML and Open in Browser
 	}
-	@Override
-    protected void handleMousePressed(final MouseEvent event) {
-		super.handleMousePressed(event);
-	}
-
-	// **-------------------------------------------------------------------------------
-		@Override protected void doContextMenu(MouseEvent event) {
-		ContextMenu menu = new ContextMenu();
-		menu.getItems().addAll(getMenuItems(event));
-		menu.show(pasteboard, event.getScreenX(), event.getScreenY());	
-		event.consume();
-	}
-
-	public List<MenuItem> getMenuItems(MouseEvent event) {
-		ObservableList<MenuItem> list = FXCollections.observableArrayList();
-		//System.out.println("ContextMenu");
-		int nKids = getChildren().size();
-		Controller controller = getController();
-		if (nKids > 0)
-		{
-			Node content = getChildren().get(0);
-			if (content instanceof TableView)
-			{
-				MenuItem scatter = makeItem("Make Scatter Chart", e -> {});
-				MenuItem timeseries = makeItem("Make Time Series", e -> {});
-				SeparatorMenuItem sep = new SeparatorMenuItem();
-				list.addAll(new MenuItem[] {scatter, timeseries, sep});
-			}
-		}
-		MenuItem toFront = 	makeItem("Bring To Front", e -> {   controller.toFront();   });
-		MenuItem toBack = 	makeItem("Send To Back", e -> {   	controller.toBack();   });
-		Menu toLayer = 		makeLayerMenu();
-		MenuItem dup = 		makeItem("Duplicate", a -> 	{		controller.duplicateSelection();	});
-		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
-		MenuItem group = 	makeItem("Group", e ->		{		controller.group();    });
-		MenuItem ungroup = 	makeItem("Ungroup", a -> 	{		controller. ungroup();	});
-		list.addAll(toFront, toBack, toLayer, dup, del); 
-		if (controller.getSelectionManager().isGroupable())	list.add(group);   
-		if (isGroup())					list.add(ungroup);   
-		return list;
-	}
-
-	private MenuItem makeItem(String name, EventHandler<ActionEvent> foo) {
-		MenuItem item = new MenuItem(name);
-		item.setOnAction(foo);
-		return item;
-	}
-
-	private Menu makeLayerMenu() {
-		Menu menu = new Menu("Move To Layer");
-		for (LayerRecord layer : getController().getLayers())
-		{
-			MenuItem item = new MenuItem(layer.getName());
-			menu.getItems().add(item);
-			item.setOnAction(e -> 	
-			{ 	
-				getController().moveSelectionToLayer(layer.getName());  
-			});
-		}
-		return menu;
-	}
+//	@Override
+//    protected void handleMousePressed(final MouseEvent event) {
+//		super.handleMousePressed(event);
+//	}
 
 
 	// **------------------------------------------------------------------------------
@@ -664,17 +629,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	@Override public void finishDragLine(MouseEvent event) {
 		if (pasteboard.getDragLine() != null) {
-			double halfWidth = getWidth() / 2.0;
-			double halfHeight = getHeight() / 2.0;
-			double x = event.getSceneX();
-			double y = event.getSceneY();
-			double centerX = getLayoutX() + halfWidth;
-			double centerY = getLayoutY() + halfHeight;
-			Point2D local = pasteboard.sceneToLocal(new Point2D(x, y));
-
-			double relX = (local.getX() - centerX) / halfWidth;
-			double relY = (local.getY() - centerY) / halfHeight;
-			RelPosition pos = new RelPosition(relX, relY);
+			
+			RelPosition pos = eventToRelPosition(event);
 			finishDragLine(this, pos);
 			event.consume();
 		}
@@ -690,6 +646,23 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void finishDragLine( ResizableBox target, RelPosition relPos)
 	{
 		pasteboard.connectTo(target, relPos);
+	}
+	
+	// convert the mouse position into two (-1 - 1) ranges based on my center
+	RelPosition eventToRelPosition(MouseEvent event)
+	{
+		double halfWidth = getWidth() / 2.0;
+		double halfHeight = getHeight() / 2.0;
+		double x = event.getSceneX();
+		double y = event.getSceneY();
+		double centerX = getLayoutX() + halfWidth;
+		double centerY = getLayoutY() + halfHeight;
+		Point2D local = pasteboard.sceneToLocal(new Point2D(x, y));
+
+		double relX = (local.getX() - centerX) / halfWidth;
+		double relY = (local.getY() - centerY) / halfHeight;
+		RelPosition pos = new RelPosition(relX, relY);
+		return pos;
 	}
 	
 	public boolean isInCompoundNode() {

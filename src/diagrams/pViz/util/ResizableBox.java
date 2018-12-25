@@ -175,65 +175,65 @@ abstract public class ResizableBox extends DraggableBox {
         return mouseInPositionForResize;
     }
 
-    protected void getInfo() {		System.out.println("getInfo");}  //TODO  abstract
-	protected void doContextMenu(final MouseEvent event) {		System.out.println("doContextMenu");}  //TODO  abstract
+//    protected void getInfo() {		System.out.println("getInfo");}  //TODO  abstract
+//	protected void doContextMenu(final MouseEvent event) {		System.out.println("doContextMenu");}  //TODO  abstract
 	
     DragContext nodeDragContext = new DragContext();
-	@Override
-    protected void handleMousePressed(final MouseEvent event) {
-
-        if (event.getClickCount() > 1)	   {	getInfo(); 	event.consume();   return; }
-        super.handleMousePressed(event);
-
-        if (!(getParent() instanceof Region)) {
-            return;
-        } else if (!event.getButton().equals(MouseButton.PRIMARY)) {
-            setCursor(null);
-            return;
-        }
-
-        storeClickValuesForResize(event.getX(), event.getY());
-
-        nodeDragContext.mouseAnchorX = event.getSceneX();
-        nodeDragContext.mouseAnchorY = event.getSceneY();
-
-        Node node = (Node) event.getSource();
-
-        nodeDragContext.translateAnchorX = node.getTranslateX();
-        nodeDragContext.translateAnchorY = node.getTranslateY();
-	   }
-
-    @Override
-    protected void handleMouseDragged(final MouseEvent event) {
-
+//	@Override
+//    protected void handleMousePressed(final MouseEvent event) {
+//
+//        if (event.getClickCount() > 1)	   {	getInfo(); 	event.consume();   return; }
+//        super.handleMousePressed(event);
+//
 //        if (!(getParent() instanceof Region)) {
 //            return;
-//        } else 
-        	if (!event.getButton().equals(MouseButton.PRIMARY)) {
-            setCursor(null);
-            return;
-        }
-        Point2D evPt = new Point2D(event.getX(), event.getY());
-        Point2D local =  sceneToLocal(evPt);
-        	storeClickValuesForResize(event.getX(), event.getY());
-        if (!dragActive) {
-            storeClickValuesForDrag(event.getX(), event.getY());
-            storeClickValuesForResize(event.getX(), event.getY());
-        }
-
-        if (RectangleMouseRegion.INSIDE.equals(lastMouseRegion)) 
-        {
-        	if (isMovable())	
-            	super.handleMouseDragged(event);
-        	
-        }
-       else if (!RectangleMouseRegion.OUTSIDE.equals(lastMouseRegion)) 
-            if (canResize())	
-            	handleResize(event.getSceneX(), event.getSceneY());
-
-        dragActive = true;
-        event.consume();
-    }
+//        } else if (!event.getButton().equals(MouseButton.PRIMARY)) {
+//            setCursor(null);
+//            return;
+//        }
+//
+//        storeClickValuesForResize(event.getX(), event.getY());
+//
+//        nodeDragContext.mouseAnchorX = event.getSceneX();
+//        nodeDragContext.mouseAnchorY = event.getSceneY();
+//
+//        Node node = (Node) event.getSource();
+//
+//        nodeDragContext.translateAnchorX = node.getTranslateX();
+//        nodeDragContext.translateAnchorY = node.getTranslateY();
+//	   }
+//
+//    @Override
+//    protected void handleMouseDragged(final MouseEvent event) {
+//
+////        if (!(getParent() instanceof Region)) {
+////            return;
+////        } else 
+//        	if (!event.getButton().equals(MouseButton.PRIMARY)) {
+//            setCursor(null);
+//            return;
+//        }
+//        Point2D evPt = new Point2D(event.getX(), event.getY());
+//        Point2D local =  sceneToLocal(evPt);
+//        	storeClickValuesForResize(event.getX(), event.getY());
+//        if (!dragActive) {
+//            storeClickValuesForDrag(event.getX(), event.getY());
+//            storeClickValuesForResize(event.getX(), event.getY());
+//        }
+//
+//        if (RectangleMouseRegion.INSIDE.equals(lastMouseRegion)) 
+//        {
+//        	if (isMovable())	
+//            	super.handleMouseDragged(event);
+//        	
+//        }
+//       else if (!RectangleMouseRegion.OUTSIDE.equals(lastMouseRegion)) 
+//            if (canResize())	
+//            	handleResize(event.getSceneX(), event.getSceneY());
+//
+//        dragActive = true;
+//        event.consume();
+//    }
 	public void addPortHandlers(Shape port)
 	{		
 		port.addEventHandler(MouseEvent.MOUSE_MOVED, e ->  { 	if (pasteboard.getDragLine() != null) return; 	port.setFill(portFillColor( EState.ACTIVE)); });
@@ -259,10 +259,9 @@ abstract public class ResizableBox extends DraggableBox {
 			port.setFill(Color.AQUAMARINE); 
 			String id = port.getId();
 			Pos pos = RelPosition.idToPosition(id);
-			pasteboard.startDragLine(node, pos, node.getLayoutX(), node.getLayoutY());
+			pasteboard.startDragLine(node, pos, node, pos, node.getLayoutX(), node.getLayoutY());
 		}
-
-		if (pasteboard.getTool().isArrow())
+		else if (pasteboard.getTool().isArrow())
 			handleResize(e);
 		
 		e.consume();
@@ -279,13 +278,18 @@ abstract public class ResizableBox extends DraggableBox {
 			handleResize(e);
 		e.consume();
 	}
-//	public boolean canResize()	{	return resizable;	}
+	private boolean resizing = false;
+	public boolean isResizing()	{	return resizing;	}
+	public void stopResizing()	{	resizing = false;	}
 	public void handleResize(MouseEvent event)
 	{
 		if (canResize())
 		{
-	        storeClickValuesForResize(event.getSceneX(), event.getSceneY());
-			handleResize(event.getSceneX(), event.getSceneY());
+			resizing = true;
+		    lastWidth = getWidth();
+		    lastHeight = getHeight();
+		    lastMouseRegion = getMouseRegion(event.getX(), event.getY());
+			handleResize(event.getX(), event.getY());
 			ShapeFactory.resizeFigureToNode((VNode)this);
 		}
 	}
@@ -309,7 +313,7 @@ abstract public class ResizableBox extends DraggableBox {
 			Shape port = null;
 			if (i % 2 == 0) 
 				port = new Rectangle(5,5);
-			else  port = new Circle(3);
+			else  port = new Circle(5);
 			port.setFill(portFillColor(EState.STANDBY));
 			port.setStroke(Color.MEDIUMAQUAMARINE);
 			addPortHandlers(port);
@@ -374,44 +378,33 @@ abstract public class ResizableBox extends DraggableBox {
 
 	    if (event.isPrimaryButtonDown())            return;
 	    final RectangleMouseRegion mouseRegion = getMouseRegion(event.getX(), event.getY());
+	    System.out.println("" + mouseRegion);
 	    mouseInPositionForResize = !mouseRegion.equals(RectangleMouseRegion.INSIDE);
 	    updateCursor(mouseRegion);
 	}
-   /**
-     * Stores relevant layout values at the time of the last mouse click (mouse-pressed event).
-     *
-     * @param x the x position of the click event
-     * @param y the y position of the click event
-     */
-    public void storeClickValuesForResize(final double x, final double y) {
-
-        lastWidth = getWidth();
-        lastHeight = getHeight();
-
-        lastMouseRegion = getMouseRegion(x, y);
-    }
-
-    /**
+     /**
      * Handles a resize event to the given cursor position.
      *
      * @param x the cursor scene-x position
      * @param y the cursor scene-y position
      */
-    protected void handleResize(final double x, final double y) {
+    public void handleResize(final double x, final double y) {
 
     	if (!canResize()) return;
     	if (lastMouseRegion == null )return;
-        switch (lastMouseRegion) {
-        case NORTHEAST:    handleResizeNorth(y);            handleResizeEast(x);            break;
-        case NORTHWEST:    handleResizeNorth(y);            handleResizeWest(x);            break;
-        case SOUTHEAST:    handleResizeSouth(y);            handleResizeEast(x);            break;
-        case SOUTHWEST:    handleResizeSouth(y);            handleResizeWest(x);            break;
-        case NORTH:        handleResizeNorth(y);       	break;
-        case SOUTH:        handleResizeSouth(y);      	break;
-        case EAST:         handleResizeEast(x);         break;
-        case WEST:         handleResizeWest(x);         break;
-        case INSIDE:
-        case OUTSIDE:							        break;
+//        System.out.println(lastMouseRegion);
+    	switch (lastMouseRegion) 
+    	{
+	        case NORTHEAST:    handleResizeNorth(y);        handleResizeEast(x);    break;
+	        case NORTHWEST:    handleResizeNorth(y);        handleResizeWest(x);    break;
+	        case SOUTHEAST:    handleResizeSouth(y);        handleResizeEast(x);    break;
+	        case SOUTHWEST:    handleResizeSouth(y);        handleResizeWest(x);    break;
+	        case NORTH:        handleResizeNorth(y);       	break;
+	        case SOUTH:        handleResizeSouth(y);      	break;
+	        case EAST:         handleResizeEast(x);         break;
+	        case WEST:         handleResizeWest(x);         break;
+	        case INSIDE:
+	        case OUTSIDE:							        break;
         }
     }
 
@@ -456,6 +449,7 @@ abstract public class ResizableBox extends DraggableBox {
 
         setLayoutY(newLayoutY);
         setHeight(newHeight);
+        System.out.println(String.format("%.2f, %.2f",  newLayoutY, newHeight));
     }
 
     /**
@@ -586,9 +580,10 @@ abstract public class ResizableBox extends DraggableBox {
 
         final double width = getWidth();
         final double height = getHeight();
-
-        if (x < 0 || y < 0)				return RectangleMouseRegion.OUTSIDE;
-        if (x > width || y > height) 	return RectangleMouseRegion.OUTSIDE;
+        System.out.println(String.format("%.1f, %.1f", x, y));
+        if (x < -10 || y < -10)				return RectangleMouseRegion.OUTSIDE;
+        if (x > width + 20 || y > height + 20) 	
+        	return RectangleMouseRegion.OUTSIDE;
  
         final boolean isNorth = y < resizeBorderTolerance;
         final boolean isSouth = y > height - resizeBorderTolerance;

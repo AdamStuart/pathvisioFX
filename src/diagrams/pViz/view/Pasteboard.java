@@ -20,6 +20,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -68,7 +69,6 @@ import util.StringUtil;
 public class Pasteboard extends PanningCanvas
 {
 	//@formatter:off
-	private static final String INFO_LABEL_ID = "infoLabel";
 	private static final String ELEMENT_NAME = "Pasteboard";
 	private SceneGestures zoomScrollGestures;
 	private PaletteController palette;
@@ -316,23 +316,33 @@ public class Pasteboard extends PanningCanvas
 
 	private Point2D startPoint = null;		// remember where the mouse was pressed
 	private Point2D curPoint = null;		// mouse location in current event
-	private EdgeLine dragLine = null;			// a polyline edge
+	private EdgeLine dragLine = null;		// a polyline edge
 	private VNode dragLineSource = null;	// the node where the dragLine starts
 	private Pos dragLinePosition = null;	// the port of the node where the dragLine starts
+	private VNode dragPolyLineSource = null;	// in the case of a polyLine, where the first segment starts
+	private Pos dragPolyLinePosition = null;	// in the case of a polyLine, the port where the first segment starts
 	
 	public EdgeLine getDragLine() { return dragLine;	}
 	public VNode getDragSource() { return dragLineSource;	}
 	public Pos getDragSourcePosition () { return dragLinePosition;	}
+	public VNode getPolyDragSource() { return dragPolyLineSource;	}
+	public Pos getPolyDragSourcePosition () { return dragPolyLinePosition;	}
 
 	static boolean verbose = false;
 
 //
+	public void startDragLine(VNode polyLineStart, Pos polylinePosition, VNode source, Pos srcPosition, double x, double y) {
+		dragPolyLineSource = polyLineStart;
+		dragPolyLinePosition = polylinePosition;
+		startDragLine( source,  srcPosition,  x,  y); 
+	}
+	
 	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
 		EdgeType edgeType = getController().getCurrentLineBend();
 		ArrowType arrow = getController().getCurrentArrowType();
 		Point2D startPt = new Point2D(x,y);
 		if (source != null)
-			source.getPortPosition( srcPosition);
+			startPt = source.getPortPosition( srcPosition);
 		dragLine = new EdgeLine(edgeType, startPt);
 //		dragLine.setArrowType(arrow);
 		dragLineSource = source;
@@ -340,9 +350,14 @@ public class Pasteboard extends PanningCanvas
 
 		dragLine.setStroke(Color.AQUA);
 		dragLine.setStrokeWidth(2);
+		dragLine.setArrowhead(arrow);
 		add(dragLine); 
 	}
 	
+	public void addPoint()
+	{
+		
+	}
 	public void removeDragLine() {
 		if (dragLine != null)
 		{
@@ -350,13 +365,41 @@ public class Pasteboard extends PanningCanvas
 			dragLine = null;
 			dragLinePosition = null;
 			dragLineSource = null;
+			dragPolyLinePosition = null;
+			dragPolyLineSource = null;
 		}
 	}
 	
 	private void setDragLine(MouseEvent event) {
 		if (dragLine != null)
+		{
 			dragLine.setEndPoint(new Point2D(event.getX(), event.getY())); 
+			dragLine.connect();
+		}
 	}
+	//---------------------------------------------------------------------------
+	// add the interaction from the stored dragSource and dragSourcePosition to this vNode at relPos
+	public void connectTo(ResizableBox vNode, RelPosition relPos ) {
+		if (dragLine == null) return;  	// shouldn't happen
+		VNode src = getPolyDragSource();
+		Pos srcPos = getPolyDragSourcePosition();
+		if (src == null) return;  	// shouldn't happen
+		
+		if (relPos.isInside()) 
+			relPos = relPos.moveToEdge();
+		
+		if (src != vNode)
+		{
+			ArrowType arrow = getController().getCurrentArrowType();
+			EdgeType edge = getController().getCurrentLineBend();
+			Interaction i = new Interaction(getModel(), src, srcPos, vNode, relPos, arrow, edge );
+			removeDragLine();
+			controller.addInteraction(i);
+			controller.redrawMyEdges((VNode) vNode);
+			controller.modelChanged();
+		}
+	}
+
 	//-----------------------------------------------------------------------------------------------------------
 	private final class MousePressedHandler implements EventHandler<MouseEvent> 
 	{
@@ -373,11 +416,14 @@ public class Pasteboard extends PanningCanvas
 			Tool tool = getTool();
 			if (tool == Tool.Polyline)
 			{
-				startPolyline(event);
+				if (dragLine != null)
+					; //dragLine.addPoint(event);
+				else	
+					startPolyline(event);
 				return;
 			}	
-			if (dragLine != null)				// TODO -- tool depenedent?
-				removeDragLine();
+//			if (dragLine != null)				// TODO -- tool depenedent?
+//				removeDragLine();
 			
 			Shape activeShape = getActiveShape();
 			double x = event.getX(), y = event.getY();
@@ -545,7 +591,15 @@ public class Pasteboard extends PanningCanvas
 	//---------------------------------------------------------------------------
 	private final class MouseMovedHandler implements EventHandler<MouseEvent> 
 	{
-		@Override public void handle(final MouseEvent event) 	{		setDragLine(event);	}   // TODO report position?
+		@Override public void handle(final MouseEvent event) 	
+		{		
+			if (getTool().isPencil())
+				setCursor(Cursor.CROSSHAIR);
+			else
+				setCursor(Cursor.DEFAULT);
+			
+			setDragLine(event);	
+		}   // TODO report position?
 	}
 	//---------------------------------------------------------------------------
 	/** 
@@ -656,21 +710,14 @@ public class Pasteboard extends PanningCanvas
 	public void setDefaultFill(Paint p)		{	defaultFill = p;	}
 	public void setDefaultStroke(Paint p)	{	defaultStroke = p;	}
 	
-//	double currentZoom = 1.0;
-//	public void setZoom(double value) {
-//		double scale = Math.pow(2.0, value);
-//		Scale sc = new Scale(scale, scale, 1, 500, 500, 0);
-//		getTransforms().clear();		
-//		getTransforms().add(sc);
-//		currentZoom = value;
-//	}
-		//---------------------------------------------------------------------------
+	//---------------------------------------------------------------------------
 	public void resetLayerVisibility(String layername, boolean vis) {
 		if (layername == null) return;
 		List<Node> layerNodes = getChildrenInLayer(layername);
 		for (Node n : layerNodes)
 			n.setVisible(vis);
 	}
+	
 	public void resetLayerLock(String layername, boolean lock) {
 		if (layername == null) return;
 		List<Node> layerNodes = getChildrenInLayer(layername);
@@ -681,27 +728,5 @@ public class Pasteboard extends PanningCanvas
 		}
 	}
 	public void selectByType(String s) {	System.out.println("selectByType " + s); 			}
-
-	public void connectTo(ResizableBox vNode, RelPosition relPos ) {
-		if (dragLine == null) return;  	// shouldn't happen
-		VNode src = getDragSource();
-		Pos srcPos = getDragSourcePosition();
-		if (src == null) return;  	// shouldn't happen
-		
-		if (relPos.isInside()) 
-			relPos = relPos.moveToEdge();
-		
-		if (src != vNode)
-		{
-			ArrowType arrow = getController().getCurrentArrowType();
-			EdgeType edge = getController().getCurrentLineBend();
-			Interaction i = new Interaction(getModel(), src, srcPos, vNode, relPos, arrow, edge );
-			controller.addInteraction(i);
-//			i.rebind();
-			removeDragLine();
-			controller.redrawEdgesToMe((VNode) vNode);
-			controller.modelChanged();
-		}
-	}
 
 }

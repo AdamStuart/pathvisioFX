@@ -1,16 +1,27 @@
 package diagrams.pViz.view;
 
+import java.util.List;
+
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import gui.Action.ActionType;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
 
 /**
  * Listeners for making the nodes draggable via left mouse button. Considers if parent is zoomed.
+ * Listen for right click to build a context sensitive menu for this node
  */
 public class VNodeGestures {
 
@@ -35,10 +46,10 @@ public class VNodeGestures {
             // left mouse button => dragging
             if( event.isSecondaryButtonDown())
             {
-            	vNode.doContextMenu(event);
+            	doContextMenu(event, vNode);
             	return;
             }
-
+            if (vNode.modelNode().isLocked())	return;
             nodeDragContext.mouseAnchorX = event.getSceneX();
             nodeDragContext.mouseAnchorY = event.getSceneY();
 
@@ -47,7 +58,7 @@ public class VNodeGestures {
             nodeDragContext.translateAnchorX = node.getTranslateX();
             nodeDragContext.translateAnchorY = node.getTranslateY();
     		if (event.getClickCount() > 1)	   {	vNode.getInfo(); 	event.consume();   return; }
-    		if (event.isPopupTrigger())	   {	vNode.doContextMenu(event); return;	   }
+    		if (event.isPopupTrigger())	   {	doContextMenu(event, vNode); return;	   }
     		Tool curTool = canvas.getTool();
     		vNode.finishDragLine(event);
     	   if (curTool != null && !curTool.isArrow()) return;
@@ -56,8 +67,8 @@ public class VNodeGestures {
     	   if (event.isAltDown())
     		   selection.duplicateSelection();
     	   
-    	   prevMouseX = event.getSceneX();
-    	   prevMouseY = event.getSceneY();
+    	   prevMouseX = event.getX();
+    	   prevMouseY = event.getY();
     	   boolean inCorner = vNode.ptInCorner(prevMouseX, prevMouseY);
     	   if (inCorner)
     		   vNode.handleResize(event);
@@ -80,23 +91,29 @@ public class VNodeGestures {
 //    		if (!vNode.isMovable()) return;
             if( !event.isPrimaryButtonDown())
                 return;
+            if (vNode.modelNode().isLocked())	return;
 
             double scale = canvas.getScale();
-
-            Node node = (Node) event.getSource();
-            node.setTranslateX(nodeDragContext.translateAnchorX + (( event.getSceneX() - nodeDragContext.mouseAnchorX) / scale));
-            node.setTranslateY(nodeDragContext.translateAnchorY + (( event.getSceneY() - nodeDragContext.mouseAnchorY) / scale));
-
+//
+//            Node node = (Node) event.getSource();
+//            node.setTranslateX(nodeDragContext.translateAnchorX + (( event.getSceneX() - nodeDragContext.mouseAnchorX) / scale));
+//            node.setTranslateY(nodeDragContext.translateAnchorY + (( event.getSceneY() - nodeDragContext.mouseAnchorY) / scale));
+//
         	double ex = event.getX();
     		double ey = event.getY();
     				
+    		if (vNode.isResizing())
+    		{
+    			vNode.handleResize(event);
+    			event.consume();
+    			return;
+    		}
         	if (event.isShiftDown())
         	{
         		// TODO  if there are edges connected to this node, constrain the coordinates to the other sides
         		ex = ey;
         	}
 //    		super.handleMouseDragged(event);
-//    		 vNode.handleResize(ex, ey);
     		 if (vNode.isSelected())
             {	
                	double dx = 0;
@@ -126,10 +143,6 @@ public class VNodeGestures {
         }
     };
     
-//protected void handleMouseDragged(final MouseEvent event) {
-//		
-//		}
-
 
     double localLastMouseX = -1; 
 	double localLastMouseY = -1; 
@@ -149,6 +162,7 @@ public class VNodeGestures {
 		}
 		getController().getUndoStack().push(ActionType.Move);
 		canvas.getSelectionMgr().extract();
+		vNode.stopResizing();
     }
 
 	private Controller getController() {
@@ -158,4 +172,65 @@ public class VNodeGestures {
 	double prevMouseX, prevMouseY;
 	
 	// **------------------------------------------------------------------------------
+	// **-------------------------------------------------------------------------------
+	protected void doContextMenu(MouseEvent event, VNode vNode) {
+		ContextMenu menu = new ContextMenu();
+		menu.getItems().addAll(getMenuItems(event, vNode));
+		menu.show(vNode.getPasteboard(), event.getScreenX(), event.getScreenY());	
+		event.consume();
+	}
+
+	public static List<MenuItem> getMenuItems(MouseEvent event, VNode vNode) {
+		ObservableList<MenuItem> list = FXCollections.observableArrayList();
+		//System.out.println("ContextMenu");
+		int nKids = vNode.getChildren().size();
+		Controller controller = vNode.getPasteboard().getController();
+		if (nKids > 0)
+		{
+			Node content = vNode.getChildren().get(0);
+			if (content instanceof TableView)
+			{
+				MenuItem scatter = makeItem("Make Scatter Chart", e -> {});
+				MenuItem timeseries = makeItem("Make Time Series", e -> {});
+				SeparatorMenuItem sep = new SeparatorMenuItem();
+				list.addAll(new MenuItem[] {scatter, timeseries, sep});
+			}
+		}
+		MenuItem toFront = 	makeItem("Bring To Front", e -> {   controller.toFront();   });
+		MenuItem toBack = 	makeItem("Send To Back", e -> {   	controller.toBack();   });
+		Menu toLayer = 		makeLayerMenu(controller);
+		MenuItem dup = 		makeItem("Duplicate", a -> 	{		controller.duplicateSelection();	});
+		MenuItem del = 		makeItem("Delete", a -> 	{		controller.deleteSelection();	});
+		MenuItem lock = 	makeItem("Lock", a -> 		{		vNode.applyEditable(false, false, false, false); controller.lock(true);	});
+		MenuItem unlock = 	makeItem("Unlock", a -> 	{		vNode.applyEditable(true, true, true, true); controller.lock(false);	});
+		list.addAll(toFront, toBack, toLayer, dup, del, lock, unlock); 
+
+		MenuItem group = 	makeItem("Group", e ->		{		controller.group();    });
+		MenuItem ungroup = 	makeItem("Ungroup", a -> 	{		controller. ungroup();	});
+		if (controller.getSelectionManager().isGroupable())	list.add(group);   
+		if (vNode.isGroup())					list.add(ungroup);   
+
+		return list;
+	}
+
+	private static MenuItem makeItem(String name, EventHandler<ActionEvent> foo) {
+		MenuItem item = new MenuItem(name);
+		item.setOnAction(foo);
+		return item;
+	}
+
+	private static Menu makeLayerMenu(Controller controller) {
+		Menu menu = new Menu("Move To Layer");
+		for (LayerRecord layer : controller.getLayers())
+		{
+			MenuItem item = new MenuItem(layer.getName());
+			menu.getItems().add(item);
+			item.setOnAction(e -> 	
+			{ 	
+				controller.moveSelectionToLayer(layer.getName());  
+			});
+		}
+		return menu;
+	}
+
 }

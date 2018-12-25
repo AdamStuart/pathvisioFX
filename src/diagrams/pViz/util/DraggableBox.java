@@ -289,7 +289,7 @@ public class DraggableBox extends StackPane {
             setCache(false);
         }
 
-        storeClickValuesForDrag(event.getSceneX(), event.getSceneY());
+        storeClickValuesForDrag(event.getX(), event.getY());
         dragActive = true;
         event.consume();
     }

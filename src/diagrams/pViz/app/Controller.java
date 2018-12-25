@@ -108,9 +108,6 @@ public class Controller implements Initializable, IController
 	private PathwayController pathwayController = null;
 	private GeneSetRecord geneSetRecord;		// the model
 
-	//------------------------------------------
-
-	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	@FXML protected TreeTableView<XRefable> nodeTable;
 	@FXML protected TreeTableColumn<TreeTableView<XRefable>,XRefable> nodeColumn;
@@ -167,7 +164,11 @@ public class Controller implements Initializable, IController
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
 	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(0); 	}
 	@FXML public void clear()			{ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
+	@FXML public void lock()			{ 	lock(true); 	}
+	@FXML public void unlock()			{ 	lock(false); 	}
 	
+	public void lock(boolean lock){ 	undoStack.push(lock ? ActionType.Lock : ActionType.Unlock);	getSelectionManager().lockSelection(lock); 	}
+
 	@FXML private void resetEdgeTable()	{		model.resetEdgeTable();	}
 	@FXML private void dumpEdgeTable()	{		Test.dumpEdgeTable(model);	}
 	@FXML private void dumpViewHierarchy()	{	Test.dumpViewHierarchy(model);	}
@@ -276,7 +277,8 @@ public class Controller implements Initializable, IController
 			}
 		}
 	}
-	
+	// things to initialize:  Palette, Inspector, Pasteboard, GPMLTreeTableView
+	//	XML:  	Document, Grid, HSplitter
 	// **-------------------------------------------------------------------------------
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
@@ -287,7 +289,7 @@ public class Controller implements Initializable, IController
 		setupPalette();
 		pasteboard = new Pasteboard(this, scale);
 		palette.setParentController(this);
-		palette.getView().setBorder(Borders.redBorder);
+//		palette.getView().setBorder(Borders.redBorder);
 		palette.getView().setPrefWidth(150);
 		palette.getView().setPrefHeight(750);
 		setupInspector();		
@@ -674,7 +676,7 @@ public class Controller implements Initializable, IController
 		}		
 	}
 	
-	public void redrawEdgesToMe(VNode vNode) {
+	public void redrawMyEdges(VNode vNode) {
 		DataNode data = vNode.modelNode();
 		List<Interaction> edges = model.findInteractionsByNode(data);
 		for (Interaction edge : edges)

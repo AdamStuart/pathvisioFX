@@ -42,6 +42,7 @@ public class GPML {
 	public GPML(Model m, String layer) {
 		model = m;
 		controller = model.getController();
+		pasteboard = controller.getPasteboard();
 		if (layer != null) activeLayer = layer;
 	}
 //	private Controller getController() { 	return model.getController();	}

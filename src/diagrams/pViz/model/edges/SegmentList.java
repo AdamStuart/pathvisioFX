@@ -367,9 +367,12 @@ public class SegmentList extends ArrayList<Segment> {
     			group.getChildren().addAll(controlPt1,controlPt2);		//
 	        }
 	        curve.setFill(null);
-	        curve.setStroke(interaction.getColor());
-			double width = interaction.getStrokeWidth();
-			curve.setStrokeWidth(width);
+			if (interaction != null)
+			{
+				curve.setStroke(interaction.getColor());
+				double width = interaction.getStrokeWidth();
+				curve.setStrokeWidth(width);
+			}
 			if (strokeDashArray != null)
 				curve.getStrokeDashArray().setAll(strokeDashArray);
 			group.getChildren().add(curve);

@@ -53,6 +53,7 @@ public enum Tool {
 	}
 	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi", "Brace"};
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
+	static Tool[] connectors =  { Polyline, Line };
 	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, GraphicalLine, Brace, Shape1 };
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent };
@@ -61,6 +62,7 @@ public enum Tool {
 	public boolean isArrow()				{	return this == Arrow;		}  
 	public boolean isShape()				{	return contains(shapes, this);		}
 	public boolean isCellShape()			{	return contains(cellShapes, this);		}
+	public boolean isPencil()				{	return contains(connectors, this );		}
 	public static boolean isShape(String s)	{	return contains(shapes, s);		}
 	public boolean isControl()				{	return contains(controls, this);		}
 	public static boolean isSVG(String type) {	return contains(tags, type);	}

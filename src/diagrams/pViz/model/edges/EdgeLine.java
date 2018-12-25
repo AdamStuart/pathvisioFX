@@ -200,8 +200,11 @@ private void addCenterPointListeners() {
 	}	
 	private void setLabelPosition(Point2D pt)
 	{
-		graphIdLabel.setTranslateX(pt.getX());
-		graphIdLabel.setTranslateY(pt.getY());
+		if (graphIdLabel != null)
+		{
+			graphIdLabel.setTranslateX(pt.getX());
+			graphIdLabel.setTranslateY(pt.getY());
+		}
 	}
 	 //----------------------------------------------------------------------
 	private Circle centerPoint;
@@ -372,30 +375,30 @@ private void addCenterPointListeners() {
 		}
 	}
 	
-		public void setEndPoint(GPMLPoint endPt) {
-			if (endPt == null) 								return;
-			if (endPt.getX() == 0 && endPt.getY() == 0)		return;
-			if (points.size() < 2)
-				points.add(endPt);
-			setPoint(endPt.getPoint(), points.get(points.size()-1));
-			if (getLine() != null)
-			{
-				line.setEndX(endPt.getX());
-				line.setEndY(endPt.getY());
-			}
+	public void setEndPoint(GPMLPoint endPt) {
+		if (endPt == null) 								return;
+		if (endPt.getX() == 0 && endPt.getY() == 0)		return;
+		if (points.size() < 2)
+			points.add(endPt);
+		setPoint(endPt.getPoint(), points.get(points.size()-1));
+		if (getLine() != null)
+		{
+			line.setEndX(endPt.getX());
+			line.setEndY(endPt.getY());
 		}
-		public void setEndPoint(Point2D endPt) {
-			if (endPt == null) 								return;
-			if (endPt.getX() == 0 && endPt.getY() == 0)		return;
-			if (points.size() < 2)
-				points.add(new GPMLPoint(endPt));
-			setPoint(endPt, points.get(points.size()-1));
-			if (line != null)
-			{
-				line.setEndX(endPt.getX());
-				line.setEndY(endPt.getY());
-			}
+	}
+	public void setEndPoint(Point2D endPt) {
+		if (endPt == null) 								return;
+		if (endPt.getX() == 0 && endPt.getY() == 0)		return;
+		if (points.size() < 2)
+			points.add(new GPMLPoint(endPt));
+		setPoint(endPt, points.get(points.size()-1));
+		if (line != null)
+		{
+			line.setEndX(endPt.getX());
+			line.setEndY(endPt.getY());
 		}
+	}
 	//----------------------------------------------------------------------
 	public void dispose()
 	{
@@ -534,9 +537,12 @@ private void addCenterPointListeners() {
 			{
 				if (BADPOINT(prev))			return;
 				if (BADPOINT(lastPt)) 		return;
-				VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
 				Line refline = new Line(prev.getX(), prev.getY(), lastPt.getX(), lastPt.getY());
-				lastPt= LineUtil.getIntersection(refline, endNode, shorten);
+				if (interaction != null)
+				{
+					VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
+					lastPt= LineUtil.getIntersection(refline, endNode, shorten);
+				}
 				setLastPoint(lastPt);
 			}
 		}     
@@ -579,8 +585,13 @@ private void addCenterPointListeners() {
 			System.out.println("zeroooo ");
 		}
 		LineUtil.set(line, getStartPoint(), getEndPoint());
-		line.setStroke(interaction.getColor());
-		double width = interaction.getStrokeWidth();
+		double width = 3;
+		if (interaction != null)
+		{
+			line.setStroke(interaction.getColor());
+			width = interaction.getStrokeWidth();
+		
+		}
 		line.setStrokeWidth(width);
 		if (strokeDashArray != null)
 			line.getStrokeDashArray().setAll(strokeDashArray);
@@ -682,13 +693,19 @@ private void addCenterPointListeners() {
 	}
 
    //----------------------------------------------------------------------
-
+	public void setArrowhead(ArrowType inType)
+	{
+		GPMLPoint last = lastGPMLPoint();
+		if (last != null) 	
+			last.setArrowType(inType);
+	}
+		
 	public Shape makeArrowhead()
 	{	
 		GPMLPoint last = lastGPMLPoint();
 		if (last == null) 		return null;
 
-		Color strokeColor = interaction.getColor();
+		Color strokeColor = interaction == null ? Color.AQUAMARINE : interaction.getColor();
 		ArrowType arrowhead = last.getArrowType();
 		if (arrowhead == null)	return null;
 		if (arrowhead == ArrowType.none) return null;

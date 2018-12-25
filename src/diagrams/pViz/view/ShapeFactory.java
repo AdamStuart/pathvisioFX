@@ -410,31 +410,31 @@ public class ShapeFactory {
 			if (figure instanceof Polygon)
 			{	double pad = 8;
 				ShapeFactory.sizeFigureToBounds(stack.getPasteboard(),stack, figure, 
-						stack.getLayoutX()-pad, stack.getLayoutY()-pad, stack.getWidth()+ 2* pad, stack.getHeight()+ 2* pad);
+						stack.getLayoutX(), stack.getLayoutY(), stack.getWidth(), stack.getHeight(), pad);
 			}
 		}
 	}
 
 public static void sizeFigureToBounds(Pasteboard pasteboard, VNode vNode, Shape figure, double layoutX,
-		double layoutY, double w, double h) {
+		double layoutY, double w, double h, double padding) {
 
 	String type = vNode.getShapeType();
 
 	if (figure instanceof Polygon)  // && "ComplexComponent".equals(type)
 	{
-		double centerX = layoutX + w /2;
+		double centerX = layoutX  + w /2;
 		double centerY = layoutY + h /2;
       	Polygon p = (Polygon) figure;
 		
        	double barrelWidth = w / 6;
     	double barrelHeight = h / 6;
-    	double x0 = centerX - w /2;
+    	double x0 = centerX - w /2 - padding;
     	double x1 = x0 + barrelWidth;  //(w / 3);
-    	double x3 = x0 + w;
+    	double x3 = x0 + w + 2 * padding;
     	double x2 = x3 - barrelWidth; 
-      	double y0 = centerY -h /2;
+      	double y0 = centerY -h /2  - padding;
     	double y1 = y0 + barrelHeight; // (h / 3);
-    	double y3 = y0 + h;
+    	double y3 = y0 + h  + 2 * padding;
     	double y2 = y3 - barrelHeight;
     	p.getPoints().clear();
     	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
@@ -955,9 +955,7 @@ public static void sizeFigureToBounds(Pasteboard pasteboard, VNode vNode, Shape 
 				boolean rightClick = event.isSecondaryButtonDown();
 				if (altDown)
 					pasteboard.getController().getSelectionManager().cloneSelection(5);
-				// do nothing for a right-click
-				// if (event.isSecondaryButtonDown()) return;// TODO -- popup up
-				// Node menu
+
 				if (event.isPopupTrigger() || rightClick) {
 					if (menu == null)
 						menu = buildContextMenu();
@@ -994,7 +992,9 @@ public static void sizeFigureToBounds(Pasteboard pasteboard, VNode vNode, Shape 
 			MenuItem toBack = 	makeItem("Send To Back", a -> 	{	c.toBack();	});
 			MenuItem group = 	makeItem("Group", a -> 			{	c.group();	});
 			MenuItem ungroup = 	makeItem("Ungroup", a -> 		{	c.ungroup();	});
-			menu.getItems().addAll(toFront, toBack, group, ungroup, dup, del);   //cut, copy
+			MenuItem lock = 	makeItem("Lock", a -> 			{	c.lock();	});
+			MenuItem unlock = 	makeItem("Unlock", a -> 		{	c.unlock();	});
+			menu.getItems().addAll(toFront, toBack, group, ungroup, dup, del, lock, unlock);   //cut, copy
 			return menu;
 		}
 		

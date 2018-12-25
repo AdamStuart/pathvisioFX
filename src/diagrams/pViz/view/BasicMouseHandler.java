@@ -127,7 +127,7 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 
 	protected void doContextMenu(MouseEvent event) {
 		ContextMenu menu = new ContextMenu();
-		menu.getItems().addAll(target.getMenuItems(event));
+		menu.getItems().addAll(VNodeGestures.getMenuItems(event, target));
 		menu.show(pasteboard, event.getScreenX(), event.getScreenY());		
 		event.consume();
 	}

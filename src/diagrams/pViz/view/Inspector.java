@@ -267,7 +267,7 @@ public class Inspector extends HBox implements Initializable {
 	public SimpleBooleanProperty snapToGridProperty() { return snapToGridProperty; }
 	SimpleBooleanProperty anchorVisibleProperty = new SimpleBooleanProperty(false);
 	public SimpleBooleanProperty anchorVisibleProperty() { return anchorVisibleProperty; }
-	SimpleBooleanProperty lockVisibleProperty = new SimpleBooleanProperty(false);
+	SimpleBooleanProperty lockVisibleProperty = new SimpleBooleanProperty(true);
 	public SimpleBooleanProperty lockVisibleProperty() { return lockVisibleProperty; }
 	// **-------------------------------------------------------------------------------
 	public void applyLocks()

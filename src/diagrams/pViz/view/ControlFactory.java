@@ -1,6 +1,7 @@
 package diagrams.pViz.view;
 
 import java.io.File;
+import java.net.URL;
 
 import diagrams.pViz.app.Tool;
 import diagrams.pViz.model.nodes.DataNode;
@@ -47,6 +48,10 @@ public class ControlFactory {
 		}
 	}
 	// **-------------------------------------------------------------------------------
+	public void addImage(URL image)
+	{
+	}
+// **-------------------------------------------------------------------------------
 	private void makeBrowser()
 	{
 		AttributeMap attrMap = dataNode;
@@ -74,21 +79,23 @@ public class ControlFactory {
 		Image img = new Image("file:" + filepath);
 		if (img.isError())
 			System.out.println("makeImageView error");
-		ImageView imgView = new ImageView(img);
-		if (dataNode.get("GraphId") == null) 
-			dataNode.put("GraphId", parent.gensym("I"));
-		
-		imgView.prefWidth(200); 	imgView.prefHeight(200);
-		imgView.setFitWidth(200); 	imgView.setFitHeight(200);
 		dataNode.put("name", filepath);
-	    imgView.setMouseTransparent(true);
-	    imgView.fitWidthProperty().bind(Bindings.subtract(parent.widthProperty(), 20));
-	    imgView.fitHeightProperty().bind(Bindings.subtract(parent.heightProperty(), 40));
-	    imgView.setTranslateY(-10);
+		ImageView imgView = makeImageView(img);
+		imgView.setTranslateY(-10);
 	    parent.readGeometry(dataNode, imgView);
 		parent.getChildren().add(new VBox(addTitleBar(filepath), imgView));
 	}
 	
+	public ImageView makeImageView(Image img)
+	{
+		ImageView imgView = new ImageView(img);
+		imgView.prefWidth(200); 	imgView.prefHeight(200);
+		imgView.setFitWidth(200); 	imgView.setFitHeight(200);
+		imgView.setMouseTransparent(true);
+    	imgView.fitWidthProperty().bind(Bindings.subtract(parent.widthProperty(), 20));
+    	imgView.fitHeightProperty().bind(Bindings.subtract(parent.heightProperty(), 40));
+    	return imgView;	
+	}
 	// **-------------------------------------------------------------------------------
 	private void makeSVGPath() {
 		AttributeMap attrMap = dataNode;
@@ -117,8 +124,6 @@ public class ControlFactory {
 		AttributeMap attrMap = dataNode;
 		attrMap.put("ShapeType","Table");
 		TableView<ObservableList<StringProperty>> table = new TableView<ObservableList<StringProperty>>();
-		if (attrMap.get("GraphId") == null)
-			attrMap.put("GraphId", parent.gensym("T"));
 		String filename = attrMap.get("file");
 		CSVTableData data = CSVTableData.readCSVfile(filename);	
 		attrMap.put("name", filename);

@@ -169,13 +169,14 @@ public class DataNode extends XRefable {
 	public boolean isConnectable() 	{	return getBool("Connectable", true);	}
 	public boolean isSelectable() 	{	return getBool("Selectable", true);	}
 	public boolean isMovable() 		{	return getBool("Movable", true);	}
+	public boolean isLocked() 		{	return !getBool("Movable", true);	}
 	
 	public void setResizable(boolean b) {		 putBool("Resizable",b);	}
 	public void setConnectable(boolean b) {		 putBool("Connectable",b);	}
 	public void setSelectable(boolean b) {		 putBool("Selectable",b);	}
 	public void setMovable(boolean b)	 {		 putBool("Movable",b);	}
 
-	public void applyLocks(boolean mov, boolean resiz, boolean edit, boolean connect) {
+	public void applyEditable(boolean mov, boolean resiz, boolean edit, boolean connect) {
 		setMovable(mov);
 		setResizable(resiz);
 		setSelectable(edit);
