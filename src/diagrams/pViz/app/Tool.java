@@ -54,7 +54,7 @@ public enum Tool {
 	public static String[] customShapes = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi", "Brace"};
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
 	static Tool[] connectors =  { Polyline, Line };
-	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon, Polyline, Line, GraphicalLine, Brace, Shape1 };
+	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon,Triangle,Pentagon,Hexagon, Polyline, Line, GraphicalLine, Brace, Shape1 };
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
@@ -70,28 +70,29 @@ public enum Tool {
 	// HACK -- convert from GPML type to shape
 	public static Tool lookup(String type) {
 		if (type == null) return Circle;
-		if ("Hexagon".equals(type)) 	return Hexagon;
-		if ("Pentagon".equals(type)) 	return Pentagon;
-		if ("Octagon".equals(type)) 	return Octagon;
-		if ("None".equals(type)) 		return Rectangle;
-		if ("Oval".equals(type)) 		return Oval;
-		
-		if ("Nucleus".equals(type)) 	return Nucleus;
-		if ("Cell".equals(type)) 		return Cell;
-		if ("Brace".equals(type)) 		return Brace;
-		if ("GraphicalLine".equals(type)) return GraphicalLine;
-		if ("GroupComponent".equals(type)) return GroupComponent;
-		if ("ComplexComponent".equals(type)) return ComplexComponent;
-		if ("Mitochondria".equals(type)) return Mitochondria;
-		if ("Protein".equals(type)) 	return Protein;
-		if ("Pathway".equals(type)) 	return Pathway;
-		if ("GeneProduct".equals(type)) return GeneProduct;
-		if ("Metabolite".equals(type)) 	return Metabolite;
-		if ("Rna".equals(type)) 		return Rna;
-		if ("ER".equals(type)) 			return ER;
-		if ("SR".equals(type)) 			return SR;
-		if ("Golgi".equals(type)) 		return Golgi;
 		return  fromString(type);
+// redundant:	
+//		if ("Hexagon".equals(type)) 	return Hexagon;
+//		if ("Pentagon".equals(type)) 	return Pentagon;
+//		if ("Octagon".equals(type)) 	return Octagon;
+//		if ("None".equals(type)) 		return Rectangle;
+//		if ("Oval".equals(type)) 		return Oval;
+//		
+//		if ("Nucleus".equals(type)) 	return Nucleus;
+//		if ("Cell".equals(type)) 		return Cell;
+//		if ("Brace".equals(type)) 		return Brace;
+//		if ("GraphicalLine".equals(type)) return GraphicalLine;
+//		if ("GroupComponent".equals(type)) return GroupComponent;
+//		if ("ComplexComponent".equals(type)) return ComplexComponent;
+//		if ("Mitochondria".equals(type)) return Mitochondria;
+//		if ("Protein".equals(type)) 	return Protein;
+//		if ("Pathway".equals(type)) 	return Pathway;
+//		if ("GeneProduct".equals(type)) return GeneProduct;
+//		if ("Metabolite".equals(type)) 	return Metabolite;
+//		if ("Rna".equals(type)) 		return Rna;
+//		if ("ER".equals(type)) 			return ER;
+//		if ("SR".equals(type)) 			return SR;
+//		if ("Golgi".equals(type)) 		return Golgi;
 	}
 	public static Tool appropriateTool(File f) {
 		if (FileUtil.isImageFile(f))	return Image;
