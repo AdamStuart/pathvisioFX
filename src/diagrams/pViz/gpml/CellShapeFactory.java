@@ -22,6 +22,8 @@ public class CellShapeFactory {
 		if ("SR".equals(s))	  			return getSarcoplasmicReticulumPath();
 		if ("ER".equals(s))	  			return getEndoplasmicReticulumPath();
 		if ("Golgi".equals(s))	  		return getGolgiPath();
+//		if ("Organelle".equals(s))	  		return getGolgiPath();   //TODO
+//		if ("Ribosome".equals(s))	  		return getGolgiPath();   //TODO
 		return new Rectangle();
 	}	
 	//-------------------------------------------------------------------------

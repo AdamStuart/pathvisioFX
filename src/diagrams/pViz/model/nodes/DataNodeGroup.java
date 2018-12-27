@@ -11,6 +11,7 @@ import diagrams.pViz.view.ShapeFactory;
 import diagrams.pViz.view.VNode;
 import javafx.geometry.BoundingBox;
 import model.AttributeMap;
+import util.StringUtil;
 
 
 @SuppressWarnings("serial")
@@ -80,7 +81,10 @@ public class DataNodeGroup extends DataNode {
 			DataNode nod = nodes.get(nodeKey);
 			String groupRef = nod.get("GroupRef");
 			if (groupId.equals(groupRef))
+			{
 				addMember(nod);
+				pasteboard.bringInFront(nod, getStack());
+			}
 		}
 		calcBounds();
 		double minX = getDouble("X");
@@ -127,7 +131,13 @@ public class DataNodeGroup extends DataNode {
 	public void moveMembers(double dx, double dy) {
 		for (DataNode node : members)
 			if (node.getStack() != null) 
-				node.getStack().setRect(node.getDouble("X")+dx, node.getDouble("Y")+ dy, node.getDouble("Width"), node.getDouble("Height"));		
+			{
+				node.putDouble("X", node.getDouble("X")+dx);
+				node.putDouble("Y", node.getDouble("Y")+dy);
+				node.putDouble("CenterX", node.getDouble("CenterX")+dx);
+				node.putDouble("CenterY", node.getDouble("CenterY")+dy);
+				node.getStack().setRect(node.getDouble("X"), node.getDouble("Y"), node.getDouble("Width"), node.getDouble("Height"));		
+			}
 	}
 
 	public void collapse() {
@@ -138,6 +148,16 @@ public class DataNodeGroup extends DataNode {
 		System.out.println("expand");	
 	}
 
+	public String getName()					
+	{	 
+		String s = super.getName();
+		if (StringUtil.isEmpty(s))
+			s = get("Style");
+		if (StringUtil.isEmpty(s))
+			s = get("GroupId");
+		return s;
+	}
+	
 	public VNode getStack()					{		return stack;	}
 	public void setStack(VNode st)			{		stack = st;	}
 	public Model getModel()					{		return model;	}

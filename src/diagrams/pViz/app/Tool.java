@@ -7,7 +7,7 @@ import util.FileUtil;
 public enum Tool {
 
 	Arrow,
-	Rectangle, RoundedRectangle, Circle, Oval, Polygon, Pentagon, Hexagon, Octagon, Polyline, Line, GraphicalLine, Brace, Shape1,   // Shapes
+	Rectangle, RoundedRectangle, Circle, Oval, Arc, Polygon, Triangle, Pentagon, Hexagon, Octagon, Polyline, Line, GraphicalLine, Brace, Shape1,   // Shapes
 	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,			// Controls

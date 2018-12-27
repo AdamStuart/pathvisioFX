@@ -82,13 +82,17 @@ public class ShapeFactory {
 
 			case Rectangle:			newShape = new Rectangle();	break;
 			case RoundedRectangle:	newShape = new Rectangle();	break;
+			case Triangle:			newShape = new Polygon();	break;	// TODO
+			case Pentagon:			newShape = new Polygon();	break;	// TODO
+			case Hexagon:			newShape = new Polygon();	break;
 			case Octagon:			newShape = new Polygon();	break;
 			case Polygon:			newShape = new Polygon();	break;
 			case Polyline:			newShape = new Polyline();	break;
 			case Line:				newShape = new Line();		break;
 			case GraphicalLine:		newShape = new Line();		break;
-			case Shape1:			newShape = Shape1.getHeartPath();	break;
+			case Shape1:			newShape = Shape1.getHeartPath();	break;	// TODO
 			case Oval:				newShape = new Ellipse();	break;
+			case Arc:				newShape = new Ellipse();	break;	// TODO
 			case Circle:			newShape = new Ellipse();	break;
 			default:	 
 				if (Tool.contains(Tool.customShapes,s))
@@ -147,22 +151,10 @@ public class ShapeFactory {
 	        r.setX(center.getX() - w /2 ); 
 	        r.setY(center.getY() - h /2 ); 
         }
-        else if (newShape instanceof Polygon || tool == Tool.ComplexComponent)
+        else if (newShape instanceof Polygon)
         {
-        	double barrelWidth = w / 8;
-        	double barrelHeight = h / 8;
-        	Polygon p = (Polygon) newShape;
-        	double x0 = center.getX() - w /2;
-        	double x1 = x0 + barrelWidth;  //(w / 3);
-        	double x3 = x0 + w;
-        	double x2 = x3 - barrelWidth; 
-          	double y0 = center.getY() -h /2;
-        	double y1 = y0 + barrelHeight; // (h / 3);
-        	double y3 = y0 + h;
-        	double y2 = y3 - barrelHeight;
-        	p.getPoints().clear();
-        	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
-         }
+        	setupPolygon((Polygon) newShape, tool, center, w, h);
+        }
        else if (newShape instanceof Path)
         {
 //			Path p = (Path) figure;
@@ -198,7 +190,61 @@ public class ShapeFactory {
 //			System.out.println(n.getId());
 		return newShape;
 	}
-	
+	// **-------------------------------------------------------------------------------
+	private static void setupPolygon(Polygon p, Tool tool, Point2D center,  double w, double h) {
+    	p.getPoints().clear();
+     if (tool == Tool.ComplexComponent)			// this is an octagonal shape
+    {
+    	double barrelWidth = w / 8;
+      	double barrelHeight = h / 8;
+    	double x0 = center.getX() - w /2;
+    	double x1 = x0 + barrelWidth;  //(w / 3);
+    	double x3 = x0 + w;
+    	double x2 = x3 - barrelWidth; 
+      	double y0 = center.getY() -h /2;
+    	double y1 = y0 + barrelHeight; // (h / 3);
+    	double y3 = y0 + h;
+    	double y2 = y3 - barrelHeight;
+    	p.getPoints().addAll(x0,y1, x1,y0, x2,y0, x3,y1, x3,y2, x2,y3, x1,y3, x0,y2);
+     }
+      else if (tool == Tool.Triangle)
+      {
+    	double x0 = center.getX() - w /2;
+    	double x2 = center.getX() + w /2;
+    	double y0 = center.getY() -h /2;
+    	double y1 = center.getY() + h /2;
+    	p.getPoints().addAll(center.getX(),y0, x2,y1, x0,y1);
+      }
+      else if (tool == Tool.Pentagon)			// TODO check this   point at top
+      {
+    	   	double x0 = center.getX();
+        	double y0 = center.getY() -h /2;
+
+        	double theta1 = Math.toRadians(72);
+        	double theta2 = Math.toRadians(144);
+        	double r1 = x0 + (w/2) * Math.cos(theta1);
+        	double r2 = x0 + (w/2) * Math.cos(theta2);
+        	double l1 = x0 - (w/2) * Math.cos(theta1);
+        	double l2 = x0 - (w/2) * Math.cos(theta2);
+        	double y1 = center.getY() + (h /2) * Math.sin(theta1);
+        	double y2 = center.getY() + (h /2) * Math.sin(theta2);
+        	p.getPoints().addAll(x0, y0, r1, y1, r2, y2, l2, y2, l1, y1);
+      }
+      	
+      else if (tool == Tool.Hexagon)		// TODO check this			flat across the top
+      {
+    	   	double x0 = center.getX();
+      	   	double x1 = x0 - .3 * w;
+      	   	double x2 = x0 + .3 * w;
+	    	double y0 = center.getY();
+	    	double left = x0 - w /2;
+	    	double right = x0 + w /2;
+	    	double top = y0 - h /2;
+	    	double bottom = y0 + h /2;
+	    	p.getPoints().addAll(left, y0, x1, top, x2, top, right, y0, x2, bottom, x1, bottom);
+      }
+  	}
+	// **-------------------------------------------------------------------------------
 
 	static public Rectangle makeMarquee() {
 		Rectangle marquee = new Rectangle();

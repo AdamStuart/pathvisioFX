@@ -59,6 +59,8 @@ public class GPMLTreeTableView implements ChangeListener {
 	TreeItem<XRefable> makeTreeItem(DataNode node)
 	{
 		TreeItem<XRefable>  item = new TreeItem<XRefable> (node);
+		if (node instanceof DataNodeGroup)
+			System.out.println("makeTreeItem - DataNodeGroup");
 //		item.expandedProperty().addListener( );
 		return item;
 	}
@@ -390,7 +392,11 @@ System.out.println("stateChanged " + e.toString());
 		}
 	}
 	// **-------------------------------------------------------------------------------
-
+public void addMembersToGroup()
+{
+	
+}
+	
 	public void addBranch(DataNode node) {
 		String type = node.get("Type");
 //		node.get("GraphId");
@@ -413,6 +419,13 @@ System.out.println("stateChanged " + e.toString());
 		TreeItem<XRefable> anItem = makeTreeItem();
 		anItem.setValue(node);
 		parent.getChildren().add(anItem);
+		 if (node instanceof DataNodeGroup) 
+		 {
+			 DataNodeGroup group = (DataNodeGroup) node;
+			 Set<DataNode> members = group.getMembers();
+			 for (DataNode member : members)
+				 addBranch(member, anItem);
+		 }
 	}
 
 	// **-------------------------------------------------------------------------------

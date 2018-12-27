@@ -33,7 +33,6 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.Region;
@@ -364,13 +363,34 @@ public class Pasteboard extends PanningCanvas
 	}
 	
 	private void setDragLine(MouseEvent event) {
-		if (dragLine != null)
-			dragLine.setEndPoint(new Point2D(event.getX(), event.getY())); 
-			dragLine.connect();
-		}
+		if (dragLine == null) return;
+		dragLine.setEndPoint(new Point2D(event.getX(), event.getY())); 
+		dragLine.connect();
 	}
 
-
+	//---------------------------------------------------------------------------
+	// add the interaction from the stored dragSource and dragSourcePosition to this vNode at relPos
+	public void connectTo(ResizableBox vNode, RelPosition relPos ) {
+		if (dragLine == null) return;  	// shouldn't happen
+		VNode src = getPolyDragSource();
+		Pos srcPos = getPolyDragSourcePosition();
+		if (src == null) return;  	// shouldn't happen
+		
+		if (relPos.isInside()) 
+			relPos = relPos.moveToEdge();
+		
+		if (src != vNode)
+		{
+			ArrowType arrow = getController().getCurrentArrowType();
+			EdgeType edge = getController().getCurrentLineBend();
+			Interaction i = new Interaction(getModel(), src, srcPos, vNode, relPos, arrow, edge );
+			removeDragLine();
+			controller.addInteraction(i);
+			controller.redrawMyEdges((VNode) vNode);
+			controller.modelChanged();
+		}
+	}
+	//---------------------------------------------------------------------------
 	
 	public boolean isMousePanEvent(MouseEvent e) {
 		if (e.isSecondaryButtonDown() || e.isMiddleButtonDown())
@@ -715,5 +735,20 @@ public class Pasteboard extends PanningCanvas
 		}
 	}
 	public void selectByType(String s) {	System.out.println("selectByType " + s); 			}
+	public void bringInFront(DataNode nod, VNode groupstack) {
+		
+		LayerRecord nodeLayer = nod.getStack().getLayer();
+		LayerRecord groupLayer = groupstack.getLayer();
+		if (!nodeLayer.equals(groupLayer))
+			nod.getStack().setLayer(groupLayer.getName());
+		
+		List<Interaction> edges = getModel().findInteractionsByNode(nod);
+		for (Interaction edge : edges)
+			edge.getEdgeLine().toFront();
+		int nodeIdx = nod.getStack().getParent().getChildrenUnmodifiable().indexOf(nod.getStack());
+		int groupIdx = groupstack.getParent().getChildrenUnmodifiable().indexOf(groupstack);
+		if (nodeIdx < groupIdx)
+			nod.getStack().toFront();
+	}
 
 }

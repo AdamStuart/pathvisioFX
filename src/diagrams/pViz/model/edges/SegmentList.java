@@ -134,6 +134,12 @@ public class SegmentList extends ArrayList<Segment> {
 				waypoints[0] = calculateWayPoint(start, waypoints[1], startAxis, startDirection);
 				waypoints[3] = calculateWayPoint(end, waypoints[1], endAxis, endDirection);
 			}
+			// this case should be 3
+		/*           
+		 *   |---[S]    [S]
+		 *   |           |
+		 *    -----------
+		 */		
 	return waypoints;
 	}
 

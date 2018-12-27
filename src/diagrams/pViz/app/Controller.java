@@ -740,7 +740,7 @@ public class Controller implements Initializable, IController
 		model.addGroup(grp);
 //		BoundingBox bounds = grp.getBounds();
 //		grp.getStack().setBounds(bounds);
-		pasteboard.getContentLayer().remove(grp.getStack());
+//		pasteboard.getContentLayer().remove(grp.getStack());
 		pasteboard.getContentLayer().add(5, grp.getStack());
 	}
 	
