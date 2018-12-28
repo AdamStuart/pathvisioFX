@@ -67,8 +67,8 @@ public class VNodeGestures {
     	   if (event.isAltDown())
     		   selection.duplicateSelection();
     	   
-    	   prevMouseX = event.getX();
-    	   prevMouseY = event.getY();
+    	   prevMouseX = event.getSceneX();
+    	   prevMouseY = event.getSceneY();
     	   boolean inCorner = vNode.ptInCorner(prevMouseX, prevMouseY);
     	   if (inCorner)
     		   vNode.handleResize(event);
@@ -99,8 +99,8 @@ public class VNodeGestures {
 //            node.setTranslateX(nodeDragContext.translateAnchorX + (( event.getSceneX() - nodeDragContext.mouseAnchorX) / scale));
 //            node.setTranslateY(nodeDragContext.translateAnchorY + (( event.getSceneY() - nodeDragContext.mouseAnchorY) / scale));
 //
-        	double ex = event.getX();
-    		double ey = event.getY();
+        	double ex = event.getSceneX();
+    		double ey = event.getSceneY();
     				
     		if (vNode.isResizing())
     		{
