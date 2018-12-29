@@ -548,7 +548,7 @@ public class GPML {
 		}
 		AttributeMap attrMap = new AttributeMap();
 		String shapeType = "Complex".equals(style) ? "ComplexComponent" : "GroupComponent";
-		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "ShapeType", shapeType, "Style", style, "Fill", "d0d0d0", "LineStyle", "Broken");
+		attrMap.putAll("GraphId", graphId, "GroupId", groupId, "ShapeType", shapeType, "Style", style, "Fill", "F7F7F0", "LineStyle", "Broken");
 		DataNodeGroup newGroup = new DataNodeGroup(attrMap,model, true);
 
 		newGroup.copyAttributesToProperties();

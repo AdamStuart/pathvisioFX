@@ -2,6 +2,7 @@ package diagrams.pViz.dialogs;
 
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -180,6 +181,7 @@ public class EnrichmentController implements Initializable
 		for (String s : response.split("\n"))
 			if (!s.trim().isEmpty())
 				speciesTargets.add(s);
+		Collections.sort(speciesTargets);
 		targetList.getItems().addAll(speciesTargets);
 	}
 

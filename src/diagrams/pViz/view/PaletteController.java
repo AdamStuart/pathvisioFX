@@ -133,6 +133,7 @@ public class PaletteController implements Initializable {
 	//-------------------------------------------------------------
 	@FXML private void editPalette() 	// TODO raw implementation
 	{
+		if (allInteractions == null)  return;			// FXML error
 		paletteEditing = !paletteEditing;
 		boolean startEdit = paletteEditing;
 		

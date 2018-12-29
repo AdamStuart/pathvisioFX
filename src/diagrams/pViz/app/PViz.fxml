@@ -32,9 +32,9 @@
 <?import javafx.scene.Group?>
 <?import javafx.scene.text.Font?>
 
-<SplitPane fx:id="splitter" orientation="VERTICAL" prefHeight="884.0" prefWidth="748.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+<SplitPane fx:id="splitter" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
    <items>
-      <BorderPane fx:id="container" prefHeight="620.0" prefWidth="746.0">
+      <BorderPane fx:id="container">
          <top>
             <HBox BorderPane.alignment="CENTER">
                <children>
@@ -155,7 +155,7 @@
                               <MenuItem id="Jupyter" fx:id="showJupyter1" mnemonicParsing="false" onAction="#showJupyter" text="Show Jupyter Notebook" />
                            </items>
                         </Menu>
-                        <Menu id="Nodes" mnemonicParsing="false" text="Nodes">
+                        <Menu id="Components" mnemonicParsing="false" text="Components">
                            <items>
                               <MenuItem id="front" fx:id="tofront" mnemonicParsing="false" onAction="#toFront" text="Bring To Front">
                                  <accelerator>
@@ -248,7 +248,7 @@
                               </Menu>
                            </items>
                         </Menu>
-                        <Menu id="Edges" mnemonicParsing="false" text="Edges">
+                        <Menu id="Interactions" mnemonicParsing="false" text="Interactions">
                            <items>
                               <MenuItem id="connect" fx:id="connect" mnemonicParsing="false" onAction="#addEdges" text="Connect Selected Nodes">
                                  <accelerator>
@@ -256,9 +256,12 @@
                                  </accelerator>
                               </MenuItem>
                               <MenuItem id="select edges" fx:id="selectEdges" mnemonicParsing="false" onAction="#selectEdges" text="Select Edges" />
-                              <MenuItem id="reset edge table" fx:id="resetEdgeTable" mnemonicParsing="false" onAction="#resetEdgeTable" text="Reset Edge Table" />
-                              <MenuItem id="addmidpt" mnemonicParsing="false" text="Add Midpoint" />
+                              <MenuItem id="addmidpt" mnemonicParsing="false" text="Add Midpoint">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="UP" code="M" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator></MenuItem>
                               <SeparatorMenuItem mnemonicParsing="false" />
+                              <MenuItem id="reset edge table" fx:id="resetEdgeTable" mnemonicParsing="false" onAction="#resetEdgeTable" text="Reset Edge Table" />
                               <MenuItem id="clear data color" fx:id="clearColors" mnemonicParsing="false" onAction="#clearColors" text="Clear Data Coloring">
                                  <accelerator>
                                     <KeyCodeCombination alt="UP" code="DIGIT3" control="UP" meta="DOWN" shift="UP" shortcut="UP" />

@@ -521,7 +521,8 @@ abstract public class ResizableBox extends DraggableBox {
         // Min & max resize logic here.
         if (newWidth > maxAvailableWidth)             newWidth = maxAvailableWidth;
         else if (newWidth < minResizeWidth)           newWidth = minResizeWidth;
-        setWidth(newWidth);
+  System.out.println(" setWidth from " + lastWidth + " --> " + newWidth);     
+  setWidth(newWidth);
     }
 
     /**

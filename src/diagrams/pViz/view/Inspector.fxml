@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.scene.shape.*?>
 <?import java.lang.Double?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.CheckBox?>
@@ -14,11 +20,11 @@
 <?import javafx.scene.shape.Polygon?>
 <?import javafx.scene.shape.Rectangle?>
 
-<HBox fx:id="inspectTop" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="145.0" prefWidth="881.0" spacing="8.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.Inspector">
+<HBox fx:id="inspectTop" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="150.0" spacing="8.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.Inspector">
    <children>
       <VBox fx:id="fillCV" onMousePressed="#fillClick">
          <children>
-            <Label text="Fill Color" VBox.vgrow="NEVER" />
+            <Label minWidth="80.0" text="Fill Color" VBox.vgrow="NEVER" />
             <HBox>
                <children>
                   <Rectangle fx:id="fillGradient" arcHeight="5.0" arcWidth="5.0" height="112.0" stroke="BLACK" strokeType="INSIDE" width="12.0">
@@ -35,10 +41,10 @@
             </HBox>
          </children>
       </VBox>
-      <VBox fx:id="weightCV" prefHeight="137.0" prefWidth="63.0">
+      <VBox fx:id="weightCV">
          <children>
             <Label text="Weight" />
-            <HBox>
+            <HBox minWidth="80.0">
                <children>
                   <Polygon stroke="BLACK" strokeType="INSIDE">
                     <points>
@@ -66,19 +72,19 @@
             </HBox>
          </children>
       </VBox>
-      <VBox fx:id="scaleCV">
+      <VBox fx:id="scaleCV" minWidth="80.0">
          <children>
             <Label text="Scale" VBox.vgrow="NEVER" />
             <Slider fx:id="scale" blockIncrement="0.25" majorTickUnit="1.0" max="2.0" min="-2.0" minorTickCount="5" orientation="VERTICAL" prefHeight="86.0" prefWidth="54.0" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
-      <VBox fx:id="opacCV">
+      <VBox fx:id="opacCV" minWidth="80.0">
          <children>
             <Label text="Opacity" />
             <Slider fx:id="opacity" blockIncrement="25.0" minorTickCount="5" orientation="VERTICAL" showTickLabels="true" showTickMarks="true" value="100.0" />
          </children>
       </VBox>
-      <VBox fx:id="strokeCV">
+      <VBox fx:id="strokeCV" minWidth="80.0">
          <children>
             <Label text="Stroke" VBox.vgrow="NEVER" />
             <HBox VBox.vgrow="ALWAYS">
@@ -97,14 +103,14 @@
             </HBox>
          </children>
       </VBox>
-      <VBox fx:id="rotatCV">
+      <VBox fx:id="rotatCV" minWidth="80.0">
          <children>
             <Label text="Rotation" VBox.vgrow="NEVER" />
             <Slider fx:id="rotation" majorTickUnit="90.0" max="180.0" min="-180.0" minorTickCount="5" orientation="VERTICAL" prefHeight="69.0" prefWidth="60.0" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS" />
          </children>
       </VBox>
-      <Separator orientation="VERTICAL" prefHeight="200.0" />
-      <VBox spacing="6.0">
+      <Separator orientation="VERTICAL" />
+      <VBox id="Discrete" spacing="6.0">
          <children>
             <HBox>
                <children>
@@ -132,22 +138,23 @@
             </HBox>
          </children>
       </VBox>
-      <Separator orientation="VERTICAL" prefHeight="200.0" />
-      <VBox prefHeight="137.0" prefWidth="154.0" spacing="6.0">
+      <Separator orientation="VERTICAL" />
+      <VBox id="Locks" spacing="6.0">
          <children>
             <Label text=" Node Locking" VBox.vgrow="NEVER" />
             <CheckBox fx:id="resizable" mnemonicParsing="false" onAction="#setResizable" text="Resizable" />
             <CheckBox fx:id="movable" layoutX="10.0" layoutY="33.0" mnemonicParsing="false" onAction="#setMovable" text="Movable" />
             <CheckBox fx:id="selectable" layoutX="10.0" layoutY="57.0" mnemonicParsing="false" onAction="#setSelectable" text="Selectable" />
             <CheckBox fx:id="connectable" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setConnectable" text="Connectable" />
+            <CheckBox fx:id="snapToGrid" mnemonicParsing="false" onAction="#setSnapToGrid" text="Snap To Grid" />
          </children>
       </VBox>
-      <Separator orientation="VERTICAL" prefHeight="200.0" />
-      <VBox spacing="6.0">
+      <Separator orientation="VERTICAL" />
+      <VBox id="Annotations" spacing="6.0">
          <children>
+            <Label fx:id="strokeLabel111" prefHeight="17.0" prefWidth="83.0" text="Annotations" />
             <CheckBox fx:id="showGraphId" mnemonicParsing="false" onAction="#showGraphId" text="Show GraphId" />
             <CheckBox fx:id="showZOrder" mnemonicParsing="false" onAction="#showZOrder" text="Show Z Order" />
-            <CheckBox fx:id="snapToGrid" mnemonicParsing="false" onAction="#setSnapToGrid" text="Snap To Grid" />
             <CheckBox fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
             <CheckBox fx:id="showLocks" mnemonicParsing="false" onAction="#showLocks" text="Show Locks" />
          </children>

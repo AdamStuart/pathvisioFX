@@ -54,17 +54,24 @@ public class DataNodeGroup extends DataNode {
 			double height =child.getDouble("Height");
 			double halfwidth = width / 2;
 			double halfheight = height / 2;
-			if (centerX - halfwidth < minX)  minX = centerX - halfwidth;
-			if (centerX + halfwidth > maxX)  maxX = centerX + halfwidth;
-			if (centerY - halfheight < minY)  minY = centerY - halfheight;
-			if (centerY + halfheight > maxY)  maxY = centerY + halfheight;
+			double left = centerX - halfwidth;
+			double right = centerX + halfwidth;
+			double top = centerY - halfheight;
+			double bottom = centerY + halfheight;
+			if (left < minX)  	minX = left;
+			if (right > maxX)  	maxX = right;
+			if (top < minY)  	minY = top;
+			if (bottom > maxY)  maxY = bottom;
 		}
+		minX += 12;			// TODO FUDGE
+		maxX += 12;
 		putDouble("X", minX);
 		putDouble("Y", minY);
 		putDouble("CenterX", (minX + maxX) / 2.0);
 		putDouble("CenterY", (minY + maxY) / 2.0);
 		putDouble("Width",  maxX - minX);
 		putDouble("Height",  maxY - minY);
+		
 		getStack().setRect(minX, minY, maxX - minX, maxY - minY);
 		ShapeFactory.resizeFigureToNode(getStack());
 		System.out.println(String.format(" and Bounds: [ ( %.2f,  %.2f )  %.2f x  %.2f]", minX, minY, maxX - minX, maxY - minY)); 
@@ -132,10 +139,10 @@ public class DataNodeGroup extends DataNode {
 		for (DataNode node : members)
 			if (node.getStack() != null) 
 			{
-				node.putDouble("X", node.getDouble("X")+dx);
-				node.putDouble("Y", node.getDouble("Y")+dy);
-				node.putDouble("CenterX", node.getDouble("CenterX")+dx);
-				node.putDouble("CenterY", node.getDouble("CenterY")+dy);
+				node.putDouble("X", node.getDouble("X")-dx);
+				node.putDouble("Y", node.getDouble("Y")-dy);
+				node.putDouble("CenterX", node.getDouble("CenterX")-dx);
+				node.putDouble("CenterY", node.getDouble("CenterY")-dy);
 				node.getStack().setRect(node.getDouble("X"), node.getDouble("Y"), node.getDouble("Width"), node.getDouble("Height"));		
 			}
 	}

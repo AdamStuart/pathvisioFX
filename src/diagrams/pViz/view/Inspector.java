@@ -22,7 +22,6 @@ import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
-import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -32,9 +31,9 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -79,8 +78,6 @@ public class Inspector extends HBox implements Initializable {
 //	@FXML private Button removeKeyFrame;
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
-		for (Node n : getChildren())
-			System.out.println(n.toString());
 		Parent p = strokeLabel.getParent();
 		strokeLabel.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.PENCIL, GlyphIcon.DEFAULT_ICON_SIZE));
 		fillLabel.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.CAR, GlyphIcon.DEFAULT_ICON_SIZE));
@@ -96,27 +93,24 @@ public class Inspector extends HBox implements Initializable {
 		opacity.valueProperty().addListener((ov, old, val) ->  	{   opacityChanged();  	});	
 		fillSlider.valueProperty().addListener((ov, old, val) ->  	{   fillChanged();  	});	
 		strokeSlider.valueProperty().addListener((ov, old, val) ->  	{   strokeChanged();  	});	
-		
-		fillCV.setBorder(Borders.thinEtchedBorder);
-		fillCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(fillCV); }); 
-		opacCV.setBorder(Borders.thinEtchedBorder);
-		opacCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(opacCV); }); 
-		rotatCV.setBorder(Borders.thinEtchedBorder);
-		rotatCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(rotatCV); }); 
-		scaleCV.setBorder(Borders.thinEtchedBorder);
-		scaleCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(scaleCV); }); 
-		weightCV.setBorder(Borders.thinEtchedBorder);
-		weightCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(weightCV); }); 
-		strokeCV.setBorder(Borders.thinEtchedBorder);
-		strokeCV.setOnMouseClicked(e -> { if (e.getClickCount() == 2) showSettings(strokeCV); }); 
+		new MinWidthAnimator(this, fillCV, fillSlider);
+		new MinWidthAnimator(this, opacCV, opacity);
+		new MinWidthAnimator(this, rotatCV, rotation);
+		new MinWidthAnimator(this, scaleCV, scale);
+		new MinWidthAnimator(this, weightCV,weight);
+		new MinWidthAnimator(this, strokeCV, strokeSlider);
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
-		EventHandler<Event> evH = event -> {	controller.getUndoStack().push(ActionType.Property);  };
-//		opacity.setOnMousePressed(evH); 
+		setBorder(Borders.blueBorder1);
+
+		
+		
+		//		opacity.setOnMousePressed(evH); 
 //		addKeyFrame.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.PLUS_CIRCLE, GlyphIcon.DEFAULT_ICON_SIZE));
 //		addKeyFrame.setText(null);
 //		removeKeyFrame.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.MINUS_CIRCLE, GlyphIcon.DEFAULT_ICON_SIZE));
 //		removeKeyFrame.setText(null);
 
+		EventHandler<Event> evH = event -> {	controller.getUndoStack().push(ActionType.Property);  };
 		weight.setOnMousePressed(evH);
 		rotation.setOnMousePressed(evH);
 		opacity.setOnMousePressed(evH);
@@ -127,12 +121,18 @@ public class Inspector extends HBox implements Initializable {
 //		getChildren().addAll( scale, weight, rotation);
 //		setBorder(Borders.redBorder);
 	}
-	private void showSettings(VBox vbox) {
-		   Alert a = new Alert(AlertType.INFORMATION, vbox.getId());
-		   a.setHeaderText("Settings for Mapping Attributes to Visualzation");
-		   a.getDialogPane().setMinWidth(600);
-		   a.setResizable(true);
-		   a.showAndWait();
+	
+	final double NARROW = 80;
+	final double WIDE = 200;
+	public void showSettings(Pane pane) {
+
+		boolean wasWide =  (pane.getMinWidth() >= WIDE);
+		pane.setMinWidth(wasWide ? NARROW : WIDE);
+//		Alert a = new Alert(AlertType.INFORMATION, vbox.getId());
+//		   a.setHeaderText("Settings for Mapping Attributes to Visualzation");
+//		   a.getDialogPane().setMinWidth(600);
+//		   a.setResizable(true);
+//		   a.showAndWait();
 	
 	
 }
@@ -276,21 +276,9 @@ public class Inspector extends HBox implements Initializable {
 	}
 	
 	@FXML private void setMovable(ActionEvent ev)		{	 selection.setMovable(movable.isSelected());	}	
-	
-	@FXML private void setResizable(ActionEvent ev)	
-	{
-		selection.setResizable(resizable.isSelected());		
-	}
-	
-	@FXML private void setSelectable(ActionEvent ev)	
-	{	
-		selection.setSelectable(selectable.isSelected());	
-	}
-
-	@FXML private void setConnectable(ActionEvent ev)	
-	{	
-		selection.setSelectable(connectable.isSelected());	
-	}
+	@FXML private void setResizable(ActionEvent ev)	 	{	selection.setResizable(resizable.isSelected());	}
+	@FXML private void setSelectable(ActionEvent ev)	{	selection.setSelectable(selectable.isSelected());	}
+	@FXML private void setConnectable(ActionEvent ev)	{	selection.setSelectable(connectable.isSelected());	}
 
 	// **-------------------------------------------------------------------------------
 	public void syncInspector()		//Inspector

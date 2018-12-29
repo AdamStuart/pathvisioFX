@@ -353,6 +353,7 @@ System.out.println("stateChanged " + e.toString());
 
 		TreeTableColumn<XRefable, String> col = new TreeTableColumn<XRefable, String>();
 		col.setText(s);
+		col.setPrefWidth(300);
 		col.setCellValueFactory(
                 (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
         		{

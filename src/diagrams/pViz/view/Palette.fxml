@@ -7,12 +7,11 @@
 <?import java.lang.*?>
 <?import javafx.scene.layout.*?>
 
-
 <VBox fx:id="palette" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefWidth="150.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.view.PaletteController">
    <children>
       <VBox fx:id="tools" spacing="4.0">
          <children>
-            <HBox>
+            <HBox id="Tools">
                <children>
                   <ToggleButton fx:id="arrow" mnemonicParsing="false" onAction="#setArrow" />
                   <ToggleButton fx:id="rectangle" mnemonicParsing="false" onAction="#setRectangle" />
@@ -20,171 +19,176 @@
                   <ToggleButton fx:id="text" layoutX="46.0" layoutY="10.0" mnemonicParsing="false" onAction="#setText" text="T" />
                </children>
             </HBox>
-            <Label text="Components" />
-            <ToggleButton fx:id="gene" mnemonicParsing="false" onAction="#setGene" prefWidth="107.0" text="Gene">
-               <font>
-                  <Font name="Baskerville Bold" size="12.0" />
-               </font>
-            </ToggleButton>
-            <ToggleButton fx:id="metabolite" mnemonicParsing="false" onAction="#setMetabolite" prefWidth="107.0" text="Metabolite">
-               <font>
-                  <Font name="Baskerville Bold" size="12.0" />
-               </font>
-            </ToggleButton>
-            <ToggleButton fx:id="protein" mnemonicParsing="false" onAction="#setProtein" prefWidth="107.0" text="Protein">
-               <font>
-                  <Font name="Baskerville Bold" size="12.0" />
-               </font>
-            </ToggleButton>
-            <ToggleButton fx:id="pathway" layoutX="10.0" layoutY="91.0" mnemonicParsing="false" onAction="#setPathway" prefWidth="107.0" text="Pathway">
-               <font>
-                  <Font name="Baskerville Bold" size="12.0" />
-               </font>
-            </ToggleButton>
-            <ToggleButton fx:id="rna" layoutX="10.0" layoutY="81.0" mnemonicParsing="false" onAction="#setRNA" prefWidth="107.0" text="RNA">
-               <font>
-                  <Font name="Baskerville Bold" size="12.0" />
-               </font>
-            </ToggleButton>
-         </children>
-      </VBox>
-      <VBox>
-         <children>
-            <HBox alignment="CENTER">
-               <children>
-                  <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="mitochondria11" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-               </children>
-            </HBox>
-            <HBox alignment="CENTER">
-               <children>
-                  <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-               </children>
-            </HBox>
-            <HBox alignment="CENTER" spacing="2.0">
-               <children>
-                  <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-                  <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
-                     <font>
-                        <Font size="9.0" />
-                     </font>
-                  </Button>
-               </children>
-            </HBox>
-         </children>
-      </VBox>
-      <Separator prefHeight="4.0" />
-      <Label text="Interactions" />
-      <ToolBar orientation="VERTICAL" prefHeight="330.0" prefWidth="122.0">
-         <items>
-            <VBox spacing="20.0">
-               <children>
-                  <HBox id="all Interactions" fx:id="allInteractions">
+            <TitledPane id="Components" text="Components">
+               <content>
+                  <AnchorPane>
                      <children>
-                        <VBox id="interactions" spacing="4.0">
+                        <VBox>
                            <children>
-                              <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Interacts">
+                              <ToggleButton fx:id="gene" mnemonicParsing="false" onAction="#setGene" prefWidth="107.0" text="Gene">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
-                                 <graphic>
-                                    <ImageView>
-                                       <image>
-                                          <Image url="@icons/transports.gif" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
                               </ToggleButton>
-                              <ToggleButton fx:id="arrow2" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow2" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Converts">
+                              <ToggleButton fx:id="metabolite" mnemonicParsing="false" onAction="#setMetabolite" prefWidth="107.0" text="Metabolite">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
-                                 <graphic>
-                                    <ImageView>
-                                       <image>
-                                          <Image url="@icons/activates.gif" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
                               </ToggleButton>
-                              <ToggleButton fx:id="arrow3" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow3" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Inhibits">
+                              <ToggleButton fx:id="protein" layoutY="52.0" mnemonicParsing="false" onAction="#setProtein" prefWidth="107.0" text="Protein">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
-                                 <graphic>
-                                    <ImageView>
-                                       <image>
-                                          <Image url="@icons/inhibits.gif" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
                               </ToggleButton>
-                              <ToggleButton fx:id="arrow4" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow4" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Catalyzes">
+                              <ToggleButton fx:id="pathway" layoutY="78.0" mnemonicParsing="false" onAction="#setPathway" prefWidth="107.0" text="Pathway">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
-                                 <graphic>
-                                    <ImageView>
-                                       <image>
-                                          <Image url="@icons/catalyzes.gif" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
                               </ToggleButton>
-                              <ToggleButton fx:id="arrow5" contentDisplay="RIGHT" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Stimulates">
+                              <ToggleButton fx:id="rna" layoutY="104.0" mnemonicParsing="false" onAction="#setRNA" prefWidth="107.0" text="RNA">
                                  <font>
                                     <Font name="Baskerville Bold" size="12.0" />
                                  </font>
-                                 <graphic>
-                                    <ImageView>
-                                       <image>
-                                          <Image url="@icons/converts.gif" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
                               </ToggleButton>
-                              <ToggleButton fx:id="arrow6" contentDisplay="RIGHT" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Binds">
-                                 <font>
-                                    <Font name="Baskerville Bold" size="12.0" />
-                                 </font>
-                                 <graphic>
-                                    <ImageView>
-                                       <image>
-                                          <Image url="@icons/stimulates.gif" />
-                                       </image>
-                                    </ImageView>
-                                 </graphic>
-                              </ToggleButton>
+                              <HBox id="Cell &amp; Nucleus" alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="mitochondria11" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                              <VBox id="Mito &amp; ER">
+                                 <children>
+                                    <HBox alignment="CENTER">
+                                       <children>
+                                          <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
+                                             <font>
+                                                <Font size="9.0" />
+                                             </font>
+                                          </Button>
+                                          <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
+                                             <font>
+                                                <Font size="9.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
+                                    <HBox alignment="CENTER" spacing="2.0">
+                                       <children>
+                                          <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
+                                             <font>
+                                                <Font size="9.0" />
+                                             </font>
+                                          </Button>
+                                          <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
+                                             <font>
+                                                <Font size="9.0" />
+                                             </font>
+                                          </Button>
+                                          <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
+                                             <font>
+                                                <Font size="9.0" />
+                                             </font>
+                                          </Button>
+                                       </children>
+                                    </HBox>
+                                 </children>
+                              </VBox>
                            </children>
                         </VBox>
                      </children>
-                  </HBox>
+                  </AnchorPane>
+               </content>
+            </TitledPane>
+         </children>
+      </VBox>
+      <TitledPane id="Interactions" alignment="TOP_LEFT" text="Interactions">
+         <content>
+            <VBox fillWidth="false" spacing="10.0">
+               <children>
+                  <VBox id="interactions" spacing="4.0">
+                     <children>
+                        <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Interacts">
+                           <font>
+                              <Font name="Baskerville Bold" size="12.0" />
+                           </font>
+                           <graphic>
+                              <ImageView>
+                                 <image>
+                                    <Image url="@icons/transports.gif" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="arrow2" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow2" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Converts">
+                           <font>
+                              <Font name="Baskerville Bold" size="12.0" />
+                           </font>
+                           <graphic>
+                              <ImageView>
+                                 <image>
+                                    <Image url="@icons/activates.gif" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="arrow3" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow3" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Inhibits">
+                           <font>
+                              <Font name="Baskerville Bold" size="12.0" />
+                           </font>
+                           <graphic>
+                              <ImageView>
+                                 <image>
+                                    <Image url="@icons/inhibits.gif" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="arrow4" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow4" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Catalyzes">
+                           <font>
+                              <Font name="Baskerville Bold" size="12.0" />
+                           </font>
+                           <graphic>
+                              <ImageView>
+                                 <image>
+                                    <Image url="@icons/catalyzes.gif" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="arrow5" contentDisplay="RIGHT" layoutX="10.0" layoutY="72.0" mnemonicParsing="false" onAction="#setArrow5" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Stimulates">
+                           <font>
+                              <Font name="Baskerville Bold" size="12.0" />
+                           </font>
+                           <graphic>
+                              <ImageView>
+                                 <image>
+                                    <Image url="@icons/converts.gif" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </ToggleButton>
+                        <ToggleButton fx:id="arrow6" contentDisplay="RIGHT" layoutX="10.0" layoutY="103.0" mnemonicParsing="false" onAction="#setArrow6" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Binds">
+                           <font>
+                              <Font name="Baskerville Bold" size="12.0" />
+                           </font>
+                           <graphic>
+                              <ImageView>
+                                 <image>
+                                    <Image url="@icons/stimulates.gif" />
+                                 </image>
+                              </ImageView>
+                           </graphic>
+                        </ToggleButton>
+                     </children>
+                  </VBox>
                   <VBox id="line types">
                      <children>
                         <ToggleButton fx:id="straight" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setStraight" prefHeight="27.0" prefWidth="107.0" text="Straight">
@@ -239,14 +243,14 @@
                   </VBox>
                </children>
             </VBox>
-         </items>
-      </ToolBar>
+         </content>
+      </TitledPane>
       <HBox>
          <children>
             <Button fx:id="zoomin" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomIn" prefHeight="30.0" prefWidth="30.0" text="&lt;" />
             <Button fx:id="zoomout" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomOut" prefHeight="30.0" prefWidth="30.0" text="&gt;" />
+            <Button fx:id="editPalette" maxHeight="-Infinity" mnemonicParsing="false" onAction="#editPalette" prefHeight="30.0" text="Edit Palette" />
          </children>
       </HBox>
-      <Button fx:id="editPalette" maxHeight="30.0" maxWidth="121.0" mnemonicParsing="false" onAction="#editPalette" prefHeight="30.0" prefWidth="121.0" text="Edit Palette" />
    </children>
 </VBox>

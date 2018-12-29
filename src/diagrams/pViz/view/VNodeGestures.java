@@ -225,10 +225,7 @@ public class VNodeGestures {
 		{
 			MenuItem item = new MenuItem(layer.getName());
 			menu.getItems().add(item);
-			item.setOnAction(e -> 	
-			{ 	
-				controller.moveSelectionToLayer(layer.getName());  
-			});
+			item.setOnAction(e -> 	{ 	controller.moveSelectionToLayer(layer.getName());  	});
 		}
 		return menu;
 	}
