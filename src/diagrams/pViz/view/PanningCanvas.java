@@ -139,8 +139,8 @@ public class PanningCanvas extends Pane {
 		int res = (int) Screen.getPrimary().getDpi();			// assumes inches
 		
 		//AM for alternate gradient gridline method
-		hGrid.setFill(Backgrounds.getGridLinesPaint(res, .5 / getScale(), Color.GRAY, false));
-		vGrid.setFill(Backgrounds.getGridLinesPaint(res, .5 / getScale(), Color.GRAY, true));
+		hGrid.setFill(Backgrounds.getGridLinesPaint(res, 1.0 / getScale(), Color.LIGHTGRAY, false));
+		vGrid.setFill(Backgrounds.getGridLinesPaint(res, 1.0 / getScale(), Color.LIGHTGRAY, true));
 		
 		
 		//AM using Line objects for the grid is causing the canvas to expand to fit the lines
