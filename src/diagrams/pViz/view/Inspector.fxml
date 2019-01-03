@@ -77,7 +77,21 @@
       </VBox>
       <VBox fx:id="scaleCV">
          <children>
-            <Label text="Scale" VBox.vgrow="NEVER" />
+            <HBox prefHeight="14.0" prefWidth="33.0">
+               <children>
+                  <Label text="Scale" VBox.vgrow="NEVER" />
+                  <Polygon fx:id="triangle" fill="#647483" stroke="BLACK" strokeType="INSIDE" translateY="3.0">
+                    <points>
+                       <Double fx:value="0.0" />
+                      <Double fx:value="-5.0" />
+                       <Double fx:value="0.0" />
+                      <Double fx:value="5.0" />
+                       <Double fx:value="8.0" />
+                      <Double fx:value="0.0" />
+                    </points>
+                  </Polygon>
+               </children>
+            </HBox>
             <HBox fx:id="scaleContainer">
                <children>
                   <Slider fx:id="scale" blockIncrement="0.25" majorTickUnit="1.0" max="2.0" min="-2.0" minorTickCount="5" orientation="VERTICAL" showTickLabels="true" showTickMarks="true" VBox.vgrow="ALWAYS">

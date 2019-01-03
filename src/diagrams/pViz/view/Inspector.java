@@ -20,7 +20,6 @@ import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.CheckBox;
@@ -38,6 +37,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
@@ -60,6 +60,7 @@ public class Inspector extends HBox implements Initializable {
 	@FXML private VBox rotatCV;
 	@FXML private VBox weightCV;
 	@FXML private VBox scaleCV;
+	@FXML private Polygon triangle;
 
 	@FXML private ColorPicker fillColor;
 	@FXML private ColorPicker lineColor;
@@ -102,7 +103,7 @@ public class Inspector extends HBox implements Initializable {
 		new MinWidthAnimator(this, fillCV,  fillContainer, fillSlider);
 		new MinWidthAnimator(this, opacCV, opacityContainer, opacity);
 		new MinWidthAnimator(this, rotatCV, rotationContainer, rotation);
-		new MinWidthAnimator(this, scaleCV, scaleContainer, scale);
+		new MinWidthAnimator(this, scaleCV, triangle, scaleContainer, scale);
 		new MinWidthAnimator(this, weightCV,weightContainer, weight);
 		new MinWidthAnimator(this, strokeCV, strokeContainer, strokeSlider);
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed

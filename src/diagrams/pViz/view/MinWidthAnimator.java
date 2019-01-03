@@ -11,6 +11,8 @@ import javafx.scene.control.Slider;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
+import javafx.scene.shape.Polygon;
+import javafx.scene.shape.Shape;
 import javafx.util.Duration;
 
 public class MinWidthAnimator
@@ -27,7 +29,16 @@ public class MinWidthAnimator
 	ChoiceBox<String> mapChooser = new ChoiceBox<String>();			// TODO using mapping enum
 	Inspector controller; 
 	Slider slider;
+	Shape widget;
 // TODO have a hover animation to collapse/expand if no button is sent in
+	public MinWidthAnimator(Inspector ctrlr, Pane pane, Polygon triang, HBox hbox, Slider inSlider)
+	{
+		this(ctrlr,pane, hbox, inSlider);
+		widget = triang;
+		widget.setTranslateX(12);
+		triang.setOnMouseClicked(ev -> { toggleWidth(pane); });
+	}
+	
 	public MinWidthAnimator(Inspector ctrlr, Pane pane, HBox hbox, Slider inSlider)
 	{
 		controller = ctrlr;
@@ -47,22 +58,27 @@ public class MinWidthAnimator
         container.setMinWidth(narrowWidth);
 		pane.setOnMouseClicked(e -> { if (e.getClickCount() == 2) toggleWidth(pane); }); 
 		hider = new Transition() { 
-        { setCycleDuration(d); }
-        
-        protected void interpolate(double frac) 
-        {
-      	  controlBox.setVisible(false);
-            final double curWidth = narrowWidth + (expandedWidth - narrowWidth) * (1 - frac);
-            container.setPrefWidth(curWidth);
-            container.setMaxWidth(curWidth);
-            container.setMinWidth(curWidth);
-        }
+         
+			{	setCycleDuration(d); }
+
+			protected void interpolate(double frac) {
+				controlBox.setVisible(false);
+				final double curWidth = narrowWidth + (expandedWidth - narrowWidth) * (1 - frac);
+				container.setPrefWidth(curWidth);
+				container.setMaxWidth(curWidth);
+				container.setMinWidth(curWidth);
+				if (widget != null)
+				{	
+					widget.setRotate(180 * (1-frac));
+					widget.setTranslateX((curWidth-narrowWidth+12));
+
+				}
+			}
       };
       hider.onFinishedProperty().set(new EventHandler<ActionEvent>() {
           @Override public void handle(ActionEvent actionEvent) {
         	  container.getStyleClass().remove("wide");
         	  container.getStyleClass().add("narrow");
-//        	  container.getChildren().remove(controlBox);
         	  controlBox.setVisible(false);
           }
         });
@@ -75,16 +91,18 @@ public class MinWidthAnimator
           container.setPrefWidth(curWidth);  
           container.setMaxWidth(curWidth); 
           container.setMinWidth(curWidth);
-        }
+			if (widget != null)
+			{	
+				widget.setRotate(180 * frac);
+			widget.setTranslateX((curWidth-narrowWidth+12));
+			
+			}
+       }
       };
       shower.onFinishedProperty().set(new EventHandler<ActionEvent>() {
         @Override public void handle(ActionEvent actionEvent) {
         	container.getStyleClass().add("wide");
         	container.getStyleClass().remove("narrow");
-//        	controlBox.getChildren().clear();
-//        	controlBox.getChildren().addAll(colLabel, colChooser, mapLabel, mapChooser);
-//            String styleString = "-fx-background-color: rgba(0.1, 0.1, 0.1, 0.5);";
-//            controlBox.setStyle(styleString);
             controlBox.setVisible(true);
       }
       });			

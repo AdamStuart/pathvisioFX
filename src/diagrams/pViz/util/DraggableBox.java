@@ -281,15 +281,12 @@ public class DraggableBox extends StackPane {
      */
     protected void handleMousePressed(final MouseEvent event) {
 
-        if (!event.getButton().equals(MouseButton.PRIMARY)) {
+        if (!event.getButton().equals(MouseButton.PRIMARY)) 
             return;
-        }
 
-        if (cacheWhenStationary) {
-            setCache(false);
-        }
+        if (cacheWhenStationary)      setCache(false);
 
-        storeClickValuesForDrag(event.getX(), event.getY());
+        storeClickValuesForDrag(event.getSceneX(), event.getSceneY());
         dragActive = true;
         event.consume();
     }
@@ -302,14 +299,14 @@ public class DraggableBox extends StackPane {
     public boolean isMovable()	{ return true;	}
     protected void handleMouseDragged(final MouseEvent event) {
 
-        if (!event.getButton().equals(MouseButton.PRIMARY)) {
-            return;
-        }
+        if (!event.getButton().equals(MouseButton.PRIMARY))   return;
         if (!isMovable()) return;
-        if (!dragActive) {
-            storeClickValuesForDrag(event.getSceneX(), event.getSceneY());
-        }
-        handleDrag(event.getSceneX(), event.getSceneY());
+        double sceneX = event.getSceneX();
+        double sceneY = event.getSceneY();
+        
+        if (!dragActive) 
+            storeClickValuesForDrag(sceneX, sceneY);
+        else handleDrag(sceneX, sceneY);
         dragActive = true;
         event.consume();
     }

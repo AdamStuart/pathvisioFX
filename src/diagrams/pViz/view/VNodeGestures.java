@@ -54,7 +54,7 @@ public class VNodeGestures {
 //            nodeDragContext.mouseAnchorY = event.getSceneY();
 
             Node node = (Node) event.getSource();
-			System.out.println(String.format("===============%.1f, %.1f", event.getSceneX(), event.getSceneY()));
+			System.out.println(String.format("=============== %.1f, %.1f", event.getSceneX(), event.getSceneY()));
 
 //            nodeDragContext.translateAnchorX = node.getTranslateX();
 //            nodeDragContext.translateAnchorY = node.getTranslateY();
@@ -85,8 +85,8 @@ public class VNodeGestures {
         }
     };
 
-    double localLastMouseX = -1; 
- 	double localLastMouseY = -1; 
+    double prevX = -1; 
+ 	double prevY = -1; 
 
  	private EventHandler<MouseEvent> mouseDraggedHandler = new EventHandler<MouseEvent>() {
         public void handle(MouseEvent event) {
@@ -122,10 +122,10 @@ public class VNodeGestures {
             {	
                	double dx = 0;
             	double dy = 0;
-            	if (localLastMouseX > 0 && localLastMouseY > 0)
+            	if (prevX > 0 && prevY > 0)
             	{
-            		dx = ex - localLastMouseX;
-            		dy = ey - localLastMouseY;
+            		dx = ex - prevX;
+            		dy = ey - prevY;
         			if (Math.abs(dy) > 10|| Math.abs(dy) > 10)
         			{
                 		System.out.println(String.format("BIG JUMP:   %.1f, %.1f", dx, dy));
@@ -141,8 +141,8 @@ public class VNodeGestures {
                 		}
        			}
             	}
-            	localLastMouseX = ex;
-            	localLastMouseY = ey;
+            	prevX = ex;
+            	prevY = ey;
             	if (vNode.modelNode() instanceof DataNodeGroup)
             		((DataNodeGroup)vNode.modelNode()).moveMembers(dx, dy);
             	
@@ -174,9 +174,8 @@ public class VNodeGestures {
 		}
 		getController().getUndoStack().push(ActionType.Move);
 		canvas.getSelectionMgr().extract();
-	    localLastMouseX = -1; 
-	 	localLastMouseY = -1; 
 		vNode.stopResizing();
+	    prevX = prevY = -1; 
     }
 
 	private Controller getController() {
