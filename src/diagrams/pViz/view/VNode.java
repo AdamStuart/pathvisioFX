@@ -356,12 +356,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double minY = b.getMinY();
 		double w = getWidth();
 		double h = getHeight();
-		dataNode.putDouble("X", minX);
-		dataNode.putDouble("Y", minY);
-		dataNode.putDouble("CenterX", minX + w / 2);
-		dataNode.putDouble("CenterY", minY + h / 2);
-		dataNode.putDouble("Width", w);
-		dataNode.putDouble("Height", h);
+		dataNode.putRect(minX, minY, w, h);
 		getController().redrawMyEdges(this);
 	}
 	public double getCenterX()	{ return dataNode.getDouble("CenterX");	}

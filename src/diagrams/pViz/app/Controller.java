@@ -207,7 +207,7 @@ public class Controller implements Initializable, IController
 	@FXML private MenuItem redo;
 	@FXML private MenuItem clearundo;
 	@FXML private HBox bottomPadding;
-	@FXML private BorderPane 	loadContainer;
+//	@FXML private BorderPane 	loadContainer;
 
 	//------------------------------------------
 	@FXML private Label select;
@@ -297,14 +297,12 @@ public class Controller implements Initializable, IController
 		palette.getView().setPrefWidth(150);
 		palette.getView().setPrefHeight(750);
 		setupInspector();		
-		pasteboard.bindGridProperties();
+		pasteboard.bindGridProperties();	// requires Inspector to be initialized
 		drawPane.getChildren().add(pasteboard);
 		
 		doc = new Document(this);
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
 		pasteboard.getStylesheets().add(cssURL);
-//		stage = App.getInstance().getStage();
-//		drawContainer.setBorder(Borders.etchedBorder);
 		scrollPane.setPannable(true);
 //		scrollPane.setOnScroll(ev -> {		//AM is this necessary?
 //			ev.consume();
@@ -320,9 +318,9 @@ public class Controller implements Initializable, IController
 //		setupListviews();
 		new BorderPaneAnimator(container, leftSideBarButton, Side.LEFT, false, 150);
 		new BorderPaneAnimator(container, bottomSideBarButton, Side.BOTTOM, false, 150);
+		bottomSideBarButton.fire();		// start with inspector closed
 		rightSideBarButton.setOnAction(event -> {	toggleHSplitter();	});
 		rightSideBarButton.fire();
-		bottomSideBarButton.fire();
 		rightSideBarButton.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.LOCATION_ARROW, GlyphIcon.DEFAULT_ICON_SIZE));
 		rightSideBarButton.setText("");
 

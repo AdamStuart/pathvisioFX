@@ -178,7 +178,7 @@ abstract public class ResizableBox extends DraggableBox {
 //    protected void getInfo() {		System.out.println("getInfo");}  //TODO  abstract
 //	protected void doContextMenu(final MouseEvent event) {		System.out.println("doContextMenu");}  //TODO  abstract
 	
-    DragContext nodeDragContext = new DragContext();
+//    DragContext nodeDragContext = new DragContext();
 //	@Override
 //    protected void handleMousePressed(final MouseEvent event) {
 //
@@ -378,7 +378,7 @@ abstract public class ResizableBox extends DraggableBox {
 
 	    if (event.isPrimaryButtonDown())            return;
 	    final RectangleMouseRegion mouseRegion = getMouseRegion(event.getX(), event.getY());
-	    System.out.println("" + mouseRegion);
+//	    System.out.println("" + mouseRegion);
 	    mouseInPositionForResize = !mouseRegion.equals(RectangleMouseRegion.INSIDE);
 	    updateCursor(mouseRegion);
 	}
@@ -449,7 +449,7 @@ abstract public class ResizableBox extends DraggableBox {
 
         setLayoutY(newLayoutY);
         setHeight(newHeight);
-        System.out.println(String.format("%.2f, %.2f",  newLayoutY, newHeight));
+//        System.out.println(String.format("%.2f, %.2f",  newLayoutY, newHeight));
     }
 
     /**
@@ -581,7 +581,7 @@ abstract public class ResizableBox extends DraggableBox {
 
         final double width = getWidth();
         final double height = getHeight();
-        System.out.println(String.format("%.1f, %.1f", x, y));
+//        System.out.println(String.format("%.1f, %.1f", x, y));
         if (x < -10 || y < -10)				return RectangleMouseRegion.OUTSIDE;
         if (x > width + 20 || y > height + 20) 	
         	return RectangleMouseRegion.OUTSIDE;

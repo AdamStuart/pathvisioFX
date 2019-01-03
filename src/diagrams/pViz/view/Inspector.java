@@ -71,6 +71,12 @@ public class Inspector extends HBox implements Initializable {
 	@FXML private Slider opacity;
 	@FXML private Slider fillSlider;
 	@FXML private Slider strokeSlider;
+	@FXML private HBox fillContainer;
+	@FXML private HBox weightContainer;
+	@FXML private HBox scaleContainer;
+	@FXML private HBox strokeContainer;
+	@FXML private HBox rotationContainer;
+	@FXML private HBox opacityContainer;
 //	@FXML private Label status1;
 //	@FXML private Label status2;
 //	@FXML private Label status3;
@@ -93,12 +99,12 @@ public class Inspector extends HBox implements Initializable {
 		opacity.valueProperty().addListener((ov, old, val) ->  	{   opacityChanged();  	});	
 		fillSlider.valueProperty().addListener((ov, old, val) ->  	{   fillChanged();  	});	
 		strokeSlider.valueProperty().addListener((ov, old, val) ->  	{   strokeChanged();  	});	
-		new MinWidthAnimator(this, fillCV, fillSlider);
-		new MinWidthAnimator(this, opacCV, opacity);
-		new MinWidthAnimator(this, rotatCV, rotation);
-		new MinWidthAnimator(this, scaleCV, scale);
-		new MinWidthAnimator(this, weightCV,weight);
-		new MinWidthAnimator(this, strokeCV, strokeSlider);
+		new MinWidthAnimator(this, fillCV,  fillContainer, fillSlider);
+		new MinWidthAnimator(this, opacCV, opacityContainer, opacity);
+		new MinWidthAnimator(this, rotatCV, rotationContainer, rotation);
+		new MinWidthAnimator(this, scaleCV, scaleContainer, scale);
+		new MinWidthAnimator(this, weightCV,weightContainer, weight);
+		new MinWidthAnimator(this, strokeCV, strokeContainer, strokeSlider);
 		// sliders don't record undoable events (because they make so many) so snapshot the state on mousePressed
 		setBorder(Borders.blueBorder1);
 
@@ -114,7 +120,9 @@ public class Inspector extends HBox implements Initializable {
 		weight.setOnMousePressed(evH);
 		rotation.setOnMousePressed(evH);
 		opacity.setOnMousePressed(evH);
-		setMinHeight(150); setPrefHeight(150); setMinWidth(600); 
+		setMinHeight(150); setPrefHeight(150); setMaxHeight(150);
+		setMinWidth(600); setPrefWidth(1000); 
+		
 //		setupKeyFrameTable();
 		getChildren().add (inspectTop);		//new Button("ANYTHING")
 //		getChildren().addAll( fillLabel, fillColor, strokeLabel, lineColor);

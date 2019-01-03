@@ -257,10 +257,10 @@ public class Selection
 		getUndoStack().push(ActionType.Move);	
 		double amount = 1;
 		double dx = 0, dy = 0;
-		if (key == KeyCode.LEFT)		dx = amount;
-		else if (key == KeyCode.RIGHT)	dx = -amount;
-		else if (key == KeyCode.UP)		dy = amount;
-		else if (key == KeyCode.DOWN)	dy = -amount;
+		if (key == KeyCode.LEFT)		dx = -amount;
+		else if (key == KeyCode.RIGHT)	dx = amount;
+		else if (key == KeyCode.UP)		dy = -amount;
+		else if (key == KeyCode.DOWN)	dy = amount;
 		translate(dx, dy);
 	}	
 	public void translate(double dx, double dy)	{	translate(dx,dy, null);	}	
@@ -285,28 +285,28 @@ public class Selection
 			if (n instanceof Shape1)
 			{
 				Shape1 r = (Shape1) n;
-				r.setTranslateX(r.getTranslateX() - dx);
-				r.setTranslateY(r.getTranslateY() - dy);
+				r.setTranslateX(r.getTranslateX() + dx);
+				r.setTranslateY(r.getTranslateY() + dy);
 			}			
 //			if (n instanceof Shape2)
 //			{
 //				Shape2 r = (Shape2) n;
-//				r.setTranslateX(r.getTranslateX() - dx);
-//				r.setTranslateY(r.getTranslateY() - dy);
+//				r.setTranslateX(r.getTranslateX() + dx);
+//				r.setTranslateY(r.getTranslateY() + dy);
 //			}
 			if (n instanceof Circle)
 			{
 				Circle c = (Circle) n;
-				c.setCenterX(c.getCenterX() - dx);
-				c.setCenterY(c.getCenterY() - dy);
+				c.setCenterX(c.getCenterX() + dx);
+				c.setCenterY(c.getCenterY() + dy);
 			}
 			if (n instanceof Polygon)
 			{
 				Polygon c = (Polygon) n;
 				for ( int i = 0; i < c.getPoints().size(); i += 2)
 				{
-					c.getPoints().set(i, c.getPoints().get(i) - dx);
-					c.getPoints().set(i+1, c.getPoints().get(i+1) - dy);
+					c.getPoints().set(i, c.getPoints().get(i) + dx);
+					c.getPoints().set(i+1, c.getPoints().get(i+1) + dy);
 				}
 			}
 			if (n instanceof Polyline)
@@ -314,14 +314,14 @@ public class Selection
 				Polyline c = (Polyline) n;
 				for ( int i = 0; i < c.getPoints().size(); i += 2)
 				{
-					c.getPoints().set(i, c.getPoints().get(i) - dx);
-					c.getPoints().set(i+1, c.getPoints().get(i+1) - dy);
+					c.getPoints().set(i, c.getPoints().get(i) + dx);
+					c.getPoints().set(i+1, c.getPoints().get(i+1) + dy);
 				}
 			}
 			if (n instanceof Group)
 			{
-				n.setLayoutX(n.getLayoutX() - dx);
-				n.setLayoutY(n.getLayoutY() - dy);
+				n.setLayoutX(n.getLayoutX() + dx);
+				n.setLayoutY(n.getLayoutY() + dy);
 			}
 			
 			if (n instanceof ImageView)
@@ -336,8 +336,8 @@ public class Selection
 			if (n instanceof StackPane)
 			{
 				StackPane r = (StackPane) n;
-				double x = r.getLayoutX() - dx;
-				double y = r.getLayoutY() - dy;
+				double x = r.getLayoutX() + dx;
+				double y = r.getLayoutY() + dy;
 				r.setLayoutX(x);
 				r.setLayoutY(y);
 			}
@@ -346,13 +346,13 @@ public class Selection
 				StackPane r = (StackPane) (n.getParent());
 				double width = r.getWidth();
 				double height = r.getHeight();
-				double x = r.getLayoutX() - dx;
-				double y = r.getLayoutY() - dy;
+				double x = r.getLayoutX() + dx;
+				double y = r.getLayoutY() +dy;
 				RectangleUtil.setRect(r, x, y, width, height);
 			}
 			if (n instanceof Line)
 			{
-				LineUtil.translateLine((Line) n, -dx, -dy);
+				LineUtil.translateLine((Line) n, dx, dy);
 			}
 		}
 	}

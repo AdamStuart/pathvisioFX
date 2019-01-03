@@ -136,14 +136,14 @@ import util.FileUtil;
 		    	return;
 		    }
 		    fxmlLoader.setLocation(url);
-		    SplitPane appPane =  fxmlLoader.load();
+		    BorderPane appPane =  fxmlLoader.load();
 		    
 		    if (doc != null)
 		   	{
 		    	Controller c = (Controller) fxmlLoader.getController();
 		    	c.addXMLDoc(doc);	
 		    }
-		    stage.setScene(new Scene(appPane, 1000, 800));
+		    stage.setScene(new Scene(appPane, 1000, 1000));
 		    registerWindow(stage);
 		    stage.show();
 		}

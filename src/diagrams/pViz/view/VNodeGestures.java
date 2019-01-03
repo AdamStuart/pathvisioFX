@@ -50,13 +50,14 @@ public class VNodeGestures {
             	return;
             }
             if (vNode.modelNode().isLocked())	return;
-            nodeDragContext.mouseAnchorX = event.getSceneX();
-            nodeDragContext.mouseAnchorY = event.getSceneY();
+//            nodeDragContext.mouseAnchorX = event.getSceneX();
+//            nodeDragContext.mouseAnchorY = event.getSceneY();
 
             Node node = (Node) event.getSource();
+			System.out.println(String.format("===============%.1f, %.1f", event.getSceneX(), event.getSceneY()));
 
-            nodeDragContext.translateAnchorX = node.getTranslateX();
-            nodeDragContext.translateAnchorY = node.getTranslateY();
+//            nodeDragContext.translateAnchorX = node.getTranslateX();
+//            nodeDragContext.translateAnchorY = node.getTranslateY();
     		if (event.getClickCount() > 1)	   {	vNode.getInfo(); 	event.consume();   return; }
     		if (event.isPopupTrigger())	   {	doContextMenu(event, vNode); return;	   }
     		Tool curTool = canvas.getTool();
@@ -67,8 +68,8 @@ public class VNodeGestures {
     	   if (event.isAltDown())
     		   selection.duplicateSelection();
     	   
-    	   prevMouseX = event.getSceneX();
-    	   prevMouseY = event.getSceneY();
+    		double prevMouseX = event.getSceneX();
+    		double  prevMouseY = event.getSceneY();
     	   boolean inCorner = vNode.ptInCorner(prevMouseX, prevMouseY);
     	   if (inCorner)
     		   vNode.handleResize(event);
@@ -84,7 +85,10 @@ public class VNodeGestures {
         }
     };
 
-    private EventHandler<MouseEvent> mouseDraggedHandler = new EventHandler<MouseEvent>() {
+    double localLastMouseX = -1; 
+ 	double localLastMouseY = -1; 
+
+ 	private EventHandler<MouseEvent> mouseDraggedHandler = new EventHandler<MouseEvent>() {
         public void handle(MouseEvent event) {
 
             // left mouse button => dragging
@@ -93,7 +97,7 @@ public class VNodeGestures {
                 return;
             if (vNode.modelNode().isLocked())	return;
 
-            double scale = canvas.getScale();
+//            double scale = canvas.getScale();
 //
 //            Node node = (Node) event.getSource();
 //            node.setTranslateX(nodeDragContext.translateAnchorX + (( event.getSceneX() - nodeDragContext.mouseAnchorX) / scale));
@@ -101,7 +105,7 @@ public class VNodeGestures {
 //
         	double ex = event.getSceneX();
     		double ey = event.getSceneY();
-    				
+//    				System.out.println(String.format("%.1f, %.1f", ex, ey));
     		if (vNode.isResizing())
     		{
     			vNode.handleResize(event);
@@ -120,13 +124,23 @@ public class VNodeGestures {
             	double dy = 0;
             	if (localLastMouseX > 0 && localLastMouseY > 0)
             	{
-            		dx = localLastMouseX - ex;
-            		dy = localLastMouseY - ey;
+            		dx = ex - localLastMouseX;
+            		dy = ey - localLastMouseY;
+        			if (Math.abs(dy) > 10|| Math.abs(dy) > 10)
+        			{
+                		System.out.println(String.format("BIG JUMP:   %.1f, %.1f", dx, dy));
+        			}
+        			else
+        			{
+        				Selection sele = getController().getSelectionManager();
+                		if (dx != 0 || dy != 0)
+                		{
+                				sele.translate(dx,dy, vNode);
+                        		System.out.println(String.format("%.1f, %.1f", dx, dy));
+                       			sele.extract();
+                		}
+       			}
             	}
-            	
-        		Selection sele = getController().getSelectionManager();
-        		sele.translate(dx,dy, vNode);
-            	sele.extract();
             	localLastMouseX = ex;
             	localLastMouseY = ey;
             	if (vNode.modelNode() instanceof DataNodeGroup)
@@ -144,10 +158,8 @@ public class VNodeGestures {
     };
     
 
-    double localLastMouseX = -1; 
-	double localLastMouseY = -1; 
-	
-
+    //-------------------------------------------------------------------------------
+ 
 	protected void handleMouseReleased(final MouseEvent event) {
 		if (canvas.getDragLine() != null && vNode.modelNode().isConnectable()) {
 			VNode starter = canvas.getDragSource();
@@ -162,6 +174,8 @@ public class VNodeGestures {
 		}
 		getController().getUndoStack().push(ActionType.Move);
 		canvas.getSelectionMgr().extract();
+	    localLastMouseX = -1; 
+	 	localLastMouseY = -1; 
 		vNode.stopResizing();
     }
 
@@ -169,9 +183,6 @@ public class VNodeGestures {
 		return vNode.modelNode().getModel().getController();
 	}
 
-	double prevMouseX, prevMouseY;
-	
-	// **------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	protected void doContextMenu(MouseEvent event, VNode vNode) {
 		ContextMenu menu = new ContextMenu();
