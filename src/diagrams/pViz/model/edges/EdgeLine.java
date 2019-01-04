@@ -7,6 +7,7 @@ import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.view.Arrow;
+import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
 import javafx.beans.property.BooleanProperty;
@@ -132,7 +133,7 @@ private void addCenterPointListeners() {
 			// add two more midpoint circles
 		}
 		setEdgeType(EdgeType.polyline);
-		connect();
+		connect(null);
 		e.consume();
 	} );
 	centerPoint.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> 
@@ -142,7 +143,7 @@ private void addCenterPointListeners() {
 		
 		centerPoint.setCenterX(e.getX());
 		centerPoint.setCenterY(e.getY());
-		connect();
+		connect(null);
 		select(true);
 		e.consume();
 	} );
@@ -407,7 +408,7 @@ private void addCenterPointListeners() {
 	}
 	
   //----------------------------------------------------------------------
-	public void connect()
+	public void connect(ArrowType arrowType)
 	{
 //		for (GPMLPoint pt : points)
 //			pt.setXYFromNode();
@@ -426,7 +427,7 @@ private void addCenterPointListeners() {
 			default: 		linearConnect();
 		}
 		
-		head = makeArrowhead();
+		head = makeArrowhead(arrowType);
 	 	
 		Point2D pt = getPointAlongLine(0.5);
 		setLabelPosition(pt);
@@ -700,13 +701,13 @@ private void addCenterPointListeners() {
 			last.setArrowType(inType);
 	}
 		
-	public Shape makeArrowhead()
+	public Shape makeArrowhead(ArrowType arrowhead)
 	{	
 		GPMLPoint last = lastGPMLPoint();
 		if (last == null) 		return null;
 
 		Color strokeColor = interaction == null ? Color.AQUAMARINE : interaction.getColor();
-		ArrowType arrowhead = last.getArrowType();
+//		ArrowType arrowhead = last.getArrowType();
 		if (arrowhead == null)	return null;
 		if (arrowhead == ArrowType.none) return null;
 		Point2D prev = forelastPoint();

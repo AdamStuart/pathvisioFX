@@ -320,7 +320,7 @@ public class Pasteboard extends PanningCanvas
 	public VNode getPolyDragSource() { return dragPolyLineSource;	}
 	public Pos getPolyDragSourcePosition () { return dragPolyLinePosition;	}
 
-	static boolean verbose = false;
+	static boolean verbose = true;
 
 //
 	public void startDragLine(VNode polyLineStart, Pos polylinePosition, VNode source, Pos srcPosition, double x, double y) {
@@ -332,6 +332,8 @@ public class Pasteboard extends PanningCanvas
 	public void startDragLine(VNode source, Pos srcPosition, double x, double y) {
 		EdgeType edgeType = getController().getCurrentLineBend();
 		ArrowType arrow = getController().getCurrentArrowType();
+		if (verbose)
+			System.out.println(arrow.toString() + "< " + edgeType.toString());
 		Point2D startPt = new Point2D(x,y);
 		if (source != null)
 			startPt = source.getPortPosition( srcPosition);
@@ -365,7 +367,7 @@ public class Pasteboard extends PanningCanvas
 	private void setDragLine(MouseEvent event) {
 		if (dragLine == null) return;
 		dragLine.setEndPoint(new Point2D(event.getX(), event.getY())); 
-		dragLine.connect();
+		dragLine.connect(getController().getCurrentArrowType());
 	}
 
 	//---------------------------------------------------------------------------
@@ -468,7 +470,7 @@ public class Pasteboard extends PanningCanvas
 					map.put("Connectable", "false");
 				DataNode mNode = new DataNode(map, getController().getModel());
 				activeStack = mNode.getStack();	
-				mNode.put("TextLabel", mNode.get("GraphId"));
+//				mNode.put("TextLabel", mNode.get("GraphId"));
 				getController().addDataNode(mNode);
 			}
 			

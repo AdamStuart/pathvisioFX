@@ -54,7 +54,7 @@ public class VNodeGestures {
 //            nodeDragContext.mouseAnchorY = event.getSceneY();
 
             Node node = (Node) event.getSource();
-			System.out.println(String.format("=============== %.1f, %.1f", event.getSceneX(), event.getSceneY()));
+//			System.out.println(String.format("=============== %.1f, %.1f", event.getSceneX(), event.getSceneY()));
 
 //            nodeDragContext.translateAnchorX = node.getTranslateX();
 //            nodeDragContext.translateAnchorY = node.getTranslateY();
@@ -97,7 +97,7 @@ public class VNodeGestures {
                 return;
             if (vNode.modelNode().isLocked())	return;
 
-//            double scale = canvas.getScale();
+            double scale = canvas.getScale();
 //
 //            Node node = (Node) event.getSource();
 //            node.setTranslateX(nodeDragContext.translateAnchorX + (( event.getSceneX() - nodeDragContext.mouseAnchorX) / scale));
@@ -135,11 +135,11 @@ public class VNodeGestures {
         				Selection sele = getController().getSelectionManager();
                 		if (dx != 0 || dy != 0)
                 		{
-                				sele.translate(dx,dy, vNode);
-                        		System.out.println(String.format("%.1f, %.1f", dx, dy));
-                       			sele.extract();
+                			sele.translate(dx,dy, vNode);
+                       		sele.extract();
+//                    		System.out.println(String.format("%.1f, %.1f", dx, dy));
                 		}
-       			}
+        			}
             	}
             	prevX = ex;
             	prevY = ey;

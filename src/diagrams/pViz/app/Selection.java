@@ -151,12 +151,13 @@ public class Selection
 	boolean isGrid(VNode node) { return node != null && node.getId() != null && node.getId().contains("grid"); }
 
 	public void duplicateSelection()	
+//	{		List<VNode> duplicats = new ArrayList<VNode>();
 	{
-		List<VNode> duplicats = new ArrayList<VNode>();
 		for (VNode n : items)
 			if (!isGrid(n)) 
-				duplicats.add(n.clone());
-		getController().addAll(duplicats);
+				n.clone();
+				//duplicats.add();
+//		getController().addAll(duplicats);
 	}
 	//--------------------------------------------------------------------------
 	public void deleteAll()	

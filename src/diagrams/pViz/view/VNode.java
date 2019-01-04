@@ -89,15 +89,18 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (title == null)
 		{
 			title = "";
-			modelNode.put("TextLabel", id);
+			boolean putIdInName = false;
+			modelNode.put("TextLabel", putIdInName ?  id : "");
 		}
+		
 		String fontWeight = dataNode.get("FontWeight");
 		String fontSize = dataNode.get("FontSize");
 		String vAlign = dataNode.get("Valign");
 		addText(title, fontWeight, fontSize, vAlign);
+		
 		String biopaxRef = modelNode.get("BiopaxRef");
 		if (biopaxRef != null)
-			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT, biopaxRef);
+			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT, biopaxRef);		// TODO looks bad if not a rectangle
 
 //		String type = attributes.get("ShapeType");
 //		System.out.println(title);
@@ -108,17 +111,17 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setZOrder();
 		addLockDisplay();
 		createFigure();
-		String shapeType = dataNode.get("ShapeType");
-        if (shapeType == null) shapeType = "";
-        String type = dataNode.get("Type");
-        if (type == null) type = "";
+//		String shapeType = dataNode.get("ShapeType");
+//        if (shapeType == null) shapeType = "";
+//        String type = dataNode.get("Type");
+//        if (type == null) type = "";
 
         
 //        readGeometry(modelNode, this);
-        modelNode.putDouble("CenterX", getLayoutX() + .5 * getWidth());
-        modelNode.putDouble("CenterY", getLayoutY() + .5 * getHeight());
+//        modelNode.putDouble("CenterX", getLayoutX() + .5 * getWidth());
+//        modelNode.putDouble("CenterY", getLayoutY() + .5 * getHeight());
         Tooltip tooltip = new Tooltip();
-//        tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
+        tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
         Tooltip.install(this,  tooltip);
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
  		pasteboard.add(this);
@@ -127,7 +130,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public VNode clone()
 	{
 		Model m = modelNode().getModel();
-		return new VNode(new DataNode(getAttributes(), m), pasteboard);
+		AttributeMap map = new AttributeMap(getAttributes());
+		String oldId = map.get("GraphId");
+		String prefix = oldId == null ? "X" : oldId.substring(0,1);
+		map.put("GraphId", m.gensym(prefix));
+		return new VNode(new DataNode(map, m), pasteboard);
 	}
 	
 	public void setScale(double x)
@@ -488,7 +495,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void readGeometry(AttributeMap attrMap, Node content)
 	{
 		String id = attrMap.get("GraphId");
-		String type = attrMap.get("ShapeType");
+//		String type = attrMap.get("ShapeType");
 		
 		double x = attrMap.getDouble("X");
 		double y = attrMap.getDouble("Y");
@@ -496,7 +503,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		double centery = attrMap.getDouble("CenterY", 50);
 		double w = attrMap.getDouble("Width", 50) ;
 		double h = attrMap.getDouble("Height", 50);
-		if ("GeneProduct".equals(type)) h = 50;
+//		if ("GeneProduct".equals(type)) h = 50;
 		String title = attrMap.get("TextLabel");
 		if (Double.isNaN(x)) {	x = centerx - w / 2;	attrMap.putDouble("X", x);  }
 		if (Double.isNaN(y)) { y = centery - h / 2;		attrMap.putDouble("Y", y);  }
