@@ -139,10 +139,10 @@ public class DataNodeGroup extends DataNode {
 		for (DataNode node : members)
 			if (node.getStack() != null) 
 			{
-				node.putDouble("X", node.getDouble("X")-dx);
-				node.putDouble("Y", node.getDouble("Y")-dy);
-				node.putDouble("CenterX", node.getDouble("CenterX")-dx);
-				node.putDouble("CenterY", node.getDouble("CenterY")-dy);
+				node.putDouble("X", node.getDouble("X")+dx);
+				node.putDouble("Y", node.getDouble("Y")+dy);
+				node.putDouble("CenterX", node.getDouble("CenterX")+dx);
+				node.putDouble("CenterY", node.getDouble("CenterY")+dy);
 				node.getStack().setRect(node.getDouble("X"), node.getDouble("Y"), node.getDouble("Width"), node.getDouble("Height"));		
 			}
 	}

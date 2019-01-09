@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.view.VNode;
 import javafx.geometry.Point2D;
@@ -91,6 +92,12 @@ public class DataNode extends XRefable {
 		return gp;
 	}	
 	//---------------------------------------------------------------------------------------
+//	public void toCX(CXObject cx )	{ 
+//		
+//		cx,addNodes
+//	}
+
+	
 	public String toGPML()	{ 
 		copyPropertiesToAttributes();
 		StringBuilder bldr = new StringBuilder();
@@ -121,7 +128,7 @@ public class DataNode extends XRefable {
 //		else if ("Pathway".equals(typ)) elementType = "Pathway";
 		else if (isDataNode(typ))		elementType =  "DataNode";
 		else
-			elementType ="Unknown";
+			elementType ="DataNode";
 		
 		bldr.append("<" + elementType + " " + attributeList(nodeAttrs) + ">\n");
 	}
@@ -142,6 +149,17 @@ public class DataNode extends XRefable {
 			"FontSize", "FontWeight", "FontStyle" };
 	void buildGraphicsTag(StringBuilder bldr)
 	{
+		
+		
+		if (get("CenterX") == null && get("X") != null)
+		{
+			double x = getDouble("X");
+			double y = getDouble("Y");
+			double w = getDouble("Width");
+			double h = getDouble("Height");
+			putDouble("CenterX", x + w /2);
+			putDouble("CenterY", y + h /2);
+		}
 		String attributes = attributeList(attributeNames);
 		if (StringUtil.hasText(attributes))
 			bldr.append( "<Graphics ").append(attributes).append( " />\n");

@@ -66,7 +66,7 @@ public class PanningCanvas extends Pane {
 	protected Selection selectionMgr;
 	public Selection getSelectionMgr()		{ return selectionMgr; }
 	protected Rectangle marquee;
-	public Rectangle getMarquee()			{ return marquee;	}
+//	public Rectangle getMarquee()			{ return marquee;	}
 	protected Label infoLabel;
 	public Label getInfoLabel()				{ return infoLabel;	}
 	private LayerRecord backgroundLayer = new LayerRecord("Background");

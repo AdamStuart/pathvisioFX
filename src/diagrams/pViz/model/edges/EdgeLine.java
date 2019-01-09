@@ -329,10 +329,17 @@ private void addCenterPointListeners() {
 	public Point2D getPointAlongLine(double position) {
 		Point2D startPt = getStartPoint();   //firstPoint();
 		Point2D endPt = getEndPoint();  //lastPoint();
-		if (type == EdgeType.simple) return getPointAlongSegment(position, startPt, endPt);
+		if (type == EdgeType.simple) 
+			return getPointAlongSegment(position, startPt, endPt);
 	
-		SegmentList segments = new SegmentList(interaction.getModel(), points);
-		return segments.fromLineCoordinate(position);
+		int size = points.size();
+		if (size < 2) return startPt;
+		startPt = points.get(size-2).getPoint();
+		return getPointAlongSegment(position, startPt, endPt);
+
+//		SegmentList segments = new SegmentList(interaction.getModel(), points);
+//		
+//		return segments.fromLineCoordinate(position);
 		}
 	
 	
@@ -509,7 +516,7 @@ private void addCenterPointListeners() {
 	}
 
 	private void linearConnect() {
-		GPMLPoint last = lastGPMLPoint();
+//		GPMLPoint last = lastGPMLPoint();
 		Point2D lastPt = lastPoint();
 //		if (lastPt != null) return;
 		
@@ -547,43 +554,11 @@ private void addCenterPointListeners() {
 				setLastPoint(lastPt);
 			}
 		}     
-//		Point2D start = firstGPMLPoint().getPoint();
-//		if (startNode == null)
-//		{
-//			String startId = interaction.get("start");
-//			if (startId != null)
-//			{
-//				DataNode modeNode = interaction.getModel().getDataNode(startId);
-//				if (modeNode != null) 
-//					startNode =	modeNode.getStack();
-//			}
-//		}
-//		else start = startNode.modelNode().getAdjustedPoint(firstGPMLPoint());
-//		setStartPoint(start);
-//		
-//
-//		Point2D end = last.getPoint();
-//		if (endNode == null)		// TODO -- and arrowhead??
-//		{
-//			String endId = interaction.get("end");
-//			if (endId != null)
-//			{
-//				DataNode modeNode = interaction.getModel().getDataNode(endId);
-//				if (modeNode != null) 
-//					endNode =	modeNode.getStack();
-//			}
-//		}
-//		else 
-//			end = endNode.modelNode().getAdjustedPoint(lastGPMLPoint());
-////		setEndPoint(end);
 		setArrowPt(lastPt);
-//
-		//		if (isZero(start) || isZero(end)) 
-//			return;
-		
+
 		if (isZero(lastPt) || isZero(getStartPoint()))
 		{
-			System.out.println("zeroooo ");
+			System.out.println("zeroooo ");			//  TODO DEBUG
 		}
 		LineUtil.set(line, getStartPoint(), getEndPoint());
 		double width = 3;
@@ -707,14 +682,12 @@ private void addCenterPointListeners() {
 		if (last == null) 		return null;
 
 		Color strokeColor = interaction == null ? Color.AQUAMARINE : interaction.getColor();
-//		ArrowType arrowhead = last.getArrowType();
 		if (arrowhead == null)	return null;
 		if (arrowhead == ArrowType.none) return null;
-		Point2D prev = forelastPoint();
+		Point2D prev = forelastPoint();			// the arrowhead rotation is based only on the last segment
 		if (type == EdgeType.elbow)
 			prev = new Point2D(last.getX(), prev.getY());
-//			Point2D lastpoint2D = last.getPoint();
-//			System.out.println("makeArrowhead: " + lastpoint2D);
+//		System.out.println("makeArrowhead: " + prev.toString() + " --> " + last.getPoint().toString());
 		Shape aHead = makeArrowHead(arrowhead.toString(), prev, last.getPoint(), strokeColor);
 		getChildren().add(aHead);
 		return aHead;
@@ -826,7 +799,7 @@ private void addCenterPointListeners() {
 			VNode end = interaction.getEndNode().getStack();
 			endID = end == null ? endGraphId() : end.getId();
 		}
-		String s=  String.format(" ?? %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d ", 
+		String s=  String.format(" %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d pts", 
 				startID, getStartX(), getStartY(), 
 				endID, getEndX(), getEndY(), getPoints().size());
 				

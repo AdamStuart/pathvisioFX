@@ -413,11 +413,11 @@ abstract public class ResizableBox extends DraggableBox {
      *
      * @param y the cursor scene-y position
      */
-    private void handleResizeNorth(final double y) {
+    private void handleResizeNorth(final double localY) {
 
         final double scaleFactor = getLocalToSceneTransform().getMyy();
-
-        final double yDragDistance = (y - lastMouseY) / scaleFactor;
+        double sceneY = localY + getLayoutY();
+        final double yDragDistance = (sceneY - lastMouseY) / scaleFactor;
         final double minResizeHeight = Math.max(getMinHeight(), 0);
 
         double newLayoutY = lastLayoutY + yDragDistance;

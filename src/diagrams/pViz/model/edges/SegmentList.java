@@ -287,7 +287,10 @@ public class SegmentList extends ArrayList<Segment> {
 			if (pixelsRemaining < slength) 		break; // not enough pixels left, we found our segment.
 			pixelsRemaining -= slength;
 		}
-
+		if (segment == null) 
+		{
+			return new Point2D(0,0);
+		}
 		//Find the location on the segment
 		Point2D s = segment.getStart();
 		Point2D e = segment.getEnd();

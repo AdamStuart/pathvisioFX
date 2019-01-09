@@ -400,7 +400,7 @@ public class DraggableBox extends StackPane {
         final double minLayoutX = getEditorProperties().getWestBoundValue();
         final double maxLayoutX = maxParentWidth - getWidth() - getEditorProperties().getEastBoundValue();
 
-        final double scaleFactor = 1.0;  //getLocalToSceneTransform().getMxx();  //AST
+        final double scaleFactor = getLocalToSceneTransform().getMxx();  
 
         double newLayoutX = lastLayoutX + (x - lastMouseX) / scaleFactor;
 
@@ -437,7 +437,7 @@ public class DraggableBox extends StackPane {
         final double minLayoutY = getEditorProperties().getNorthBoundValue();
         final double maxLayoutY = maxParentHeight - getHeight() - getEditorProperties().getSouthBoundValue();
 
-        final double scaleFactor = 1.0;  //getLocalToSceneTransform().getMxx();   //AST
+        final double scaleFactor = getLocalToSceneTransform().getMxx();   
 
         double newLayoutY = lastLayoutY + (y - lastMouseY) / scaleFactor;
 

@@ -320,7 +320,7 @@ public class Pasteboard extends PanningCanvas
 	public VNode getPolyDragSource() { return dragPolyLineSource;	}
 	public Pos getPolyDragSourcePosition () { return dragPolyLinePosition;	}
 
-	static boolean verbose = true;
+	static boolean verbose = false;
 
 //
 	public void startDragLine(VNode polyLineStart, Pos polylinePosition, VNode source, Pos srcPosition, double x, double y) {
