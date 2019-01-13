@@ -341,7 +341,7 @@ public class GPML {
 						GPMLPoint gpt = new GPMLPoint(pt);
 						points.add(gpt);
 						String key = j > 0 ? "targetid" : "sourceid";
-						attrib.put(key, gpt.getGraphRef());
+						attrib.putInteger(key, gpt.getGraphRef());
 						ArrowType type = gpt.getArrowType();
 						if (type != null)
 							attrib.put("ArrowHead", type.toString());
@@ -364,11 +364,11 @@ public class GPML {
 		if (z > 1)
 		{
 			GPMLPoint startPt = points.get(0);
-			startId = startPt.getGraphRef();
-			startNode = m.getDataNode(startId);
-			attrib.put("sourceid", startId);
+			int strtId = startPt.getGraphRef();
+			startNode = m.find(strtId);
+			attrib.putInteger("sourceid", strtId);
 			GPMLPoint lastPt = points.get(z-1);
-			endId = lastPt.getGraphRef();
+			int ending = lastPt.getGraphRef();
 			attrib.put("targetid", endId);
 			ArrowType arwType = lastPt.getArrowType();
 			if (arwType != null)
@@ -412,7 +412,7 @@ public class GPML {
 			label.getStack().setLayerName("Background");
 		NodeList elems = labelNode.getChildNodes();
 		label.add(labelNode.getAttributes());
-		label.setGraphId(label.get("GraphId"));
+		label.setGraphId(label.getId());
 		String txt = label.get("TextLabel");
 		if (txt == null) txt = "Undefined";
 		label.setName(txt);

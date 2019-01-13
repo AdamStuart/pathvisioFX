@@ -81,9 +81,9 @@ public class DataNodeGroup extends DataNode {
 		String groupId = get("GroupId");
 		if (groupId == null) 		return;		//ERROR
 		clearMembers();
-		Map<String, DataNode> nodes = model.getDataNodeMap();
+		Map<Integer, DataNode> nodes = model.getDataNodeMap();
 		Pasteboard pasteboard = model.getController().getPasteboard();
-		for (String nodeKey : nodes.keySet())
+		for (int nodeKey : nodes.keySet())
 		{
 			DataNode nod = nodes.get(nodeKey);
 			String groupRef = nod.get("GroupRef");
@@ -107,7 +107,7 @@ public class DataNodeGroup extends DataNode {
 			else
 			{
 				VNode childstack = node.getStack();
-				childstack.setId(node.getGraphId());
+				childstack.setId("" + node.getGraphId());
 	//			pasteboard.getContentLayer().remove(childstack);
 				stack.getChildren().add(childstack);
 				double x = node.getDouble("X");

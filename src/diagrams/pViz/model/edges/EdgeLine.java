@@ -55,7 +55,7 @@ public class EdgeLine extends Group {
 //		arrowType = ArrowType.arrow;			// kept in last GPMLPoint
 		centerPoint = new Circle(3);
 		centerPoint.setFill(Color.HOTPINK);
-		centerPoint.setVisible(false);
+		centerPoint.setVisible(true);
 	}
 //	public EdgeLine(EdgeType edgeType, Point2D start, ArrowType arrow)
 //	{
@@ -96,6 +96,28 @@ public class EdgeLine extends Group {
 		addCenterPointListeners();
 		getChildren().add(centerPoint);
 		setMouseTransparent(false);
+		addEventHandler(MouseEvent.MOUSE_ENTERED, e -> 
+		{ 	
+			if (line != null)
+			{
+				line.setStrokeWidth(5);
+				line.setStroke(Color.RED);
+			}
+		} );
+		addEventHandler(MouseEvent.MOUSE_MOVED, e -> 
+		{ 	
+			if (line != null)
+			{
+				line.setStroke(Color.RED);
+				line.setStrokeWidth(5);
+			}
+	} );
+		addEventHandler(MouseEvent.MOUSE_EXITED, e -> 
+		{ 	
+			if (line != null)
+				line.setStroke(Color.BLACK);
+			line.setStrokeWidth(1);
+		});
 	}
 	 //----------------------------------------------------------------------
 //	private double srcX, srcY, targX, targY;
@@ -183,10 +205,10 @@ private void addCenterPointListeners() {
 	public void addGraphIdDisplay()
 	{
 		if (interaction == null) return;
-		String id = interaction.getGraphId(); // ("GraphId");
-		if (id == null) return;
+		int id = interaction.getGraphId(); // ("GraphId");
+		if (id == 0) return;
 //		System.out.println("addGraphIdDisplay: " + id);
-		graphIdLabel = new Label(id);
+		graphIdLabel = new Label("" + id);
 		graphIdLabel.setPrefWidth(100);
 		graphIdLabel.setTextFill(Color.RED);
 		graphIdLabel.setPrefHeight(20);
@@ -449,15 +471,15 @@ private void addCenterPointListeners() {
 	}
 	
 	//----------------------------------------------------------------------
-	public String startGraphId()
+	public int startGraphId()
 	{
-		if (points.size() == 0) return "";
+		if (points.size() == 0) return 0;
 		GPMLPoint pt = points.get(0);
 		return pt.getGraphRef();
 	}
-	public String endGraphId()
+	public int endGraphId()
 	{
-		if (points.size() == 0) return "";
+		if (points.size() == 0) return 0;
 		GPMLPoint pt = points.get(points.size()-1);
 		return pt.getGraphRef();
 	}
@@ -699,13 +721,14 @@ private void addCenterPointListeners() {
 		double[] arrowShape = ArrowType.getArrowShape(shape);
 		if (ArrowType.isShape(shape))
 		{
-			arrowhead = new Circle(4);
+			arrowhead = new Circle(6);
 			arrowhead.setFill(Color.WHITE);
 			arrowhead.setStroke(Color.BLACK);
 		}
 		else 
 		{
 			Line line = new Line(mid.getX(), mid.getY(), last.getX(), last.getY());
+			line.setStrokeWidth(6);
 			arrowhead = new Arrow(line, 1.0f, color, arrowShape);
 			arrowhead.setFill(color);
 		}
@@ -785,19 +808,19 @@ private void addCenterPointListeners() {
 	//----------------------------------------------------------------------
 	public String toString()
 	{
-		String startID;
-		if (interaction == null || interaction.getStartNode() == null) startID =  "NO START";
+		int startID;
+		if (interaction == null || interaction.getStartNode() == null) startID =  0;
 		else 
 		{
 			VNode start = interaction.getStartNode().getStack();
-			startID = start == null ? startGraphId() : start.getId();
+			startID = start == null ? startGraphId() : start.getGraphId();
 		}
-		String endID;
-		if (interaction == null || interaction.getEndNode() == null) endID = "NO TARGET";
+		int endID;
+		if (interaction == null || interaction.getEndNode() == null) endID = 0;
 		else 
 		{
 			VNode end = interaction.getEndNode().getStack();
-			endID = end == null ? endGraphId() : end.getId();
+			endID = end == null ? endGraphId() : end.getGraphId();
 		}
 		String s=  String.format(" %s \t(%4.1f, %4.1f) --> %s (%4.1f, %4.1f) %d pts", 
 				startID, getStartX(), getStartY(), 

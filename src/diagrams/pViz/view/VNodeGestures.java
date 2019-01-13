@@ -37,8 +37,16 @@ public class VNodeGestures {
 
     public EventHandler<MouseEvent> getOnMousePressedEventHandler() {   return mousePressedHandler;    }
     public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {   return mouseDraggedHandler;  }
+    public EventHandler<MouseEvent> getOnMouseClickedEventHandler() {   return mouseClickedHandler;  }
 
     //-------------------------------------------------------------------------------
+    private EventHandler<MouseEvent> mouseClickedHandler = new EventHandler<MouseEvent>() {
+
+        public void handle(MouseEvent event) {
+        	event.consume();
+        }
+       };
+    
     private EventHandler<MouseEvent> mousePressedHandler = new EventHandler<MouseEvent>() {
 
         public void handle(MouseEvent event) {

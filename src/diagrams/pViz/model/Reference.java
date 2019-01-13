@@ -13,21 +13,22 @@ import util.StringUtil;
 public class Reference  {
 
 	//---------------------------------------------------------------------------------------------
-	private	 String graphId;
+	private	 int id;
 	private	 String db;
 	private	 String dbid;
 		 
-	public	 Reference(String a, String b, String c)
+	public	 Reference(int a, String b, String c)
 	{
 		super();
-		graphId = a;
+		id = a;
 		db = b;
 		dbid =c ;
 	}
+	int getId()	{ return id;	}
 		 
 //---------------------------------------------------------------------------------------------
  
-	public static void annotateIdentifiers(Map<String, DataNode> dataNodeMap) {
+	public static void annotateIdentifiers(Map<Integer, DataNode> dataNodeMap) {
 		 System.out.println("Annotate");
 		 Set<String> dbs = new HashSet<String>();		
 		 List<Reference> refs = new ArrayList<Reference>();		
@@ -36,7 +37,7 @@ public class Reference  {
 			 String type = n.getType();		if (StringUtil.isEmpty(type)) continue;
 			 String db = n.getDatabase();	if (StringUtil.isEmpty(db)) continue;
 			 String dbid = n.getDbid();	 	if (StringUtil.isEmpty(dbid)) continue;
-			 String id = n.getGraphId();	if (StringUtil.isEmpty(id)) continue;
+			 int id = n.getId();	if (id == 0) continue;
 			 refs.add(new Reference(id, db, dbid));
 			 dbs.add(db);
 		 }
@@ -61,7 +62,7 @@ public class Reference  {
 	 {
 		 StringBuilder build = new StringBuilder();
 		 for (Reference r : inList)
-			 build.append(r.graphId).append("\t");
+			 build.append("" + r.getId()).append("\t");
 		 return StringUtil.chopLast(build.toString());
 	 }
 	}

@@ -163,11 +163,10 @@ public class ControlFactory {
 	{		
 		HBox titleBar = new HBox();
 	    titleBar.setMaxHeight(25);
-	    Label idLabel = new Label(parent.getGraphId());
-	    idLabel.setMinWidth(50);
+//	    idLabel.setMinWidth(50);
 	    StackPane.setAlignment(titleBar, Pos.TOP_CENTER);
 	    Label titleLabel = new Label(title);
-		titleBar.getChildren().addAll(idLabel, titleLabel);
+		titleBar.getChildren().add(titleLabel);		//dLabel, 
 	    titleBar.setMouseTransparent(true);
 	    return titleBar;
 	}

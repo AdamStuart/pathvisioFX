@@ -61,7 +61,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	@FXML private TableColumn<PathwayRecord, String> urlColumn;
 	@FXML private TableColumn<PathwayRecord, String> speciesColumn;
 
-	@FXML private ChoiceBox<String> species;
+	@FXML private ChoiceBox<String> speciesChoices;
 	@FXML private Button search;
 	@FXML private TextField searchBox;
 	@FXML private Button cancel;
@@ -77,7 +77,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	public String getState() 	{ 	return state; 	}
 
 	//---------------------------------------------------------------------------
-	public static String HUMAN_PATHWAYS = "http://webservice.wikipathways.org/listPathways?organism=Homo%20sapiens";
+	public static String HUMAN_PATHWAYS = "https://webservice.wikipathways.org/listPathways?organism=Homo%20sapiens";
 	
 	public static String tooltip = "Combine terms with AND and OR. Combining terms with a space is equal to using OR ('p53 OR apoptosis' gives the same result as 'p53 apoptosis').\n" + 
 			"Group terms with parentheses, e.g. '(apoptosis OR mapk) AND p53'\n" +
@@ -90,8 +90,8 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		String[] organisms = { "Any", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Canis familiarus", "Box taurus", "Pan troglodytes", "Gallus gallus" };
-		species.getItems().addAll(organisms);
-		species.getSelectionModel().select(1);
+		speciesChoices.getItems().addAll(organisms);
+		speciesChoices.getSelectionModel().select(1);
 		
 		search.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.SEARCH, GlyphIcon.DEFAULT_ICON_SIZE));
 		search.setText("");
@@ -278,7 +278,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		}
 	}
 	//---------------------------------------------------------------------------
-	public static String FIND_PATHWAYS_BASE = "http://webservice.wikipathways.org/findPathwaysByText?";
+	public static String FIND_PATHWAYS_BASE = "https://webservice.wikipathways.org/findPathwaysByText?";
 	@FXML public void doSearch()	
 	{
 		String text = searchBox.getText().trim();
@@ -287,7 +287,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 		String queryText = "", speciesComponent = "";
 		if (StringUtil.hasText(text))
 			queryText = "query=" + text;
-		String selection = species.getSelectionModel().getSelectedItem();
+		String selection = speciesChoices.getSelectionModel().getSelectedItem();
 		if ( !"Any".equals(selection))
 			speciesComponent = "species=" + selection.replace(" ", "%20")  + "&";
 				

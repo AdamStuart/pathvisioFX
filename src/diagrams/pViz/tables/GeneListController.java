@@ -303,9 +303,9 @@ public class GeneListController  extends TableController  {
 	@FXML private void showCols(TableColumn<Gene, String>... cols)		
 	{	
 		theTable.getColumns().clear();
-		theTable.getColumns().addAll(cols);
+//		theTable.getColumns().addAll(cols);			// TODO javac warning???
 		columnTable.getItems().clear();
-		columnTable.getItems().addAll(cols);
+//		columnTable.getItems().addAll(cols);
 //		columnTable.getItems().addAll(separatorColumn);
 		for (Object o : allColumns)
 		{

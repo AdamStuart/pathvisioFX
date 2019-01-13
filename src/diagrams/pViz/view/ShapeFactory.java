@@ -100,14 +100,14 @@ public class ShapeFactory {
 		}
 		if (newShape == null) 					return null;
 
-		String id = modelNode.get("GraphId");
-		if (id == null)
+		int id = modelNode.getId();
+		if (id == 0)
 		{
-			id = modelNode.getModel().gensym("" + s.charAt(0));
+			id = modelNode.getModel().gensym();
 			modelNode.setGraphId(id);
-			modelNode.put("GraphId", id);
+			modelNode.setId(id);
 		}
-		stack.setId(id);
+		stack.setId("" + id);
 		stack.getProperties().putAll(modelNode);
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, modelNode);

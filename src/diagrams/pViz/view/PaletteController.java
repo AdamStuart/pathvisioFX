@@ -268,11 +268,11 @@ public class PaletteController implements Initializable {
 	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
 	@FXML private void setSegmented()	{		activeLineType = "Segmented";	}
 	public EdgeType getCurrentLineBend() { return EdgeType.lookup(activeLineType);		}
-	@FXML private void setArrow1()		{		activeArrowType = ArrowType.mimactivation;	}
-	@FXML private void setArrow2()		{		activeArrowType = ArrowType.miminhibition;	}
-	@FXML private void setArrow3()		{		activeArrowType = ArrowType.mimconversion;	}
+	@FXML private void setArrow1()		{		activeArrowType = ArrowType.interacts;	}	// TODO get type from id
+	@FXML private void setArrow2()		{		activeArrowType = ArrowType.mimconversion;	}
+	@FXML private void setArrow3()		{		activeArrowType = ArrowType.miminhibition;	}
 	@FXML private void setArrow4()		{		activeArrowType = ArrowType.mimcatalysis;	}
-	@FXML private void setArrow5()		{		activeArrowType = ArrowType.mimtranslation;	}
+	@FXML private void setArrow5()		{		activeArrowType = ArrowType.stimulates;	}
 	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	}
 	@FXML private HBox allInteractions;
 	

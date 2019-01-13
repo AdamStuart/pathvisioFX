@@ -42,9 +42,9 @@ public class DataNode extends XRefable {
 	{
 		super(am);
 		model = m;
-		String id = get("GraphId");
-		if (id == null) id = model.gensym("C");
-		put("GraphId", id);
+		int id = getId();
+		if (id == 0) id = model.gensym();
+		setId(id);
 		stack = new VNode(this, m.getController().getPasteboard());
 	}
 
@@ -209,6 +209,15 @@ public class DataNode extends XRefable {
 		points.addAll(pts);
 	}
 	public List<GPMLPoint> getGPMLPoints()	{ return points;	}
-
+	// **-------------------------------------------------------------------------------
+	public boolean contains(String s)
+	{
+		if (StringUtil.isEmpty(s)) return false;
+//		String str = s.toUpperCase();		done by caller
+		for (String val : values())
+			if (val.toUpperCase().indexOf(s) >= 0)
+				return true;
+		return false;
+	}
 
 }

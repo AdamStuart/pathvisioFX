@@ -39,7 +39,7 @@
                 </Menu>
               </menus>
             </MenuBar>
-            <ChoiceBox fx:id="species" prefWidth="150.0" HBox.hgrow="NEVER" />
+            <ChoiceBox fx:id="speciesChoices" prefWidth="150.0" HBox.hgrow="NEVER" />
             <Button fx:id="search" mnemonicParsing="false" onAction="#doSearch" prefHeight="27.0" prefWidth="40.0" text="F" HBox.hgrow="NEVER" />
             <TextField fx:id="searchBox" HBox.hgrow="NEVER" />
          </children>

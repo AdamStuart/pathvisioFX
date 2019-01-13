@@ -142,9 +142,9 @@ public class Test {
 			for (Edge e : model.getEdges())
 				System.out.println(e);
 			}
-		static public void dumpNodeTable(Map<String, DataNode> dataNodeMap) {
+		static public void dumpNodeTable(Map<Integer, DataNode> dataNodeMap) {
 			System.out.println(dataNodeMap.keySet().size());
-			for (String key : dataNodeMap.keySet())
+			for (int key : dataNodeMap.keySet())
 			{
 				String s;
 				DataNode node = dataNodeMap.get(key);
@@ -155,7 +155,7 @@ public class Test {
 							node.getDouble("CenterY"),
 							node.get("TextLabel"));
 					}
-				else s = key;
+				else s = "" + key;
 				System.out.println(key + "\n" + s);
 			}
 		}

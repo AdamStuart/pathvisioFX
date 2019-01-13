@@ -54,10 +54,10 @@ public class Model
  */
 	private Controller controller;
 	public Controller getController() { return controller; } 
-	private Map<String, DataNode> dataNodeMap = FXCollections.observableHashMap();
+	private Map<Integer, DataNode> dataNodeMap = FXCollections.observableHashMap();
 	private int nodeCounter = 0;
 	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
-	public Map<String, DataNode> getDataNodeMap() {		return dataNodeMap;	}
+	public Map<Integer, DataNode> getDataNodeMap() {		return dataNodeMap;	}
 
 	private Map<String, DataNodeGroup> groupMap = FXCollections.observableHashMap();
 	public Collection<DataNodeGroup> getGroups()			{ return groupMap.values();	}
@@ -81,14 +81,14 @@ public class Model
 	}
 	public Interaction getInteraction(String edgeId)	{ 	return interactionMap.get(edgeId);	}
 	
-	private Map<String, DataNode> shapes = new HashMap<String,DataNode>();
-	public Map<String, DataNode> getShapes()	{ return shapes; }
-	public DataNode findShape(String s ) 		{ return shapes.get(s);	}
+	private Map<Integer, DataNode> shapes = new HashMap<Integer,DataNode>();
+	public Map<Integer, DataNode> getShapes()	{ return shapes; }
+	public DataNode findShape(Integer s ) 		{ return shapes.get(s);	}
 	public void addShape(DataNode s ) 			{ shapes.put(s.getGraphId(),s);	}
 
-	private Map<String, DataNode> labels = new HashMap<String,DataNode>();
-	public Map<String, DataNode> getLabels()	{ return labels; }
-	public DataNode findLabel(String s ) 		{ return labels.get(s);	}
+	private Map<Integer, DataNode> labels = new HashMap<Integer,DataNode>();
+	public Map<Integer, DataNode> getLabels()	{ return labels; }
+	public DataNode findLabel(Integer s ) 		{ return labels.get(s);	}
 	public void addLabel(DataNode d)			{ labels.put(d.getGraphId(),  d); }
 
 
@@ -204,9 +204,9 @@ public class Model
 		public void addResource(DataNode mnode)		
 	{  
 		if (mnode != null) 
-			addResource(mnode.get("GraphId"), mnode);
+			addResource(mnode.getId(), mnode);
 	}
-	public void addResource(String key, DataNode n)		
+	public void addResource(Integer key, DataNode n)		
 	{  
 		if (key == null) System.err.println("NULL KEY");
 		if (dataNodeMap.get(key) == null)
@@ -220,7 +220,17 @@ public class Model
 		for (DataNode g : getNodes())
 		{
 			if (name.equalsIgnoreCase(g.getName())) return g;
-			if (name.equalsIgnoreCase(g.getGraphId())) return g;
+//			if (name.equalsIgnoreCase(g.getGraphId())) return g;
+		}
+		return null;
+	}
+	public DataNode findDataNode(int id)
+	{
+		if (id <= 0) return null;
+		for (DataNode g : getNodes())
+		{
+			if (id == g.getGraphId()) return g;
+//			if (name.equalsIgnoreCase(g.getGraphId())) return g;
 		}
 		return null;
 	}
@@ -235,6 +245,16 @@ public class Model
 				if (id.equals(g.get("ID"))) 
 					hits.add(g);
 		}
+		return hits;
+	}
+	// **-------------------------------------------------------------------------------
+	public List<DataNode> search(String txt)
+	{
+		txt = txt.toUpperCase();
+		List<DataNode> hits = new ArrayList<DataNode>();
+		for (DataNode g : getNodes())
+			if (g.contains(txt))
+				hits.add(g);
 		return hits;
 	}
 	// **-------------------------------------------------------------------------------
@@ -307,14 +327,14 @@ public class Model
 	}
 	public void removeEdges(DataNode node)		
 	{  
-		List<String> edgesToRemove = new ArrayList<String>();
+		List<Integer> edgesToRemove = new ArrayList<Integer>();
 		for (Interaction e : getEdges())
 		{
 			if (e == null) continue;
 			if (e.isStart(node) || e.isEnd(node))
 				edgesToRemove.add(e.getGraphId());
 		}
-		for (String id : edgesToRemove)
+		for (int id : edgesToRemove)
 			interactionMap.remove(id);
 //		List<Edge> okEdges = edgeTable.stream().filter(new TouchingNodeFilter(node)).collect(Collectors.toList());
 //		edgeTable.clear();
@@ -328,8 +348,7 @@ public class Model
 		if ("Marquee".equals(node.getId())) return;
 		
 		DataNode mNode = node.modelNode();
-		String id = mNode.getGraphId();
-		if (id == null) id = mNode.get("GraphId");
+		int id = mNode.getId();
 		removeEdges(mNode);
 		
 		dataNodeMap.remove(id);
@@ -370,10 +389,13 @@ public class Model
 		return null;
 	}
 	
-	public String cloneResourceId(String oldId)
+	public DataNode find(int key)				
 	{
-		return gensym(oldId.substring(0,1));
+		 DataNode n = dataNodeMap.get(key);	
+		return null;
 	}
+	
+	public int cloneResourceId(String oldId)	{		return gensym();	}
 	//------------------------------------------------------------------------- GROUPS
 //	Map<String, GPMLGroup> groups = new HashMap<String, GPMLGroup>();
 	// move to GPML
@@ -423,8 +445,8 @@ public class Model
 		for (Edge ed : getEdges())
 		{
 			if (a == ed) return true;
-			if (a.getSourceid().equals(ed.getSourceid()))
-				if (a.getTargetid().equals(ed.getTargetid()))
+			if (a.getSourceid() == ed.getSourceid())
+				if (a.getTargetid() == ed.getTargetid())
 					return true;
 		}
 		return false;
@@ -471,7 +493,18 @@ public class Model
 	static String getBoundsString(double x, double y, double w, double h)	{
 	 return String.format("x=%.1f, y=%.1f, width=%.1f, height=%.1f", x, y, w, h);
 	}
-	public String gensym(String prefix)	{		return (prefix == null ? "" : prefix ) + ++nodeCounter;	}
+	
+	Map<String, Integer> oldIds = new HashMap<String, Integer>();
+	
+	public int gensym()	{		return ++nodeCounter;	}
+	public int gensym(String oldSymbol)	
+	{		
+		Integer extant = oldIds.get(oldSymbol);
+		if  (extant != null) return extant;
+		Integer newId =	gensym();
+		oldIds.put(oldSymbol, newId);
+		return newId;
+	}
 	
 	
 	int verbose = 0;

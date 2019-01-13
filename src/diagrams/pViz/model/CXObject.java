@@ -4,6 +4,7 @@ import java.util.List;
 
 
 import diagrams.pViz.model.edges.Edge;
+import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import util.StringUtil;
 class CartesianLayout
@@ -37,12 +38,20 @@ class NodeAttribute
 
 class EdgeAttribute
 {
-	String propOf;	
+	int propOf;	
 	String name;
 	String val;
 	String type;
 	String subnet;
 
+	EdgeAttribute(int pr, String nam, String v, String typ, String sub)
+	{
+		propOf = pr;
+		name = nam;
+		val = v;
+		type = typ;
+		subnet = sub;
+	}
 	public String toString()
 	{
 		return CXObject.line("n", name) + CXObject.line("po", propOf) + CXObject.line("v", val) + CXObject.line("d", type) + CXObject.line("s", subnet);
@@ -91,8 +100,25 @@ public class CXObject {
 		{
 			return line("@id", id) + line("s", src) + line("t", targ) + line("i", type);
 		}
+		public Edge(int i, int s, int t, String typ)
+		{
+			id = i;
+			src = s;
+			targ = t;
+			type = typ;
+		}
 	}
-	
+	public void addEdge(Interaction e) {
+		
+		int id = e.getId();
+		Edge edge = new Edge(id, e.getSourceid(), e.getTargetid(), e.getInterType());
+		edges.add(edge);
+		for (String s : e.keySet())
+		{
+			EdgeAttribute ea = new EdgeAttribute(id, s, e.get(s), "string", "");
+			edgeAttributes.add(ea);
+		}
+	}
 	
 	class NetworkAttribute
 	{
@@ -132,4 +158,6 @@ public class CXObject {
 	
 	public static String q(String a)		{			return '"' + a + '"';		}
 	public static String b(String a)		{			return '{' + a + '}';		}
+
+
 }

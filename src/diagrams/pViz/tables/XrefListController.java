@@ -320,7 +320,7 @@ public class XrefListController  extends TableController  {
 	@FXML private void showCols(TableColumn<XRefable, String>... cols)		
 	{	
 		theTable.getColumns().clear();
-		theTable.getColumns().addAll(cols);
+		theTable.getColumns().addAll(cols);			// javac warning
 		columnTable.getItems().clear();
 		columnTable.getItems().addAll(cols);
 //		columnTable.getItems().addAll(separatorColumn);

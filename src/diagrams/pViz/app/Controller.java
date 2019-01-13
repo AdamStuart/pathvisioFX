@@ -55,16 +55,21 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
@@ -78,6 +83,7 @@ import model.IController;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
 import model.bio.GeneSetRecord;
+import model.bio.PathwayRecord;
 import model.bio.Species;
 import model.bio.XRefable;
 import util.FileUtil;
@@ -198,6 +204,9 @@ public class Controller implements Initializable, IController
 	@FXML private Button leftSideBarButton;
 	@FXML private Button rightSideBarButton;
 	@FXML private Button toggleGridButton;
+	@FXML private ChoiceBox<String> speciesChoices;
+	@FXML private Button search;
+	@FXML private TextField searchBox;
 
 //-------------------------------------------------------------
 	@FXML private MenuItem annotate;
@@ -324,6 +333,20 @@ public class Controller implements Initializable, IController
 		rightSideBarButton.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.LOCATION_ARROW, GlyphIcon.DEFAULT_ICON_SIZE));
 		rightSideBarButton.setText("");
 
+		// TODO
+		String[] organisms = { "Any", "Homo sapiens", "Mus musculus", "Rattus norvegicus", "Canis familiarus", "Box taurus", "Pan troglodytes", "Gallus gallus" };
+		speciesChoices.getItems().addAll(organisms);
+		speciesChoices.getSelectionModel().select(1);
+		
+		String tooltip = "A local, case-insensitive search within this pathway."; 		// TODO
+		search.setGraphic(GlyphsDude.createIcon(FontAwesomeIcons.SEARCH, GlyphIcon.DEFAULT_ICON_SIZE));
+		search.setText("");
+		search.setTooltip(new Tooltip(tooltip));
+		searchBox.setTooltip(new Tooltip(tooltip));
+		searchBox.setText(lastSearch);
+		searchBox.addEventHandler(KeyEvent.KEY_PRESSED, e -> {  if (e.getCode() == KeyCode.ENTER) doSearch();	} );
+		searchBox.selectAll();
+
 		pasteboard.makeGrid(toggleGridButton, scrollPane);	
 		Pair<FXMLLoader, Stage> loader = App.getInstance().makeLoader();
 		
@@ -394,7 +417,7 @@ public class Controller implements Initializable, IController
 			int index = StringUtil.toInteger(idx);
 			if (mimeType == Controller.GENE_MIME_TYPE)
 			 {
-			   String rowName = "";
+			   int rowName = 0;
 			   if (index >=0 && model.getDataNodeMap().size() > index)
 				   	rowName = model.getDataNodeMap().get(index).getGraphId();
 //			   showGeneInfo(rowName);
@@ -708,7 +731,7 @@ public class Controller implements Initializable, IController
 	
 	public void addDataNode(DataNode node) {
 		pasteboard.setActiveLayer("Content");	
-		node.setGraphId(node.get("GraphId"));
+		node.setGraphId(node.getId());
 		 node.setName( node.get("TextLabel"));
 		if (node.getStack() == null)
 			new VNode(node, pasteboard);
@@ -778,13 +801,37 @@ public class Controller implements Initializable, IController
 //			AnchorPane.setTopAnchor(item, item.getLayoutY() - minY);
 		}
 		group.setName("Complex");
-		group.setGraphId(group.get("GraphId"));
+		group.setGraphId(group.getId());
 		addGroup(group);
 		return group;
 
 	} 
 
-
+	//---------------------------------------------------------------------------
+	static String lastSearch;
+	@FXML public void doSearch()	
+	{
+		if (searchBox == null)
+		{
+			System.out.println("searchBox == null");
+			return;
+		}
+		String text = searchBox.getText();
+		if (StringUtil.isEmpty(text)) 			return;
+		lastSearch = text;
+		String queryText = "", speciesComponent = "";
+		if (StringUtil.hasText(text))
+		{
+			List<DataNode> hits = model.search(text);
+			if (!hits.isEmpty())
+				getSelectionManager().selectList(hits);
+		}
+	}
+	@FXML public void speciesChanged()	
+	{
+		String selection = speciesChoices.getSelectionModel().getSelectedItem();
+		model.setSpecies(Species.lookup(selection));
+	}
 	// **-------------------------------------------------------------------------------
 	// GeneSets
 	// **-------------------------------------------------------------------------------

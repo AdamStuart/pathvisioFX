@@ -593,6 +593,8 @@ public class Pasteboard extends PanningCanvas
 			removeMarquee();
 			startPoint = curPoint = null;
 			requestFocus();		// needed for the key event handler to receive events
+			if (dragLine != null)
+				removeDragLine();
 			palette.resetTool();
 			event.consume();
 		}

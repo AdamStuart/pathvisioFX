@@ -111,8 +111,8 @@ System.out.println("stateChanged " + e.toString());
 	                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
 	                {
 	                	XRefable g = param.getValue().getValue();
-	        			String s = (g == null) ? "" : g.getGraphId();
-	        	        return  new ReadOnlyStringWrapper(s);
+	        			int s = (g == null) ? 0 : g.getGraphId();
+	        	        return  new ReadOnlyStringWrapper("" + s);
 	                 }
 	                );
 	        groupRefCol.setCellValueFactory(
@@ -189,7 +189,7 @@ System.out.println("stateChanged " + e.toString());
 						TreeItem<XRefable> cur = treeView.getTreeItem(idx);
 						if (cur != null)
 						{
-							String id = cur.getValue().getGraphId();
+							int id = cur.getValue().getGraphId();
 							DataNode datanode = model.findDataNode(id);
 							if (datanode != null)
 							{
@@ -322,7 +322,7 @@ System.out.println("stateChanged " + e.toString());
 					System.out.println("Error");
 				else
 				{
-					a.setGraphId(a.get("GraphId"));
+					a.setGraphId(a.getId());
 					addBranch(a, interactionRow);
 				}
 			}
@@ -431,15 +431,15 @@ public void addMembersToGroup()
 
 	// **-------------------------------------------------------------------------------
 
-	public TreeItem<XRefable> findNodeTreeItem(String inId) {		return findNode(inId);	}
+//	public TreeItem<XRefable> findNodeTreeItem(String inId) {		return findNode(inId);	}
 	
-	public TreeItem<XRefable> findNode(String inId) {
+	public TreeItem<XRefable> findNode(int inId) {
 		
-		if (inId == null) return null;
+		if (inId == 0) return null;
 		for (TreeItem<XRefable> branch : nodes.getChildren())
 		{
-			String id = branch.getValue().getGraphId();
-			if (inId.equals(id))
+			int id = branch.getValue().getGraphId();
+			if (inId ==id)
 				return branch;
 		}
 		return null;
@@ -488,8 +488,7 @@ public void addMembersToGroup()
 	}
 	private void dump(String prefix, XRefable xref, int depth) 
 	{
-		String id = xref.getGraphId();
-		if (id == null)  id = xref.get("GraphId");
+		int id = xref.getGraphId();
 		System.out.println(prefix + xref.getName() + " " +  id + " ");		//xref.get("Type") + " " +
 		
 	}

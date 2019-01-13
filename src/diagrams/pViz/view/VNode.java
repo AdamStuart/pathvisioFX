@@ -78,6 +78,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		gestures = new VNodeGestures(this, pasteboard);
 		setOnMouseDragged(gestures.getOnMouseDraggedEventHandler());
 		setOnMousePressed(gestures.getOnMousePressedEventHandler());
+		setOnMouseClicked(gestures.getOnMouseClickedEventHandler());
 		controlFactory = new ControlFactory(this);		// this creates browsers, imageview, rich text, etc.
 		if (modelNode instanceof DataNodeGroup)
 		{
@@ -133,7 +134,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		AttributeMap map = new AttributeMap(getAttributes());
 		String oldId = map.get("GraphId");
 		String prefix = oldId == null ? "X" : oldId.substring(0,1);
-		map.put("GraphId", m.gensym(prefix));
+		map.setId(m.gensym());
 		return new VNode(new DataNode(map, m), pasteboard);
 	}
 	
@@ -199,14 +200,14 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
 		return  (selectedProperty != null && selectedProperty.getValue());
 	}
-	
-	public String getGraphId()			{ 	return dataNode.getGraphId();	}
+		
+	public int getGraphId()				{ 	return dataNode.getGraphId();	}
 	private Controller getController()  { 	return pasteboard.getController();   	}
 	public Label getTextField()			{ 	return text;	}
 	public Shape getFigure()			{	return figure;	}
 	public void setFigure(Shape s)		{	figure = s;	}
 	public DataNode modelNode()			{	return dataNode;	}
-	public String gensym(String s)		{	return dataNode.getModel().gensym(s);	}
+	public int gensym()					{	return dataNode.getModel().gensym();	}
 	public AttributeMap getAttributes() {	return dataNode;	}
 	// **-------------------------------------------------------------------------------
 	static InnerShadow effect = new InnerShadow();

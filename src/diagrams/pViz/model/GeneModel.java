@@ -154,8 +154,13 @@ public class GeneModel {
 		for (Gene g : genes)
 		{
 			if (name.equalsIgnoreCase(g.getName())) return g;
-			if (name.equalsIgnoreCase(g.getGraphId())) return g;
 		}
+		return null;
+	}
+	public Gene find(int id)
+	{
+		for (Gene g : genes)
+			if (g.getId() == id) return g;
 		return null;
 	}
 	static public boolean isGeneSet(File f)

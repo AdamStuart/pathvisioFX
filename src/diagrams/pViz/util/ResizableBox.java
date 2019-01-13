@@ -697,9 +697,7 @@ abstract public class ResizableBox extends DraggableBox {
 		return 0;
 	}
 
-	public String getGraphId() {
-		return "UNASSIGNED";
-	} 
+	public int getGraphId() {		return 0;	} 
 
 
 }

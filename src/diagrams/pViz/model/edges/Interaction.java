@@ -7,6 +7,7 @@ import java.util.List;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.gpml.GPMLPoint.ArrowType;
+import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.util.ResizableBox;
 import diagrams.pViz.view.VNode;
@@ -86,24 +87,23 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	{
 		return getName().compareToIgnoreCase(other.getName());
 	}
-	
-	public void rebind(String sourceId) {
-		if (!isWellConnected()) return; 
-		setSource(getStartNode().getName());
-		setTarget(getEndNode().getName());
-		setNameFromState();
-		model.getController().getTreeTableView().addBranch(this, sourceId);
-//		repostionAnchors();
-	}
+//	
+//	public void rebind(String sourceId) {
+//		if (!isWellConnected()) return; 
+//		setSource(getStartNode().getName());
+//		setTarget(getEndNode().getName());
+//		setNameFromState();
+//		model.getController().getTreeTableView().addBranch(this, sourceId);
+////		repostionAnchors();
+//	}
 //------------------------------------------------------------------------------------------
 	@Override public String toString()
 	{
 		String name =  getName();
 		if (StringUtil.isEmpty(name)) name = "#"; 
-		String id =  getGraphId();
-		if (StringUtil.isEmpty(id)) id = "*"; 
+		int id =  getGraphId();
 		String str = (edgeLine == null) ? "X" : edgeLine.toString();
-		return name + " " + id + " " + str + " " + getInterType();
+		return name + " [" + id + "] " + str + " " + getInterType();
 	}
 
     public String toGPML()
@@ -122,6 +122,10 @@ public class Interaction extends Edge implements Comparable<Interaction>
 			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
 		b.append("</Interaction>\n");
 		return b.toString();
+   }
+    public void toCX(CXObject cx)
+   {
+		cx.addEdge(this);
    }
 
 	public boolean isWellConnected() {

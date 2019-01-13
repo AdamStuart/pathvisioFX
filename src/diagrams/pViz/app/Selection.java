@@ -121,6 +121,12 @@ public class Selection
 		}
 	}
 
+	public void selectList(List<DataNode> searchHits)
+	{
+		clear();
+		for (DataNode hit : searchHits)
+			select(hit.getStack());
+	}
 	//--------------------------------------------------------------------------
 	public void deleteSelection()	
 	{
@@ -180,8 +186,8 @@ public class Selection
 			node.rememberPositionEtc(offset);
 			AttributeMap newAttrs = new AttributeMap(node.getAttributes());
 			String oldId = newAttrs.get("GraphId");
-			String newId = controller.getModel().cloneResourceId(oldId);
-			newAttrs.put("GraphId", newId);
+			int newId = controller.getModel().cloneResourceId(oldId);
+			newAttrs.setId(newId);
 			newAttrs.incrementZOrder();
 			DataNode clone = new DataNode(newAttrs, controller.getModel());
 			controller.add(clone.getStack());

@@ -16,7 +16,7 @@ public class GPMLPoint {
 	private double relX = 0;
 	private double relY = 0;
 	private ArrowType head = ArrowType.none;
-	private String graphRef;
+	private int graphRef;
 	private Interaction interaction;
 	public void setInteraction(Interaction s)	{ interaction = s;	}
 
@@ -29,8 +29,8 @@ public class GPMLPoint {
 	public Point2D getPoint()			{ return new Point2D(x,y);	}
 	public void setPoint(Point2D p)		{ if (p != null) { setX(p.getX()); setY(p.getY()); }  }
 
-	public String getGraphRef()			{ return graphRef;	}
-	public void setGraphRef(String s)	{ graphRef = s;	}
+	public int getGraphRef()			{ return graphRef;	}
+	public void setGraphRef(int s)	{ graphRef = s;	}
 
 	public ArrowType getArrowType()		{ return head;	}
 	public void setArrowType(ArrowType s)	{ head = s;	}
@@ -46,7 +46,7 @@ public class GPMLPoint {
 	public GPMLPoint(Point2D pt, Interaction i) {
 		this(pt.getX(), pt.getY());
 		interaction = i;
-		graphRef = i == null ? "" : i.getSourceid();
+		graphRef = i == null ? 0 : i.getSourceid();
 	}
 	
 	public GPMLPoint(Point2D pt) {
@@ -75,7 +75,7 @@ public class GPMLPoint {
 			else if ("Y".equals(name))  y = StringUtil.toDouble(val);
 			else if ("RelX".equals(name))  relX = StringUtil.toDouble(val);
 			else if ("RelY".equals(name))  relY = StringUtil.toDouble(val);
-			else if ("GraphRef".equals(name))  graphRef = val;
+			else if ("GraphRef".equals(name))  graphRef = StringUtil.toInteger(val);
 			else if ("ArrowHead".equals(name))  head = ArrowType.lookup(val);
 		}
 		System.out.println(head.toString() + " (" + x + ", " + y + ")"); 
@@ -140,6 +140,8 @@ public class GPMLPoint {
 		mimconversion,
 		mimtranscriptiontranslation,
 		mimtranslation,
+		interacts,
+		stimulates,
 		circle,
 		arrow,
 		tbar,
@@ -168,7 +170,7 @@ public class GPMLPoint {
 		public  double[] getArrowShape() {
 
 			if (ArrowType.none == this) 					return  new double[]{ };
-	    	if (ArrowType.tbar == this )    				return  new double[]{-10,0,10,0 };
+	    	if (ArrowType.tbar == this )    				return  new double[]{-30,0,30,0 };
 	    	if (ArrowType.miminhibition == this )    		return  new double[]{-10,0,10,0 };
 	    	if (ArrowType.mimactivation == this )    		return  new double[]{0,0,5,12,-5,12};
 	    	if (ArrowType.mimbinding == this )    			return  new double[]{0,0,5,12,0, 6, -5,12};

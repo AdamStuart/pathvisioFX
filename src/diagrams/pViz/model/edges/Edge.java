@@ -8,6 +8,8 @@ import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.view.VNode;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
@@ -90,20 +92,20 @@ abstract public class Edge extends XRefable {
 		if (attr != null)    	addAll(attr);
     	startNode = start.modelNode();  
     	put("source", start.modelNode().getLabel());
-    	put("sourceid", start.modelNode().getGraphId());
+    	putInteger("sourceid", start.modelNode().getGraphId());
     	setSource(start.modelNode().getLabel()); 
     	setSourceid(start.modelNode().getGraphId());
     	
     	endNode = end.modelNode();	
     	put("target", end.modelNode().getLabel());
-    	put("targetid", end.modelNode().getGraphId());
+    	putInteger("targetid", end.modelNode().getGraphId());
     	setTarget(endNode.getLabel()); 
     	setTargetid(endNode.getGraphId());
-		if (StringUtil.isEmpty(getGraphId()))
+		if (getGraphId() > 0)
 		{	
-			String id = model.gensym("E");
+			int id = model.gensym();
 			setGraphId(id);
-			put("GraphId", id);
+			setId(id);
 		}
 		init(null, null);		//pts, anchors
     }
@@ -407,15 +409,15 @@ abstract public class Edge extends XRefable {
 	public String getTarget()  { return target.get();}
 	public void setTarget(String s)  { target.set(s);}
 	
-	private SimpleStringProperty sourceid = new SimpleStringProperty();	
-	public StringProperty  sourceidProperty()  { return sourceid;}
-	public String getSourceid()  { return sourceid.get();}
-	public void setSourceid(String s)  { sourceid.set(s);}
+	private SimpleIntegerProperty sourceid = new SimpleIntegerProperty();	
+	public IntegerProperty  sourceidProperty()  { return sourceid;}
+	public int getSourceid()  { return sourceid.get();}
+	public void setSourceid(int s)  { sourceid.set(s);}
 	
-	private SimpleStringProperty targetid = new SimpleStringProperty();	
-	public StringProperty  targetidProperty()  { return targetid;}
-	public String getTargetid()  { return targetid.get();}
-	public void setTargetid(String s)  { targetid.set(s);}
+	private SimpleIntegerProperty targetid = new SimpleIntegerProperty();	
+	public IntegerProperty  targetidProperty()  { return targetid;}
+	public Integer getTargetid()  { return targetid.get();}
+	public void setTargetid(int s)  { targetid.set(s);}
 	
 	private SimpleStringProperty interaction = new SimpleStringProperty();	
 	public StringProperty  interactionProperty()  { return interaction;}
