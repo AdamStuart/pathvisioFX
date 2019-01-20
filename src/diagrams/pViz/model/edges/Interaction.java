@@ -100,7 +100,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	@Override public String toString()
 	{
 		String name =  getName();
-		if (StringUtil.isEmpty(name)) name = "#"; 
+		if (StringUtil.isEmpty(name)) name = "-"; 
 		int id =  getGraphId();
 		String str = (edgeLine == null) ? "X" : edgeLine.toString();
 		return name + " [" + id + "] " + str + " " + getInterType();

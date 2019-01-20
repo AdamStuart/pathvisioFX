@@ -43,20 +43,20 @@ public class PaletteController implements Initializable {
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{
 		paletteGroup = new ToggleGroup();
-		paletteGroup.getToggles().addAll(arrow, rectangle, text, polyline, gene, metabolite, pathway, protein, rna);
+		paletteGroup.getToggles().addAll(arrow, rectangle, text, gene, metabolite, pathway, protein, rna, arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
 		lineTypeGroup = new ToggleGroup();
 		lineTypeGroup.getToggles().addAll(straight, curved, elbowed, segmented);
 		straight.setSelected(true );
-		arrowGroup = new ToggleGroup();	
-		arrowGroup.getToggles().addAll(arrow1, arrow2, arrow3, arrow4, arrow5, arrow6);
-		arrow1.setSelected(true);
+//		arrowGroup = new ToggleGroup();	
+//		arrowGroup.getToggles().addAll();
+//		arrow1.setSelected(true);
 //		EventHandler<? super MouseEvent> dragHandler = new EventHandler{
 //				
 //		};
 //		arrow1.setOnDragDetected(dragHandler );
 		setGraphic(arrow, Tool.Arrow, FontAwesomeIcons.LOCATION_ARROW);
 		setGraphic(rectangle, Tool.Rectangle, FontAwesomeIcons.SQUARE);
-		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
+//		setGraphic(polyline, Tool.Polyline, FontAwesomeIcons.PENCIL);
 	}
 
 	public void setParentController(Controller c)	
@@ -198,9 +198,9 @@ public class PaletteController implements Initializable {
 	// **-------------------------------------------------------------------------------
 	private ToggleGroup paletteGroup;
 	private ToggleGroup lineTypeGroup;
-	private ToggleGroup arrowGroup;
+//	private ToggleGroup arrowGroup;
 	public ToggleGroup getToolGroup()			{ 	return paletteGroup;	}
-	public ToggleGroup getArrowGroup()			{ 	return arrowGroup;	}
+//	public ToggleGroup getArrowGroup()			{ 	return arrowGroup;	}
 	public ToggleGroup getLineTypeGroup()		{ 	return lineTypeGroup;	}
 
 // **-------------------------------------------------------------------------------

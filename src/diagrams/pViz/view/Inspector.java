@@ -260,11 +260,13 @@ public class Inspector extends HBox implements Initializable {
 	@FXML private CheckBox showGraphId;	
 	@FXML private CheckBox snapToGrid;	
 	@FXML private CheckBox showZOrder;	
+	@FXML private CheckBox showCenterpoints;	
 	@FXML private CheckBox showAnchors;	
 	@FXML private CheckBox showLocks;	
 	@FXML private void	showZOrder() 	{		zOrderVisible.set(showZOrder.isSelected());	}
 	@FXML private void	setSnapToGrid() {		snapToGridProperty.set(snapToGrid.isSelected());  }
 	@FXML private void	showGraphId() 	{		graphIdsVisible.set(showGraphId.isSelected());	} 
+	@FXML private void	showCenterpoints() 	{	centerpointVisibleProperty.set(showCenterpoints.isSelected());	}
 	@FXML private void	showAnchors() 	{		anchorVisibleProperty.set(showAnchors.isSelected());	}
 	@FXML private void	showLocks() 	{		lockVisibleProperty.set(showLocks.isSelected());	}
 
@@ -274,6 +276,8 @@ public class Inspector extends HBox implements Initializable {
 	public SimpleBooleanProperty zOrderVisibleProperty() { return zOrderVisible; }
 	SimpleBooleanProperty snapToGridProperty = new SimpleBooleanProperty(false);
 	public SimpleBooleanProperty snapToGridProperty() { return snapToGridProperty; }
+	SimpleBooleanProperty centerpointVisibleProperty = new SimpleBooleanProperty(false);
+	public SimpleBooleanProperty centerpointVisibleProperty() { return centerpointVisibleProperty; }
 	SimpleBooleanProperty anchorVisibleProperty = new SimpleBooleanProperty(false);
 	public SimpleBooleanProperty anchorVisibleProperty() { return anchorVisibleProperty; }
 	SimpleBooleanProperty lockVisibleProperty = new SimpleBooleanProperty(true);

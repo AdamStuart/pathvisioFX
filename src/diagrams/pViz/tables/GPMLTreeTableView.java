@@ -285,7 +285,7 @@ System.out.println("stateChanged " + e.toString());
 		model.getNodes().stream().forEach((node) -> {			addBranch(node);        });
 		
 		model.getEdges().stream().forEach((interaction) -> {
-			String origin = interaction.get("sourceid");
+			int origin = interaction.getInteger("sourceid");
 			interaction.setNameFromState();
 //			System.out.println("interaction " + interaction.get("GraphId") + " starts at " + origin);
 
@@ -303,7 +303,7 @@ System.out.println("stateChanged " + e.toString());
 			root.getChildren().add(orphans);
 		
 		model.getStates().stream().forEach((state) -> {
-			String origin = state.get("GraphRef");
+			int origin = state.getInteger("GraphRef");
 			state.setName(state.get("TextLabel"));
 			TreeItem<XRefable> origItem = findDeep(nodes,origin);
 			if (origItem == null)  reportError(state);
@@ -316,7 +316,7 @@ System.out.println("stateChanged " + e.toString());
 			if (anchors == null) return;
 			for (Anchor a : anchors)
 			{
-				String interactionId = a.getInteractionId();
+				int interactionId = a.getInteractionId();
 				TreeItem<XRefable> interactionRow = findDeep(nodes,interactionId);
 				if (interactionRow == null)
 					System.out.println("Error");
@@ -409,7 +409,7 @@ public void addMembersToGroup()
 		else if (node instanceof DataNode)  		addBranch(node, nodes);
 	}
 
-	public void addBranch(XRefable node, String parentID) {
+	public void addBranch(XRefable node, int parentID) {
 		TreeItem<XRefable> mom = findDeep(nodes, parentID);
 		if (mom == null)  System.err.println("Null parent: " + parentID);
 		else
@@ -444,13 +444,13 @@ public void addMembersToGroup()
 		}
 		return null;
 	}
-	private TreeItem<XRefable> findDeep(TreeItem<XRefable> inRoot, String inId) {
+	private TreeItem<XRefable> findDeep(TreeItem<XRefable> inRoot, int inId) {
 		
-		if (inId == null) return null;
-		if (inId.isEmpty()) return null;
+//		if (inId == null) return null;
+//		if (inId.isEmpty()) return null;
 		XRefable val = inRoot.getValue();
 //		if (inRoot.getValue() == null) return null;
-		if (val != null && inId.equals(val.getGraphId()))
+		if (val != null && inId == val.getGraphId())
 			return inRoot;
 		for (TreeItem<XRefable> branch : inRoot.getChildren())
 		{

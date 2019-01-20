@@ -2,6 +2,7 @@ package diagrams.pViz.gpml;
 
 import java.util.List;
 
+import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import javafx.geometry.Point2D;
@@ -65,7 +66,7 @@ public class GPMLPoint {
 //		graphRef = ref;
 //	}
 	
-	public GPMLPoint(org.w3c.dom.Node node) {
+	public GPMLPoint(org.w3c.dom.Node node, Model model) {
 		for (int i=0; i<node.getAttributes().getLength(); i++)
 		{
 			org.w3c.dom.Node child = node.getAttributes().item(i);
@@ -75,12 +76,26 @@ public class GPMLPoint {
 			else if ("Y".equals(name))  y = StringUtil.toDouble(val);
 			else if ("RelX".equals(name))  relX = StringUtil.toDouble(val);
 			else if ("RelY".equals(name))  relY = StringUtil.toDouble(val);
-			else if ("GraphRef".equals(name))  graphRef = StringUtil.toInteger(val);
+			else if ("GraphRef".equals(name))  
+				{
+				if (StringUtil.isNumber(val))
+					graphRef = StringUtil.toInteger(val);
+				else 
+				{
+					DataNode nod = model.find(val);
+					if (nod != null)
+						graphRef = nod.getGraphId(); 
+				}}
+			
 			else if ("ArrowHead".equals(name))  head = ArrowType.lookup(val);
 		}
-		System.out.println(head.toString() + " (" + x + ", " + y + ")"); 
+		System.out.println(String.format("%s (%.2f, %.2f)",  head.toString(),x ,y )); 
 	}
-	
+//	else if ("org.pathvisio.DoubleLineProperty".equals(name))  
+//	{
+//		relY = StringUtil.toDouble(val);
+//	}
+
 //	Pair<Double, Double > portToRelXY(String portId)
 //	{
 //		int id = StringUtil.toInteger(portId);

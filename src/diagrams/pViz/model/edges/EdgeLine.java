@@ -132,9 +132,10 @@ public class EdgeLine extends Group {
 	
 private void addCenterPointListeners() {
 	ObservableMap<Object, Object> properties = getProperties(); 
-	BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
-	if (selectedProperty != null) 
-		centerPoint.visibleProperty().bind(selectedProperty);
+//	BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
+//	if (selectedProperty != null) 
+//		centerPoint.visibleProperty().bind( setCenterpointVis(visible) );			//selectedProperty
+	centerPoint.visibleProperty().bind(interaction.getModel().getController().getInspector().centerpointVisibleProperty());
 	centerPoint.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> 
 	{ 	
 		if (polyline == null)
@@ -236,7 +237,11 @@ private void addCenterPointListeners() {
 		centerPoint.setCenterX(pt.getX());
 		centerPoint.setCenterY(pt.getY());
 	}
-	 //----------------------------------------------------------------------
+	public void setCenterpointVis(boolean visible)
+	{
+		centerPoint.setVisible(visible);
+	}
+		 //----------------------------------------------------------------------
 	private Interaction interaction;		// the model corresponding to this geometry
 //	private ArrowType arrowType;
 	private Polyline polyline;
@@ -269,7 +274,7 @@ private void addCenterPointListeners() {
 		for (Anchor a: anchors) 
 			a.getShape().setVisible(visible);
 	}
-	
+
 	public Polyline getPolyline()	
 	{
 		if (polyline == null)
@@ -623,7 +628,7 @@ private void addCenterPointListeners() {
 			polyline.getPoints().addAll(pt.getX() + pt.getRelX(), pt.getY() + pt.getRelY());
 		}
 		// shorten the last segment if endNode is defined
-		Node endNode = interaction == null ? null : interaction.getEndNode().getStack();
+		Node endNode = (interaction == null || interaction.getEndNode() == null) ? null : interaction.getEndNode().getStack();
 		boolean shorten = SHORTEN && endNode != null;			// TODO -- and arrowhead??
 		if (shorten) {
 			GPMLPoint prev = points.get(sz - 2);

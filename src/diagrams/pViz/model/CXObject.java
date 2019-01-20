@@ -7,6 +7,7 @@ import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import util.StringUtil;
+//-------------------------------------------------------------------
 class CartesianLayout
 {
 	int node;	
@@ -19,9 +20,9 @@ class CartesianLayout
 	{
 		return CXObject.iline("node", node)+ CXObject.iline("view", view) + CXObject.line("x", x) + CXObject.line("y", y) ;
 	}
-	
 }
 
+//-------------------------------------------------------------------
 class NodeAttribute
 {
 	int propOf;	
@@ -36,6 +37,7 @@ class NodeAttribute
 	}
 }
 
+//-------------------------------------------------------------------
 class EdgeAttribute
 {
 	int propOf;	
@@ -58,6 +60,7 @@ class EdgeAttribute
 	}
 }
 
+//-------------------------------------------------------------------
 public class CXObject {
 	
 	private List<NodeAttribute> nodeAttributes;
@@ -70,7 +73,7 @@ public class CXObject {
 	{
 		
 	}	
-
+	//-------------------------------------------------------------------
 	class Node
 	{
 		int id;	
@@ -89,7 +92,7 @@ public class CXObject {
 		}
 	}
 	
-
+	//-------------------------------------------------------------------
 	class Edge
 	{
 		int id;	
@@ -119,7 +122,7 @@ public class CXObject {
 			edgeAttributes.add(ea);
 		}
 	}
-	
+	//-------------------------------------------------------------------
 	class NetworkAttribute
 	{
 		String name;
@@ -133,8 +136,7 @@ public class CXObject {
 		}
 		
 	}
-
-	
+	//-------------------------------------------------------------------
 	public static String line(String attr, int val)
 	{
 		return q(attr) + ": " + val + ",\n";

@@ -730,8 +730,14 @@ public class Controller implements Initializable, IController
 	// coming from parser:
 	
 	public void addDataNode(DataNode node) {
-		pasteboard.setActiveLayer("Content");	
-		node.setGraphId(node.getId());
+		pasteboard.setActiveLayer("Content");
+		int id = node.getId();
+		if (id < 0)
+		{
+			String s = node.get("GraphId");
+			id  = model.gensym(s);
+			node.setGraphId(id);
+		}
 		 node.setName( node.get("TextLabel"));
 		if (node.getStack() == null)
 			new VNode(node, pasteboard);

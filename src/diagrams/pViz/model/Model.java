@@ -286,6 +286,13 @@ public class Model
 		for (Edge e : getEdges())
 			e.getEdgeLine().setAnchorVis(visible);	
 	}
+	
+	public void setCenterpointVisibility(boolean visible)			
+	{ 
+		for (Edge e : getEdges())
+			e.getEdgeLine().setCenterpointVis(visible);	
+	}
+	
 	private void readEdges(String state) {
 	}
 	// **-------------------------------------------------------------------------------
@@ -386,13 +393,16 @@ public class Model
 	{
 		 DataNode n = getDataNode(key);	
 		 if (n != null) return n;
+		 Integer id = oldIds.get(key);
+		 if (id != null)
+			 return find(id);
 		return null;
 	}
 	
 	public DataNode find(int key)				
 	{
 		 DataNode n = dataNodeMap.get(key);	
-		return null;
+		return n;
 	}
 	
 	public int cloneResourceId(String oldId)	{		return gensym();	}

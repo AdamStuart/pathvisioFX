@@ -98,7 +98,7 @@ import util.FileUtil;
 			FXMLLoader fxmlLoader = new FXMLLoader();
 		    fxmlLoader.setLocation(url);
 		    BorderPane appPane =  fxmlLoader.load();
-		    loaderStage.setScene(new Scene(appPane, 360, 130));
+		    loaderStage.setScene(new Scene(appPane, 800, 130));
 //		    loaderStage.show();
 			return new Pair<FXMLLoader, Stage>(fxmlLoader, loaderStage);
 		}
@@ -143,7 +143,7 @@ import util.FileUtil;
 		    	Controller c = (Controller) fxmlLoader.getController();
 		    	c.addXMLDoc(doc);	
 		    }
-		    stage.setScene(new Scene(appPane, 1000, 1000));
+		    stage.setScene(new Scene(appPane, 1200, 1000));
 		    registerWindow(stage);
 		    stage.show();
 		}

@@ -245,7 +245,9 @@ public class GPML {
 		DataNode node = new DataNode(m);
 		node.put("Layer", activeLayer);
 		node.add(datanode.getAttributes());
-		
+		String inId = node.get("GraphId");
+		if (!StringUtil.isNumber(inId))
+			node.putInteger("GraphId", m.gensym(inId));
 		NodeList elems = datanode.getChildNodes();
 		for (int i=0; i<elems.getLength(); i++)
 		{
@@ -290,7 +292,7 @@ public class GPML {
 					org.w3c.dom.Node pt = pts.item(j);
 					if ("Point".equals(pt.getNodeName()))
 					{
-						GPMLPoint gpt = new GPMLPoint(pt);
+						GPMLPoint gpt = new GPMLPoint(pt, m);
 						points.add(gpt);
 						ArrowType type = gpt.getArrowType();
 						if (type != null)
@@ -323,8 +325,19 @@ public class GPML {
 		List<Anchor> anchors = new ArrayList<Anchor>();
 		AttributeMap attrib = new AttributeMap(edgeML.getAttributes());
 		NodeList elems = edgeML.getChildNodes();
-		String startId="", endId="";
-		DataNode endNode = null, startNode = null;
+		int graphId = -1;
+		String val = attrib.get("GraphId");
+		if (StringUtil.isNumber(val))
+			graphId = StringUtil.toInteger(val);
+		else 
+		{
+			DataNode nod = model.find(val);
+			if (nod != null)
+				graphId = nod.getGraphId(); 
+			graphId = m.gensym(val);
+			attrib.putInteger("GraphId",graphId);
+		}
+
 		for (int i=0; i<elems.getLength(); i++)
 		{
 			org.w3c.dom.Node n = elems.item(i);
@@ -338,7 +351,7 @@ public class GPML {
 					org.w3c.dom.Node pt = pts.item(j);
 					if ("Point".equals(pt.getNodeName()))
 					{
-						GPMLPoint gpt = new GPMLPoint(pt);
+						GPMLPoint gpt = new GPMLPoint(pt, m);
 						points.add(gpt);
 						String key = j > 0 ? "targetid" : "sourceid";
 						attrib.putInteger(key, gpt.getGraphRef());
@@ -348,7 +361,7 @@ public class GPML {
 					}
 					if ("Anchor".equals(pt.getNodeName()))
 					{
-						Anchor anchor = new Anchor(pt, m,attrib.get("GraphId"));
+						Anchor anchor = new Anchor(pt, m,attrib.getInteger("GraphId"));
 						anchors.add(anchor);
 //						getController().addAnchor(anchor);
 					}
@@ -361,41 +374,37 @@ public class GPML {
 		}
 		//post parsing
 		int z = points.size();
+		DataNode endNode = null, startNode = null;
 		if (z > 1)
 		{
+			
+
 			GPMLPoint startPt = points.get(0);
 			int strtId = startPt.getGraphRef();
 			startNode = m.find(strtId);
 			attrib.putInteger("sourceid", strtId);
+		
 			GPMLPoint lastPt = points.get(z-1);
 			int ending = lastPt.getGraphRef();
-			attrib.put("targetid", endId);
+			endNode = m.find(ending);
+			attrib.putInteger("targetid", ending);
 			ArrowType arwType = lastPt.getArrowType();
 			if (arwType != null)
 				attrib.put("ArrowHead", arwType.toString());
-			endNode = m.getDataNode(endId);
-//			double thickness = attrib.getDouble("LineThickness");
-//			attrib.putDouble("LineThickness", thickness);
-//			if (startNode != null && endNode != null) 
-//				return interaction;	
-//			else if (startPt != null && lastPt != null) 
-//				return new Interaction(startPt, lastPt, thickness, model);		// Group
-			}
+		}
 		else
 		{
 			System.err.println("z = " + z);
 			return null;
 		}
-		Interaction interaction = new Interaction(attrib, m,points, anchors);
+		Interaction interaction = new Interaction(attrib, m, points, anchors);
 		interaction.put("Layer", "Content");
 		interaction.add(edgeML.getAttributes());
+		interaction.putInteger("GraphId", graphId);
 		interaction.copyAttributesToProperties();		// copy attributes into properties for tree table editing
+		interaction.setStartNode(startNode);
+		interaction.setEndNode(endNode);
 		
-		if (startNode != null && endNode != null)
-		{
-			interaction.setStartNode(startNode);
-			interaction.setEndNode(endNode);
-		}
 		return interaction;
 	}
 	catch(Exception e)
@@ -412,6 +421,18 @@ public class GPML {
 			label.getStack().setLayerName("Background");
 		NodeList elems = labelNode.getChildNodes();
 		label.add(labelNode.getAttributes());
+		String idval = label.get("GraphId");
+		int graphId = -1;
+		if (StringUtil.isNumber(idval))
+			graphId = StringUtil.toInteger(idval);
+		else 
+		{
+			DataNode nod = model.find(idval);
+			if (nod != null)
+				graphId = nod.getGraphId(); 
+			graphId = model.gensym(idval);
+			label.putInteger("GraphId",graphId);
+		}
 		label.setGraphId(label.getId());
 		String txt = label.get("TextLabel");
 		if (txt == null) txt = "Undefined";

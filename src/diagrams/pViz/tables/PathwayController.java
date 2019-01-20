@@ -85,7 +85,7 @@ public class PathwayController implements Initializable, IController, ISpeciesSp
 			" Use quotes to escape special characters. E.g. 'apoptosis*' will include the * in the search and not use it as wildcard.";
 	
 	//---------------------------------------------------------------------------
-	static String lastSearch = "WP4";
+	static String lastSearch = "WP554";
 			
 	@Override public void initialize(URL location, ResourceBundle resources)
 	{

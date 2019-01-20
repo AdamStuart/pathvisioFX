@@ -22,17 +22,17 @@ public class Anchor extends XRefable {		// extends DataNode
 	public void setInteraction(Edge e) 		
 	{  
 		myInteraction = (Interaction) e;  
-		setInteractionId (myInteraction == null ? "" : myInteraction.get("GraphId"));	
+		setInteractionId (myInteraction == null ? 0 : myInteraction.getInteger("GraphId"));	
 	}
-	public String getInteractionId() 				{  return  get("InteractionId");	}
-	public void setInteractionId(String e) 			{  put("InteractionId", e);	}
+	public int getInteractionId() 				{  return  getInteger("InteractionId");	}
+	public void setInteractionId(int e) 			{  putInteger("InteractionId", e);	}
 //	
 	public double getAnchorPosition()				{  return getDouble("Position");	}
 	public void setPosition(double d)				{   putDouble("Position", d);	}
 	public Shape getShape()							{	return myShape;}
 
 	
-	public Anchor(org.w3c.dom.Node node, Model m, String inter)
+	public Anchor(org.w3c.dom.Node node, Model m, int interactionId)
 	{
 		super(new AttributeMap(node.getAttributes()));
 		myShape = new Circle();
@@ -42,7 +42,7 @@ public class Anchor extends XRefable {		// extends DataNode
 		myShape.setStroke(Color.DARKOLIVEGREEN);
 		setName(String.format("Anchor @ %.2f", getAnchorPosition()));
 //		setInteraction(inter);
-		setInteractionId(inter);
+		setInteractionId(interactionId);
 	}
 	
 	public String toString()

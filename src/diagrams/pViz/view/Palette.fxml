@@ -15,7 +15,6 @@
                <children>
                   <ToggleButton fx:id="arrow" mnemonicParsing="false" onAction="#setArrow" />
                   <ToggleButton fx:id="rectangle" mnemonicParsing="false" onAction="#setRectangle" />
-                  <ToggleButton fx:id="polyline" mnemonicParsing="false" onAction="#setPolyline" />
                   <ToggleButton fx:id="text" layoutX="46.0" layoutY="10.0" mnemonicParsing="false" onAction="#setText" text="T" />
                </children>
             </HBox>
