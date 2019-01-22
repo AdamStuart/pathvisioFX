@@ -23,6 +23,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
@@ -56,7 +57,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	private Shape figure;
 	private Label text;
 	private Label graphIdLabel;
-	private Label zOrderLabel;
+	private Label refsLabel;
 	private Label lockLabel;
 	private String title;
 //	private TooltipBehavior myTTB = new TooltipBehavior(
@@ -108,8 +109,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		addPorts();
         readGeometry(modelNode, this);
 		addGraphIdDisplay();
-		addZOrderDisplay();
-		setZOrder();
+		addReferencesDisplay();
+		setReferences();
 		addLockDisplay();
 		createFigure();
 //		String shapeType = dataNode.get("ShapeType");
@@ -150,15 +151,25 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		graphIdLabel = new Label(id);
 		addAnnotation(graphIdLabel, getController().getInspector().graphIdsVisibleProperty(),Pos.TOP_LEFT, -getWidth()/4, -getHeight()/4-10);
 	}	
-	public void setZOrder()
+	public void setReferences()
 	{
-		String z = dataNode.get("ZOrder");
-		zOrderLabel.setText(z);
+		String z = dataNode.get("BiopaxRef");
+		if (z != null)
+		{
+			refsLabel.setText(z);
+			BiopaxRecord record = getModel().getReference(z);
+			if (record != null)
+			{
+				Tooltip tooltip = new Tooltip();
+				tooltip.setOnShowing(v -> { tooltip.setText(record.toString());});
+				Tooltip.install(refsLabel,  tooltip);
+			}
+		}
 	}
-	public void addZOrderDisplay()
+	public void addReferencesDisplay()
 	{
-		zOrderLabel = new Label("Z");
-		addAnnotation(zOrderLabel, getController().getInspector().zOrderVisibleProperty(),Pos.TOP_RIGHT, getWidth()/4, -getHeight()/4-10);
+		refsLabel = new Label("");
+		addAnnotation(refsLabel, getController().getInspector().referencesVisibleProperty(),Pos.TOP_RIGHT, getWidth()/4, -getHeight()/4-10);
 	}	
 	public void addLockDisplay()
 	{
@@ -203,6 +214,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		
 	public int getGraphId()				{ 	return dataNode.getGraphId();	}
 	private Controller getController()  { 	return pasteboard.getController();   	}
+	private Model getModel() 		 { 		return pasteboard.getController().getModel();   	}
 	public Label getTextField()			{ 	return text;	}
 	public Shape getFigure()			{	return figure;	}
 	public void setFigure(Shape s)		{	figure = s;	}
@@ -342,7 +354,19 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
  	// **-------------------------------------------------------------------------------
 
-	public String getLayerName() 		{	return getAttributes().get("Layer");	}
+	public String getLayerName() 		
+
+	{	
+		Parent parent = getParent();
+		if (parent instanceof Layer)
+		{
+			
+		}
+		if (parent == null) 	
+			return getAttributes().get("Layer");	
+		
+		return "Content";
+	}
 	public void setLayerName(String s) 	{	getAttributes().put("Layer", s);	}
 	public boolean isLayerLocked() 		{	LayerRecord rec = getLayer(); return rec == null || rec.getLock();	}
 
@@ -565,7 +589,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		str = bldr.toString();
 		if (getFigure()!= null)			getFigure().setStyle(str);	    
 	}
-	
+
 	private String makeStyleString(String gpmlTag) {
 		String val = dataNode.get(gpmlTag);
 		if (val == null) return "";

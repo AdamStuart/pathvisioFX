@@ -274,7 +274,7 @@ public class PaletteController implements Initializable {
 	@FXML private void setArrow4()		{		activeArrowType = ArrowType.mimcatalysis;	}
 	@FXML private void setArrow5()		{		activeArrowType = ArrowType.stimulates;	}
 	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	}
-	@FXML private HBox allInteractions;
+	@FXML private VBox allInteractions;
 	
 	
 	//-------------------------------------------------------------

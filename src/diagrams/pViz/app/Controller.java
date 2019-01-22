@@ -630,8 +630,9 @@ public class Controller implements Initializable, IController
 		n.modelNode().removeSelf();
 		getModel().removeNode(n);
 		String layer = n.getLayerName();
-		Layer content = pasteboard.getLayer(layer);			// TODO -- layering naive
-		content.remove(n);
+		Layer level = pasteboard.getLayer(layer);	
+		if (level != null)
+			level.remove(n);
 	}
 	public void remove(Edge e)						
 	{		

@@ -100,7 +100,7 @@ public class EdgeLine extends Group {
 		{ 	
 			if (line != null)
 			{
-				line.setStrokeWidth(5);
+				line.setStrokeWidth(8);
 				line.setStroke(Color.RED);
 			}
 		} );
@@ -109,14 +109,14 @@ public class EdgeLine extends Group {
 			if (line != null)
 			{
 				line.setStroke(Color.RED);
-				line.setStrokeWidth(5);
+				line.setStrokeWidth(8);
 			}
 	} );
 		addEventHandler(MouseEvent.MOUSE_EXITED, e -> 
 		{ 	
 			if (line != null)
-				line.setStroke(Color.BLACK);
-			line.setStrokeWidth(1);
+				line.setStroke(interaction.getColor());
+			line.setStrokeWidth(interaction.getStrokeWidth());
 		});
 	}
 	 //----------------------------------------------------------------------
@@ -661,21 +661,24 @@ private void addCenterPointListeners() {
 		poly.getPoints().clear();
 		if (line != null) line.setVisible(false);
 		int sz  = points.size();
+		GPMLPoint startPt = points.get(0);
 		GPMLPoint prevPt = null;
-		boolean turnLeft = true;			// TODO
+		boolean sidewaysFirst = Math.abs(startPt.getRelX()) > Math.abs(startPt.getRelY());
+		
 		for (int i = 0; i < sz ; i++) {
-			GPMLPoint current = points.get(i);
+			GPMLPoint currPt = points.get(i);
 			if (prevPt != null)
 			{
-				if (! isOrthog(prevPt, current))
-					if (turnLeft )
-						poly.getPoints().addAll(prevPt.getX(), current.getY());
-					else
-						poly.getPoints().addAll(current.getX(), prevPt.getY());
-				turnLeft = !turnLeft;
+				if (! isOrthog(prevPt, currPt))
+				{
+					double x = (sidewaysFirst ) ? currPt.getX() : prevPt.getX();
+					double y = (sidewaysFirst ) ? prevPt.getY() : currPt.getY();
+					poly.getPoints().addAll(x, y);
+				}
+				sidewaysFirst = !sidewaysFirst;
 			}
-			poly.getPoints().addAll(current.getX(), current.getY());
-			prevPt = current;
+			poly.getPoints().addAll(currPt.getX(), currPt.getY());
+			prevPt = currPt;
 		}
 		
 		Point2D last = lastPoint();
@@ -686,12 +689,11 @@ private void addCenterPointListeners() {
 			Line line = new Line(prev.getX(), prev.getY(), last.getX(), last.getY());
 			Point2D shortStopPt = LineUtil.getIntersection(line, endNode);
 			Point2D correctedPt = new Point2D(last.getX(), shortStopPt.getY());			//  hack
-			poly.getPoints().addAll(correctedPt.getX(), correctedPt.getY());
 			setArrowPt(correctedPt);
-		} else
-		{
-			poly.getPoints().addAll(last.getX(), last.getY());
-		}
+			last = correctedPt;
+		} 
+			
+		poly.getPoints().addAll(last.getX(), last.getY());
 		poly.setStroke(interaction.getColor());
 	}
 

@@ -277,7 +277,7 @@ public class GPML {
 						key = grandchild.getTextContent();
 					else 
 						val = grandchild.getTextContent();
-					System.out.println(grandchild.getNodeName() + " " + key + val );
+					System.out.println(grandchild.getNodeName() + " " + key + ": " + val );
 				}
 				if (key != null && val != null)
 					 node.put(key, val);
@@ -361,7 +361,7 @@ public class GPML {
 					}
 					if ("Anchor".equals(pt.getNodeName()))
 					{
-						Anchor anchor = new Anchor(pt, m,attrib.getInteger("GraphId"));
+						Anchor anchor = new Anchor(pt, m, attrib.getInteger("GraphId"));
 						anchors.add(anchor);
 //						getController().addAnchor(anchor);
 					}
@@ -606,9 +606,10 @@ public class GPML {
 			shapeNode.put("Type", "Shape");
 			shapeNode.put("ShapeType", shapeType);
 			shapeNode.setName(shapeNode.get("ShapeType"));
-			new VNode(shapeNode, pasteboard);
+			VNode vnode = new VNode(shapeNode, pasteboard);
 			model.addResource(shapeNode);
 			model.addShape(shapeNode);
+			vnode.setStyle("double-border");
 			
 		}
 		public void addLabel(DataNode label) {

@@ -187,7 +187,7 @@
          <children>
             <Label fx:id="strokeLabel111" prefHeight="17.0" prefWidth="83.0" text="Annotations" />
             <CheckBox fx:id="showGraphId" mnemonicParsing="false" onAction="#showGraphId" text="Show GraphId" />
-            <CheckBox fx:id="showZOrder" mnemonicParsing="false" onAction="#showZOrder" text="Show Z Order" />
+            <CheckBox fx:id="showReferences" mnemonicParsing="false" onAction="#showReferences" text="Show References" />
             <CheckBox fx:id="showCenterpoints" mnemonicParsing="false" onAction="#showCenterpoints" text="Show Centerpoints" />
             <CheckBox fx:id="showAnchors" mnemonicParsing="false" onAction="#showAnchors" text="Show Anchors" />
             <CheckBox fx:id="showLocks" mnemonicParsing="false" onAction="#showLocks" text="Show Locks" />

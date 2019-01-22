@@ -63,12 +63,12 @@
                            <children>
                               <HBox id="Cell &amp; Nucleus" alignment="CENTER">
                                  <children>
-                                    <Button fx:id="mitochondria11" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
+                                    <Button fx:id="cell" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
                                        <font>
                                           <Font size="9.0" />
                                        </font>
                                     </Button>
-                                    <Button fx:id="mitochondria111" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
+                                    <Button fx:id="nucleus" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
                                        <font>
                                           <Font size="9.0" />
                                        </font>
@@ -79,12 +79,12 @@
                                  <children>
                                     <HBox alignment="CENTER">
                                        <children>
-                                          <Button fx:id="mitochondria1" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
+                                          <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
                                              <font>
                                                 <Font size="9.0" />
                                              </font>
                                           </Button>
-                                          <Button fx:id="er1" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
+                                          <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
                                              <font>
                                                 <Font size="9.0" />
                                              </font>
@@ -93,17 +93,17 @@
                                     </HBox>
                                     <HBox alignment="CENTER" spacing="2.0">
                                        <children>
-                                          <Button fx:id="golgi1" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
+                                          <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
                                              <font>
                                                 <Font size="9.0" />
                                              </font>
                                           </Button>
-                                          <Button fx:id="sr1" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
+                                          <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
                                              <font>
                                                 <Font size="9.0" />
                                              </font>
                                           </Button>
-                                          <Button fx:id="brace1" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
+                                          <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
                                              <font>
                                                 <Font size="9.0" />
                                              </font>
@@ -124,7 +124,7 @@
          <content>
             <VBox fillWidth="false" spacing="28.0">
                <children>
-                  <VBox id="interactions" spacing="4.0">
+                  <VBox id="interactions" fx:id="allInteractions" spacing="4.0">
                      <children>
                         <ToggleButton fx:id="arrow1" contentDisplay="RIGHT" mnemonicParsing="false" onAction="#setArrow1" onDragDetected="#dragInteraction" prefHeight="27.0" prefWidth="107.0" text="Interacts">
                            <font>
