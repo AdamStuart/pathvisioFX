@@ -5,13 +5,13 @@ import java.util.List;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Tool;
-import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.EdgeType;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.util.ResizableBox;
 import gui.Action.ActionType;
 import javafx.beans.value.ChangeListener;
@@ -323,6 +323,12 @@ public class Pasteboard extends PanningCanvas
 	static boolean verbose = false;
 
 //
+	
+	public void startDragLine(VNode vNode, Pos pos)
+	{
+		startDragLine(vNode, pos, vNode.getLayoutX(), vNode.getLayoutY());
+	}
+
 	public void startDragLine(VNode polyLineStart, Pos polylinePosition, VNode source, Pos srcPosition, double x, double y) {
 		dragPolyLineSource = polyLineStart;
 		dragPolyLinePosition = polylinePosition;

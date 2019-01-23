@@ -11,6 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
@@ -18,6 +19,8 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.paint.Color;
+import model.stat.RelPosition;
 
 /**
  * Listeners for making the nodes draggable via left mouse button. Considers if parent is zoomed.
@@ -70,7 +73,12 @@ public class VNodeGestures {
     		if (event.isPopupTrigger())	   {	doContextMenu(event, vNode); return;	   }
     		Tool curTool = canvas.getTool();
     		vNode.finishDragLine(event);
-    	   if (curTool != null && !curTool.isArrow()) return;
+    	   if (curTool.isInteraction()) 
+    	   {
+    		   canvas.startDragLine(vNode, Pos.CENTER);
+    		   return;
+    	   }
+     
     	   
     	   Selection selection = getController().getSelectionManager();
     	   if (event.isAltDown())

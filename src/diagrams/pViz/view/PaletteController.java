@@ -6,9 +6,8 @@ import java.util.ResourceBundle;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
-import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.edges.EdgeType;
-import gui.Action.ActionType;
+import diagrams.pViz.util.ArrowType;
 import icon.FontAwesomeIcons;
 import icon.GlyphIcon;
 import icon.GlyphIcons;
@@ -28,7 +27,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 
@@ -106,9 +104,14 @@ public class PaletteController implements Initializable {
 	
 	public void setTool(Tool tool)
 	{
-		if (getTool() == tool) sticky = true;
+		if (getTool() == tool) 
+		{ 
+			sticky = true;
+			return;	
+		}
 		if (getTool() == Tool.Arrow) sticky = false;
 		curTool = tool;
+		
 		ToggleGroup group = getToolGroup();
 //		group.selectToggle(value);
 		for (Toggle t : group.getToggles())		// TODO this should reduce to a single line.
@@ -242,7 +245,7 @@ public class PaletteController implements Initializable {
 	@FXML private VBox palette;			// root of Palette.fxml
 	@FXML private VBox tools;	
 
-	@FXML private ToggleButton arrow;
+	@FXML private ToggleButton arrow;			// selection
 	@FXML private ToggleButton rectangle;
 	@FXML private ToggleButton circle;
 	@FXML private ToggleButton text;
@@ -268,14 +271,14 @@ public class PaletteController implements Initializable {
 	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
 	@FXML private void setSegmented()	{		activeLineType = "Segmented";	}
 	public EdgeType getCurrentLineBend() { return EdgeType.lookup(activeLineType);		}
-	@FXML private void setArrow1()		{		activeArrowType = ArrowType.interacts;	}	// TODO get type from id
-	@FXML private void setArrow2()		{		activeArrowType = ArrowType.mimconversion;	}
-	@FXML private void setArrow3()		{		activeArrowType = ArrowType.miminhibition;	}
-	@FXML private void setArrow4()		{		activeArrowType = ArrowType.mimcatalysis;	}
-	@FXML private void setArrow5()		{		activeArrowType = ArrowType.stimulates;	}
-	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	}
+	@FXML private void setArrow1()		{		activeArrowType = ArrowType.interacts;	setTool(Tool.ArrowInteracts);}	// TODO get type from id
+	@FXML private void setArrow2()		{		activeArrowType = ArrowType.mimconversion;	setTool(Tool.ArrowConverts);}
+	@FXML private void setArrow3()		{		activeArrowType = ArrowType.miminhibition;	setTool(Tool.ArrowInhibits);}
+	@FXML private void setArrow4()		{		activeArrowType = ArrowType.mimcatalysis;	setTool(Tool.ArrowCatalyzes);}
+	@FXML private void setArrow5()		{		activeArrowType = ArrowType.stimulates;	setTool(Tool.ArrowStimulates);}
+	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	setTool(Tool.ArrowBinds);}
 	@FXML private VBox allInteractions;
-	
+
 	
 	//-------------------------------------------------------------
 

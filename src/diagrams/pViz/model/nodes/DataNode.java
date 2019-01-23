@@ -92,10 +92,7 @@ public class DataNode extends XRefable {
 		return gp;
 	}	
 	//---------------------------------------------------------------------------------------
-//	public void toCX(CXObject cx )	{ 
-//		
-//		cx,addNodes
-//	}
+	public void toCX(CXObject cx )	{ 		cx.addNode(this);	}
 
 	
 	public String toGPML()	{ 

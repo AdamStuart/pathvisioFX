@@ -4,9 +4,9 @@ import java.util.List;
 
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
-import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.view.VNode;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;

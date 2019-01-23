@@ -14,6 +14,7 @@ import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.ResizableBox;
 import gui.Backgrounds;
+import gui.Borders;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableMap;
@@ -94,6 +95,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			boolean putIdInName = false;
 			modelNode.put("TextLabel", putIdInName ?  id : "");
 		}
+        readGeometry(modelNode, this);
 		
 		String fontWeight = dataNode.get("FontWeight");
 		String fontSize = dataNode.get("FontSize");
@@ -107,7 +109,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //		String type = attributes.get("ShapeType");
 //		System.out.println(title);
 		addPorts();
-        readGeometry(modelNode, this);
 		addGraphIdDisplay();
 		addReferencesDisplay();
 		setReferences();
@@ -423,6 +424,12 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			style = FontWeight.EXTRA_BOLD;
 		Font f = Font.font(Font.getDefault().getFamily(), style, size);
 		text.setFont(f);
+		double width = getWidth();
+		if (width > 10)
+		{
+			text.setPrefWidth(width);
+			text.setMinWidth(width);
+		}
 	}
 	
 	public void addText(String textLabel)

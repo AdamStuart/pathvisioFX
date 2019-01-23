@@ -9,22 +9,18 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.gpml.GPMLPoint.ArrowType;
 import diagrams.pViz.model.Model;
-import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
 import diagrams.pViz.tables.VocabRecord;
-import diagrams.pViz.view.GroupMouseHandler;
+import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
-import gui.Action.ActionType;
 import javafx.collections.FXCollections;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.bio.Gene;
@@ -361,7 +357,14 @@ public class GPML {
 					}
 					if ("Anchor".equals(pt.getNodeName()))
 					{
-						Anchor anchor = new Anchor(pt, m, attrib.getInteger("GraphId"));
+						
+						Anchor anchor = new Anchor(pt, m, graphId);
+						String oldid = anchor.get("GraphId");
+						int id;
+						if (StringUtil.isNumber(oldid))
+							id = StringUtil.toInteger(oldid);
+						else id = m.gensym(oldid);
+						anchor.putInteger("GraphId", id);
 						anchors.add(anchor);
 //						getController().addAnchor(anchor);
 					}
@@ -377,8 +380,6 @@ public class GPML {
 		DataNode endNode = null, startNode = null;
 		if (z > 1)
 		{
-			
-
 			GPMLPoint startPt = points.get(0);
 			int strtId = startPt.getGraphRef();
 			startNode = m.find(strtId);

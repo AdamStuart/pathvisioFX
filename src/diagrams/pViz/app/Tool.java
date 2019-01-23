@@ -10,7 +10,8 @@ public enum Tool {
 	Rectangle, RoundedRectangle, Circle, Oval, Arc, Polygon, Triangle, Pentagon, Hexagon, Octagon, Polyline, Line, GraphicalLine, Brace, Shape1,   // Shapes
 	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
-	Browser, Text, Table, Image, SVGPath, Media,			// Controls
+	Browser, Text, Table, Image, SVGPath, Media,		// Controls
+	ArrowInteracts, ArrowConverts, ArrowInhibits, ArrowCatalyzes, ArrowStimulates, ArrowBinds 		// Interactions
 	;
 
 	public static Tool fromString(String type)
@@ -58,8 +59,11 @@ public enum Tool {
 	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
+	static Tool[] interactions = { ArrowInteracts, ArrowConverts, ArrowInhibits, ArrowCatalyzes, ArrowStimulates, ArrowBinds};
 
 	public boolean isArrow()				{	return this == Arrow;		}  
+	public boolean isInteraction()			{	return contains(interactions, this);		}  
+	public boolean connectsToEdges() 		{	return this == ArrowInhibits || this == ArrowCatalyzes;	}
 	public boolean isShape()				{	return contains(shapes, this);		}
 	public boolean isCellShape()			{	return contains(cellShapes, this);		}
 	public boolean isPencil()				{	return contains(connectors, this );		}
@@ -102,4 +106,5 @@ public enum Tool {
 		if (FileUtil.isTextFile(f))		return Text;
 		return null;
 	}
+
 }

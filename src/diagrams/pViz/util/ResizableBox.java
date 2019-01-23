@@ -255,7 +255,7 @@ abstract public class ResizableBox extends DraggableBox {
 		}
 		
 //		if (pasteboard.getTool() == Tool.Polyline)
-		if (pasteboard.getTool().isArrow())
+		if (pasteboard.getTool().isInteraction())
 		{
 			port.setFill(Color.AQUAMARINE); 
 			String id = port.getId();

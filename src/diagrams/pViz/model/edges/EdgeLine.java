@@ -3,14 +3,13 @@ package diagrams.pViz.model.edges;
 import java.util.ArrayList;
 import java.util.List;
 
+import diagrams.pViz.app.Tool;
 import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
-import diagrams.pViz.gpml.GPMLPoint.ArrowType;
+import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.view.Arrow;
-import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
-import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableMap;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
@@ -20,7 +19,6 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.CubicCurve;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
@@ -80,6 +78,8 @@ public class EdgeLine extends Group {
 		setMouseTransparent(true);
 	}
 
+	private Tool getTool() { return  interaction.getModel().getController().getPasteboard().getTool(); }
+	
 	public EdgeLine(Edge inter, List<GPMLPoint> pts, List<Anchor> anchorList) 
 	{
 	   	this();
@@ -98,7 +98,10 @@ public class EdgeLine extends Group {
 		setMouseTransparent(false);
 		addEventHandler(MouseEvent.MOUSE_ENTERED, e -> 
 		{ 	
-			if (line != null)
+			boolean hiliteEdge = true;
+			Tool tool = getTool();
+			hiliteEdge = tool.isInteraction() && tool.connectsToEdges();
+			if (line != null && hiliteEdge)
 			{
 				line.setStrokeWidth(8);
 				line.setStroke(Color.RED);
@@ -106,7 +109,10 @@ public class EdgeLine extends Group {
 		} );
 		addEventHandler(MouseEvent.MOUSE_MOVED, e -> 
 		{ 	
-			if (line != null)
+			boolean hiliteEdge = true;
+			Tool tool = getTool();
+			hiliteEdge = tool.isInteraction() && tool.connectsToEdges();
+			if (line != null && hiliteEdge)
 			{
 				line.setStroke(Color.RED);
 				line.setStrokeWidth(8);
@@ -543,27 +549,7 @@ private void addCenterPointListeners() {
 	}
 
 	private void linearConnect() {
-//		GPMLPoint last = lastGPMLPoint();
 		Point2D lastPt = lastPoint();
-//		if (lastPt != null) return;
-		
-//		if (interaction == null)			// error state
-//		{
-//			setEndPoint(new Point2D(0,0));
-//			LineUtil.set(getLine(), new Point2D(0,0), new Point2D(230,30));
-//			return;
-//			
-//		}
-//		VNode startNode = interaction.getStartNode() == null ? null : interaction.getStartNode().getStack();
-//		VNode endNode = interaction.getEndNode() == null ? null : interaction.getEndNode().getStack();
-//		Shape shape = null;
-//		if (endNode == null) 
-//		{
-//			String targId = interaction.get("targetid");
-//			Anchor a =interaction.findAnchorByRef(targId);
-//			if (a != null)
-//				shape = a.getShape();
-//		}
 		int shorten = SHORTEN ? 10 : 0;
 		
 		if (shorten > 0) {
@@ -587,13 +573,12 @@ private void addCenterPointListeners() {
 		{
 			System.out.println("zeroooo ");			//  TODO DEBUG
 		}
-		LineUtil.set(line, getStartPoint(), getEndPoint());
+		LineUtil.set(line, getStartPoint(), lastPt);
 		double width = 3;
 		if (interaction != null)
 		{
 			line.setStroke(interaction.getColor());
 			width = interaction.getStrokeWidth();
-		
 		}
 		line.setStrokeWidth(width);
 		if (strokeDashArray != null)
