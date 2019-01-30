@@ -82,12 +82,12 @@ public class Model
 	private Map<Integer, DataNode> shapes = new HashMap<Integer,DataNode>();
 	public Map<Integer, DataNode> getShapes()	{ return shapes; }
 	public DataNode findShape(Integer s ) 		{ return shapes.get(s);	}
-	public void addShape(DataNode s ) 			{ shapes.put(s.getGraphId(),s);	}
+	public void addShape(DataNode s ) 			{ shapes.put(s.getId(),s);	}
 
 	private Map<Integer, DataNode> labels = new HashMap<Integer,DataNode>();
 	public Map<Integer, DataNode> getLabels()	{ return labels; }
 	public DataNode findLabel(Integer s ) 		{ return labels.get(s);	}
-	public void addLabel(DataNode d)			{ labels.put(d.getGraphId(),  d); }
+	public void addLabel(DataNode d)			{ labels.put(d.getId(),  d); }
 
 
 	private String title = "PathVisio Mockup";
@@ -227,7 +227,7 @@ public class Model
 		if (id <= 0) return null;
 		for (DataNode g : getNodes())
 		{
-			if (id == g.getGraphId()) return g;
+			if (id == g.getId()) return g;
 //			if (name.equalsIgnoreCase(g.getGraphId())) return g;
 		}
 		return null;
@@ -337,7 +337,7 @@ public class Model
 		{
 			if (e == null) continue;
 			if (e.isStart(node) || e.isEnd(node))
-				edgesToRemove.add(e.getGraphId());
+				edgesToRemove.add(e.getId());
 		}
 		for (int id : edgesToRemove)
 			interactionMap.remove(id);
@@ -409,7 +409,7 @@ public class Model
 	// move to GPML
 	public void addGroup(DataNodeGroup grp) {
 		groupMap.put(grp.getGroupId(),grp);
-		dataNodeMap.put(grp.getGraphId(),grp);
+		dataNodeMap.put(grp.getId(),grp);
 	}
 //	public Collection<GPMLGroup> getGroups() { return groups.values();	}
 	

@@ -417,7 +417,7 @@ public class Controller implements Initializable, IController
 			 {
 			   int rowName = 0;
 			   if (index >=0 && model.getDataNodeMap().size() > index)
-				   	rowName = model.getDataNodeMap().get(index).getGraphId();
+				   	rowName = model.getDataNodeMap().get(index).getId();
 //			   showGeneInfo(rowName);
 			   return;
 		  }
@@ -735,7 +735,7 @@ public class Controller implements Initializable, IController
 		{
 			String s = node.get("GraphId");
 			id  = model.gensym(s);
-			node.setGraphId(id);
+			node.setId(id);
 		}
 		 node.setName( node.get("TextLabel"));
 		if (node.getStack() == null)
@@ -806,7 +806,7 @@ public class Controller implements Initializable, IController
 //			AnchorPane.setTopAnchor(item, item.getLayoutY() - minY);
 		}
 		group.setName("Complex");
-		group.setGraphId(group.getId());
+		group.setId(group.getId());
 		addGroup(group);
 		return group;
 

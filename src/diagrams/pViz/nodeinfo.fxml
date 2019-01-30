@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<Accordion maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.65">
+  <panes>
+    <TitledPane animated="false" text="Attributes">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <VBox layoutX="9.0" layoutY="11.0" prefHeight="286.0" prefWidth="562.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+                     <children>
+                        <HBox prefHeight="40.0" spacing="12.0">
+                           <children>
+                              <Label text="Id" />
+                              <TextField />
+                              <Label layoutX="10.0" layoutY="10.0" text="Type" />
+                              <TextField layoutX="44.0" layoutY="10.0" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="10.0" prefHeight="94.0" prefWidth="578.0" spacing="12.0">
+                           <children>
+                              <Label text="Database" />
+                              <TextField />
+                              <Label layoutX="10.0" layoutY="10.0" text="Database ID" />
+                              <TextField layoutX="44.0" layoutY="10.0" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="110.0" prefHeight="52.0" prefWidth="578.0" spacing="12.0">
+                           <children>
+                              <Label text="X" />
+                              <TextField prefHeight="27.0" prefWidth="61.0" />
+                              <Label layoutX="10.0" layoutY="10.0" text="Y" />
+                              <TextField layoutX="44.0" layoutY="10.0" prefHeight="27.0" prefWidth="57.0" />
+                              <Label layoutX="10.0" layoutY="10.0" text="Width" />
+                              <TextField layoutX="31.0" layoutY="10.0" prefHeight="27.0" prefWidth="56.0" />
+                              <Label layoutX="86.0" layoutY="10.0" text="Height" />
+                              <TextField layoutX="107.0" layoutY="10.0" prefHeight="27.0" prefWidth="56.0" />
+                              <Label layoutX="262.0" layoutY="10.0" text="Z" />
+                              <TextField layoutX="315.0" layoutY="10.0" prefHeight="27.0" prefWidth="60.0" text="23432" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="90.0" prefHeight="47.0" prefWidth="578.0" spacing="12.0">
+                           <children>
+                              <Label text="Stroke" />
+                              <TextField prefHeight="27.0" prefWidth="43.0" />
+                              <Label layoutX="10.0" layoutY="10.0" text="Thicknesss" />
+                              <TextField layoutX="44.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
+                              <Label layoutX="10.0" layoutY="10.0" text="Fill" />
+                              <TextField layoutX="31.0" layoutY="10.0" prefHeight="27.0" prefWidth="43.0" />
+                           </children>
+                        </HBox>
+                        <HBox layoutX="10.0" layoutY="190.0" prefHeight="100.0" prefWidth="200.0" spacing="12.0">
+                           <children>
+                              <Label layoutX="86.0" layoutY="10.0" text="Group" />
+                              <TextField layoutX="107.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
+                              <Label layoutX="335.0" layoutY="10.0" text="Fontsize" />
+                              <TextField layoutX="385.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
+                              <Label layoutX="436.0" layoutY="10.0" text="FontWeight" />
+                              <TextField layoutX="500.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
+                              <Label layoutX="111.0" layoutY="10.0" text="Valign" />
+                              <TextField layoutX="175.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </children></AnchorPane>
+      </content>
+    </TitledPane>
+    <TitledPane animated="false" text="Backpage">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+      </content>
+    </TitledPane>
+    <TitledPane animated="false" text="References">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+               <children>
+                  <TableView layoutX="7.0" layoutY="-1.0" prefHeight="318.0" prefWidth="587.0">
+                    <columns>
+                        <TableColumn fx:id="refCol" prefWidth="75.0" text="Reference" />
+                        <TableColumn fx:id="yearCol" prefWidth="75.0" text="Year" />
+                        <TableColumn fx:id="authorCol" prefWidth="75.0" text="Author" />
+                        <TableColumn fx:id="titleCol" prefWidth="260.0" text="Title" />
+                        <TableColumn fx:id="sourceCol" prefWidth="75.0" text="Source" />
+                        <TableColumn fx:id="dbCol" prefWidth="103.0" text="Database" />
+                        <TableColumn fx:id="dbidCol" prefWidth="47.0" text="DBID" />
+                    </columns>
+                  </TableView>
+               </children></AnchorPane>
+      </content>
+    </TitledPane>
+  </panes>
+</Accordion>

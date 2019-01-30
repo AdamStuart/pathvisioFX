@@ -97,7 +97,7 @@ public class LegendRecord implements TableRecord {
 		attrs.put("CenterX", "350");
 		attrs.put("CenterY", "200");
 		DataNode node = new DataNode(attrs, model);
-		model.getDataNodeMap().put(node.getGraphId(), node);
+		model.getDataNodeMap().put(node.getId(), node);
 		VNode stack = node.getStack();
 		VBox box = new VBox();
 		Label titleLabel = new Label(title);

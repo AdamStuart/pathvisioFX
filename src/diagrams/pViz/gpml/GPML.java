@@ -329,7 +329,7 @@ public class GPML {
 		{
 			DataNode nod = model.find(val);
 			if (nod != null)
-				graphId = nod.getGraphId(); 
+				graphId = nod.getId(); 
 			graphId = m.gensym(val);
 			attrib.putInteger("GraphId",graphId);
 		}
@@ -430,11 +430,11 @@ public class GPML {
 		{
 			DataNode nod = model.find(idval);
 			if (nod != null)
-				graphId = nod.getGraphId(); 
+				graphId = nod.getId(); 
 			graphId = model.gensym(idval);
 			label.putInteger("GraphId",graphId);
 		}
-		label.setGraphId(label.getId());
+		label.setId(label.getId());
 		String txt = label.get("TextLabel");
 		if (txt == null) txt = "Undefined";
 		label.setName(txt);

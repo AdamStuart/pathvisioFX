@@ -54,7 +54,7 @@ abstract public class Edge extends XRefable {
     	{
     		startNode = start;
         	setSource(start.getLabel()); 
-        	setSourceid(start.getGraphId());
+        	setSourceid(start.getId());
     	}
     	DataNode target = model.getDataNode(get("targetid"));
     	if (target == null)
@@ -64,14 +64,14 @@ abstract public class Edge extends XRefable {
     		{
     			Anchor anch = model.findAnchorByRef(ref);
         		if (anch != null)
-        			setTargetid(anch.getGraphId());
+        			setTargetid(anch.getId());
     		}
   		}
     	if (target != null) 
     	{
     		endNode = target;
     		setTarget(target.getLabel()); 
-    		setTargetid(target.getGraphId());
+    		setTargetid(target.getId());
     	}
     	
       }
@@ -92,19 +92,18 @@ abstract public class Edge extends XRefable {
 		if (attr != null)    	addAll(attr);
     	startNode = start.modelNode();  
     	put("source", start.modelNode().getLabel());
-    	putInteger("sourceid", start.modelNode().getGraphId());
+    	putInteger("sourceid", start.modelNode().getId());
     	setSource(start.modelNode().getLabel()); 
-    	setSourceid(start.modelNode().getGraphId());
+    	setSourceid(start.modelNode().getId());
     	
     	endNode = end.modelNode();	
     	put("target", end.modelNode().getLabel());
-    	putInteger("targetid", end.modelNode().getGraphId());
+    	putInteger("targetid", end.modelNode().getId());
     	setTarget(endNode.getLabel()); 
-    	setTargetid(endNode.getGraphId());
-		if (getGraphId() > 0)
+    	setTargetid(endNode.getId());
+		if (getId() > 0)
 		{	
 			int id = model.gensym();
-			setGraphId(id);
 			setId(id);
 		}
 		init(null, null);		//pts, anchors

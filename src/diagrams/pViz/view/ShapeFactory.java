@@ -104,7 +104,6 @@ public class ShapeFactory {
 		if (id == 0)
 		{
 			id = modelNode.getModel().gensym();
-			modelNode.setGraphId(id);
 			modelNode.setId(id);
 		}
 		stack.setId("" + id);

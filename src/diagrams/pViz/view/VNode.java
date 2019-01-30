@@ -213,7 +213,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		return  (selectedProperty != null && selectedProperty.getValue());
 	}
 		
-	public int getGraphId()				{ 	return dataNode.getGraphId();	}
+	public int getGraphId()				{ 	return dataNode.getId();	}
 	private Controller getController()  { 	return pasteboard.getController();   	}
 	private Model getModel() 		 { 		return pasteboard.getController().getModel();   	}
 	public Label getTextField()			{ 	return text;	}

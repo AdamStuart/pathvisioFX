@@ -85,7 +85,7 @@ public class GPMLPoint {
 				{
 					DataNode nod = model.find(val);
 					if (nod != null)
-						graphRef = nod.getGraphId(); 
+						graphRef = nod.getId(); 
 				}}
 			
 			else if ("ArrowHead".equals(name))  head = ArrowType.lookup(val);

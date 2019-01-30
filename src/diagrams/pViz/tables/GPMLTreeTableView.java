@@ -111,7 +111,7 @@ System.out.println("stateChanged " + e.toString());
 	                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
 	                {
 	                	XRefable g = param.getValue().getValue();
-	        			int s = (g == null) ? 0 : g.getGraphId();
+	        			int s = (g == null) ? 0 : g.getId();
 	        	        return  new ReadOnlyStringWrapper("" + s);
 	                 }
 	                );
@@ -189,7 +189,7 @@ System.out.println("stateChanged " + e.toString());
 						TreeItem<XRefable> cur = treeView.getTreeItem(idx);
 						if (cur != null)
 						{
-							int id = cur.getValue().getGraphId();
+							int id = cur.getValue().getId();
 							DataNode datanode = model.findDataNode(id);
 							if (datanode != null)
 							{
@@ -322,7 +322,7 @@ System.out.println("stateChanged " + e.toString());
 					System.out.println("Error");
 				else
 				{
-					a.setGraphId(a.getId());
+					a.setId(a.getId());
 					addBranch(a, interactionRow);
 				}
 			}
@@ -438,7 +438,7 @@ public void addMembersToGroup()
 		if (inId == 0) return null;
 		for (TreeItem<XRefable> branch : nodes.getChildren())
 		{
-			int id = branch.getValue().getGraphId();
+			int id = branch.getValue().getId();
 			if (inId ==id)
 				return branch;
 		}
@@ -450,7 +450,7 @@ public void addMembersToGroup()
 //		if (inId.isEmpty()) return null;
 		XRefable val = inRoot.getValue();
 //		if (inRoot.getValue() == null) return null;
-		if (val != null && inId == val.getGraphId())
+		if (val != null && inId == val.getId())
 			return inRoot;
 		for (TreeItem<XRefable> branch : inRoot.getChildren())
 		{
@@ -488,7 +488,7 @@ public void addMembersToGroup()
 	}
 	private void dump(String prefix, XRefable xref, int depth) 
 	{
-		int id = xref.getGraphId();
+		int id = xref.getId();
 		System.out.println(prefix + xref.getName() + " " +  id + " ");		//xref.get("Type") + " " +
 		
 	}

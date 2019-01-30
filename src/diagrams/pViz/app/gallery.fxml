@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Accordion?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.TitledPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox maxWidth="600.0" minWidth="600.0" prefHeight="700.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.GalleryController">
+   <children>
+      <HBox>
+         <children>
+            <Button fx:id="search" mnemonicParsing="false" onAction="#doSearch" prefHeight="27.0" prefWidth="40.0" text="F" />
+            <TextField fx:id="searchBox" />
+            <ChoiceBox fx:id="speciesChoices" prefWidth="150.0" />
+         </children>
+      </HBox>
+      <Label alignment="CENTER" prefHeight="37.0" prefWidth="481.0" text="Select an example below to start with a suitable template." textAlignment="CENTER">
+         <font>
+            <Font name="Gill Sans" size="18.0" />
+         </font>
+         <VBox.margin>
+            <Insets left="8.0" right="8.0" />
+         </VBox.margin>
+      </Label>
+      <Label alignment="CENTER" layoutX="18.0" layoutY="37.0" prefHeight="33.0" prefWidth="481.0" text="Specify keywords, species and target publication to refine recommendations." textAlignment="CENTER">
+         <font>
+            <Font name="Gill Sans" size="12.0" />
+         </font>
+      </Label>
+      <HBox prefHeight="1.0" prefWidth="600.0" />
+      <Accordion maxHeight="1.7976931348623157E308" maxWidth="-Infinity" minWidth="-Infinity" prefHeight="554.0" prefWidth="600.0" VBox.vgrow="ALWAYS">
+        <panes>
+            <TitledPane animated="false" prefHeight="217.0" prefWidth="600.0" text="Membranes">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0">
+                     <children>
+                        <GridPane gridLinesVisible="true" layoutX="4.0" layoutY="1.0" prefHeight="421.0" prefWidth="635.0">
+                           <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="395.0" minWidth="10.0" prefWidth="295.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" maxWidth="322.0" minWidth="10.0" prefWidth="291.0" />
+                           </columnConstraints>
+                           <rowConstraints>
+                              <RowConstraints maxHeight="215.80413818359375" minHeight="10.0" prefHeight="215.80413818359375" vgrow="SOMETIMES" />
+                              <RowConstraints maxHeight="204.0" minHeight="10.0" prefHeight="130.19586181640625" vgrow="SOMETIMES" />
+                           </rowConstraints>
+                           <children>
+                              <ImageView fitHeight="184.0" fitWidth="358.0" pickOnBounds="true" preserveRatio="true" GridPane.rowIndex="1">
+                                 <image>
+                                    <Image url="@../../../../../../Desktop/Screen%20Shot%202018-10-31%20at%2010.28.50%20AM.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="184.0" fitWidth="358.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                                 <image>
+                                    <Image url="@../../../../../../Desktop/Gluconeogenese_Schema_2.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="184.0" fitWidth="358.0" pickOnBounds="true" preserveRatio="true">
+                                 <image>
+                                    <Image url="@../../../../../../Desktop/675px-PPAR-diagram.png" />
+                                 </image>
+                              </ImageView>
+                              <ImageView fitHeight="184.0" fitWidth="358.0" pickOnBounds="true" preserveRatio="true" GridPane.columnIndex="1">
+                                 <image>
+                                    <Image url="@../../../../../../Documents/tutorial_image2.png" />
+                                 </image>
+                              </ImageView>
+                           </children>
+                        </GridPane>
+                     </children>
+                  </AnchorPane>
+               </content>
+            </TitledPane>
+            <TitledPane animated="false" layoutX="10.0" layoutY="64.0" text="Schematics">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <ImageView fitHeight="233.0" fitWidth="423.0" layoutX="100.0" layoutY="-4.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../Desktop/Gene_Regulatory_Network.jpg" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+               </content>
+            </TitledPane>
+          <TitledPane animated="false" text="Genetic Pathways">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <ImageView fitHeight="233.0" fitWidth="423.0" layoutX="100.0" layoutY="-4.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../Desktop/Gene_Regulatory_Network.jpg" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </TitledPane>
+          <TitledPane animated="false" text="Metabolic Pathways">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <ImageView fitHeight="266.0" fitWidth="238.0" layoutX="173.0" layoutY="8.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../Desktop/Gluconeogenese_Schema_2.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </TitledPane>
+          <TitledPane animated="false" text="Signalling Pathways">
+            <content>
+              <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="277.0" prefWidth="572.0">
+                     <children>
+                        <HBox layoutX="96.0" layoutY="242.0">
+                           <children>
+                              <Button mnemonicParsing="false" text="Button" />
+                              <Button layoutX="10.0" layoutY="10.0" mnemonicParsing="false" text="Button" />
+                              <Button layoutX="69.0" layoutY="10.0" mnemonicParsing="false" text="Button" />
+                              <Button layoutX="128.0" layoutY="10.0" mnemonicParsing="false" text="Button" />
+                           </children>
+                        </HBox>
+                        <ImageView fitHeight="232.0" fitWidth="474.0" layoutX="12.0" layoutY="1.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../tutorial_image2.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+            </content>
+          </TitledPane>
+            <TitledPane animated="false" layoutX="10.0" layoutY="64.0" text="Outcome Pathways">
+               <content>
+                  <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                     <children>
+                        <ImageView fitHeight="260.0" fitWidth="306.0" layoutX="74.0" layoutY="37.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../../../../Desktop/reaction_subtypes_0-497x357.png" />
+                           </image>
+                        </ImageView>
+                     </children>
+                  </AnchorPane>
+               </content>
+            </TitledPane>
+        </panes>
+      </Accordion>
+   </children>
+</VBox>
