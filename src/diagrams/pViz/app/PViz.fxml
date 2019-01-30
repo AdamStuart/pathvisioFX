@@ -67,11 +67,26 @@
                               <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem id="Submit" fx:id="submit" mnemonicParsing="false" onAction="#submit" text="Submit to WikiPathways...">
-                           <accelerator>
-                              <KeyCodeCombination alt="DOWN" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
+                        <Menu id="Share" mnemonicParsing="false" text="Share">
+                          <items>
+                            <MenuItem id="WP" mnemonicParsing="false" text="Submit to WikiPathways..." />
+                              <MenuItem id="NDEX" fx:id="submit" mnemonicParsing="false" onAction="#submit" text="Submit to NDEX...">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="DOWN" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem id="Export" fx:id="submit1" mnemonicParsing="false" onAction="#submit" text="Export as HTML">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="DOWN" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                              <MenuItem id="Export" fx:id="submit11" mnemonicParsing="false" onAction="#submit" text="Export as SVG">
+                                 <accelerator>
+                                    <KeyCodeCombination alt="DOWN" code="S" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                                 </accelerator>
+                              </MenuItem>
+                          </items>
+                        </Menu>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem id="Print" mnemonicParsing="false" onAction="#print" text="Print">
                            <accelerator>
@@ -140,7 +155,10 @@
                   </Menu>
                   <Menu id="Pathways" mnemonicParsing="false" text="Pathways">
                      <items>
-                        <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways..." />
+                        <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways...">
+                           <accelerator>
+                              <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
+                           </accelerator></MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem id="Annotate" fx:id="annotate" mnemonicParsing="false" onAction="#annotate" text="Annotate" />
                         <MenuItem id="Enrich" fx:id="enrich" mnemonicParsing="false" onAction="#doEnrich" text="Enrich..." />
@@ -349,32 +367,20 @@
                               <KeyCodeCombination alt="UP" code="L" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem id="Refs" fx:id="references" mnemonicParsing="false" text="References">
+                        <MenuItem id="Refs" fx:id="references" mnemonicParsing="false" onAction="#openReferences" text="References">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="R" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
                         <SeparatorMenuItem mnemonicParsing="false" />
-                        <MenuItem id="Gene Set" fx:id="browseGenes" mnemonicParsing="false" onAction="#doNewGeneList" text="New Gene Set">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="K" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
+                        <MenuItem id="Gene Set" fx:id="browseGenes" mnemonicParsing="false" onAction="#doNewGeneList" text="New Gene Set" />
                         <MenuItem id="Multigenes" fx:id="multiGeneList" mnemonicParsing="false" onAction="#doNewMultiGeneList" text="Multi Gene List">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="M" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
-                        <MenuItem id="Syntax Checker" fx:id="syntax" mnemonicParsing="false" onAction="#doNewMultiGeneList" text="Syntax Checker">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="M" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
-                        <MenuItem id="Curation tools" fx:id="curation" mnemonicParsing="false" text="Curation Tools">
-                           <accelerator>
-                              <KeyCodeCombination alt="UP" code="M" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
-                           </accelerator>
-                        </MenuItem>
+                        <MenuItem id="Syntax Checker" fx:id="syntax" mnemonicParsing="false" onAction="#doNewMultiGeneList" text="Syntax Checker" />
+                        <MenuItem id="Curation tools" fx:id="curation" mnemonicParsing="false" text="Curation Tools" />
                      </items>
                   </Menu>
                   <Menu id="Help (Debug)" mnemonicParsing="false" text="Help">

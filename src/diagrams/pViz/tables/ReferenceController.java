@@ -9,6 +9,8 @@ import java.util.ResourceBundle;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import diagrams.pViz.app.Controller;
+import diagrams.pViz.model.Model;
 import gui.DraggableTableRow;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -48,6 +50,24 @@ public class ReferenceController extends TableController<BiopaxRecord> implement
 	@FXML private Button search;
 	@FXML private TextField searchBox;
 
+	public void setModel(Model m)	
+	{ 
+		parentModel = m;	
+		if (m == null) return;
+		parentController = parentModel.getController();
+		getRefsFromModel();  
+	}
+	
+	private void getRefsFromModel() {
+		if (parentModel == null) return;
+		List<BiopaxRecord> refs = parentModel.getReferences();
+		theTable.getItems().clear();
+		theTable.getItems().addAll(refs);
+	}
+	
+	private Model parentModel;
+	private Controller parentController;
+	
 	static TableRow<PathwayRecord> thisRow = null;
 //	private IController parentController;
 //	public void setParentController(IController c)	{ parentController = c;	}

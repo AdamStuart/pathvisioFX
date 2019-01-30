@@ -294,7 +294,6 @@ public class Inspector extends HBox implements Initializable {
 	@FXML private void setResizable(ActionEvent ev)	 	{	selection.setResizable(resizable.isSelected());	}
 	@FXML private void setSelectable(ActionEvent ev)	{	selection.setSelectable(selectable.isSelected());	}
 	@FXML private void setConnectable(ActionEvent ev)	{	selection.setSelectable(connectable.isSelected());	}
-
 	// **-------------------------------------------------------------------------------
 	public void syncInspector()		//Inspector
 	{

@@ -5,6 +5,7 @@ import javafx.animation.Animation;
 import javafx.animation.Transition;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
@@ -24,9 +25,10 @@ public class MinWidthAnimator
 	HBox container;
 	VBox controlBox = new VBox(2);
 	Label colLabel = new Label("Column:");
-	Label mapLabel = new Label("Mapping:");
+//	Label mapLabel = new Label("Mapping:");
 	ChoiceBox<String> colChooser = new ChoiceBox<String>();			// TODO col list
-	ChoiceBox<String> mapChooser = new ChoiceBox<String>();			// TODO using mapping enum
+//	ChoiceBox<String> mapChooser = new ChoiceBox<String>();			// TODO using mapping enum
+	CheckBox passThru = new CheckBox("Passthrough");
 	Inspector controller; 
 	Slider slider;
 	Shape widget;
@@ -46,13 +48,13 @@ public class MinWidthAnimator
 		slider = inSlider;
 //		container.setOnMouseClicked(e -> { if (e.getClickCount() == 2) controller.showSettings(container); }); 
 		pane.setBorder(Borders.thinEtchedBorder);
-		controlBox.getChildren().addAll(colLabel, colChooser, mapLabel, mapChooser);
+		controlBox.getChildren().addAll(colLabel, colChooser, passThru);		//mapLabel, mapChooser
 		container.getChildren().add( controlBox);
 //		container.setBorder(Borders.greenBorder);
 		controlBox.setVisible(false);
 //		pane.getChildren().add(container);
-		colChooser.getItems().addAll("Name", "GraphId", "DataValue");
-		mapChooser.getItems().addAll("Continous", "Discrete", "Passthrough");
+		colChooser.getItems().addAll("pVal", "log2FC", "degree", "density");
+//		mapChooser.getItems().addAll("Continous", "Discrete", "Passthrough");
         container.setPrefWidth(narrowWidth);
         container.setMaxWidth(narrowWidth);
         container.setMinWidth(narrowWidth);

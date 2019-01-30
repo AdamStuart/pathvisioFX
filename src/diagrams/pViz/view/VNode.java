@@ -284,6 +284,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		tag.setStrokeWidth(0.5);
 		tag.setFill(color);
 		getChildren().add(tag);
+		tag.setTranslateX(-2);
 		StackPane.setAlignment(tag, position);
 
 		Tooltip tooltip = new Tooltip();

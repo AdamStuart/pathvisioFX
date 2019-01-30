@@ -129,7 +129,8 @@ public class Selection
 	}
 	//--------------------------------------------------------------------------
 	public void deleteSelection()	
-	{		for (int i= items.size()-1; i>= 0; i--)
+	{		
+		for (int i= items.size()-1; i>= 0; i--)
 		{
 			VNode node = items.get(i);
 			if (isGrid(node)) continue;

@@ -11,6 +11,7 @@ import diagrams.pViz.model.Model;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.tables.GeneListController;
 import diagrams.pViz.tables.PathwayController;
+import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.tables.XrefListController;
 import diagrams.pViz.view.PanningCanvas;
 import diagrams.pViz.view.SceneGestures;
@@ -23,7 +24,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
-import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
@@ -264,15 +264,17 @@ import util.FileUtil;
 	catch (Exception e) { e.printStackTrace();	}
 }
 //---------------------------------------------------------------------------------------
-	static final String RESOURCE = "ReferenceList.fxml";
-    static final String STYLE = "genelistStyles.css";
-	static  public Pair<FXMLLoader, Stage>  openReferenceList() {
+	static final String RESOURCE = "../tables/ReferenceList.fxml";
+//    static final String STYLE = "../tables/genelistStyles.css";
+	static  public Pair<FXMLLoader, Stage>  openReferenceList(Model model) {
 		try
 		{
 			Stage stage = new Stage();
 			URL res = getInstance().getClass().getResource(RESOURCE);
 		    FXMLLoader referenceLoader = new FXMLLoader(res);
 	        Scene scene = new Scene(referenceLoader.load());
+	        ReferenceController ctrl =  (ReferenceController)referenceLoader.getController();
+	        ctrl.setModel(model);
 //			scene.getStylesheets().add(getInstance().getClass().getResource(STYLE).toExternalForm());
 	        stage.setTitle("Reference Window");
 	        stage.setX(20);

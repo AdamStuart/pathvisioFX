@@ -140,8 +140,8 @@ public class Controller implements Initializable, IController
 	@FXML private void save()			{ 	doc.save();	}
 	@FXML private void saveas()			{	doc.saveas();		}
 	@FXML private void submit() 		{ 	doc.submit();		} 
-	@FXML private void getInfo() 		{ getSelectionManager().getInfo();	} 
-	
+	@FXML private void getInfo() 		{ 	getSelectionManager().getInfo();	} 
+	@FXML private void openReferences() { 	App.openReferenceList(model);  	} 
 	
 	@FXML private void close()			
 	{ 
@@ -877,4 +877,8 @@ public class Controller implements Initializable, IController
 	public GeneSetRecord getGeneSetRecord() {		return geneSetRecord;	}
 	public EdgeType getCurrentLineBend() {		return palette.getCurrentLineBend();	}
 	public Tool getTool() {		return palette.getTool();	}
+	public void editGroup() {
+		// TODO Auto-generated method stub
+		
+	}
 }

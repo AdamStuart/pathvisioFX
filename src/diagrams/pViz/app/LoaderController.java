@@ -29,7 +29,7 @@ public class LoaderController implements IController, Initializable {
 	@FXML private void newEditor()		{ 	App.getInstance().doNew();	}
 	@FXML private void newGeneList()	{ 	App.doNewGeneList(null,null);	}
 	@FXML private void newPathwayList()	{ 	App.browsePathways(null);	}
-	@FXML private void newReferenceList(){ 	App.openReferenceList();	}
+	@FXML private void newReferenceList(){ 	App.openReferenceList(null);	}
 	@FXML private void enableLogging(){ 		}
 
 }

@@ -279,6 +279,11 @@ public class PaletteController implements Initializable {
 	@FXML private void setArrow6()		{		activeArrowType = ArrowType.mimbinding;	setTool(Tool.ArrowBinds);}
 	@FXML private VBox allInteractions;
 
+
+	@FXML private void makeGroup()		{ controller.group();  }
+	@FXML private void ungroup()	{ controller.ungroup();  }
+	@FXML private void editGroup()	{ controller.editGroup();  }
+	
 	
 	//-------------------------------------------------------------
 

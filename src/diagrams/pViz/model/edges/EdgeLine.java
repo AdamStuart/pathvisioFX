@@ -125,6 +125,7 @@ public class EdgeLine extends Group {
 			line.setStrokeWidth(interaction.getStrokeWidth());
 		});
 	}
+
 	 //----------------------------------------------------------------------
 //	private double srcX, srcY, targX, targY;
 //	
@@ -212,7 +213,7 @@ private void addCenterPointListeners() {
 	public void addGraphIdDisplay()
 	{
 		if (interaction == null) return;
-		int id = interaction.getGraphId(); // ("GraphId");
+		int id = interaction.getInteger("GraphId"); // ("GraphId");
 		if (id == 0) return;
 //		System.out.println("addGraphIdDisplay: " + id);
 		graphIdLabel = new Label("" + id);
