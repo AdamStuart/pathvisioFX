@@ -2,9 +2,25 @@
 .text-area {
     -fx-background-color: rgba(53,89,119,0.4);
 }
+/* 
+.button {
+  -fx-background-color: green;
+}
+ */
 
+.button1{
+    -fx-text-fill: #006464;
+    -fx-background-color: #DFB951;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 5;
+}
+
+.datanode {
+  -fx-background-color: red;
+}
 .text-area .scroll-pane {
-    -fx-background-color: transparent;
+    -fx-background-color: rgba(53,89,119,0.4);
 }
 
 .text-area .scroll-pane .viewport {
@@ -30,7 +46,6 @@
   display: block;
   clear: both;
   background: white;
-  border: 5px solid gray;
   outline: 5px solid gray;
   height: 10px;
   width: 10px;

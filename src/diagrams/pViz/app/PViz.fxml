@@ -1,38 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.*?>
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.image.*?>
-<?import javafx.scene.input.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.*?>
-<?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.control.TreeTableColumn?>
 <?import javafx.scene.control.TreeTableView?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.input.KeyCodeCombination?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.Group?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane fx:id="container" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
+<BorderPane fx:id="container" xmlns="http://javafx.com/javafx/8.0.65" xmlns:fx="http://javafx.com/fxml/1" fx:controller="diagrams.pViz.app.Controller">
    <top>
       <HBox BorderPane.alignment="CENTER">
          <children>
@@ -64,7 +51,7 @@
                         </MenuItem>
                         <MenuItem id="Save as..." mnemonicParsing="false" onAction="#saveas" text="Save As">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="Q" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
+                              <KeyCodeCombination alt="UP" code="S" control="UP" meta="DOWN" shift="DOWN" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
                         <Menu id="Share" mnemonicParsing="false" text="Share">
@@ -155,6 +142,7 @@
                   </Menu>
                   <Menu id="Pathways" mnemonicParsing="false" text="Pathways">
                      <items>
+                        <MenuItem id="wpSearch" fx:id="gallery" mnemonicParsing="false" onAction="#showGallery" text="Gallery" />
                         <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways...">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
@@ -359,7 +347,7 @@
                         </MenuItem>
                         <MenuItem id="Palette" fx:id="showPalette" mnemonicParsing="false" onAction="#showInspector" text="Show Palette">
                            <accelerator>
-                              <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+                              <KeyCodeCombination alt="UP" code="I" control="DOWN" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator>
                         </MenuItem>
                         <MenuItem id="Layers" fx:id="showLayers" mnemonicParsing="false" onAction="#showLayers" text="Show Layers">

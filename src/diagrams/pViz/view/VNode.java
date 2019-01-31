@@ -346,6 +346,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		else figure = ShapeFactory.makeNewShape(shapeType, this);
 		if (figure != null)
 			setScaleShape(false);
+		getStylesheets().add("datanode");
 	}
 	
 	public void setBackgroundImage(Image img)
@@ -519,7 +520,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (shape == null) shape = getFigure();
 		if (shape != null)
 		{
-			attributes.putColor("Fill",   (Color) shape.getFill());	
+//			attributes.putColor("Fill",   (Color) shape.getFill());	
 			attributes.putColor("Stroke",   (Color) shape.getStroke());	
 			attributes.putDouble("LineThickness",   shape.getStrokeWidth());	
 		}
@@ -595,7 +596,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //		bldr.append(makeStyleString("Opacity"));
 		bldr.append(makeStyleString("LineThickness"));
 		str = bldr.toString();
-		if (getFigure()!= null)			getFigure().setStyle(str);	    
+		if (str.length() > 0 && getFigure()!= null)			getFigure().setStyle(str);	    
 	}
 
 	private String makeStyleString(String gpmlTag) {

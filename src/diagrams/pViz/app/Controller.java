@@ -154,6 +154,7 @@ public class Controller implements Initializable, IController
 		}
 	}
 	static String jupy = "https://nbviewer.jupyter.org/github/CamDavidsonPilon/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/blob/master/Chapter1_Introduction/Ch1_Introduction_PyMC3.ipynb";
+	@FXML private void showGallery()	{ 	App.doNewGallery();	}
 	@FXML private void showJupyter()	{ 	WebUtil.showURL(jupy);	}
 	@FXML private void openInCytoscape(){ 	System.out.println("openInCytoscape");		}
 	@FXML private void print()			{ 	doc.print();			}
@@ -306,10 +307,10 @@ public class Controller implements Initializable, IController
 		setupInspector();		
 		pasteboard.bindGridProperties();	// requires Inspector to be initialized
 		drawPane.getChildren().add(pasteboard);
-		
+	
 		doc = new Document(this);
 		String cssURL = this.getClass().getResource("styles.css").toExternalForm();
-		pasteboard.getStylesheets().add(cssURL);
+		container.getStylesheets().add(cssURL);
 		scrollPane.setPannable(true);
 //		scrollPane.setOnScroll(ev -> {		//AM is this necessary?
 //			ev.consume();
@@ -384,6 +385,7 @@ public class Controller implements Initializable, IController
 		   inspector = inspectorLoader.getController();
 		   inspector.setParentController(this);
 		   container.setBottom(inspector);
+//		   container.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
 	   }
 	   catch (Exception e) 
 	   { System.err.println("Inspector failed to load");
@@ -752,6 +754,7 @@ public class Controller implements Initializable, IController
 		model.addEdge(e);
 		EdgeLine edgeLine = e.getEdgeLine();
 		pasteboard.add(0, edgeLine, e.getLayer());
+		modelChanged();
 	}
 
 	public void addInteraction(VNode starter, VNode end) {		
@@ -808,6 +811,7 @@ public class Controller implements Initializable, IController
 		group.setName("Complex");
 		group.setId(group.getId());
 		addGroup(group);
+		modelChanged();
 		return group;
 
 	} 

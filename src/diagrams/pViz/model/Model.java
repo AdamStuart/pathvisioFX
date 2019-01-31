@@ -508,7 +508,7 @@ public class Model
 	public int gensym(String oldSymbol)	
 	{		
 		Integer extant = oldIds.get(oldSymbol);
-		if  (extant != null) return extant;
+		if  (extant != null && extant > 0) return extant;
 		Integer newId =	gensym();
 		oldIds.put(oldSymbol, newId);
 		return newId;

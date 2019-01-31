@@ -108,6 +108,8 @@ public class ShapeFactory {
 		}
 		stack.setId("" + id);
 		stack.getProperties().putAll(modelNode);
+		stack.getStyleSheets().add("button1");
+		stack.getStyleClass().add("datanode");
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, modelNode);
 	
@@ -280,7 +282,7 @@ public class ShapeFactory {
 			}
 			if ("GeneProduct".equals(shapeType))
 			{	
-				r.setFill(Color.GOLD);  	r.setStrokeWidth(1.0);
+//				r.setFill(Color.GOLD);  	r.setStrokeWidth(1.0);
 			}
 			if ("Cell".equals(shapeType))
 			{	

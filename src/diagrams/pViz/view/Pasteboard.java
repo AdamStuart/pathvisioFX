@@ -226,6 +226,8 @@ public class Pasteboard extends PanningCanvas
 		attrMap.putBool("Resizable", false);
 		DataNode node = new DataNode(attrMap, getModel());
 		controller.addDataNode(node);
+		node.getStack().getStyleClass().add("datanode");
+		node.getStack().getStyleClass().add("button1");
 	}
 
 	public void addShapeAt(String text, Point2D pt) {
@@ -245,7 +247,8 @@ public class Pasteboard extends PanningCanvas
 		attrMap.put("TextLabel", text);
 		attrMap.putBool("Connectable", true);
 		attrMap.putBool("Resizable", true);
-		DataNode node = new DataNode(attrMap, getModel());
+		DataNode node = new DataNode(attrMap,getModel() );
+		getModel().addShape(node);
 		controller.addDataNode(node);
 	}
 		

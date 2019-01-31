@@ -68,6 +68,8 @@ public class PaletteController implements Initializable {
 	{
 		b.setGraphic(GlyphsDude.createIcon(i, GlyphIcon.DEFAULT_ICON_SIZE));
 		b.setId(t.name());
+
+		b.getStyleClass().add("toolbar-button");
 	}
 	
 	// **-------------------------------------------------------------------------------

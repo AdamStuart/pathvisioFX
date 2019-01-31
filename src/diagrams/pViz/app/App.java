@@ -32,6 +32,7 @@ import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import model.bio.GeneSetRecord;
@@ -312,6 +313,30 @@ import util.FileUtil;
 			stage.show();
 		}
 		catch (Exception e) { e.printStackTrace();	}
+	}
+
+	public static void doNewGallery()
+	{
+		Stage theStage = new Stage();
+		try 
+		{
+			theStage.setTitle("Pathway Gallery");
+			FXMLLoader fxmlLoader = new FXMLLoader();
+			String fullname = "gallery.fxml";
+		    URL url = instance.getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
+		    if (url == null)
+		    {
+		    	System.err.println("Bad path to the FXML file");
+		    	return;
+		    }
+		    fxmlLoader.setLocation(url);
+		    VBox appPane =  fxmlLoader.load();
+		    
+		    theStage.setScene(new Scene(appPane, 500, 700));
+		    theStage.show();
+		}
+		catch (Exception e) { e.printStackTrace();}
+		
 	}
 
 	//---------------------------------------------------------------------------------------
