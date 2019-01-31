@@ -108,7 +108,7 @@ public class ShapeFactory {
 		}
 		stack.setId("" + id);
 		stack.getProperties().putAll(modelNode);
-		stack.getStyleSheets().add("button1");
+//		stack.getStyleSheets().add("button1");
 		stack.getStyleClass().add("datanode");
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, modelNode);
