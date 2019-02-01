@@ -82,10 +82,6 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setOnMousePressed(gestures.getOnMousePressedEventHandler());
 		setOnMouseClicked(gestures.getOnMouseClickedEventHandler());
 		controlFactory = new ControlFactory(this);		// this creates browsers, imageview, rich text, etc.
-		if (modelNode instanceof DataNodeGroup)
-		{
-			System.out.println("GROUP");
-		}
 		String id = modelNode.get("GraphId");
 		setId(id);
 		title = modelNode.get("TextLabel");
@@ -127,15 +123,14 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
         tooltip.setOnShowing(v -> { tooltip.setText(modelNode.getSortedAttributes());});
         Tooltip.install(this,  tooltip);
   		layoutBoundsProperty().addListener(e -> { extractPosition(); } ); 
- 		pasteboard.add(this);
+// 		pasteboard.add(this);
 	}
 	// **-------------------------------------------------------------------------------
 	public VNode clone()
 	{
 		Model m = modelNode().getModel();
 		AttributeMap map = new AttributeMap(getAttributes());
-		String oldId = map.get("GraphId");
-		String prefix = oldId == null ? "X" : oldId.substring(0,1);
+//		int oldId = map.getInteger("GraphId");
 		map.setId(m.gensym());
 		return new VNode(new DataNode(map, m), pasteboard);
 	}
@@ -148,9 +143,9 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	public void addGraphIdDisplay()
 	{
-		String id = modelNode().get("GraphId");
-		graphIdLabel = new Label(id);
-		addAnnotation(graphIdLabel, getController().getInspector().graphIdsVisibleProperty(),Pos.TOP_LEFT, -getWidth()/4, -getHeight()/4-10);
+		int id = dataNode.getGraphId();
+		graphIdLabel = new Label("" + id);
+		addAnnotation(graphIdLabel, getController().getInspector().graphIdsVisibleProperty(),Pos.TOP_LEFT, -getWidth()/3, -getHeight()/4-10);
 	}	
 	public void setReferences()
 	{
@@ -362,9 +357,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	{	
 		Parent parent = getParent();
 		if (parent instanceof Layer)
-		{
-			
-		}
+		 return ((Layer) parent).getName();
 		if (parent == null) 	
 			return getAttributes().get("Layer");	
 		
@@ -703,7 +696,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	
 	public boolean isInCompoundNode() {
 		DataNodeGroup gp = modelNode().getGroup();
-		return gp!=null && gp.isCompoundNode();
+		return gp!=null; // && gp.isCompoundNode();
 	}
 	
 	public DataNodeGroup getGroup() {		return modelNode().getGroup();	}

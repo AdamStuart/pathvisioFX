@@ -11,7 +11,10 @@ public enum Tool {
 	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent,
 	Protein, Pathway, GeneProduct, Metabolite, Rna,
 	Browser, Text, Table, Image, SVGPath, Media,		// Controls
-	ArrowInteracts, ArrowConverts, ArrowInhibits, ArrowCatalyzes, ArrowStimulates, ArrowBinds 		// Interactions
+	ArrowInteracts, ArrowConverts, ArrowInhibits, ArrowCatalyzes, ArrowStimulates, ArrowBinds, 		// Interactions
+	
+	GeneCollection, Drug, BiologicalIntermediate, BlackBox, 
+	Haplotype, Ion, DrugClass, Phenotype, PhysicalEntity, Process			// Defined by PharmaGKB
 	;
 
 	public static Tool fromString(String type)

@@ -119,8 +119,8 @@ System.out.println("stateChanged " + e.toString());
 	                (TreeTableColumn.CellDataFeatures<XRefable, String> param) -> 
 	                {
 	                	XRefable g = param.getValue().getValue();
-	        			String s = (g == null) ? "" : g.getGroupRef();
-	        	        return  new ReadOnlyStringWrapper(s);
+	        			int s = (g == null) ? 0 : g.getGroupRef();
+	        	        return  new ReadOnlyStringWrapper("" + s);
 	                 }
 	                );
 	        xrefdbCol.setCellValueFactory(

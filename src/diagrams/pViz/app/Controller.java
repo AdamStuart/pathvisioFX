@@ -167,7 +167,7 @@ public class Controller implements Initializable, IController
 	@FXML private  void clearUndo()		{	undoStack.clear(); 	}
 	@FXML private void selectAll()		{ 	undoStack.push(ActionType.Select); getSelectionManager().selectAll(); 		}
 	@FXML public void deleteSelection(){ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteSelection(); 	}
-	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().cloneSelection(0); 	}
+	@FXML public void duplicateSelection(){ undoStack.push(ActionType.Duplicate);	getSelectionManager().duplicateSelection(); 	}
 	@FXML public void clear()			{ 	undoStack.push(ActionType.Delete);	getSelectionManager().deleteAll(); 	}
 	@FXML public void lock()			{ 	lock(true); 	}
 	@FXML public void unlock()			{ 	lock(false); 	}
@@ -717,8 +717,8 @@ public class Controller implements Initializable, IController
 	
 	public void assignDataNodesToGroups() {
 //		if (true) return;
-		Map<String, DataNodeGroup> groupMap = model.getGroupMap();
-		for (String key : groupMap.keySet())
+		Map<Integer, DataNodeGroup> groupMap = model.getGroupMap();
+		for (Integer key : groupMap.keySet())
 		{
 			DataNodeGroup groupNode = groupMap.get(key);
 			groupNode.assignMembers();
@@ -741,7 +741,10 @@ public class Controller implements Initializable, IController
 		}
 		 node.setName( node.get("TextLabel"));
 		if (node.getStack() == null)
-			new VNode(node, pasteboard);
+		{
+			VNode vnode =	new VNode(node, pasteboard);
+			pasteboard.add(vnode);
+		}
 		model.addResource(node);
 		modelChanged();
 	}
@@ -774,45 +777,52 @@ public class Controller implements Initializable, IController
 	}
 	
 	public DataNodeGroup addGroup(List<VNode> selectedItems, boolean isCompound) {// from GUI selection
-		getUndoStack().push(ActionType.Group);
+//		getUndoStack().push(ActionType.Group);  done in controller
 
-		pasteboard.setActiveLayer("Background");	
+//		pasteboard.setActiveLayer("Background");	
 		AttributeMap map = new AttributeMap();
 		map.put("Type", "Group");
-		map.put("ShapeType", "Octagon");
+		map.put("ShapeType", "None");
 		map.put("Color", "DDDDDD");
-		map.put("TextLabel", "Complex");
-		map.put("Name", "Complex");
-		map.put("Layer", "Background");
+		map.put("TextLabel", "");
+		map.put("Name", "");
+		map.put("Layer", "Content");
 		DataNodeGroup group = new DataNodeGroup(map, getModel(), isCompound);
-		VNode stack = group.getStack();
+		int groupId = group.getGraphId();
 		for (VNode item : selectedItems)
 		{
-			item.setMouseTransparent(true);
-			item.modelNode().rememberPosition();
-			group.addMember(item.modelNode());
+//			item.setMouseTransparent(true);
+			item.setEffect(null);	
+			item.showPorts(false);
+
+			DataNode dataNode = item.modelNode();
+			dataNode.rememberPosition();
+			dataNode.setGroupRef(groupId);
+			group.addMember(dataNode);
 		}
 		group.calcBounds();
-		double groupWidth = group.getDouble("Width");
-		double groupHeight = group.getDouble("Height");
-		double minX = group.getDouble("X");
-		double minY = group.getDouble("Y");
-		for (VNode item : selectedItems)
-		{
-			stack.getChildren().add(item);
-			double hw = item.getWidth() /2;
-			double hh = item.getHeight()/2;
-			item.setTranslateX(item.getLayoutX() - minX - groupWidth /4);
-			item.setTranslateY(item.getLayoutY() - minY- groupHeight /4 );
-			item.deselect();
-//			AnchorPane.setLeftAnchor(item, item.getLayoutX() - minX);
-//			AnchorPane.setTopAnchor(item, item.getLayoutY() - minY);
-		}
-		group.setName("Complex");
-		group.setId(group.getId());
 		addGroup(group);
 		modelChanged();
 		return group;
+
+//		VNode stack = group.getStack();
+		//		double groupWidth = group.getDouble("Width");
+//		double groupHeight = group.getDouble("Height");
+//		double minX = group.getDouble("X");
+//		double minY = group.getDouble("Y");
+//		for (VNode item : selectedItems)
+//		{
+//			stack.getChildren().add(item);
+//			double hw = item.getWidth() /2;
+//			double hh = item.getHeight()/2;
+//			item.setTranslateX(item.getLayoutX() - minX - groupWidth /4);
+//			item.setTranslateY(item.getLayoutY() - minY- groupHeight /4 );
+//			item.deselect();
+//			AnchorPane.setLeftAnchor(item, item.getLayoutX() - minX);
+//			AnchorPane.setTopAnchor(item, item.getLayoutY() - minY);
+//		}
+//		group.setName("Complex");
+//		group.setId(group.getId());
 
 	} 
 

@@ -24,7 +24,7 @@ public class DataNodeGroup extends DataNode {
 	public Set<DataNode> getMembers() 		{		return members;	}
 	final boolean compoundNode;			// a compound node leaves its children on the canvas, a group moves them into its own Group
 	public boolean isCompoundNode() { return compoundNode;	}
-	public String getGroupId()	{ return get("GroupId");	}
+	public Integer getGroupId()	{ return getInteger("GroupId");	}
 	public DataNodeGroup(AttributeMap map, Model m, boolean isCompound)
 	{
 		super(map,m);
@@ -106,17 +106,17 @@ public class DataNodeGroup extends DataNode {
 			}
 			else
 			{
-				VNode childstack = node.getStack();
-				childstack.setId("" + node.getGraphId());
-	//			pasteboard.getContentLayer().remove(childstack);
-				stack.getChildren().add(childstack);
-				double x = node.getDouble("X");
-				double y = node.getDouble("Y");
-				double w = node.getDouble("Width");
-				double h = node.getDouble("Height");
-				childstack.setTranslateX(x-minX);
-				childstack.setTranslateY(y-minY-h);
-				childstack.setMouseTransparent(true);
+//				VNode childstack = node.getStack();
+//				childstack.setId("" + node.getGraphId());
+//	//			pasteboard.getContentLayer().remove(childstack);
+//				stack.getChildren().add(childstack);
+//				double x = node.getDouble("X");
+//				double y = node.getDouble("Y");
+//				double w = node.getDouble("Width");
+//				double h = node.getDouble("Height");
+//				childstack.setTranslateX(x-minX);
+//				childstack.setTranslateY(y-minY-h);
+//				childstack.setMouseTransparent(true);
 			}
 		}
 		System.out.println("inGroup: " + stack.getChildren().size());
@@ -145,6 +145,8 @@ public class DataNodeGroup extends DataNode {
 				node.putDouble("CenterY", node.getDouble("CenterY")+dy);
 				node.getStack().setRect(node.getDouble("X"), node.getDouble("Y"), node.getDouble("Width"), node.getDouble("Height"));		
 			}
+		for (DataNode node : members)
+			node.getModel().getController().redrawMyEdges(node.getStack());
 	}
 
 	public void collapse() {

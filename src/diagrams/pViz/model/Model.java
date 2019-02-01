@@ -57,14 +57,14 @@ public class Model
 	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
 	public Map<Integer, DataNode> getDataNodeMap() {		return dataNodeMap;	}
 
-	private Map<String, DataNodeGroup> groupMap = FXCollections.observableHashMap();
+	private Map<Integer, DataNodeGroup> groupMap = FXCollections.observableHashMap();
 	public Collection<DataNodeGroup> getGroups()			{ return groupMap.values();	}
-	public Map<String, DataNodeGroup> getGroupMap() {		return groupMap;	}
+	public Map<Integer, DataNodeGroup> getGroupMap() {		return groupMap;	}
 
-	private Map<String, DataNodeState> stateMap = FXCollections.observableHashMap();
+	private Map<Integer, DataNodeState> stateMap = FXCollections.observableHashMap();
 	public Collection<DataNodeState> getStates()			{ return stateMap.values();	}
-	public Map<String, DataNodeState> getStateMap() {		return stateMap;	}
-	public void addState(String graphRef, DataNodeState statenode) {		stateMap.put(graphRef, statenode);	}
+	public Map<Integer, DataNodeState> getStateMap() {		return stateMap;	}
+	public void addState(Integer graphRef, DataNodeState statenode) {		stateMap.put(graphRef, statenode);	}
 
 	public Collection<Interaction> getEdges()			{ return interactionMap.values();	}
 	private Map<String, Interaction> interactionMap = FXCollections.observableHashMap();
@@ -152,7 +152,7 @@ public class Model
 	}
 	public void serializeGroups(StringBuilder bldr)
 	{
-		for (String key : groupMap.keySet())
+		for (Integer key : groupMap.keySet())
 			bldr.append(groupMap.get(key).toGPML());
 	}
 //	//---------------------------------------------------------
@@ -394,6 +394,7 @@ public class Model
 		 Integer id = oldIds.get(key);
 		 if (id != null)
 			 return find(id);
+		 gensym(key);
 		return null;
 	}
 	
@@ -408,7 +409,8 @@ public class Model
 //	Map<String, GPMLGroup> groups = new HashMap<String, GPMLGroup>();
 	// move to GPML
 	public void addGroup(DataNodeGroup grp) {
-		groupMap.put(grp.getGroupId(),grp);
+		int id = grp.getGraphId();
+		groupMap.put(id,grp);
 		dataNodeMap.put(grp.getId(),grp);
 	}
 //	public Collection<GPMLGroup> getGroups() { return groups.values();	}

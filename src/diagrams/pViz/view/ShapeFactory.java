@@ -120,8 +120,16 @@ public class ShapeFactory {
 			a.setFill(Color.BEIGE);
 		}
 		if (tool == Tool.Mitochondria)
-			stack.setScale(0.25);
+			stack.setScale(0.5);
 		
+		if (tool == Tool.GroupComponent) 
+		{
+			newShape.setFill(null);
+			newShape.setStroke(Color.PINK);
+			newShape.setStrokeWidth(3.6);
+			newShape.getStrokeDashArray().addAll(3.0, 7.0, 3.0, 7.0);
+
+		}
 
 		Insets insets = new Insets(2,2,2,2);  //getInsets();
         double hInsets = insets.getLeft() + insets.getRight();
@@ -1001,7 +1009,7 @@ public static void sizeFigureToBounds(Pasteboard pasteboard, VNode vNode, Shape 
 				// boolean leftClick = event.isPrimaryButtonDown();
 				boolean rightClick = event.isSecondaryButtonDown();
 				if (altDown)
-					pasteboard.getController().getSelectionManager().cloneSelection(5);
+					pasteboard.getController().getSelectionManager().duplicateSelection();
 
 				if (event.isPopupTrigger() || rightClick) {
 					if (menu == null)

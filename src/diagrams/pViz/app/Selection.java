@@ -157,11 +157,16 @@ public class Selection
 	boolean isGrid(VNode node) { return node != null && node.getId() != null && node.getId().contains("grid"); }
 
 	public void duplicateSelection()	
-//	{		List<VNode> duplicats = new ArrayList<VNode>();
+//	{		
 	{
+		List<VNode> duplicats = new ArrayList<VNode>();
 		for (VNode n : items)
 			if (!isGrid(n)) 
-				n.clone();
+				duplicats.add(n.clone());
+		
+		items.clear();
+		items.addAll(duplicats);
+		
 				//duplicats.add();
 //		getController().addAll(duplicats);
 	}
@@ -173,31 +178,31 @@ public class Selection
 	}
 	// **-------------------------------------------------------------------------------
 	// TODO -- this doesn't make the clone into the active selection (correctly)
-	public void cloneSelection(int offset)
-	{
-		List<VNode> sel = getAll();
-		List<VNode> newSelection = new ArrayList<VNode>();
-		Controller controller = getController();
-		for (VNode n : sel)
-		{
-			if ("Marquee".equals(n.getId()))	continue;
-			if (!(n instanceof VNode))		continue;
-			VNode node = (VNode) n;
-			node.rememberPositionEtc(offset);
-			AttributeMap newAttrs = new AttributeMap(node.getAttributes());
-			String oldId = newAttrs.get("GraphId");
-			int newId = controller.getModel().cloneResourceId(oldId);
-			newAttrs.setId(newId);
-			newAttrs.incrementZOrder();
-			DataNode clone = new DataNode(newAttrs, controller.getModel());
-			controller.add(clone.getStack());
-			newSelection.add(clone.getStack());
-		}
-//		items.removeAll();
-		clear();
-		for (VNode vnode : newSelection)
-			select(vnode);  
-	}
+//	public void cloneSelection(int offset)
+//	{
+//		List<VNode> sel = getAll();
+//		List<VNode> newSelection = new ArrayList<VNode>();
+//		Controller controller = getController();
+//		for (VNode n : sel)
+//		{
+//			if ("Marquee".equals(n.getId()))	continue;
+//			if (!(n instanceof VNode))		continue;
+//			VNode node = (VNode) n;
+//			node.rememberPositionEtc(offset);
+//			AttributeMap newAttrs = new AttributeMap(node.getAttributes());
+//			String oldId = newAttrs.get("GraphId");
+//			int newId = controller.getModel().cloneResourceId(oldId);
+//			newAttrs.setId(newId);
+//			newAttrs.incrementZOrder();
+//			DataNode clone = new DataNode(newAttrs, controller.getModel());
+//			controller.add(clone.getStack());
+//			newSelection.add(clone.getStack());
+//		}
+////		items.removeAll();
+//		clear();
+//		for (VNode vnode : newSelection)
+//			select(vnode);  
+//	}
 	//--------------------------------------------------------------------------
 	public void doGroup(boolean isCompoundNode)
 	{

@@ -365,6 +365,7 @@ public class GPML {
 							id = StringUtil.toInteger(oldid);
 						else id = m.gensym(oldid);
 						anchor.putInteger("GraphId", id);
+						anchor.setId(id);
 						anchors.add(anchor);
 //						getController().addAnchor(anchor);
 					}
@@ -434,7 +435,7 @@ public class GPML {
 			graphId = model.gensym(idval);
 			label.putInteger("GraphId",graphId);
 		}
-		label.setId(label.getId());
+//		label.setId(label.getId());
 		String txt = label.get("TextLabel");
 		if (txt == null) txt = "Undefined";
 		label.setName(txt);
@@ -608,6 +609,7 @@ public class GPML {
 			shapeNode.put("ShapeType", shapeType);
 			shapeNode.setName(shapeNode.get("ShapeType"));
 			VNode vnode = new VNode(shapeNode, pasteboard);
+			pasteboard.add(vnode);
 			model.addResource(shapeNode);
 			model.addShape(shapeNode);
 			vnode.setStyle("double-border");
@@ -618,7 +620,8 @@ public class GPML {
 			label.put("Layer", "Background");
 			label.setType("Label");
 			label.put("Type", "Label");
-			new VNode(label, pasteboard);
+			VNode vnode = new VNode(label, pasteboard);
+			pasteboard.add(vnode);
 			model.addResource(label);
 			model.addLabel(label);
 		}
@@ -626,7 +629,7 @@ public class GPML {
 
 		public void addStateNode(DataNodeState statenode) {
 			pasteboard.setActiveLayer("Content");	
-			String graphRef = statenode.get("GraphRef");
+			Integer graphRef = statenode.getInteger("GraphRef");
 			DataNode host = model.findDataNode(graphRef);
 			if (host != null)
 			{

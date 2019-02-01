@@ -1,6 +1,7 @@
 package diagrams.pViz.view;
 
 import java.util.List;
+import java.util.Map;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
@@ -78,9 +79,10 @@ public class VNodeGestures {
     		   canvas.startDragLine(vNode, Pos.CENTER);
     		   return;
     	   }
-     
+    
     	   
     	   Selection selection = getController().getSelectionManager();
+      		boolean wasSelected = selection.isSelected(vNode);
     	   if (event.isAltDown())
     		   selection.duplicateSelection();
     	   
@@ -91,7 +93,6 @@ public class VNodeGestures {
     		   vNode.handleResize(event);
     	   else
     	   {
-    		boolean wasSelected = selection.isSelected(vNode);
     		if (event.isControlDown() || event.isShiftDown())			//TODO -- configurable?
     			selection.select(vNode, !wasSelected);
     		else if (!wasSelected)
@@ -143,30 +144,26 @@ public class VNodeGestures {
             		dx = ex - prevX;
             		dy = ey - prevY;
         			if (Math.abs(dy) > 10|| Math.abs(dy) > 10)
-        			{
                 		System.out.println(String.format("BIG JUMP:   %.1f, %.1f", dx, dy));
-        			}
-        			else
-        			{
-        				Selection sele = getController().getSelectionManager();
-                		if (dx != 0 || dy != 0)
-                		{
-                			sele.translate(dx,dy, vNode);
-                       		sele.extract();
+        			Selection sele = getController().getSelectionManager();
+                	if (dx != 0 || dy != 0)
+                	{
+                		sele.translate(dx,dy, vNode);
+                    	sele.extract();
 //                    		System.out.println(String.format("%.1f, %.1f", dx, dy));
-                		}
-        			}
+                	}
             	}
             	prevX = ex;
             	prevY = ey;
             	if (vNode.modelNode() instanceof DataNodeGroup)
             		((DataNodeGroup)vNode.modelNode()).moveMembers(dx, dy);
             	
-            	if (vNode.isInCompoundNode())
-            	{
-            		System.out.println("compund node recalc");
-            		vNode.getGroup().calcBounds();
-            	}
+        		int groupId = vNode.modelNode().getInteger("GroupRef");
+            	DataNodeGroup gp = vNode.modelNode().getGroup();
+        		Map<Integer, DataNodeGroup> map = vNode.modelNode().getModel().getGroupMap();
+        		gp = map.get(groupId);
+        		if (gp != null)
+            		gp.calcBounds();
             }
             event.consume();
 

@@ -25,7 +25,7 @@ public class GroupMouseHandler extends BasicMouseHandler {
 		prevPoint = local;
 		boolean altDown = event.isAltDown();
 		if (altDown)
-			controller.getSelectionManager().cloneSelection(5);
+			controller.getSelectionManager().duplicateSelection();
 		
 		if (event.isPopupTrigger() || rightClick)	
 		{

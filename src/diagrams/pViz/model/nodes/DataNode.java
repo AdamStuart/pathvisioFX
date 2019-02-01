@@ -7,6 +7,7 @@ import java.util.Map;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.geometry.Point2D;
 import javafx.scene.shape.Shape;
@@ -43,9 +44,12 @@ public class DataNode extends XRefable {
 		super(am);
 		model = m;
 		int id = getId();
-		if (id == 0) id = model.gensym();
+		if (id <= 0) id = model.gensym();
 		setId(id);
-		stack = new VNode(this, m.getController().getPasteboard());
+		putInteger("GraphId", id );
+		Pasteboard board = m.getController().getPasteboard();
+		stack = new VNode(this,board );
+		board.add(stack);
 	}
 
 	public DataNode(DataNode orig, VNode view)
@@ -85,9 +89,9 @@ public class DataNode extends XRefable {
 //	@Override public String toString()	{ return getGraphId() + " = " + getName();	}
 	
 	public DataNodeGroup getGroup() {
-		String ref = get("GroupRef");
-		if (ref == null) return null;
-		Map<String, DataNodeGroup> map = model.getGroupMap();
+		int ref = getInteger("GroupRef");
+		if (ref <= 0) return null;
+		Map<Integer, DataNodeGroup> map = model.getGroupMap();
 		DataNodeGroup gp = map.get(ref);
 		return gp;
 	}	

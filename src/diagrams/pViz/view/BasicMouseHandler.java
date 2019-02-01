@@ -97,7 +97,7 @@ public class BasicMouseHandler implements EventHandler<MouseEvent> {
 		prevPoint = local;
 		boolean altDown = event.isAltDown();
 		if (altDown)
-			controller.getSelectionManager().cloneSelection(5);
+			controller.getSelectionManager().duplicateSelection();
 		if (event.isPopupTrigger() || rightClick)	
 		{
 			doContextMenu(event);

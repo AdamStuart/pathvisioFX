@@ -34,6 +34,8 @@ public class Layer extends Group {
 	public void add(int index, Node node)
 	{
 		if (locked) return;
+		if (index < 0 || index > getChildren().size())
+			index = getChildren().size()-1;
 		getChildren().add(index, node);
 		node.setVisible(vis);
 	}
