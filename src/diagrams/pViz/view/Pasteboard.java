@@ -427,8 +427,13 @@ public class Pasteboard extends PanningCanvas
 			
 			if (event.isConsumed())
 				return;
-			
+			if (getDragLine() != null) 
+				removeDragLine();
 			Tool tool = getTool();
+			if (tool == Tool.ArrowCatalyzes)
+			{
+				
+			}
 			if (tool == Tool.Polyline)
 			{
 				if (dragLine != null)

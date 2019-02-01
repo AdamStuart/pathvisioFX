@@ -105,7 +105,7 @@ public class Controller implements Initializable, IController
 	private UndoStack undoStack;
 	public UndoStack getUndoStack()		{		return undoStack;	}
 	private Document doc;
-	private String species = "Unspecified";
+	private String species = "Homo sapiens";
 
 	int verbose = 1;
 	private AnchorPane propertyPanel = null;
@@ -608,15 +608,15 @@ public class Controller implements Initializable, IController
 		if ("Marquee".equals(n.getId())) 	return;
 	}
 
-	public void add(VNode n)							
-	{		
-		pasteboard.add(n);	
-		DataNode modelNode = n.modelNode();
-//		if (n.isAnchor()) return;
-		if (n.isLabel()) return;
-		AttributeMap map = modelNode;
-		Object prop  = map.get("TextLabel");
-	}
+//	public void add(VNode n)			// only used by test				
+//	{		
+//		pasteboard.add(n);	
+//		DataNode modelNode = n.modelNode();
+////		if (n.isAnchor()) return;
+////		if (n.isLabel()) return;
+//		AttributeMap map = modelNode;
+//		Object prop  = map.get("TextLabel");
+//	}
 	public void addAll(List<VNode> n)	{	pasteboard.addAllVNodes(n);	}
 	public void addAll(VNode... n)		{	pasteboard.addAllVNodes(n);	}
 	
@@ -773,7 +773,7 @@ public class Controller implements Initializable, IController
 //		BoundingBox bounds = grp.getBounds();
 //		grp.getStack().setBounds(bounds);
 //		pasteboard.getContentLayer().remove(grp.getStack());
-		pasteboard.getContentLayer().add(5, grp.getStack());
+		pasteboard.getContentLayer().add(0, grp.getStack());
 	}
 	
 	public DataNodeGroup addGroup(List<VNode> selectedItems, boolean isCompound) {// from GUI selection

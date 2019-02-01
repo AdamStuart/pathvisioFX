@@ -44,7 +44,7 @@ public class Layer extends Group {
 		if (locked) return;
 		if (getChildren().contains(node)) 
 		{
-			return;		//TODO   if STRICT throwo exception
+			return;		//TODO   if STRICT throw exception
 		}
 		getChildren().add(node);
 		node.setVisible(vis);

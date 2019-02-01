@@ -70,6 +70,8 @@ public enum Tool {
 	public boolean isShape()				{	return contains(shapes, this);		}
 	public boolean isCellShape()			{	return contains(cellShapes, this);		}
 	public boolean isPencil()				{	return contains(connectors, this );		}
+	public boolean isComponent()			{	return contains(components, this );		}
+	public boolean isCatalysis()			{	return  this == ArrowCatalyzes;		}
 	public static boolean isShape(String s)	{	return contains(shapes, s);		}
 	public boolean isControl()				{	return contains(controls, this);		}
 	public static boolean isSVG(String type) {	return contains(tags, type);	}

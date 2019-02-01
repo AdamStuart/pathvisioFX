@@ -434,6 +434,7 @@ public class GPML {
 				graphId = nod.getId(); 
 			graphId = model.gensym(idval);
 			label.putInteger("GraphId",graphId);
+			label.setId(graphId);
 		}
 //		label.setId(label.getId());
 		String txt = label.get("TextLabel");
@@ -621,6 +622,7 @@ public class GPML {
 			label.setType("Label");
 			label.put("Type", "Label");
 			VNode vnode = new VNode(label, pasteboard);
+			vnode.setMouseTransparent(false);
 			pasteboard.add(vnode);
 			model.addResource(label);
 			model.addLabel(label);

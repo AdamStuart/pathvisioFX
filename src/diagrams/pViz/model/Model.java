@@ -599,6 +599,13 @@ public class Model
 		{
 			String db = node.get("Database");
 			String id = node.get("ID");
+			if((StringUtil.isEmpty(db) && StringUtil.isEmpty(id)))
+			{
+				db = "HGNC";
+				id = node.getName();
+			}
+
+			
 			if(!(StringUtil.isEmpty(db) || StringUtil.isEmpty(id)))
 				bldr.append(db).append('\t').append(id).append('\n');
 		}

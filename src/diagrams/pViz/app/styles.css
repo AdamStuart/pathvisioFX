@@ -17,7 +17,7 @@
 }
 
 .datanode {
-  -fx-background-color: red;
+  -fx-background-color: gray;
 }
 .text-area .scroll-pane {
     -fx-background-color: rgba(53,89,119,0.4);

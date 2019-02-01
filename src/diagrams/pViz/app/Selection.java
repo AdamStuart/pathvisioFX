@@ -280,9 +280,11 @@ public class Selection
 	public void translate(double dx, double dy, VNode except)		
 	{		
 //		getUndoStack().push(ActionType.Move);	
-		for (Node n : items)
+		for (VNode vn : items)
 		{
+			Node n = vn;
 			if (n == except) continue;
+			if (!vn.isMovable()) continue;
 			if (n.getParent() instanceof Group && !(n.getParent() instanceof Layer))
 				n = n.getParent();
 			if (n instanceof Rectangle)

@@ -52,6 +52,7 @@ public class EnrichmentController implements Initializable
 
 	private void setSpeciesInfo(String newSpecies)
 	{
+		if (newSpecies.equals("Unspecified"))  newSpecies = "Human";		//TODO  HACK
 		species.set(newSpecies);
 		readDataSources();	
 		readTargetSources(newSpecies);
@@ -84,6 +85,7 @@ public class EnrichmentController implements Initializable
 //				testStringOnAllPatterns(line);
 				String source = fields[0];
 				if (StringUtil.isEmpty(source))		continue;
+				if (fields.length < 2)		continue;
 				String val = fields[1];
 				if (StringUtil.isEmpty(val))		continue;
 				String urlStr = BDB + species.get() + "/xrefs/" + nameToSystemLookup.get(source) + "/" + val;
@@ -172,6 +174,7 @@ public class EnrichmentController implements Initializable
 	
 	public void readTargetSources(String species)
 	{
+		species = "Human";
 		if (StringUtil.isEmpty(species)) return;
 		String urlStr = BDB + species + "/targetDataSources";
 		String response = StringUtil.callURL(urlStr, true);

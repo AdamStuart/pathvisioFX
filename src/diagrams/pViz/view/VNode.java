@@ -227,6 +227,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		boolean selected = isSelected();
 		EventType<? extends MouseEvent> type = event.getEventType();
 		boolean inside = type.equals(MouseEvent.MOUSE_ENTERED) || type.equals(MouseEvent.MOUSE_MOVED);
+		if (getPasteboard().getTool().isCatalysis())
+			inside = false;
 		setEffect((selected || inside) ? effect : null);
 		showPorts(showPorts && (selected || inside));
 	}
@@ -433,7 +435,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		text = new Label(textLabel);
 		text.setMinWidth(80); 		text.setMinHeight(18);
 		text.setPrefWidth(120); 	text.setPrefHeight(40);
-		text.setMouseTransparent(true);
+//		text.setMouseTransparent(true);
 		text.setBackground(Backgrounds.transparent());   
 		text.setFont(new Font(18));
 		setAlignment(text, pos);

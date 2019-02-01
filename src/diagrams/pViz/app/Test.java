@@ -33,18 +33,18 @@ public class Test {
 		attrMap.putCircle(new Circle(120, 230, 40));
 		attrMap.put("TextLabel", "root");
 		DataNode n1 = new DataNode(attrMap, model);
-		c.add(n1.getStack());
+		c.getPasteboard().add(n1.getStack());
 	
 		attrMap.putFillStroke(Color.CORNSILK, Color.BLUE);
 		attrMap.putCircle(new Circle(220, 130, 60));
 		attrMap.setTool(Tool.Circle.toString()); 
 		DataNode circ = new DataNode(attrMap, model);		//, "Eli"
-		c.add(circ.getStack());
+		c.getPasteboard().add(circ.getStack());
 	
 		attrMap.putFillStroke(Color.LIGHTSKYBLUE, Color.DARKOLIVEGREEN);
 		attrMap.putCircle(new Circle(220, 330, 60));
 		DataNode n3 = new DataNode(attrMap, model);	//, "Fristcut"
-		c.add(n3.getStack());
+		c.getPasteboard().add(n3.getStack());
 		
 		Interaction line1 = model.addInteraction(circ, n3, "Content");		c.addInteraction(line1);
 		Interaction line2 = model.addInteraction(circ, n1, "Content");		c.addInteraction(line2);
@@ -54,14 +54,14 @@ public class Test {
 		attrMap.putRect(r1);
 		attrMap.putFillStroke(Color.CORNSILK, Color.DARKOLIVEGREEN);
 		DataNode n4 = new DataNode(attrMap, model);
-		c.add(n4.getStack());
+		c.getPasteboard().add(n4.getStack());
 	}
 	static protected void test2(Controller c)
 	{
 		Model model = c.getModel();
 		c.getUndoStack().push(ActionType.Test);	
-		double WIDTH = 20;
-		double HEIGHT = 20;
+		int WIDTH = 20;
+		int HEIGHT = 20;
 		double RADIUS = 10;
 		double spacer = 5 * RADIUS;
 //		ShapeFactory f = getNodeFactory().getShapeFactory();
@@ -73,8 +73,8 @@ public class Test {
 				Circle c1 = new Circle(i * spacer, j * spacer, RADIUS);
 				attrMap.putCircle(c1);
 				attrMap.put("ShapeType","Circle");
-				attrMap.put("GraphId", i + ", " + j);
-				c.add(new DataNode(attrMap, model).getStack());
+				attrMap.putInteger("GraphId", i * HEIGHT + j);
+				c.getPasteboard().add(new DataNode(attrMap, model).getStack());
 			}
 	}
 	

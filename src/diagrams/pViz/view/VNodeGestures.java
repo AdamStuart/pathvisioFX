@@ -55,7 +55,9 @@ public class VNodeGestures {
 
         public void handle(MouseEvent event) {
 
-            // left mouse button => dragging
+    		Tool curTool = canvas.getTool();
+    		if (curTool.isComponent()) return;
+          // left mouse button => dragging
             if( event.isSecondaryButtonDown())
             {
             	doContextMenu(event, vNode);
@@ -72,7 +74,6 @@ public class VNodeGestures {
 //            nodeDragContext.translateAnchorY = node.getTranslateY();
     		if (event.getClickCount() > 1)	   {	vNode.getInfo(); 	event.consume();   return; }
     		if (event.isPopupTrigger())	   {	doContextMenu(event, vNode); return;	   }
-    		Tool curTool = canvas.getTool();
     		vNode.finishDragLine(event);
     	   if (curTool.isInteraction()) 
     	   {
@@ -112,8 +113,10 @@ public class VNodeGestures {
 //    		if (!vNode.isMovable()) return;
             if( !event.isPrimaryButtonDown())
                 return;
-            if (vNode.modelNode().isLocked())	return;
-
+            if (vNode.modelNode().isLocked())	
+            	return;
+            Tool t = vNode.getPasteboard().getTool();
+            if (t.isComponent()) return;
             double scale = canvas.getScale();
 //
 //            Node node = (Node) event.getSource();
