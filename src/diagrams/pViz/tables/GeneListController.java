@@ -764,10 +764,10 @@ public class GeneListController  extends TableController  {
 
 	}
 	//---------------------------------------------------------------------------
-	public void openByReference(String ref) {
+	public void openByReference(int ref) {
 		for (Object rec : theTable.getItems())
 		{
-			if (ref.equals(((Gene)rec).getGraphId()))
+			if (ref == ((Gene)rec).getGraphId())
 				System.out.println("openByReference " + ref);
 		}
 	}

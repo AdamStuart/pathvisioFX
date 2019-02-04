@@ -317,6 +317,7 @@ public class Pasteboard extends PanningCanvas
 	private VNode dragPolyLineSource = null;	// in the case of a polyLine, where the first segment starts
 	private Pos dragPolyLinePosition = null;	// in the case of a polyLine, the port where the first segment starts
 	
+	public boolean isDraggingLine() { return dragLine != null;	}
 	public EdgeLine getDragLine() { return dragLine;	}
 	public VNode getDragSource() { return dragLineSource;	}
 	public Pos getDragSourcePosition () { return dragLinePosition;	}
@@ -346,7 +347,7 @@ public class Pasteboard extends PanningCanvas
 		Point2D startPt = new Point2D(x,y);
 		if (source != null)
 			startPt = source.getPortPosition( srcPosition);
-		dragLine = new EdgeLine(edgeType, startPt);
+		dragLine = new EdgeLine(edgeType, startPt, this);
 //		dragLine.setArrowType(arrow);
 		dragLineSource = source;
 		dragLinePosition = srcPosition;
@@ -381,8 +382,9 @@ public class Pasteboard extends PanningCanvas
 
 	//---------------------------------------------------------------------------
 	// add the interaction from the stored dragSource and dragSourcePosition to this vNode at relPos
-	public void connectTo(ResizableBox vNode, RelPosition relPos ) {
+	public void connectTo(ResizableBox target, RelPosition relPos ) {
 		if (dragLine == null) return;  	// shouldn't happen
+		if (target == null) return;  	// shouldn't happen
 		VNode src = getPolyDragSource();
 		Pos srcPos = getPolyDragSourcePosition();
 		if (src == null) return;  	// shouldn't happen
@@ -390,14 +392,14 @@ public class Pasteboard extends PanningCanvas
 		if (relPos.isInside()) 
 			relPos = relPos.moveToEdge();
 		
-		if (src != vNode)
+		if (src != target)
 		{
 			ArrowType arrow = getController().getCurrentArrowType();
 			EdgeType edge = getController().getCurrentLineBend();
-			Interaction i = new Interaction(getModel(), src, srcPos, vNode, relPos, arrow, edge );
+			Interaction i = new Interaction(getModel(), src, srcPos, target, relPos, arrow, edge );
 			removeDragLine();
 			controller.addInteraction(i);
-			controller.redrawMyEdges((VNode) vNode);
+			controller.redrawMyEdges((VNode) target);
 			controller.modelChanged();
 		}
 	}

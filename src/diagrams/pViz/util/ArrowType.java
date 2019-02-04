@@ -1,5 +1,7 @@
 package diagrams.pViz.util;
 
+import diagrams.pViz.gpml.GPMLPoint;
+import model.bio.MIM;
 
 //-----------------------------------------------------------------------
 public enum ArrowType
@@ -64,6 +66,24 @@ public enum ArrowType
 	public boolean connectsToEdges()	
 	{ 
 		return (ArrowType.mimactivation == this ) || (ArrowType.miminhibition == this ); 
+	}
+
+	public MIM getInteractionType(GPMLPoint endPt)			// TODO
+	{ 	
+		if (endPt != null)
+		{	
+			ArrowType at = endPt.getArrowType();
+			if (ArrowType.mimcatalysis == at)		return MIM.MIM_CATALYSIS;
+			if (ArrowType.miminhibition == at)		return MIM.MIM_INHIBITION;
+			if (ArrowType.mimbinding == at)			return MIM.MIM_BINDING;
+			if (ArrowType.mimconversion == at)		return MIM.MIM_CONVERSION;
+			if (ArrowType.mimtranslation == at)		return MIM.MIM_TRANSLATION;
+			if (ArrowType.interacts == at)			return MIM.MIM_INHIBITION;
+//			if (ArrowType.mimtranscriptiontranslation == at)		return MIM.MIM_TRANSLATION;
+//			if (ArrowType.mimactivation == at)		return MIM.MIM_;
+//			if (ArrowType.stimulates == at)		return MIM.MIM_BINDING;
+		}
+		return MIM.MIM_STIMULATION;
 	}
 }
 

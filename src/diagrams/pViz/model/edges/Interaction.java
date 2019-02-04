@@ -4,7 +4,6 @@ package diagrams.pViz.model.edges;
 
 import java.util.List;
 
-import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
@@ -15,6 +14,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import model.AttributeMap;
+import model.bio.MIM;
 import model.bio.XRefable;
 import model.stat.RelPosition;
 import util.StringUtil;
@@ -33,6 +33,11 @@ public class Interaction extends Edge implements Comparable<Interaction>
 	public StringProperty  interactionTypeProperty()  { return interactionType;}
 	public void setInteractionType(String s) 	 	{ interactionType.set(s);}
 	public  String getInterType()  					{ return interactionType.get();}
+
+//	private SimpleStringProperty arrowType = new SimpleStringProperty();		
+//	public StringProperty  arrowTypeProperty()  { return arrowType;}
+//	public void setArrowType(String s) 	 	{ arrowType.set(s);}
+//	public  String getArrowType()  					{ return arrowType.get();}
 
 	public void dump()	{ System.out.println( toString());	}		//get("GraphId") +
 	public Interaction(Model inModel)
@@ -55,7 +60,9 @@ public class Interaction extends Edge implements Comparable<Interaction>
 			ResizableBox vNode, RelPosition targPosition, ArrowType arrow, EdgeType edge) 
 	{
 		this(model,src,vNode, null);
-		setInteractionType(edge.toString());
+		setInteractionType(arrow.toString());
+		put("EdgeType", edge.toString());
+//		setArrowType(arrow.toString());
 		putDouble("LineThickness", 1.5);
 		
 //		String newId = newEdgeId();
@@ -76,7 +83,6 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		endPoint.setArrowType(arrow);
 	}	
 
-	
 	public Interaction(Model inModel, ResizableBox start, ResizableBox end, AttributeMap attr) 		//, List<GPMLPoint> pts, List<Anchor> anchors
 	{
     	super( inModel, (VNode) start,  (VNode) end,  attr);	
@@ -106,7 +112,7 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		return name + " [" + id + "] " + str + " " + getInterType();
 	}
 
-    public String toGPML()
+   public String toGPML()
    {
 		StringBuffer b = new StringBuffer(String.format("<Interaction GraphId=\"%s\" >\n", getSafe("GraphId")));
 		b.append("<Graphics ");
@@ -123,7 +129,8 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		b.append("</Interaction>\n");
 		return b.toString();
    }
-    public void toCX(CXObject cx)
+   
+   public void toCX(CXObject cx)
    {
 		cx.addEdge(this);
    }
@@ -148,25 +155,17 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		else if (arrow.contains("modif")) 		arrow = "~>";
 		else if (arrow.contains("cleav")) 		arrow = "-\\";
 		else if (arrow.contains("coval")) 		arrow = "::";
-		else if (arrow.contains("transcriptiontranslation")) 		arrow = "-#";
+		else if (arrow.contains("transcrip")) 	arrow = "-#";
 		else if (arrow.contains("translat")) 	arrow = "-X";
 		else if (arrow.contains("gap")) 		arrow = " >";
-	else if (arrow.contains("reg")) 			arrow = "-R";
-		String target = getTarget();
-		if ( target == null)
-		{
-			target = get("targetid");
-			if ( target == null)
-				target = "??";
-		}
-		setName("--" + arrow + " " + target);
-	}
-	public String getStartName() {
-		return getStartNode() == null ?  get("sourceid") : getStartNode().getName();
-	}
-	public String getEndName() {
-		return getEndNode() == null ? get("targetid") : getEndNode().getName();
-	}
+		else if (arrow.contains("reg")) 		arrow = "-R";
 
-	public Anchor findAnchorByRef(String targRef) {		return getModel().findAnchorByRef(targRef);	}
+		int target = getInteger("targetid");
+		String	targetName = ( target > 0) ? getModel().getNodeName(target) :  "??";
+		setName("--" + arrow + " " + targetName);
+	}
+	
+	public MIM getInteractionType() {
+		return MIM.lookup(getInterType());
+	}
 }

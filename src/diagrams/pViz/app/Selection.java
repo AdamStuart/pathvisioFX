@@ -164,11 +164,11 @@ public class Selection
 			if (!isGrid(n)) 
 				duplicats.add(n.clone());
 		
-		items.clear();
+		clear();
 		items.addAll(duplicats);
 		
 				//duplicats.add();
-//		getController().addAll(duplicats);
+		getController().addAll(duplicats);
 	}
 	//--------------------------------------------------------------------------
 	public void deleteAll()	

@@ -70,6 +70,7 @@ public class ShapeFactory {
 		Shape newShape= null;
 		Tool tool = Tool.lookup(s);
 //		AttributeMap attrMap = modelNode;
+		
 		switch (tool)
 		{
 			case Cell:				newShape = new Rectangle();	break;

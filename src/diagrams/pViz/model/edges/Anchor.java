@@ -1,18 +1,22 @@
-package diagrams.pViz.gpml;
+package diagrams.pViz.model.edges;
 
+import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
-import diagrams.pViz.model.edges.Edge;
-import diagrams.pViz.model.edges.EdgeLine;
-import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
-import model.bio.XRefable;
 
-public class Anchor extends XRefable {		// extends DataNode
+public class Anchor extends DataNode {		// extends DataNode
 
+	/**
+	 *  An Anchor is a DataNode that lives along an edge of a line.  
+	 *  Catalysis and Inhibition interactions connect to anchors
+	 */
+	
+	private static final long serialVersionUID = 1L;
 	private Circle myShape;
 	private Interaction myInteraction;
 //	private String interId;
@@ -31,17 +35,20 @@ public class Anchor extends XRefable {		// extends DataNode
 	public void setPosition(double d)				{   putDouble("Position", d);	}
 	public Shape getShape()							{	return myShape;}
 
-	
 	public Anchor(org.w3c.dom.Node node, Model m, int interactionId)
 	{
-		super(new AttributeMap(node.getAttributes()));
+		this(new AttributeMap(node.getAttributes()), m, interactionId);	
+	}	
+	
+	public Anchor(AttributeMap attr, Model m, int interactionId)
+	{
+		super(attr, m);
 		myShape = new Circle();
 		myShape.setRadius(4);
 		myShape.visibleProperty().bind(m.getController().getInspector().anchorVisibleProperty());
 		myShape.setFill(Color.BISQUE);
 		myShape.setStroke(Color.DARKOLIVEGREEN);
 		setName(String.format("Anchor @ %.2f", getAnchorPosition()));
-//		setInteraction(inter);
 		setInteractionId(interactionId);
 	}
 	
@@ -58,6 +65,12 @@ public class Anchor extends XRefable {		// extends DataNode
 		String shape = get("Shape");
 		if (shape == null) shape = "Oval";
 		return String.format("<Anchor Position=\"%.2f\" Shape=\"%s\" GraphId=\"%s\" />\n", getAnchorPosition(), shape, getGraphId());
+	}
+	
+	public void toCX(CXObject cx)
+	{
+		String shape = get("Shape");
+		cx.addAnchor(this);
 	}
 
 //	public void setAnchorPosition(Interaction i) {		resetPosition(i);	}
@@ -80,7 +93,7 @@ public class Anchor extends XRefable {		// extends DataNode
 			c.setCenterY(pt.getY());
 		}
 		Interaction e  = getInteraction();
-		if (e != caller)
+		if (e != null && e != caller)
 			e.connect();
 	}
 }

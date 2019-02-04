@@ -2,9 +2,8 @@ package diagrams.pViz.model;
 
 import java.util.List;
 
-
-import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.edges.Anchor;
 import diagrams.pViz.model.nodes.DataNode;
 import util.StringUtil;
 //-------------------------------------------------------------------
@@ -57,6 +56,18 @@ class EdgeAttribute
 	public String toString()
 	{
 		return CXObject.line("n", name) + CXObject.line("po", propOf) + CXObject.line("v", val) + CXObject.line("d", type) + CXObject.line("s", subnet);
+	}
+}
+
+
+class AnchorAttribute
+{
+	int propOf;	
+	String position;
+
+	public String toString()
+	{
+		return "?" + CXObject.line("n", position) + CXObject.line("po", propOf) + CXObject.line("v", position);		// TODO
 	}
 }
 
@@ -121,6 +132,10 @@ public class CXObject {
 			EdgeAttribute ea = new EdgeAttribute(id, s, e.get(s), "string", "");
 			edgeAttributes.add(ea);
 		}
+	}
+	public void addAnchor(Anchor a)
+	{
+		
 	}
 	//-------------------------------------------------------------------
 	class NetworkAttribute

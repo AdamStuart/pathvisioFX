@@ -1,16 +1,19 @@
 package diagrams.pViz.view;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Tool;
+import diagrams.pViz.dialogs.NodeInfoController;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
+import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.ResizableBox;
 import gui.Backgrounds;
@@ -19,12 +22,14 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableMap;
 import javafx.event.EventType;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Label;
@@ -32,6 +37,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -44,6 +50,7 @@ import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
+import javafx.stage.Stage;
 import model.AttributeMap;
 import model.bio.BiopaxRecord;
 import model.stat.RelPosition;
@@ -104,7 +111,8 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 //		String type = attributes.get("ShapeType");
 //		System.out.println(title);
-		addPorts();
+		boolean isAnchor = modelNode.isAnchor();
+		addPorts(isAnchor);
 		addGraphIdDisplay();
 		addReferencesDisplay();
 		setReferences();
@@ -129,10 +137,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public VNode clone()
 	{
 		Model m = modelNode().getModel();
-		AttributeMap map = new AttributeMap(getAttributes());
-//		int oldId = map.getInteger("GraphId");
+		AttributeMap map = new AttributeMap(modelNode());
 		map.setId(m.gensym());
-		return new VNode(new DataNode(map, m), pasteboard);
+		DataNode modelNode = new DataNode(map, m, false);
+		return modelNode.getStack();
 	}
 	
 	public void setScale(double x)
@@ -227,7 +235,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		boolean selected = isSelected();
 		EventType<? extends MouseEvent> type = event.getEventType();
 		boolean inside = type.equals(MouseEvent.MOUSE_ENTERED) || type.equals(MouseEvent.MOUSE_MOVED);
-		if (getPasteboard().getTool().isCatalysis())
+		if (getPasteboard().getTool().isCatalysis() && pasteboard.isDraggingLine())
 			inside = false;
 		setEffect((selected || inside) ? effect : null);
 		showPorts(showPorts && (selected || inside));
@@ -338,12 +346,21 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		if (tool.isControl())
 		{
 			controlFactory.addNewNode(tool, dataNode);
-			return;
+			getStyleClass().add("control");
 		}
-		else figure = ShapeFactory.makeNewShape(shapeType, this);
-		if (figure != null)
-			setScaleShape(false);
-		getStylesheets().add("datanode");
+		else if ("Anchor".equals(shapeType))
+		{
+			figure = new Circle(6);
+			getStyleClass().add("anchor");
+		}
+		else 
+		{
+			figure = ShapeFactory.makeNewShape(shapeType, this);
+			if (figure != null)
+				setScaleShape(false);
+			getStylesheets().add("datanode");
+		}
+
 	}
 	
 	public void setBackgroundImage(Image img)
@@ -469,19 +486,24 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 
 	// **-------------------------------------------------------------------------------
 	public void getInfo() {		
+		DataNode datanode = modelNode();
+		String s = datanode.getInfoStr();
 		String biopaxRef = getAttributes().get("BiopaxRef");
 		if (biopaxRef != null)
 		{
-			BiopaxRecord rec = modelNode().getModel().getReference(biopaxRef);
+			BiopaxRecord rec = datanode.getModel().getReference(biopaxRef);
 			if (rec != null)
 			{
 				ReferenceController.showPMIDInfo(rec.getId());
 				return;
 			}
 		}
-		DataNode model = modelNode();
-		String s = model.getInfoStr();
-		if ("Pathway".equals(model.getShapeType()))
+		if (biopaxRef == null)
+		{
+			getInfo2();
+			return;
+		}
+		if ("Pathway".equals(datanode.getShapeType()))
 		{
 			String id = App.choosePathway(pasteboard.getController());
 		}
@@ -500,6 +522,32 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 //		super.handleMousePressed(event);
 //	}
 
+	static public  void getInfo2()		
+	{
+		Stage dlogStage = new Stage();
+		try 
+		{
+			dlogStage.setTitle("Node Information");
+			FXMLLoader fxmlLoader = new FXMLLoader();
+			String fullname = "../dialogs/nodeinfo.fxml";
+		    URL url = App.getInstance().getClass().getResource(fullname);		// this gets the fxml file from the same directory as this class
+		    if (url == null)
+		    {
+		    	System.err.println("Bad path to the FXML file: " + fullname);
+		    	return;
+		    }
+		    fxmlLoader.setLocation(url);
+		    Parent appPane =  fxmlLoader.load();
+//		    NodeInfoController nodeInfoController = (NodeInfoController) fxmlLoader.getController();
+		    dlogStage.setScene(new Scene(appPane, 800, 800));
+		    dlogStage.show();
+		}
+		catch (Exception e) 
+		{ 
+			System.err.println("Loading error in browsePathways()");
+			e.printStackTrace();
+		}
+	}
 
 	// **------------------------------------------------------------------------------
 	public void rememberPositionEtc() 		{		rememberPositionEtc(0);		}

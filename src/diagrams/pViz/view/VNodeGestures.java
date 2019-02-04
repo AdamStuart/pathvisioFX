@@ -20,8 +20,6 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.paint.Color;
-import model.stat.RelPosition;
 
 /**
  * Listeners for making the nodes draggable via left mouse button. Considers if parent is zoomed.
@@ -54,7 +52,7 @@ public class VNodeGestures {
     private EventHandler<MouseEvent> mousePressedHandler = new EventHandler<MouseEvent>() {
 
         public void handle(MouseEvent event) {
-
+        	boolean requirePortConnect = true;
     		Tool curTool = canvas.getTool();
     		if (curTool.isComponent()) return;
           // left mouse button => dragging
@@ -64,6 +62,7 @@ public class VNodeGestures {
             	return;
             }
             if (vNode.modelNode().isLocked())	return;
+            if (requirePortConnect && canvas.isDraggingLine())	return;				// Edges must terminate on ports
 //            nodeDragContext.mouseAnchorX = event.getSceneX();
 //            nodeDragContext.mouseAnchorY = event.getSceneY();
 

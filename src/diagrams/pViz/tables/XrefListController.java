@@ -781,10 +781,10 @@ public class XrefListController  extends TableController  {
 
 	}
 	//---------------------------------------------------------------------------
-	public void openByReference(String ref) {
+	public void openByReference(int ref) {
 		for (Object rec : theTable.getItems())
 		{
-			if (ref.equals(((XRefable)rec).getGraphId()))
+			if (ref == ((XRefable)rec).getGraphId())
 				System.out.println("openByReference " + ref);
 		}
 	}

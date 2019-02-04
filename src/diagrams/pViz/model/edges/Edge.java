@@ -2,7 +2,6 @@ package diagrams.pViz.model.edges;
 
 import java.util.List;
 
-import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
@@ -21,6 +20,7 @@ import javafx.scene.shape.Shape;
 import model.AttributeMap;
 import model.bio.MIM;
 import model.bio.XRefable;
+import model.stat.RelPosition;
 import util.StringUtil;
 
 /*
@@ -41,6 +41,9 @@ abstract public class Edge extends XRefable {
 	public Edge(Model inModel) 
     {
 		model = inModel;
+		int id = inModel.gensym();
+		setGraphId(id);
+		putInteger("GraphId", id);
 	}
 	
 	// from parser
@@ -49,17 +52,17 @@ abstract public class Edge extends XRefable {
 		this(inModel);
 		addAll(attr);
 		init(pts, anchors);
-		DataNode start = model.getDataNode(get("sourceid"));
+		DataNode start = model.find(getInteger("sourceid"));
     	if (start != null) 
     	{
     		startNode = start;
         	setSource(start.getLabel()); 
         	setSourceid(start.getId());
     	}
-    	DataNode target = model.getDataNode(get("targetid"));
+    	DataNode target = model.find(getInteger("targetid"));
     	if (target == null)
     	{
-    		String ref = get("targetid");
+    		int ref = getInteger("targetid");
     		if (startNode != null)
     		{
     			Anchor anch = model.findAnchorByRef(ref);
@@ -222,21 +225,21 @@ abstract public class Edge extends XRefable {
 //   		edgeLine.connect();
 //   		System.out.println("connect");
 //   }
-   public boolean references(String state)
+   public boolean references(int state)
    {
-	   if (state.equals(get("GraphRef"))) return true;
+	   if (state == getInteger("GraphRef")) return true;
 	   for (GPMLPoint pt : edgeLine.getPoints())
-		   if (state.equals(pt.getGraphRef()))
+		   if (state == pt.getGraphRef())
 			   return true;
 	   return false;
    }
-	public boolean touches(String graphId)
+	public boolean touches(int graphId)
 	{
-		if (graphId == null) return false;
-		if (graphId.equals(get("sourceid")))	return true;
-		if (graphId.equals(get("targetid")))		return true;
+		if (graphId <= 0) return false;
+		if (graphId == getInteger("sourceid"))	return true;
+		if (graphId == getInteger("targetid"))		return true;
 		for (Anchor a : edgeLine.getAnchors())
-			if (graphId.equals(a.getGraphId())) 
+			if (graphId == a.getGraphId())
 				return true;
 		return false;
 	}
@@ -350,6 +353,38 @@ abstract public class Edge extends XRefable {
 			builder.append(a.toGPML());
 		return builder.toString();
 	}
+	public String getStartName() {
+		return getStartNode() == null ?  get("sourceid") : getStartNode().getName();
+	}
+	public String getEndName() {
+		return getEndNode() == null ? get("targetid") : getEndNode().getName();
+	}
+
+//	public Anchor findAnchorByRef(int targRef) {		return getModel().findAnchorByRef(targRef);	}
+	
+	public Anchor addAnchorAt(Point2D hitPt) {			// comes from clicking on an edge while dragLining
+		
+		double startX = edgeLine.getStartX();		// TODO assuming simple line
+		double endX = edgeLine.getEndX();
+		double hitX = hitPt.getX();
+		double hitY = hitPt.getY();
+		double relVal = (hitX-startX) / (endX-startX);
+		
+		Model m = getModel();
+		AttributeMap map = new AttributeMap();
+		map.putDouble("Position", relVal);
+		map.putDouble("GraphId", m.gensym());
+		map.putDouble("CenterX", hitX);
+		map.putDouble("CenterY", hitY);
+		map.putDouble("Width", 5);
+		map.putDouble("Height", 5);
+		map.put("ShapeType", "Anchor");
+		Anchor a = new Anchor(map, m, getId());
+		edgeLine.addAnchor(a);
+		m.getPasteboard().connectTo(a.getStack(), RelPosition.ZERO);
+		return a;
+	}
+
 	//----------------------------------------------------------------------
 //	protected AttributeMap attributes = new AttributeMap();
 //	public AttributeMap getAttributes() {		return attributes;	}
@@ -385,19 +420,7 @@ abstract public class Edge extends XRefable {
 	private Color color = Color.BLACK;
 	public Color getColor() 		{	return color;	}
 	public void setColor(Color c) 	{	color = c;	}
-	public MIM getInteractionType()			// TODO
-	{ 	
-		GPMLPoint point = edgeLine.lastGPMLPoint();
-		if (point != null)
-		{	
-			ArrowType at = point.getArrowType();
-			if (ArrowType.mimcatalysis == at)	return MIM.MIM_CATALYSIS;
-			if (ArrowType.miminhibition == at)	return MIM.MIM_INHIBITION;
-			if (ArrowType.mimbinding == at)	return MIM.MIM_BINDING;
-		}
-		return MIM.MIM_STIMULATION;
-	}
-	
+
 	private SimpleStringProperty source = new SimpleStringProperty();
 	public StringProperty  sourceProperty()  { return source;}
 	public String getSource()  { return source.get();}

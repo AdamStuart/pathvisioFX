@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 import animation.BorderPaneAnimator;
+import diagrams.pViz.dialogs.AddNodeDialog;
 import diagrams.pViz.dialogs.EnrichmentController;
 import diagrams.pViz.dialogs.EnrichmentDialog;
 import diagrams.pViz.dialogs.LegendDialog;
@@ -142,7 +143,8 @@ public class Controller implements Initializable, IController
 	@FXML private void submit() 		{ 	doc.submit();		} 
 	@FXML private void getInfo() 		{ 	getSelectionManager().getInfo();	} 
 	@FXML private void openReferences() { 	App.openReferenceList(model);  	} 
-	
+
+
 	@FXML private void close()			
 	{ 
 		doc.close();	
@@ -233,7 +235,6 @@ public class Controller implements Initializable, IController
 	@Override public void reorderColumns(int a, int b) {	}
 
 	public static String CSS_Gray2 = "-fx-border-width: 2; -fx-border-color: blue;";
-	static String CSS_cellBackground(boolean undone) 	{		return "-fx-background-color: " + (undone ? "GREY; " : "BEIGE; ");	}
 	static String ctrlStr = "fx:id=\"%s\" was not injected: check your FXML file '%s'.";
 	static String missing(String s)	{		return String.format(ctrlStr, s, "AttributeValueFXML.fxml");	}
 	
@@ -459,9 +460,15 @@ public class Controller implements Initializable, IController
 //		dlog.showAndWait();
 	}
 	//-----------------------------------------------------------------------
-	@FXML private void doEnrich() 
+	@FXML private void doAddNode()
+	{
+		AddNodeDialog dlog = new AddNodeDialog(getModel());
+		dlog.show();
+	}
+	//-----------------------------------------------------------------------
+	@FXML private void doAnnotate() 
 	{		
-		System.out.println("Enrich");	
+		System.out.println("doAnnotate");	
 		EnrichmentDialog dlog = new EnrichmentDialog(model);
 		EnrichmentController ctrol = dlog.getController();
 		@SuppressWarnings("unchecked")
@@ -575,28 +582,29 @@ public class Controller implements Initializable, IController
 //	}
 	
 	//---------------------------------------------------------------------------------
-	  static class DrawActionCell extends ListCell<Action> {
-		    @Override
-		    public void updateItem(Action item, boolean empty) {
-		      super.updateItem(item, empty);
-		      if (item != null) 
-		      {
-		    	  String style = CSS_cellBackground(item.isUndone());
-		    	  setStyle(style);
-		    	  setText(item.toString());
-		      }
-		      else   {  	  setStyle("");  	  setText("");    }
-		    }
-		  }
-	  
-	  static class StyleSheetCell extends ListCell<String> {
-		    @Override public void updateItem(String item, boolean empty) {
-		      super.updateItem(item, empty);
-		      if (item != null) 
-		    	  setText(item.toString());
-		      else    {     setStyle("");   	  setText("");      }
-		    }
-		  }
+//	static String CSS_cellBackground(boolean undone) 	{		return "-fx-background-color: " + (undone ? "GREY; " : "BEIGE; ");	}
+//	  static class DrawActionCell extends ListCell<Action> {
+//		    @Override
+//		    public void updateItem(Action item, boolean empty) {
+//		      super.updateItem(item, empty);
+//		      if (item != null) 
+//		      {
+//		    	  String style = CSS_cellBackground(item.isUndone());
+//		    	  setStyle(style);
+//		    	  setText(item.toString());
+//		      }
+//		      else   {  	  setStyle("");  	  setText("");    }
+//		    }
+//		  }
+//	  
+//	  static class StyleSheetCell extends ListCell<String> {
+//		    @Override public void updateItem(String item, boolean empty) {
+//		      super.updateItem(item, empty);
+//		      if (item != null) 
+//		    	  setText(item.toString());
+//		      else    {     setStyle("");   	  setText("");      }
+//		    }
+//		  }
 	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	public void selectAll(List<Node> n)	{		getSelectionManager().selectAll(n);	}

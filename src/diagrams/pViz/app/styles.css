@@ -36,6 +36,15 @@
 	-fx-border-color: green; 	
 }
 
+.fatLine {
+	-fx-stroke-width: 8px; 
+	-fx-stroke: green; 	
+}
+.thinLine {
+	-fx-stroke-width: 1px; 
+	-fx-stroke: black; 	
+}
+
 .custom-dashed-border {
         -fx-border-color: blue ;
         -fx-border-width: 5 ; 

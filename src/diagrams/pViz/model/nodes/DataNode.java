@@ -41,6 +41,10 @@ public class DataNode extends XRefable {
 	static String getNextId()	{ return "id" + counter++; }
 	public DataNode(AttributeMap am, Model m)
 	{
+		this(am,m,true);
+	}
+	public DataNode(AttributeMap am, Model m, boolean addToPasteboard)
+	{
 		super(am);
 		model = m;
 		int id = getId();
@@ -49,7 +53,7 @@ public class DataNode extends XRefable {
 		putInteger("GraphId", id );
 		Pasteboard board = m.getController().getPasteboard();
 		stack = new VNode(this,board );
-		board.add(stack);
+		if (addToPasteboard) board.add(stack);
 	}
 
 	public DataNode(DataNode orig, VNode view)
@@ -201,6 +205,7 @@ public class DataNode extends XRefable {
 		setSelectable(edit);
 		setConnectable(connect);
 	}
+	public boolean isAnchor() {		return "Anchor".equals(get("ShapeType"));	}
 	// **-------------------------------------------------------------------------------
 	// side case:  shapes are dataNodes, but they may be a path or GraphicalLine
 	

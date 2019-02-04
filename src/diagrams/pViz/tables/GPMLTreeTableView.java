@@ -9,8 +9,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.model.Model;
+import diagrams.pViz.model.edges.Anchor;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;

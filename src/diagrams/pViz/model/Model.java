@@ -9,8 +9,8 @@ import java.util.Map;
 import java.util.Set;
 
 import diagrams.pViz.app.Controller;
-import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
+import diagrams.pViz.model.edges.Anchor;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
@@ -20,6 +20,7 @@ import diagrams.pViz.tables.CommentRecord;
 import diagrams.pViz.tables.GPMLTreeTableView;
 import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.view.Layer;
+import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -48,10 +49,11 @@ public class Model
 /*
  *  Model - the set of record lists	
  *  
- *  We need to keep track of species, nodes, edges, genelists, pathways, references, comments, groups
+ *  We need to keep track of species, nodes, edges, genesets, pathways, references, comments, groups
  */
 	private Controller controller;
 	public Controller getController() { return controller; } 
+	public Pasteboard getPasteboard() { return controller.getPasteboard(); } 
 	private Map<Integer, DataNode> dataNodeMap = FXCollections.observableHashMap();
 	private int nodeCounter = 0;
 	public Collection<DataNode> getNodes()			{ return dataNodeMap.values();	}
@@ -69,7 +71,7 @@ public class Model
 	public Collection<Interaction> getEdges()			{ return interactionMap.values();	}
 	private Map<String, Interaction> interactionMap = FXCollections.observableHashMap();
 	public Map<String, Interaction> getInteractions()			{ return interactionMap;	}
-	public List<Interaction> getInteractionList(String nodeId)			
+	public List<Interaction> getInteractionList(int nodeId)			
 	{ 
 		List<Interaction> hits = new ArrayList<Interaction>();
 		for (Interaction e : interactionMap.values())
@@ -210,7 +212,12 @@ public class Model
 		if (dataNodeMap.get(key) == null)
 			dataNodeMap.put(key, n);
 	}
-
+	public String getNodeName(int id)
+	{
+		if (id <= 0) return "???";
+		DataNode node = dataNodeMap.get(id);
+		return (node == null) ? "??" : node.getName();
+	}
 	public DataNode findDataNode(String nameOrId)
 	{
 		if (nameOrId == null) return null;
@@ -294,7 +301,7 @@ public class Model
 	private void readEdges(String state) {
 	}
 	// **-------------------------------------------------------------------------------
-	public Anchor findAnchorByRef(String graphRef)
+	public Anchor findAnchorByRef(int graphRef)
 	{
 		for (Interaction inter : interactionMap.values())
 		{
@@ -304,10 +311,10 @@ public class Model
 		}
 		return null;
 	}
-	public Interaction findInteractionById(String graphId)
+	public Interaction findInteractionById(int graphId)
 	{
 		for (Interaction inter : interactionMap.values())
-			if (graphId.equals(inter.getGraphId()))
+			if (graphId ==inter.getGraphId())
 					return inter;
 		return null;
 	}

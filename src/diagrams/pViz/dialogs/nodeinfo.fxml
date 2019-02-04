@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.Accordion?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
@@ -10,7 +13,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<Accordion maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8.0.65">
+<Accordion maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
   <panes>
     <TitledPane animated="false" text="Attributes">
       <content>
@@ -67,17 +70,12 @@
                               <Label layoutX="436.0" layoutY="10.0" text="FontWeight" />
                               <TextField layoutX="500.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
                               <Label layoutX="111.0" layoutY="10.0" text="Valign" />
-                              <TextField layoutX="175.0" layoutY="10.0" prefHeight="27.0" prefWidth="39.0" />
+                              <TextField layoutX="175.0" layoutY="10.0" prefHeight="27.0" prefWidth="70.0" />
                            </children>
                         </HBox>
                      </children>
                   </VBox>
                </children></AnchorPane>
-      </content>
-    </TitledPane>
-    <TitledPane animated="false" text="Backpage">
-      <content>
-        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
       </content>
     </TitledPane>
     <TitledPane animated="false" text="References">
@@ -96,6 +94,11 @@
                     </columns>
                   </TableView>
                </children></AnchorPane>
+      </content>
+    </TitledPane>
+    <TitledPane animated="false" text="Backpage">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
       </content>
     </TitledPane>
   </panes>

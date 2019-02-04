@@ -6,8 +6,6 @@ package diagrams.pViz.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import diagrams.pViz.app.Tool;
-import diagrams.pViz.view.DragContext;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.ShapeFactory;
 import diagrams.pViz.view.VNode;
@@ -18,13 +16,9 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.effect.InnerShadow;
-import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import model.stat.RelPosition;
 
@@ -236,7 +230,7 @@ abstract public class ResizableBox extends DraggableBox {
 //    }
 	public void addPortHandlers(Shape port)
 	{		
-		port.addEventHandler(MouseEvent.MOUSE_MOVED, e ->  { 	if (pasteboard.getDragLine() != null) return; 	port.setFill(portFillColor( EState.ACTIVE)); });
+		port.addEventHandler(MouseEvent.MOUSE_MOVED, e ->  { 	port.setFill(portFillColor( EState.ACTIVE)); });
 		port.addEventHandler(MouseEvent.MOUSE_EXITED, e -> {	port.setFill(portFillColor( EState.OFF)); } );
 		port.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {  	port.setFill(portFillColor( EState.STANDBY));  	finishDragLine(port, this); });
 		port.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> { 	startPortDrag(e, (VNode)this, port);} );
@@ -245,7 +239,7 @@ abstract public class ResizableBox extends DraggableBox {
 
 	public void startPortDrag(MouseEvent e, VNode node, Shape port) 
 	{
-		if (pasteboard.getDragLine()!= null)  // finish an ongoing drag
+		if (pasteboard.isDraggingLine())  // finish an ongoing drag
 		{
 			RelPosition pos = port == null ? RelPosition.ZERO : RelPosition.idToRelPosition(port.getId());
 			pasteboard.connectTo(node,pos);
@@ -305,28 +299,34 @@ abstract public class ResizableBox extends DraggableBox {
 	}
 	private List<Shape> ports = new ArrayList<Shape>();
 
-  	public void addPorts()
+	
+	protected void addPorts(boolean isAnchor)
 	{
-		for (int i=0; i< 9 ; i++)
+		if (isAnchor)
+			makePort(Pos.CENTER, 4);
+		else for (int i=0; i< 9 ; i++)
 		{
 			if (i == 4) continue;			//skip center
 			Pos pos = Pos.values()[i];
-			Shape port = null;
-			if (i % 2 == 0) 
-				port = new Rectangle(5,5);
-			else  port = new Circle(5);
-			port.setFill(portFillColor(EState.STANDBY));
-			port.setStroke(Color.MEDIUMAQUAMARINE);
-			addPortHandlers(port);
-			setAlignment(port, pos);
-			getChildren().add(port);
-			ports.add(port);
-			port.setVisible(false);
-			port.setId(""+(i+1));
+			makePort(pos, i);
 		}
 	}
 	
-	public void showPorts(boolean vis)
+  	private void makePort(Pos pos, int nodeid)
+  	{
+		Shape port = null;
+		port = new Circle(7);
+		port.setFill(portFillColor(EState.STANDBY));
+		port.setStroke(Color.MEDIUMAQUAMARINE);
+		addPortHandlers(port);
+		setAlignment(port, pos);
+		getChildren().add(port);
+		port.setVisible(false);
+		port.setId(""+nodeid);
+		ports.add(port);
+  	}
+	
+  	public void showPorts(boolean vis)
 	{
 		if (getWidth() < 40 || getHeight() < 18)
 			vis = false;
@@ -354,7 +354,7 @@ abstract public class ResizableBox extends DraggableBox {
 	public Color portFillColor(EState state)
 	{
 		if (state == EState.OFF)		return  Color.WHITE;
-		if (state == EState.STANDBY)	return Color.YELLOW;
+		if (state == EState.STANDBY)	return Color.WHITE;
 		if (state == EState.FILLED)		return Color.BLACK;
 		if (state == EState.MISMATCH)	return  Color.RED;
 		return Color.GREEN;
@@ -373,7 +373,7 @@ abstract public class ResizableBox extends DraggableBox {
      *
      * @param event the latest {@link MouseEvent} for the mouse entering or moving inside the rectangle
      */
-	static InnerShadow effect = new InnerShadow();
+//	static InnerShadow effect = new InnerShadow();
 	
 	   protected void processMousePosition(final MouseEvent event) {
 

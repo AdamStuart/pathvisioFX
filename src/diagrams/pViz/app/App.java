@@ -33,6 +33,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Pair;
 import model.bio.GeneSetRecord;
@@ -121,6 +122,7 @@ import util.FileUtil;
 		}
 	}
 	
+    static final String STYLE = "styles.css";
 	public void doNew(Stage stage, org.w3c.dom.Document doc)
 	{
 		if (stage == null)
@@ -144,7 +146,11 @@ import util.FileUtil;
 		    	Controller c = (Controller) fxmlLoader.getController();
 		    	c.addXMLDoc(doc);	
 		    }
-		    stage.setScene(new Scene(appPane, 1200, 1000));
+		    int screenWidth = (int) Screen.getPrimary().getBounds().getWidth();
+		    int screenHeight = (int) Screen.getPrimary().getBounds().getHeight();
+		    Scene scene  = new Scene(appPane, screenWidth, screenHeight);
+			scene.getStylesheets().add(getInstance().getClass().getResource(STYLE).toExternalForm());
+		    stage.setScene(scene);			
 		    registerWindow(stage);
 		    stage.show();
 		}

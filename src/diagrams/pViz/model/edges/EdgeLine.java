@@ -4,10 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diagrams.pViz.app.Tool;
-import diagrams.pViz.gpml.Anchor;
 import diagrams.pViz.gpml.GPMLPoint;
 import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.view.Arrow;
+import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
 import gui.Backgrounds;
 import javafx.collections.ObservableMap;
@@ -24,6 +24,7 @@ import javafx.scene.shape.Polyline;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.scene.text.Font;
+import model.stat.RelPosition;
 import util.LineUtil;
 
 /* 
@@ -60,10 +61,12 @@ public class EdgeLine extends Group {
 //		this(edgeType, start);
 ////		arrowType = arrow;
 //	}
-	public EdgeLine(EdgeType edgeType, Point2D start)
+	private Pasteboard canvas;
+	public EdgeLine(EdgeType edgeType, Point2D start, Pasteboard board)
 	
 	{
 	   this();
+	   canvas = board;
 //	   srcX = startX;
 //	   	srcY = startY;
 //	   	targX = endX;
@@ -78,7 +81,8 @@ public class EdgeLine extends Group {
 		setMouseTransparent(true);
 	}
 
-	private Tool getTool() { return  interaction.getModel().getController().getPasteboard().getTool(); }
+	private Tool getTool() { return  canvas.getTool(); }
+	Point2D hitPt = null;
 	
 	public EdgeLine(Edge inter, List<GPMLPoint> pts, List<Anchor> anchorList) 
 	{
@@ -86,8 +90,9 @@ public class EdgeLine extends Group {
 		if (pts != null) 
 			points.addAll(pts);
 		interaction = (Interaction) inter;
-//		if (inter != null)
-//			System.out.println("Interactino id = "+ interaction.get("GraphId"));
+		if (inter != null)
+			   canvas = inter.getModel().getController().getPasteboard();
+
 		if (anchorList != null)
 			anchors.addAll(anchorList);
 //		for (Anchor anchor : anchors)
@@ -98,32 +103,47 @@ public class EdgeLine extends Group {
 		setMouseTransparent(false);
 		addEventHandler(MouseEvent.MOUSE_ENTERED, e -> 
 		{ 	
-			boolean hiliteEdge = true;
+			boolean hiliteEdge = canvas.isDraggingLine();
 			Tool tool = getTool();
-			hiliteEdge = tool.isInteraction() && tool.connectsToEdges();
+			hiliteEdge &= tool.connectsToEdges();
 			if (line != null && hiliteEdge)
 			{
-				line.setStrokeWidth(8);
-				line.setStroke(Color.RED);
+				line.getStyleClass().add("fatLine");
+				line.getStyleClass().remove("thinLine");
+				hitPt = new Point2D(e.getX(), e.getY());
 			}
 		} );
 		addEventHandler(MouseEvent.MOUSE_MOVED, e -> 
 		{ 	
-			boolean hiliteEdge = true;
+			boolean hiliteEdge = canvas.isDraggingLine();
 			Tool tool = getTool();
-			hiliteEdge = tool.isInteraction() && tool.connectsToEdges();
+			hiliteEdge &= tool.connectsToEdges();
 			if (line != null && hiliteEdge)
 			{
-				line.setStroke(Color.RED);
-				line.setStrokeWidth(8);
+				line.getStyleClass().add("fatLine");
+				line.getStyleClass().remove("thinLine");
+				hitPt = new Point2D(e.getX(), e.getY());
 			}
 	} );
 		addEventHandler(MouseEvent.MOUSE_EXITED, e -> 
 		{ 	
 			if (line != null)
-				line.setStroke(interaction.getColor());
-			line.setStrokeWidth(interaction.getStrokeWidth());
+			{
+				line.getStyleClass().add("thinLine");
+				line.getStyleClass().remove("fatLine");
+				hitPt = null;
+		}
 		});
+		
+		addEventHandler(MouseEvent.MOUSE_PRESSED, e -> 
+		{ 	
+			if (hitPt != null)
+			{
+				System.out.println("addAnchor");
+				Anchor anchor = interaction.addAnchorAt(hitPt);
+			}
+		});
+		
 	}
 
 	 //----------------------------------------------------------------------
@@ -258,14 +278,14 @@ private void addCenterPointListeners() {
 	private List<GPMLPoint> points = new ArrayList<GPMLPoint>();
 	private List<Anchor> anchors = new ArrayList<Anchor>();
  
-	public Anchor findAnchor(String graphRef)
+	public Anchor findAnchor(int graphRef)
     {
-	  if (graphRef == null) return null;
+	  if (graphRef <= 0) return null;
 //	  System.out.println("searching anchors " + getAnchors().size() + " " + graphRef);
 	  for (Anchor a : getAnchors())
 	  {
 //		  System.out.println("anchor " + a.getGraphId());
-		  if (graphRef.equals(a.getGraphId()))
+		  if (graphRef == a.getGraphId())
 			   return a;
 	  }
 	   return null;
@@ -338,7 +358,7 @@ private void addCenterPointListeners() {
 	
 	public List<Anchor> getAnchors() 	{ 	return anchors;	}
 	public void addAnchor(Anchor a) 	{ 	anchors.add(a);	}
-	public void addAnchors(List<Anchor> a) 	{ 	if (a != null) anchors.addAll(a);	}
+//	public void addAnchors(List<Anchor> a) 	{ 	if (a != null) anchors.addAll(a);	}
 	public void removeAnchor(Anchor a) 	{ 	anchors.remove(a);	}
 
 	private boolean selected;
@@ -595,9 +615,8 @@ private void addCenterPointListeners() {
 		if (curveGroup != null) 	getChildren().remove(curveGroup);
 		
 		if (line != null) line.setVisible(false);
-		int nPoints = points.size();
 		
-		SegmentList segments = new SegmentList(interaction.getModel(), points);
+		SegmentList segments = new SegmentList(canvas.getModel(), points);
 		curveGroup  = segments.makeCurveGroup(interaction, strokeDashArray);
 		setArrowPt(lastPoint());
 		getChildren().add(curveGroup);
@@ -723,7 +742,7 @@ private void addCenterPointListeners() {
 			Line line = new Line(mid.getX(), mid.getY(), last.getX(), last.getY());
 			line.setStrokeWidth(6);
 			arrowhead = new Arrow(line, 1.0f, color, arrowShape);
-			arrowhead.setFill(color);
+//			arrowhead.setFill(color);
 		}
 		arrowhead.setTranslateX(getArrowX());
 		arrowhead.setTranslateY(getArrowY());
