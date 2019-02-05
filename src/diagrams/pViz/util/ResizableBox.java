@@ -21,6 +21,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import model.stat.RelPosition;
+import util.StringUtil;
 
 /**
  * A draggable, resizable box that can display children.
@@ -239,9 +240,11 @@ abstract public class ResizableBox extends DraggableBox {
 
 	public void startPortDrag(MouseEvent e, VNode node, Shape port) 
 	{
+		String portId = port.getId();
+		RelPosition pos = RelPosition.idToRelPosition(portId);
 		if (pasteboard.isDraggingLine())  // finish an ongoing drag
 		{
-			RelPosition pos = port == null ? RelPosition.ZERO : RelPosition.idToRelPosition(port.getId());
+			pos = port == null ? RelPosition.ZERO : RelPosition.idToRelPosition(port.getId());
 			pasteboard.connectTo(node,pos);
 			port.setFill(portFillColor(EState.FILLED)); 
 			e.consume();
@@ -251,17 +254,36 @@ abstract public class ResizableBox extends DraggableBox {
 //		if (pasteboard.getTool() == Tool.Polyline)
 		if (pasteboard.getTool().isInteraction())
 		{
+			Pos posit = RelPosition.idToPosition(portId);
 			port.setFill(Color.AQUAMARINE); 
-			String id = port.getId();
-			Pos pos = RelPosition.idToPosition(id);
-			pasteboard.startDragLine(node, pos, node, pos, node.getLayoutX(), node.getLayoutY());
+			pasteboard.startDragLine(node, posit, node, posit, node.getLayoutX(), node.getLayoutY());
 		}
 		else if (pasteboard.getTool().isArrow())
-			handleResize(e);
+		{
+			double x = e.getX() + port.getLayoutX();		// convert port to stack coordinates
+			double y = e.getY() + port.getLayoutY();
+			int j = idToInt(portId);
+			lastMouseRegion = regionLookup(j);
+//			handleResize(e);
+			handleResize(x, y);
+	}
 		
 		e.consume();
 	}
 	
+	private RectangleMouseRegion regionLookup(int j) {
+		if (j < 0 || j > 8) return null;
+		
+		return idToMouseRegion(j);
+	}
+
+	int idToInt(String id)
+	{
+		if (StringUtil.isInteger(id))
+			return StringUtil.toInteger(id);
+		return -1;
+	}
+
 	
 	abstract public void finishDragLine(Node port, ResizableBox target);
 	abstract public void finishDragLine(MouseEvent event);	
@@ -270,7 +292,10 @@ abstract public class ResizableBox extends DraggableBox {
 	public void portDrag(MouseEvent e, VNode node, Shape port) 
 	{
 		if (pasteboard.getTool().isArrow())
+		{
+			System.out.println(String.format("%.2f, %.2f" , e.getX(), e.getY()));
 			handleResize(e);
+		}
 		e.consume();
 	}
 	private boolean resizing = false;
@@ -283,13 +308,13 @@ abstract public class ResizableBox extends DraggableBox {
 			resizing = true;
 		    lastWidth = getWidth();
 		    lastHeight = getHeight();
-		    lastMouseRegion = getMouseRegion(event.getX(), event.getY());
+		    lastMouseRegion = getMouseRegion(event);
 			handleResize(event.getX(), event.getY());
 			ShapeFactory.resizeFigureToNode((VNode)this);
 		}
 	}
 
-	public void setResize(boolean enable)
+	protected void setResize(boolean enable)
 	{
 		setResizeEnabledNorth(enable);
 		setResizeEnabledEast(enable);
@@ -334,7 +359,7 @@ abstract public class ResizableBox extends DraggableBox {
 			p.setVisible(vis);
 	}
 	
-	public boolean ptInCorner(double x, double y) {
+  	public boolean ptInCorner(double x, double y) {
 		
 		boolean xOnEdge = near(x, getLayoutX()) || near(x, getLayoutX() + getWidth());
 		boolean yOnEdge = near(y, getLayoutY()) || near(y, getLayoutY() + getHeight());
@@ -353,10 +378,10 @@ abstract public class ResizableBox extends DraggableBox {
 	
 	public Color portFillColor(EState state)
 	{
-		if (state == EState.OFF)		return  Color.WHITE;
+		if (state == EState.OFF)		return Color.WHITE;
 		if (state == EState.STANDBY)	return Color.WHITE;
 		if (state == EState.FILLED)		return Color.BLACK;
-		if (state == EState.MISMATCH)	return  Color.RED;
+		if (state == EState.MISMATCH)	return Color.RED;
 		return Color.GREEN;
 	}
 //
@@ -570,6 +595,14 @@ abstract public class ResizableBox extends DraggableBox {
         setWidth(newWidth);
     }
 
+    protected RectangleMouseRegion getMouseRegion(MouseEvent ev) {
+        final double x = ev.getX();
+        final double y = ev.getY();
+        RectangleMouseRegion region = getMouseRegion(x, y);
+        System.out.println(region.toString()+ "");
+        return region;
+    }
+
     /**
      * Gets the particular sub-region of the rectangle that the given cursor position is in.
      *
@@ -578,13 +611,14 @@ abstract public class ResizableBox extends DraggableBox {
      *
      * @return the {@link RectangleMouseRegion} that the cursor is located in
      */
+    static int MARGIN = 10;
     protected RectangleMouseRegion getMouseRegion(final double x, final double y) {
 
-        final double width = getWidth();
+       final double width = getWidth();
         final double height = getHeight();
 //        System.out.println(String.format("%.1f, %.1f", x, y));
-        if (x < -10 || y < -10)				return RectangleMouseRegion.OUTSIDE;
-        if (x > width + 20 || y > height + 20) 	
+        if (x < -MARGIN || y < -MARGIN)				return RectangleMouseRegion.OUTSIDE;
+        if (x > width + 2 * MARGIN || y > height + 2 * MARGIN) 	
         	return RectangleMouseRegion.OUTSIDE;
  
         final boolean isNorth = y < resizeBorderTolerance;
@@ -643,6 +677,22 @@ abstract public class ResizableBox extends DraggableBox {
         NORTH, NORTHEAST, EAST, SOUTHEAST, SOUTH, SOUTHWEST, WEST, NORTHWEST, INSIDE, OUTSIDE;
     }
 
+    public static RectangleMouseRegion idToMouseRegion(int id)
+    {
+    	switch (id)
+    	{
+	    	case 0:  return RectangleMouseRegion.NORTHWEST;
+	    	case 1:  return RectangleMouseRegion.NORTH;
+	    	case 2:  return RectangleMouseRegion.NORTHEAST;
+	    	case 3:  return RectangleMouseRegion.WEST;
+	    	case 4:  return RectangleMouseRegion.INSIDE;
+	    	case 5:  return RectangleMouseRegion.EAST; 
+	    	case 6:  return RectangleMouseRegion.SOUTHWEST;
+	    	case 7:  return RectangleMouseRegion.SOUTH;
+	    	case 8:  return RectangleMouseRegion.SOUTHEAST;
+	    	default: return RectangleMouseRegion.OUTSIDE;
+    	}
+    }
 	// **-------------------------------------------------------------------------------
 
 //	public double getCenterX() {		return modelNode().getDouble("CenterX");	}

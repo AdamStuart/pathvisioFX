@@ -17,7 +17,9 @@
 }
 
 .datanode {
-  -fx-background-color: gray;
+  -fx-border-width: 3;
+  -fx-background-color: white;
+	-fx-border-color: green; 	
 }
 .text-area .scroll-pane {
     -fx-background-color: rgba(53,89,119,0.4);
@@ -42,7 +44,7 @@
 }
 .thinLine {
 	-fx-stroke-width: 1px; 
-	-fx-stroke: black; 	
+	-fx-stroke: green; 	
 }
 
 .custom-dashed-border {
@@ -55,7 +57,6 @@
   display: block;
   clear: both;
   background: white;
-  outline: 5px solid gray;
   height: 10px;
   width: 10px;
 }

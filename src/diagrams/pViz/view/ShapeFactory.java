@@ -110,7 +110,8 @@ public class ShapeFactory {
 		stack.setId("" + id);
 		stack.getProperties().putAll(modelNode);
 //		stack.getStyleSheets().add("button1");
-		stack.getStyleClass().add("datanode");
+		newShape.getStyleClass().add("datanode");
+		newShape.getStyleClass().add("custom-dashed-border");
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, modelNode);
 	
