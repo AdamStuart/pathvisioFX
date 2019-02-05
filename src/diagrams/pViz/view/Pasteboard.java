@@ -324,7 +324,7 @@ public class Pasteboard extends PanningCanvas
 	public VNode getPolyDragSource() { return dragPolyLineSource;	}
 	public Pos getPolyDragSourcePosition () { return dragPolyLinePosition;	}
 
-	static boolean verbose = false;
+	static boolean verbose = true;
 
 //
 	
@@ -562,17 +562,19 @@ public class Pasteboard extends PanningCanvas
 
 	//-----------------------------------------------------------------------------------------------------------
 	private final class MouseDraggedHandler implements EventHandler<MouseEvent> {
+		private static final double LEFT_MARGIN = 10;
+		private static final double TOP_MARGIN = 10;
+
 		@Override public void handle(final MouseEvent event) {
 
 			if (isMousePanEvent(event))		//AM Panning is handled by the ScrollPane
 				return;
 			
-			
 			if (verbose)	
 				System.out.println("Pasteboard.MouseDraggedHandler, activeShape: " + activeStack);
 
 			// store current cursor position
-			curPoint = new Point2D(event.getX(), event.getY());
+			curPoint = new Point2D(Math.max(LEFT_MARGIN, event.getX()), Math.max(TOP_MARGIN, event.getY()));
 			if (startPoint == null) 
 				startPoint = curPoint;
 			if (getTool() == Tool.Arrow)	
@@ -600,7 +602,7 @@ public class Pasteboard extends PanningCanvas
 			event.consume();
 		}
 	}
-	private void removeMarquee()	{	controller.remove(marquee);  }
+	private void removeMarquee()	{	controller.remove(marquee);  setActiveStack(null); }
 	//---------------------------------------------------------------------------
 	private final class MouseClickHandler implements EventHandler<MouseEvent> 
 	{
