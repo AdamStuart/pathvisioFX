@@ -20,7 +20,7 @@
                   <ToggleButton fx:id="text" layoutX="46.0" layoutY="10.0" mnemonicParsing="false" onAction="#setText" text="T" />
                </children>
             </HBox>
-            <TitledPane id="Components" alignment="TOP_LEFT" text="Components">
+            <TitledPane id="Components" alignment="TOP_LEFT" text="DataNodes">
                <content>
                         <VBox>
                            <children>
@@ -53,102 +53,7 @@
                         </VBox>
                </content>
             </TitledPane>
-            <TitledPane id="Groups" text="Groups">
-               <content>
-                        <VBox>
-                           <children>
-                              <HBox id="Cell &amp; Nucleus" alignment="CENTER">
-                                 <children>
-                                    <Button fx:id="cell" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                    <Button fx:id="nucleus" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                 </children>
-                              </HBox>
-                              <HBox alignment="CENTER">
-                                 <children>
-                                    <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                    <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                    <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                 </children>
-                              </HBox>
-                              <HBox>
-                                 <children>
-                                    <Button fx:id="compound" mnemonicParsing="false" onDragDetected="#dragControl" text="Compound">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                              <Button fx:id="complex" mnemonicParsing="false" onDragDetected="#dragControl" text="Complex">
-                                 <font>
-                                    <Font size="9.0" />
-                                 </font>
-                              </Button>
-                                 </children>
-                              </HBox>
-                        <HBox layoutX="20.0" layoutY="54.0">
-                           <children>
-                                    <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                              <Button fx:id="compartment" mnemonicParsing="false" onDragDetected="#dragControl" text="Compartment">
-                                 <font>
-                                    <Font size="9.0" />
-                                 </font>
-                              </Button>
-                                    <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                           </children>
-                        </HBox>
-                              <HBox alignment="BOTTOM_CENTER" prefHeight="32.0">
-                                 <children>
-                                    <Button fx:id="group" mnemonicParsing="false" onAction="#makeGroup" onDragDetected="#dragControl" text="Group">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                    <Button fx:id="editGroup" mnemonicParsing="false" onAction="#editGroup" onDragDetected="#dragControl" text="Edit">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                    <Button fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" onDragDetected="#dragControl" text="Ungroup">
-                                       <font>
-                                          <Font size="9.0" />
-                                       </font>
-                                    </Button>
-                                 </children>
-                              </HBox>
-                           </children>
-                        </VBox>
-               </content>
-            </TitledPane>
-         </children>
-      </VBox>
-      <TitledPane id="Interactions" alignment="TOP_LEFT" text="Interactions">
+            <TitledPane id="Interactions" alignment="TOP_LEFT" text="Relationships">
          <content>
             <VBox fillWidth="false" spacing="28.0">
                <children>
@@ -284,7 +189,102 @@
             </VBox>
          </content>
       </TitledPane>
-      <HBox>
+            <TitledPane id="Groups" text="Graphical Elements">
+               <content>
+                        <VBox>
+                           <children>
+                              <HBox id="Cell &amp; Nucleus" alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="cell" mnemonicParsing="false" onDragDetected="#dragControl" text="Cell">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="nucleus" mnemonicParsing="false" onDragDetected="#dragControl" text="Nucleus">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                              <HBox alignment="CENTER">
+                                 <children>
+                                    <Button fx:id="mitochondria" mnemonicParsing="false" onDragDetected="#dragControl" text="Mitochondria">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="er" mnemonicParsing="false" onDragDetected="#dragControl" text="ER">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="sr" mnemonicParsing="false" onDragDetected="#dragControl" text="SR">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                              <HBox>
+                                 <children>
+                                    <Button fx:id="compound" mnemonicParsing="false" onDragDetected="#dragControl" text="Compound">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                              <Button fx:id="complex" mnemonicParsing="false" onDragDetected="#dragControl" text="Complex">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                                 </children>
+                              </HBox>
+                        <HBox layoutX="20.0" layoutY="54.0">
+                           <children>
+                                    <Button fx:id="brace" mnemonicParsing="false" onDragDetected="#dragControl" text="{">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                              <Button fx:id="compartment" mnemonicParsing="false" onDragDetected="#dragControl" text="Compartment">
+                                 <font>
+                                    <Font size="9.0" />
+                                 </font>
+                              </Button>
+                                    <Button fx:id="golgi" mnemonicParsing="false" onDragDetected="#dragControl" text="Golgi">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                           </children>
+                        </HBox>
+                              <HBox alignment="BOTTOM_CENTER" prefHeight="32.0">
+                                 <children>
+                                    <Button fx:id="group" mnemonicParsing="false" onAction="#makeGroup" onDragDetected="#dragControl" text="Group">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="editGroup" mnemonicParsing="false" onAction="#editGroup" onDragDetected="#dragControl" text="Edit">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                    <Button fx:id="ungroup" mnemonicParsing="false" onAction="#ungroup" onDragDetected="#dragControl" text="Ungroup">
+                                       <font>
+                                          <Font size="9.0" />
+                                       </font>
+                                    </Button>
+                                 </children>
+                              </HBox>
+                           </children>
+                        </VBox>
+               </content>
+            </TitledPane>
+         </children>
+      </VBox>
+       <HBox>
          <children>
             <Button fx:id="zoomin" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomIn" prefHeight="30.0" prefWidth="30.0" text="&lt;" />
             <Button fx:id="zoomout" maxHeight="30.0" maxWidth="30.0" mnemonicParsing="false" onAction="#zoomOut" prefHeight="30.0" prefWidth="30.0" text="&gt;" />
