@@ -8,8 +8,8 @@ public enum Tool {
 
 	Arrow,
 	Rectangle, RoundedRectangle, Circle, Oval, Arc, Polygon, Triangle, Pentagon, Hexagon, Octagon, Polyline, Line, GraphicalLine, Brace, Shape1,   // Shapes
-	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent,
-	Protein, Pathway, GeneProduct, Metabolite, Rna,
+	Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent, ComplexComponent, Compartment, Anchor,
+	Protein, Pathway, GeneProduct, Metabolite, RNA,
 	Browser, Text, Table, Image, SVGPath, Media,		// Controls
 	ArrowInteracts, ArrowConverts, ArrowInhibits, ArrowCatalyzes, ArrowStimulates, ArrowBinds, 		// Interactions
 	
@@ -59,7 +59,7 @@ public enum Tool {
 	static String[] tags = { "Mitochondria", "Protein", "Pathway", "GeneProduct", "Metabolite", "Rna", "ER", "SR", "Golgi"};
 	static Tool[] connectors =  { Polyline, Line };
 	static Tool[] shapes =  { Rectangle, RoundedRectangle, Circle, Oval, Polygon,Triangle,Pentagon,Hexagon, Polyline, Line, GraphicalLine, Brace, Shape1 };
-	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, Rna };
+	static Tool[] components =  { Protein, Pathway, GeneProduct, Metabolite, RNA };
 	static Tool[] cellShapes =  { Golgi, Mitochondria, SR, ER, Cell, Nucleus, Organelle, GroupComponent };
 	static Tool[] controls = { Browser, Text, Table, Image, SVGPath, Media};
 	static Tool[] interactions = { ArrowInteracts, ArrowConverts, ArrowInhibits, ArrowCatalyzes, ArrowStimulates, ArrowBinds};

@@ -16,6 +16,7 @@ import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.GeneModel;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.Reference;
+import diagrams.pViz.model.edges.Anchor;
 import diagrams.pViz.model.edges.Edge;
 import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.EdgeType;
@@ -36,7 +37,6 @@ import diagrams.pViz.view.LayerRecord;
 import diagrams.pViz.view.PaletteController;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.VNode;
-import gui.Action;
 import gui.Action.ActionType;
 import gui.UndoStack;
 import icon.FontAwesomeIcons;
@@ -57,7 +57,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
@@ -100,7 +99,7 @@ public class Controller implements Initializable, IController
 	public Model getDrawModel()   		{ 		return model;  }
 	public Model getModel() 			{		return model;	}	
 	private GeneModel geneModel;
-	public GeneModel getGeneModel()   		{ 		return geneModel;  }
+	public GeneModel getGeneModel()   	{ 		return geneModel;  }
 	private Pasteboard pasteboard;
 	public Pasteboard getPasteboard()   { 		return pasteboard;  }
 	private UndoStack undoStack;
@@ -716,7 +715,16 @@ public class Controller implements Initializable, IController
 		DataNode data = vNode.modelNode();
 		List<Interaction> edges = model.findInteractionsByNode(data);
 		for (Interaction edge : edges)
+		{
 			edge.connect();
+			for (Anchor a : edge.getAnchors())
+			{
+				a.resetPosition(edge);
+				List<Interaction> sources = model.findInteractionsByNode(a);
+				for (Interaction i : sources)
+					i.connect();
+			}
+		}
 	}
 	public void redrawAllEdges() {
 	for (Interaction edge : model.getEdges())

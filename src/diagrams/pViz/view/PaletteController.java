@@ -230,7 +230,7 @@ public class PaletteController implements Initializable {
 	@FXML private void setGene()		{ setTool(Tool.GeneProduct);	}
 	@FXML private void setMetabolite()	{ setTool(Tool.Metabolite);	}
 	@FXML private void setProtein()		{ setTool(Tool.Protein);	}
-	@FXML private void setRNA()			{ setTool(Tool.Rna);	}
+	@FXML private void setRNA()			{ setTool(Tool.RNA);	}
 	@FXML private void setPathway()		{ setTool(Tool.Pathway);	}
 
 	// **-------------------------------------------------------------------------------
@@ -273,6 +273,8 @@ public class PaletteController implements Initializable {
 	@FXML private void setElbowed()		{		activeLineType = "Elbow";	}
 	@FXML private void setSegmented()	{		activeLineType = "Segmented";	}
 	public EdgeType getCurrentLineBend() { return EdgeType.lookup(activeLineType);		}
+
+	// TODO
 	@FXML private void setArrow1()		{		activeArrowType = ArrowType.interacts;	setTool(Tool.ArrowInteracts);}	// TODO get type from id
 	@FXML private void setArrow2()		{		activeArrowType = ArrowType.mimconversion;	setTool(Tool.ArrowConverts);}
 	@FXML private void setArrow3()		{		activeArrowType = ArrowType.miminhibition;	setTool(Tool.ArrowInhibits);}
@@ -282,9 +284,9 @@ public class PaletteController implements Initializable {
 	@FXML private VBox allInteractions;
 
 
-	@FXML private void makeGroup()		{ controller.group();  }
-	@FXML private void ungroup()	{ controller.ungroup();  }
-	@FXML private void editGroup()	{ controller.editGroup();  }
+	@FXML private void makeGroup()		{ 		controller.group();  }
+	@FXML private void ungroup()		{ 		controller.ungroup();  }
+	@FXML private void editGroup()		{ 		controller.editGroup();  }
 	
 	
 	//-------------------------------------------------------------

@@ -128,12 +128,10 @@ public class Interaction extends Edge implements Comparable<Interaction>
 			b.append(String.format("<Xref Database=\"%s\" ID=\"%s\" />\n", db, dbid));
 		b.append("</Interaction>\n");
 		return b.toString();
-   }
+	}
    
-   public void toCX(CXObject cx)
-   {
-		cx.addEdge(this);
-   }
+	public void toCX(CXObject cx)   	{	cx.addEdge(this);   }
+	public MIM getInteractionType() {	return MIM.lookup(getInterType());	}
 
 	public boolean isWellConnected() {
 		return getStartNode() != null && getEndNode() != null;
@@ -165,7 +163,4 @@ public class Interaction extends Edge implements Comparable<Interaction>
 		setName("--" + arrow + " " + targetName);
 	}
 	
-	public MIM getInteractionType() {
-		return MIM.lookup(getInterType());
-	}
 }

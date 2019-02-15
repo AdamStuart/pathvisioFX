@@ -1,8 +1,11 @@
 package diagrams.pViz.model.edges;
 
+import java.util.List;
+
 import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.view.VNodeGestures;
 import javafx.geometry.Point2D;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -17,23 +20,23 @@ public class Anchor extends DataNode {		// extends DataNode
 	 */
 	
 	private static final long serialVersionUID = 1L;
-	private Circle myShape;
+//	private Circle myShape;
 	private Interaction myInteraction;
-//	private String interId;
 
 	
-	public Interaction getInteraction() 				{  return myInteraction;	}
+	public boolean isAnchor() 					{		return true;}
+	public Interaction getInteraction() 		{  	return myInteraction;	}
 	public void setInteraction(Edge e) 		
 	{  
 		myInteraction = (Interaction) e;  
-		setInteractionId (myInteraction == null ? 0 : myInteraction.getInteger("GraphId"));	
+		setInteractionId (e == null ? -1 : e.getId());	
 	}
-	public int getInteractionId() 				{  return  getInteger("InteractionId");	}
-	public void setInteractionId(int e) 			{  putInteger("InteractionId", e);	}
+	public int getInteractionId() 					{  	return  getInteger("InteractionId");	}
+	public void setInteractionId(int e) 			{  	putInteger("InteractionId", e);	}
 //	
-	public double getAnchorPosition()				{  return getDouble("Position");	}
+	public double getAnchorPosition()				{  	return getDouble("Position");	}
 	public void setPosition(double d)				{   putDouble("Position", d);	}
-	public Shape getShape()							{	return myShape;}
+	//=========================================================================
 
 	public Anchor(org.w3c.dom.Node node, Model m, int interactionId)
 	{
@@ -43,39 +46,21 @@ public class Anchor extends DataNode {		// extends DataNode
 	public Anchor(AttributeMap attr, Model m, int interactionId)
 	{
 		super(attr, m);
-		myShape = new Circle();
-		myShape.setRadius(4);
-		myShape.visibleProperty().bind(m.getController().getInspector().anchorVisibleProperty());
-		myShape.setFill(Color.BISQUE);
-		myShape.setStroke(Color.DARKOLIVEGREEN);
+//		myShape = new Circle();
+//		myShape.setRadius(4);
+//		myShape.visibleProperty().bind(m.getController().getInspector().anchorVisibleProperty());
+//		myShape.setFill(Color.BISQUE);
+//		myShape.setStroke(Color.DARKOLIVEGREEN);
+//		new VNodeGestures(stack, m.getPasteboard());
+		getStack().getFigure().visibleProperty().bind(m.getController().getInspector().anchorVisibleProperty());
 		setName(String.format("Anchor @ %.2f", getAnchorPosition()));
-		setInteractionId(interactionId);
-	}
-	
-	public String toString()
-	{
-		String type =  getType();
-		if (type == null) type = get("Type") ;		
-		if (type == null) type = "Unspecified";		
-		return String.format("Anchor of type=\"%s\" />", type);  // On Edge from %s to %s   , getStartName(), getEndName()
-	}
-	
-	public String toGPML()
-	{
-		String shape = get("Shape");
-		if (shape == null) shape = "Oval";
-		return String.format("<Anchor Position=\"%.2f\" Shape=\"%s\" GraphId=\"%s\" />\n", getAnchorPosition(), shape, getGraphId());
-	}
-	
-	public void toCX(CXObject cx)
-	{
-		String shape = get("Shape");
-		cx.addAnchor(this);
+		setInteraction(m.findInteractionById(interactionId));
 	}
 
-//	public void setAnchorPosition(Interaction i) {		resetPosition(i);	}
+	//=========================================================================
 	public void resetPosition(Edge caller)
 	{
+		Shape myShape = getStack().getFigure();
 		double position = getAnchorPosition();
 		if (Double.isNaN(position))
 			position = 0.5;
@@ -91,9 +76,33 @@ public class Anchor extends DataNode {		// extends DataNode
 			Circle c = ((Circle)(myShape));
 			c.setCenterX(pt.getX());
 			c.setCenterY(pt.getY());
+			putDouble("CenterX", pt.getX());
+			putDouble("CenterY", pt.getY());
+			putDouble("X", pt.getX()-(c.getRadius()/2));
+			putDouble("Y", pt.getY()-(c.getRadius()/2));
 		}
-		Interaction e  = getInteraction();
-		if (e != null && e != caller)
-			e.connect();
+		List< Interaction>  links = model.findInteractionsByNode(this);
+		for (Interaction e : links)
+			if (e != caller)
+				e.connect();
 	}
+	
+//=========================================================================
+	public String toString()
+	{
+		String type =  getType();
+		if (type == null) type = get("Type") ;		
+		if (type == null) type = "Unspecified";		
+		return String.format("Anchor of type=\"%s\" />", type);  // On Edge from %s to %s   , getStartName(), getEndName()
+	}
+	
+	public String toGPML()
+	{
+		String shape = get("Shape");
+		if (shape == null) shape = "Oval";
+		return String.format("<Anchor Position=\"%.2f\" Shape=\"%s\" GraphId=\"%s\" />\n", getAnchorPosition(), shape, getGraphId());
+	}
+	
+	public void toCX(CXObject cx)	{		cx.addAnchor(this);	}
+
 }

@@ -167,6 +167,7 @@ public class Pasteboard extends PanningCanvas
 				{
 					if (FileUtil.isCDT(f))				controller.open(f);				// CDT is a genelist format
 					else if (FileUtil.isGPML(f))		controller.open(f);				// gpml files are parsed 
+					else if (FileUtil.isCX(f))			controller.open(f);				// gpml files are parsed 
 					else if (FileUtil.isCSS(f))			controller.addStylesheet(f);	// css files are added to the Scene
 					else if (FileUtil.isDataFile(f))	controller.assignDataFile(f);	// data files are applied to the nodes
 					else if (FileUtil.isTextFile(f))	controller.addGeneSet(f, dropPt);	
@@ -210,8 +211,8 @@ public class Pasteboard extends PanningCanvas
 	}
 	public void addNodeAt(String text, Point2D pt) {
 			
-		double w = 80;
-		double h  = 30;
+		double w = 80;		// TODO get from style sheet 
+		double h = 30;
 
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putDouble("X", pt.getX());
@@ -232,7 +233,7 @@ public class Pasteboard extends PanningCanvas
 
 	public void addShapeAt(String text, Point2D pt) {
 		
-		double w = 280;
+		double w = 280;		// TODO get from style sheet 
 		double h  = 300;
 		AttributeMap attrMap = new AttributeMap();
 		attrMap.putDouble("X", pt.getX());
@@ -351,9 +352,7 @@ public class Pasteboard extends PanningCanvas
 //		dragLine.setArrowType(arrow);
 		dragLineSource = source;
 		dragLinePosition = srcPosition;
-
-		dragLine.setStroke(Color.AQUA);
-		dragLine.setStrokeWidth(2);
+		dragLine.getStyleClass().add("dragLine");
 		dragLine.setArrowhead(arrow);
 		add(dragLine); 
 	}
@@ -401,6 +400,7 @@ public class Pasteboard extends PanningCanvas
 			controller.addInteraction(i);
 			controller.redrawMyEdges((VNode) target);
 			controller.modelChanged();
+			controller.getPasteboard().resetTool();
 		}
 	}
 	//---------------------------------------------------------------------------

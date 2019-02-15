@@ -84,6 +84,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		dataNode = modelNode;
 		dataNode.setStack(this);
 		pasteboard = p;
+		boolean isAnchor = modelNode.isAnchor();
 		gestures = new VNodeGestures(this, pasteboard);
 		setOnMouseDragged(gestures.getOnMouseDraggedEventHandler());
 		setOnMousePressed(gestures.getOnMousePressedEventHandler());
@@ -99,19 +100,19 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			modelNode.put("TextLabel", putIdInName ?  id : "");
 		}
         readGeometry(modelNode, this);
-		
-		String fontWeight = dataNode.get("FontWeight");
-		String fontSize = dataNode.get("FontSize");
-		String vAlign = dataNode.get("Valign");
-		addText(title, fontWeight, fontSize, vAlign);
-		
+        if (!StringUtil.isEmpty(title))
+        {
+        	String fontWeight = dataNode.get("FontWeight");
+        	String fontSize = dataNode.get("FontSize");
+        	String vAlign = dataNode.get("Valign");
+			addText(title, fontWeight, fontSize, vAlign);
+        }
 		String biopaxRef = modelNode.get("BiopaxRef");
 		if (biopaxRef != null)
 			tagCorner(Color.LIGHTSEAGREEN, Pos.TOP_LEFT, biopaxRef);		// TODO looks bad if not a rectangle
 
 //		String type = attributes.get("ShapeType");
 //		System.out.println(title);
-		boolean isAnchor = modelNode.isAnchor();
 		addPorts(isAnchor);
 		addGraphIdDisplay();
 		addReferencesDisplay();
@@ -153,6 +154,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	{
 		int id = dataNode.getGraphId();
 		graphIdLabel = new Label("" + id);
+		graphIdLabel.setMinWidth(60);
 		addAnnotation(graphIdLabel, getController().getInspector().graphIdsVisibleProperty(),Pos.TOP_LEFT, -getWidth()/3, -getHeight()/4-10);
 	}	
 	public void setReferences()
@@ -184,12 +186,13 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void addAnnotation(Label label, BooleanProperty visibility, Pos align, double offsetX, double offsetY)
 	{
 		label.setPrefWidth(100);
-		label.setTextFill(Color.BROWN);
 		label.setPrefHeight(20);
 		label.setMouseTransparent(true);
-		label.setBackground(Backgrounds.transparent());   
+		label.getStyleClass().add("node-annotation");
+//		label.setBackground(Backgrounds.transparent());   
 		label.setFont(new Font(10));
-		label.setAlignment(align);
+//		label.setAlignment(align);
+//		label.setTextFill(Color.BROWN);
 		label.setTranslateX(offsetX);
 		label.setTranslateY(offsetY);
 		label.visibleProperty().bind(visibility);
@@ -200,7 +203,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	public void setText(String s)		{ 	text.setText(s);	}
 	public String getText()				
 	{ 	
-		String s = text.getText();	
+		String s = text == null ? null : text.getText();	
 		if (StringUtil.isEmpty(s))
 		{
 //			if (isAnchor()) return "Anchor (" + getGraphId() + ")";

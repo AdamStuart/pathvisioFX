@@ -6,12 +6,17 @@ import java.util.Map;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Selection;
 import diagrams.pViz.app.Tool;
+import diagrams.pViz.model.edges.Anchor;
+import diagrams.pViz.model.edges.EdgeLine;
+import diagrams.pViz.model.edges.Interaction;
+import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import gui.Action.ActionType;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
@@ -20,6 +25,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
+import util.LineUtil;
 
 /**
  * Listeners for making the nodes draggable via left mouse button. Considers if parent is zoomed.
@@ -110,9 +116,10 @@ public class VNodeGestures {
 
             // left mouse button => dragging
 //    		if (!vNode.isMovable()) return;
+        	DataNode dNode = vNode.modelNode();
             if( !event.isPrimaryButtonDown())
                 return;
-            if (vNode.modelNode().isLocked())	
+            if (dNode.isLocked())	
             	return;
             Tool t = vNode.getPasteboard().getTool();
             if (t.isComponent()) return;
@@ -136,8 +143,19 @@ public class VNodeGestures {
         		// TODO  if there are edges connected to this node, constrain the coordinates to the other sides
         		ex = ey;
         	}
-//    		super.handleMouseDragged(event);
-    		 if (vNode.isSelected())
+        	
+        	if (dNode.isAnchor())
+        	{
+        		Interaction i = ((Anchor)(vNode.modelNode())).getInteraction();
+        		if (i != null)
+        		{
+        			EdgeLine line = i.getEdgeLine();
+        			Point2D closest = LineUtil.closestPoint(line.getStartPoint(), line.getEndPoint(), new Point2D(ex, ey));
+        			dNode.putDouble("CenterX", closest.getX());
+        			dNode.putDouble("CenterY", closest.getY());
+        		}
+        	}
+        	else if (vNode.isSelected())
             {	
                	double dx = 0;
             	double dy = 0;
@@ -157,12 +175,12 @@ public class VNodeGestures {
             	}
             	prevX = ex;
             	prevY = ey;
-            	if (vNode.modelNode() instanceof DataNodeGroup)
+            	if (dNode instanceof DataNodeGroup)
             		((DataNodeGroup)vNode.modelNode()).moveMembers(dx, dy);
             	
-        		int groupId = vNode.modelNode().getInteger("GroupRef");
+        		int groupId = dNode.getInteger("GroupRef");
             	DataNodeGroup gp = vNode.modelNode().getGroup();
-        		Map<Integer, DataNodeGroup> map = vNode.modelNode().getModel().getGroupMap();
+        		Map<Integer, DataNodeGroup> map = dNode.getModel().getGroupMap();
         		gp = map.get(groupId);
         		if (gp != null)
             		gp.calcBounds();
@@ -197,6 +215,7 @@ public class VNodeGestures {
 		return vNode.modelNode().getModel().getController();
 	}
 
+	// **-------------------------------------------------------------------------------
 	// **-------------------------------------------------------------------------------
 	protected void doContextMenu(MouseEvent event, VNode vNode) {
 		ContextMenu menu = new ContextMenu();

@@ -95,6 +95,7 @@ public class ShapeFactory {
 			case Oval:				newShape = new Ellipse();	break;
 			case Arc:				newShape = new Ellipse();	break;	// TODO
 			case Circle:			newShape = new Ellipse();	break;
+			case Anchor:			newShape = new Circle(4);	break;
 			default:	 
 				if (Tool.contains(Tool.customShapes,s))
 					newShape = CellShapeFactory.makeCustomShape(s); 
@@ -115,7 +116,6 @@ public class ShapeFactory {
 		setDefaultAttributes(newShape);
 		setAttributes(newShape, modelNode);
 	
-
 		if ("Line".equals(s))
 		{
 			Arrow a = new Arrow((Line) newShape, 0.7f);
@@ -138,7 +138,14 @@ public class ShapeFactory {
         double vInsets = insets.getTop() + insets.getBottom();
         double w = modelNode.getDouble("Width", 15) + hInsets;
         double h = modelNode.getDouble("Height", 15 + vInsets);
-        if (newShape instanceof Circle)
+		
+        if (tool == Tool.Anchor)
+		{
+			newShape.setFill(Color.BISQUE);
+			newShape.setStroke(Color.DARKOLIVEGREEN);
+		
+		}
+		else if (newShape instanceof Circle)
         {
         	Circle c = (Circle) newShape;
         	c.setRadius(Math.min(w, h)/ 2); 

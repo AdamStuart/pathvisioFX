@@ -314,7 +314,7 @@ public class Model
 	public Interaction findInteractionById(int graphId)
 	{
 		for (Interaction inter : interactionMap.values())
-			if (graphId ==inter.getGraphId())
+			if (graphId ==inter.getId())
 					return inter;
 		return null;
 	}
@@ -337,6 +337,7 @@ public class Model
 				hits.add(inter);
 		return hits;
 	}
+
 	public void removeEdges(DataNode node)		
 	{  
 		List<Integer> edgesToRemove = new ArrayList<Integer>();

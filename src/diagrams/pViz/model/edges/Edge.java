@@ -94,13 +94,13 @@ abstract public class Edge extends XRefable {
 		this(inModel);
 		if (attr != null)    	addAll(attr);
     	startNode = start.modelNode();  
-    	put("source", start.modelNode().getLabel());
+//    	put("source", start.modelNode().getLabel());
     	putInteger("sourceid", start.modelNode().getId());
     	setSource(start.modelNode().getLabel()); 
     	setSourceid(start.modelNode().getId());
     	
     	endNode = end.modelNode();	
-    	put("target", end.modelNode().getLabel());
+//    	put("target", end.modelNode().getLabel());
     	putInteger("targetid", end.modelNode().getId());
     	setTarget(endNode.getLabel()); 
     	setTargetid(endNode.getId());
@@ -162,15 +162,24 @@ abstract public class Edge extends XRefable {
 			startPt = startNode.getAdjustedPoint(gpt);
 		edgeLine.setStartPoint(startPt);
 			
+		
 		GPMLPoint lastpt = getEdgeLine().lastGPMLPoint();
 		Point2D endpt = lastpt.getPoint();
 		if (endNode != null)
-		 endpt = endNode.getAdjustedPoint(lastpt);
+		{
+			endpt = endNode.getAdjustedPoint(lastpt);
+			getEdgeLine().setLastPoint(endpt);
+		}
 		edgeLine.setEndPoint(endpt);
-		ArrowType typ = lastpt.getArrowType();
 //		edgeLine.setArrowType(lastpt.getArrowType());
-		edgeLine.connect(typ);
+		edgeLine.connect(getArrowType());
 
+	}
+	
+	private ArrowType getArrowType() {
+	
+	GPMLPoint lastpt = getEdgeLine().lastGPMLPoint();
+	return lastpt.getArrowType();
 	}
 //		
 //		
@@ -373,15 +382,17 @@ abstract public class Edge extends XRefable {
 		Model m = getModel();
 		AttributeMap map = new AttributeMap();
 		map.putDouble("Position", relVal);
-		map.putDouble("GraphId", m.gensym());
+		map.putInteger("GraphId", m.gensym());
 		map.putDouble("CenterX", hitX);
 		map.putDouble("CenterY", hitY);
-		map.putDouble("Width", 5);
-		map.putDouble("Height", 5);
+		map.putDouble("Width", 10);
+		map.putDouble("Height", 10);
 		map.put("ShapeType", "Anchor");
-		Anchor a = new Anchor(map, m, getId());
+		int myId = getId();
+		Anchor a = new Anchor(map, m, myId);
 		edgeLine.addAnchor(a);
 		m.getPasteboard().connectTo(a.getStack(), RelPosition.ZERO);
+		m.getPasteboard().resetTool();
 		return a;
 	}
 

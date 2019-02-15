@@ -38,7 +38,7 @@ import util.LineUtil;
  *
  *  All edges are directional. We support arrow heads but not tails (or double headed arrows). 
  *  points is the array of all segment ends.  The straight segments are used to derive the curves.
- *  There is also a centerPoint object to allow the user to add segments by moving centerPoint.
+ *  There is also a centerPoint object per segment to allow the user to add segments by moving centerPoint.
  *  There are Shapes defined for head and tail, but only head is used.
  *  Interaction is the model  that corresponds to this view.
  */
@@ -52,9 +52,14 @@ public class EdgeLine extends Group {
 	   	head =  tail = null;
 		interaction = null;			
 //		arrowType = ArrowType.arrow;			// kept in last GPMLPoint
-		centerPoint = new Circle(3);
-		centerPoint.setFill(Color.HOTPINK);
-		centerPoint.setVisible(true);
+
+		startPointShape = new Circle(50, 50, 10);
+		startPointShape.setFill(Color.HOTPINK);
+
+		endPointShape = new Circle(50, 50, 10);
+		endPointShape.setFill(Color.HOTPINK);
+
+		centerPoints = new ArrayList<Circle>();
 	}
 //	public EdgeLine(EdgeType edgeType, Point2D start, ArrowType arrow)
 //	{
@@ -98,9 +103,8 @@ public class EdgeLine extends Group {
 //		for (Anchor anchor : anchors)
 //			System.out.println("A: " +anchor.toString());
 		addGraphIdDisplay();
-		addCenterPointListeners();
-		getChildren().add(centerPoint);
 		setMouseTransparent(false);
+		addCenterPoint();
 		addEventHandler(MouseEvent.MOUSE_ENTERED, e -> 
 		{ 	
 			boolean hiliteEdge = canvas.isDraggingLine();
@@ -146,6 +150,14 @@ public class EdgeLine extends Group {
 		
 	}
 
+	private void addCenterPoint()
+	{
+		Circle c = new Circle(3);
+		centerPoints.add(c);
+		addCenterPointListeners(c);
+		getChildren().add(c);
+		
+	}
 	 //----------------------------------------------------------------------
 //	private double srcX, srcY, targX, targY;
 //	
@@ -157,13 +169,13 @@ public class EdgeLine extends Group {
 //	public void setStartX(double x) { srcX = x; }
 //	public void setStartY(double y) { srcY = y; }
 	
-private void addCenterPointListeners() {
+private void addCenterPointListeners(Circle c) {
 	ObservableMap<Object, Object> properties = getProperties(); 
 //	BooleanProperty selectedProperty = (BooleanProperty) properties.get("selected"); 
 //	if (selectedProperty != null) 
 //		centerPoint.visibleProperty().bind( setCenterpointVis(visible) );			//selectedProperty
-	centerPoint.visibleProperty().bind(interaction.getModel().getController().getInspector().centerpointVisibleProperty());
-	centerPoint.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> 
+	c.visibleProperty().bind(interaction.getModel().getController().getInspector().centerpointVisibleProperty());
+	c.addEventHandler(MouseEvent.MOUSE_PRESSED, e -> 
 	{ 	
 		if (polyline == null)
 		{
@@ -186,13 +198,13 @@ private void addCenterPointListeners() {
 		connect(null);
 		e.consume();
 	} );
-	centerPoint.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> 
+	c.addEventHandler(MouseEvent.MOUSE_DRAGGED, e -> 
 	{ 	
 		points.get(1).setX(e.getX());
 		points.get(1).setY(e.getY());				// TODO only works once
 		
-		centerPoint.setCenterX(e.getX());
-		centerPoint.setCenterY(e.getY());
+		c.setCenterX(e.getX());
+		c.setCenterY(e.getY());
 		connect(null);
 		select(true);
 		e.consume();
@@ -206,7 +218,7 @@ private void addCenterPointListeners() {
 		if (nearby(pt, x, y))
 			return pt;
 	return null;
-}
+	}
 
 	boolean nearby(GPMLPoint pt, double x, double y)
 	{
@@ -258,15 +270,39 @@ private void addCenterPointListeners() {
 		}
 	}
 	 //----------------------------------------------------------------------
-	private Circle centerPoint;
-	private void setCenterPosition(Point2D pt)
+	private Circle startPointShape;
+	private Circle endPointShape;
+	private List<Circle> centerPoints;
+	private void setStartAndEndMarkers()
 	{
-		centerPoint.setCenterX(pt.getX());
-		centerPoint.setCenterY(pt.getY());
+		startPointShape.setCenterX(getStartX());
+		startPointShape.setCenterY(getStartY());
+		endPointShape.setCenterX(getEndX());
+		endPointShape.setCenterY(getEndY());
+		startPointShape.toFront();
+		endPointShape.toFront();
 	}
+	
+	private void setCenterPosition(int index, Point2D pt)
+	{
+		Circle cpt;
+		if (index <= centerPoints.size())
+		{
+			cpt = new Circle(3);
+			centerPoints.add(cpt);
+		}
+		else cpt = centerPoints.get(index);
+			
+		cpt.setCenterX(pt.getX());
+		cpt.setCenterY(pt.getY());
+	}
+	
 	public void setCenterpointVis(boolean visible)
 	{
-		centerPoint.setVisible(visible);
+		endPointShape.setVisible(visible);
+		startPointShape.setVisible(visible);
+		for (Circle c : centerPoints)
+			c.setVisible(visible);
 	}
 		 //----------------------------------------------------------------------
 	private Interaction interaction;		// the model corresponding to this geometry
@@ -343,7 +379,7 @@ private void addCenterPointListeners() {
 	private Shape head, tail;
 	public Shape getHead()			{ return head;	}
 	public Shape getTail()			{ return tail;	}
-	public Shape getCenter()		{ return centerPoint;	}
+//	public Shape getCenter()		{ return centerPoint;	}
 	public EdgeType getEdgeType()	{ return type;	}
 	public void setEdgeType(EdgeType t)	{ type = t;	}
 	public String getLayer()			{ 	return interaction.getLayer();	}
@@ -414,17 +450,8 @@ private void addCenterPointListeners() {
 	}
 
 	//----------------------------------------------------------------------
-	public void setStartPoint(GPMLPoint startPt) {
-		if (startPt == null) return;
-		if (points.size() < 1)
-			points.add(startPt);
-		setPoint(startPt.getPoint(), points.get(0));
-		if (line != null)
-		{
-			line.setStartX(startPt.getX());
-			line.setStartY(startPt.getY());
-		}
-	}
+	public void setStartPoint(GPMLPoint startPt) {		setStartPoint(startPt.getPoint());	}
+	
 	public void setStartPoint(Point2D startPt) {
 		if (startPt == null) return;
 		if (points.size() < 1)
@@ -435,20 +462,12 @@ private void addCenterPointListeners() {
 			line.setStartX(startPt.getX());
 			line.setStartY(startPt.getY());
 		}
+		startPointShape.setCenterX(startPt.getX());
+		startPointShape.setCenterY(startPt.getY());
 	}
 	
-	public void setEndPoint(GPMLPoint endPt) {
-		if (endPt == null) 								return;
-		if (endPt.getX() == 0 && endPt.getY() == 0)		return;
-		if (points.size() < 2)
-			points.add(endPt);
-		setPoint(endPt.getPoint(), points.get(points.size()-1));
-		if (getLine() != null)
-		{
-			line.setEndX(endPt.getX());
-			line.setEndY(endPt.getY());
-		}
-	}
+	public void setEndPoint(GPMLPoint startPt) {		setEndPoint(startPt.getPoint());	}
+
 	public void setEndPoint(Point2D endPt) {
 		if (endPt == null) 								return;
 		if (endPt.getX() == 0 && endPt.getY() == 0)		return;
@@ -460,6 +479,8 @@ private void addCenterPointListeners() {
 			line.setEndX(endPt.getX());
 			line.setEndY(endPt.getY());
 		}
+		endPointShape.setCenterX(endPt.getX());
+		endPointShape.setCenterY(endPt.getY());
 	}
 	//----------------------------------------------------------------------
 	public void dispose()
@@ -480,6 +501,8 @@ private void addCenterPointListeners() {
 		for (Anchor a : anchors)
 			a.resetPosition(interaction);
 	
+		setStartAndEndMarkers();
+		
 		switch (type)
 		{
 			case polyline:	polylineConnect(); 		break;
@@ -490,14 +513,6 @@ private void addCenterPointListeners() {
 		
 		head = makeArrowhead(arrowType);
 	 	
-		Point2D pt = getPointAlongLine(0.5);
-		setLabelPosition(pt);
-		if (type == EdgeType.polyline && points.size() > 1)
-		{
-			GPMLPoint midPt = points.get(1);
-			pt = midPt.getPoint();
-		}
-		setCenterPosition(pt);
 
 //		addTail();			not implemented here
 	}
@@ -604,6 +619,12 @@ private void addCenterPointListeners() {
 		line.setStrokeWidth(width);
 		if (strokeDashArray != null)
 			line.getStrokeDashArray().setAll(strokeDashArray);
+		
+		Point2D pt = getPointAlongLine(0.5);
+		setLabelPosition(pt);
+//		GPMLPoint midPt = points.get(1);
+//		pt = midPt.getPoint();
+		setCenterPosition(0, pt);
 	}
 	
 	  private boolean isZero(Point2D pt) {
@@ -629,8 +650,12 @@ private void addCenterPointListeners() {
 		polyline.getPoints().clear();
 		GPMLPoint last = points.get(sz - 1);
 		for (int i = 0; i < sz - 1; i++) {
-			GPMLPoint pt = points.get(i);	
-			polyline.getPoints().addAll(pt.getX() + pt.getRelX(), pt.getY() + pt.getRelY());
+			GPMLPoint pt = points.get(i);
+			GPMLPoint nextPt = points.get(i+1);
+			polyline.getPoints().addAll(pt.getX(), pt.getY());
+			Point2D midPoint = LineUtil.midPoint(pt.getPoint(), nextPt.getPoint(), 0.5);
+			centerPoints.get(i).setLayoutX(midPoint.getX());
+			centerPoints.get(i).setLayoutY(midPoint.getY());
 		}
 		// shorten the last segment if endNode is defined
 		Node endNode = (interaction == null || interaction.getEndNode() == null) ? null : interaction.getEndNode().getStack();
@@ -651,6 +676,7 @@ private void addCenterPointListeners() {
 		polyline.setStrokeWidth(interaction.getStrokeWidth());
 		if (strokeDashArray != null)
 			polyline.getStrokeDashArray().setAll(strokeDashArray);
+		
 	}
 
 	private boolean isOrthog(GPMLPoint a, GPMLPoint b)

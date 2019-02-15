@@ -42,9 +42,24 @@
 	-fx-stroke-width: 8px; 
 	-fx-stroke: green; 	
 }
+.dragLine {
+	-fx-stroke-width: 3px; 
+	-fx-stroke: blue; 	
+}
 .thinLine {
 	-fx-stroke-width: 1px; 
 	-fx-stroke: green; 	
+}
+
+.anchor {
+	-fx-background-color:  blue; 
+	-fx-stroke: brown; 	
+	-fx-stroke-width: 3px; 
+}
+
+.node-annotation {
+	-fx-background-color:  transparent; 
+	-fx-stroke: brown; 	
 }
 
 .custom-dashed-border {

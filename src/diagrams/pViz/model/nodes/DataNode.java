@@ -205,7 +205,7 @@ public class DataNode extends XRefable {
 		setSelectable(edit);
 		setConnectable(connect);
 	}
-	public boolean isAnchor() {		return "Anchor".equals(get("ShapeType"));	}
+	public boolean isAnchor() {		return false;}
 	// **-------------------------------------------------------------------------------
 	// side case:  shapes are dataNodes, but they may be a path or GraphicalLine
 	
