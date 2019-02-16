@@ -80,7 +80,7 @@ public class Selection
 //		if (s.isLayerLocked()) return;
 		items.add(vnode);	
 		vnode.setEffect(new DropShadow()); 
-		boolean showPorts = vnode.modelNode().isConnectable() || vnode.modelNode().isResizable();
+		boolean showPorts = vnode.USEPORTS() && (vnode.modelNode().isConnectable() || vnode.modelNode().isResizable());
 		vnode.showPorts(showPorts);
 		
 		ObservableMap<Object, Object> properties = vnode.getProperties(); 

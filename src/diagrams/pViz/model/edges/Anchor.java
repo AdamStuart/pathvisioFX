@@ -46,12 +46,6 @@ public class Anchor extends DataNode {		// extends DataNode
 	public Anchor(AttributeMap attr, Model m, int interactionId)
 	{
 		super(attr, m);
-//		myShape = new Circle();
-//		myShape.setRadius(4);
-//		myShape.visibleProperty().bind(m.getController().getInspector().anchorVisibleProperty());
-//		myShape.setFill(Color.BISQUE);
-//		myShape.setStroke(Color.DARKOLIVEGREEN);
-//		new VNodeGestures(stack, m.getPasteboard());
 		getStack().getFigure().visibleProperty().bind(m.getController().getInspector().anchorVisibleProperty());
 		setName(String.format("Anchor @ %.2f", getAnchorPosition()));
 		setInteraction(m.findInteractionById(interactionId));

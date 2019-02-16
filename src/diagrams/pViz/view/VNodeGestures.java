@@ -58,7 +58,7 @@ public class VNodeGestures {
     private EventHandler<MouseEvent> mousePressedHandler = new EventHandler<MouseEvent>() {
 
         public void handle(MouseEvent event) {
-        	boolean requirePortConnect = true;
+        	boolean requirePortConnect = vNode.USEPORTS();
     		Tool curTool = canvas.getTool();
     		if (curTool.isComponent()) return;
           // left mouse button => dragging
@@ -80,6 +80,7 @@ public class VNodeGestures {
     		if (event.getClickCount() > 1)	   {	vNode.getInfo(); 	event.consume();   return; }
     		if (event.isPopupTrigger())	   {	doContextMenu(event, vNode); return;	   }
     		vNode.finishDragLine(event);
+//    		if (event.isConsumed()) return;
     	   if (curTool.isInteraction()) 
     	   {
     		   canvas.startDragLine(vNode, Pos.CENTER);

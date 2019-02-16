@@ -189,10 +189,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		label.setPrefHeight(20);
 		label.setMouseTransparent(true);
 		label.getStyleClass().add("node-annotation");
-//		label.setBackground(Backgrounds.transparent());   
 		label.setFont(new Font(10));
-//		label.setAlignment(align);
-//		label.setTextFill(Color.BROWN);
 		label.setTranslateX(offsetX);
 		label.setTranslateY(offsetY);
 		label.visibleProperty().bind(visibility);
@@ -231,10 +228,11 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	// **-------------------------------------------------------------------------------
 	static InnerShadow effect = new InnerShadow();
 	
+	public boolean USEPORTS()  { return false; }
    protected void processMousePosition(final MouseEvent event) 
    {
 		super.processMousePosition(event);
-		boolean showPorts = dataNode.isConnectable() || dataNode.isResizable();
+		boolean showPorts = USEPORTS() && (dataNode.isConnectable() || dataNode.isResizable());
 		boolean selected = isSelected();
 		EventType<? extends MouseEvent> type = event.getEventType();
 		boolean inside = type.equals(MouseEvent.MOUSE_ENTERED) || type.equals(MouseEvent.MOUSE_MOVED);
@@ -709,6 +707,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		else selectedProperty.set(Boolean.FALSE);	
 	}
 	// **-------------------------------------------------------------------------------
+	// drag to a vNode
 	@Override public void finishDragLine(MouseEvent event) {
 		if (pasteboard.getDragLine() != null) {
 			
@@ -717,7 +716,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			event.consume();
 		}
 	}
-	
+	// drag to a port
 	public void finishDragLine(Node port, ResizableBox target)
 	{
 		String id = port.getId();
@@ -725,9 +724,10 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		finishDragLine(target, relPos);
 	}
 	
-	public void finishDragLine( ResizableBox target, RelPosition relPos)
+	private void finishDragLine( ResizableBox target, RelPosition relPos)
 	{
 		pasteboard.connectTo(target, relPos);
+		pasteboard.resetTool();
 	}
 	
 	// convert the mouse position into two (-1 - 1) ranges based on my center

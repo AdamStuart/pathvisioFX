@@ -52,7 +52,7 @@
 }
 
 .anchor {
-	-fx-background-color:  blue; 
+	-fx-background-color:  red; 
 	-fx-stroke: brown; 	
 	-fx-stroke-width: 3px; 
 }

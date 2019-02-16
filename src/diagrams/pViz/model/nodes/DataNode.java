@@ -174,11 +174,15 @@ public class DataNode extends XRefable {
 		}
 	}
 	// **-------------------------------------------------------------------------------
+	boolean noRel = true;
 	public Point2D  getAdjustedPoint(GPMLPoint gpmlPt)
 	{
 		if (gpmlPt == null) return new Point2D(0,0);
 		double relX = gpmlPt.getRelX();
 		double relY = gpmlPt.getRelY();
+		if (noRel) 
+			relX = relY = 0;
+		
 		double cx = getDouble("CenterX");
 		double cy = getDouble("CenterY");
 		double width = getDouble("Width", 0);
