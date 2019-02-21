@@ -782,13 +782,15 @@ public class Controller implements Initializable, IController
 		modelChanged();
 	}
 	
-	public void addGroup(DataNodeGroup grp) {		// from parser
+	public void addGroup(DataNodeGroup grp) {		// from parser or dropping compartment shape
 		if (grp == null) return;
 		grp.getStack().addEventHandler(MouseEvent.ANY, new GroupMouseHandler(pasteboard));
 		model.addGroup(grp);
 //		BoundingBox bounds = grp.getBounds();
 //		grp.getStack().setBounds(bounds);
 //		pasteboard.getContentLayer().remove(grp.getStack());
+		if (pasteboard.getContentLayer().getChildren().contains(grp.getStack()))
+			return;
 		pasteboard.getContentLayer().add(0, grp.getStack());
 	}
 	

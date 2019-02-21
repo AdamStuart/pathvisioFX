@@ -148,7 +148,7 @@
                   </Menu>
                   <Menu id="Pathways" mnemonicParsing="false" text="Pathways">
                      <items>
-                        <MenuItem id="wpSearch" fx:id="gallery" mnemonicParsing="false" onAction="#showGallery" text="Gallery" />
+                        <MenuItem id="Gallery" fx:id="gallery" mnemonicParsing="false" onAction="#showGallery" text="Gallery" />
                         <MenuItem id="wpSearch" fx:id="wpSearch" mnemonicParsing="false" onAction="#browsePathways" text="Search Wikipathways...">
                            <accelerator>
                               <KeyCodeCombination alt="UP" code="U" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
@@ -159,7 +159,6 @@
                               <KeyCodeCombination alt="UP" code="PLUS" control="UP" meta="DOWN" shift="UP" shortcut="UP" />
                            </accelerator></MenuItem>
                         <MenuItem id="Annotate" fx:id="annotate" mnemonicParsing="false" onAction="#doAnnotate" text="Annotate..." />
-                        <MenuItem id="Analyze" fx:id="annotate1" mnemonicParsing="false" onAction="#annotate" text="Annotate" />
                         <SeparatorMenuItem mnemonicParsing="false" />
                         <MenuItem id="add Legend" fx:id="addLegend" mnemonicParsing="false" onAction="#addLegend" text="Add Legend" />
                         <MenuItem id="add Legend dlog" fx:id="addLegendDlog" mnemonicParsing="false" onAction="#addLegendDlog" text="Add Legend..." />

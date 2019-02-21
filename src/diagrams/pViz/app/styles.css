@@ -17,8 +17,8 @@
 }
 
 .datanode {
-  -fx-border-width: 3;
-  -fx-background-color: white;
+  -fx-border-width: 1;
+  -fx-background-color: yellow;
 	-fx-border-color: green; 	
 }
 .text-area .scroll-pane {
@@ -49,6 +49,15 @@
 .thinLine {
 	-fx-stroke-width: 1px; 
 	-fx-stroke: green; 	
+}
+.edgeLine {
+	-fx-stroke-width: 1px; 
+	-fx-stroke: black; 	
+}
+
+.selectedLine {
+	-fx-stroke-width: 6px; 
+	-fx-stroke: pink; 	
 }
 
 .anchor {

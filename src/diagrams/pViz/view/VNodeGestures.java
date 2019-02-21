@@ -16,15 +16,24 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.TableView;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
+import javafx.scene.shape.Circle;
+import javafx.scene.shape.Shape;
 import util.LineUtil;
 
 /**
@@ -46,6 +55,7 @@ public class VNodeGestures {
     public EventHandler<MouseEvent> getOnMousePressedEventHandler() {   return mousePressedHandler;    }
     public EventHandler<MouseEvent> getOnMouseDraggedEventHandler() {   return mouseDraggedHandler;  }
     public EventHandler<MouseEvent> getOnMouseClickedEventHandler() {   return mouseClickedHandler;  }
+    public EventHandler<MouseEvent> getOnDragDetectedEventHandler() {   return dragDetectedHandler;  }
 
     //-------------------------------------------------------------------------------
     private EventHandler<MouseEvent> mouseClickedHandler = new EventHandler<MouseEvent>() {
@@ -54,7 +64,21 @@ public class VNodeGestures {
         	event.consume();
         }
        };
-    
+       private EventHandler<MouseEvent> dragDetectedHandler = new EventHandler<MouseEvent>() {
+
+		public void handle(MouseEvent event) {
+			Dragboard board = vNode.startDragAndDrop(TransferMode.COPY_OR_MOVE);
+			vNode.getLayer().remove(vNode);
+			ClipboardContent content = new ClipboardContent();
+			content.put(DataFormat.PLAIN_TEXT, "VNODE:" + vNode.getId());
+			vNode.getPasteboard().setDragNode(vNode);
+			board.setContent(content);
+			board.setDragView(vNode.snapshot(null, null), event.getX()-vNode.getWidth()/2, event.getY()-vNode.getHeight()/2);
+//         content.putString("Hello!");
+			event.consume();
+		}
+    };
+       
     private EventHandler<MouseEvent> mousePressedHandler = new EventHandler<MouseEvent>() {
 
         public void handle(MouseEvent event) {
@@ -93,9 +117,11 @@ public class VNodeGestures {
     	   if (event.isAltDown())
     		   selection.duplicateSelection();
     	   
-    		double prevMouseX = event.getSceneX();
-    		double  prevMouseY = event.getSceneY();
-    	   boolean inCorner = vNode.ptInCorner(prevMouseX, prevMouseY);
+   		double prevMouseX = event.getX();
+   		double  prevMouseY = event.getY();
+		double sceneMouseX = event.getSceneX();
+		double  sceneMouseY = event.getSceneY();
+    	   boolean inCorner = vNode.ptInCorner(sceneMouseX, sceneMouseY);
     	   if (inCorner)
     		   vNode.handleResize(event);
     	   else
@@ -122,7 +148,8 @@ public class VNodeGestures {
                 return;
             if (dNode.isLocked())	
             	return;
-            Tool t = vNode.getPasteboard().getTool();
+            Pasteboard pasteboard = vNode.getPasteboard();
+            Tool t = pasteboard.getTool();
             if (t.isComponent()) return;
             double scale = canvas.getScale();
 //
@@ -132,6 +159,17 @@ public class VNodeGestures {
 //
         	double ex = event.getSceneX();
     		double ey = event.getSceneY();
+    		
+    		Parent p = pasteboard.getParent();
+    		while (!(p instanceof ScrollPane))
+    			p = p.getParent();
+    		Bounds b = p.getBoundsInParent();
+    		Bounds b2 = p.parentToLocal(b);
+    		Bounds b3 = p.parentToLocal(b2);
+    		double px = b.getMinX();
+    		double py = b.getMinY();
+    		ex -= px;
+    		ey -= py;
 //    				System.out.println(String.format("%.1f, %.1f", ex, ey));
     		if (vNode.isResizing())
     		{
@@ -147,13 +185,27 @@ public class VNodeGestures {
         	
         	if (dNode.isAnchor())
         	{
-        		Interaction i = ((Anchor)(vNode.modelNode())).getInteraction();
+        		Anchor a = (Anchor)dNode;
+        		Interaction i = a.getInteraction();
         		if (i != null)
         		{
         			EdgeLine line = i.getEdgeLine();
-        			Point2D closest = LineUtil.closestPoint(line.getStartPoint(), line.getEndPoint(), new Point2D(ex, ey));
-        			dNode.putDouble("CenterX", closest.getX());
-        			dNode.putDouble("CenterY", closest.getY());
+        			Point2D start = line.getStartPoint();
+        			Point2D end = line.getEndPoint();
+        			Point2D closest = LineUtil.closestPoint(start, end, new Point2D(ex, ey));
+        			double position = LineUtil.toLineCoordinates(start, end, closest);
+        			a.setPosition(position);
+        			a.putDouble("CenterX", closest.getX());
+        			a.putDouble("CenterY", closest.getY());
+        			Shape shp = vNode.getFigure();
+        			if (shp instanceof Circle)
+        			{
+        				Circle c = (Circle) shp;
+        				vNode.setLayoutX(closest.getX()-6);
+        				vNode.setLayoutY(closest.getY()-6);
+        				c.setCenterX(closest.getX());
+        				c.setCenterY(closest.getY());
+        			}
         		}
         	}
         	else if (vNode.isSelected())

@@ -5,14 +5,13 @@ import java.util.List;
 import diagrams.pViz.model.CXObject;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
-import diagrams.pViz.view.VNodeGestures;
+import diagrams.pViz.view.VNode;
 import javafx.geometry.Point2D;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import model.AttributeMap;
 
-public class Anchor extends DataNode {		// extends DataNode
+public class Anchor extends DataNode {	
 
 	/**
 	 *  An Anchor is a DataNode that lives along an edge of a line.  
@@ -20,23 +19,8 @@ public class Anchor extends DataNode {		// extends DataNode
 	 */
 	
 	private static final long serialVersionUID = 1L;
-//	private Circle myShape;
 	private Interaction myInteraction;
 
-	
-	public boolean isAnchor() 					{		return true;}
-	public Interaction getInteraction() 		{  	return myInteraction;	}
-	public void setInteraction(Edge e) 		
-	{  
-		myInteraction = (Interaction) e;  
-		setInteractionId (e == null ? -1 : e.getId());	
-	}
-	public int getInteractionId() 					{  	return  getInteger("InteractionId");	}
-	public void setInteractionId(int e) 			{  	putInteger("InteractionId", e);	}
-//	
-	public double getAnchorPosition()				{  	return getDouble("Position");	}
-	public void setPosition(double d)				{   putDouble("Position", d);	}
-	//=========================================================================
 
 	public Anchor(org.w3c.dom.Node node, Model m, int interactionId)
 	{
@@ -52,9 +36,25 @@ public class Anchor extends DataNode {		// extends DataNode
 	}
 
 	//=========================================================================
+	
+	public boolean isAnchor() 						{	return true;}
+	public Interaction getInteraction() 			{  	return myInteraction;	}
+	public void setInteraction(Edge e) 		
+	{  
+		myInteraction = (Interaction) e;  
+		setInteractionId (e == null ? -1 : e.getId());	
+	}
+	public int getInteractionId() 					{  	return  getInteger("InteractionId");	}
+	public void setInteractionId(int e) 			{  	putInteger("InteractionId", e);	}
+//	
+	public double getAnchorPosition()				{  	return getDouble("Position");	}
+	public void setPosition(double d)				{   putDouble("Position", d);	}
+
+	//=========================================================================
 	public void resetPosition(Edge caller)
 	{
-		Shape myShape = getStack().getFigure();
+		VNode stack = getStack();
+		Shape myShape = stack.getFigure();
 		double position = getAnchorPosition();
 		if (Double.isNaN(position))
 			position = 0.5;
@@ -70,10 +70,13 @@ public class Anchor extends DataNode {		// extends DataNode
 			Circle c = ((Circle)(myShape));
 			c.setCenterX(pt.getX());
 			c.setCenterY(pt.getY());
+			double radius = c.getRadius();
+			stack.setLayoutX(pt.getX()-radius);
+			stack.setLayoutY(pt.getY()-radius);
 			putDouble("CenterX", pt.getX());
 			putDouble("CenterY", pt.getY());
-			putDouble("X", pt.getX()-(c.getRadius()/2));
-			putDouble("Y", pt.getY()-(c.getRadius()/2));
+			putDouble("X", pt.getX()-radius);
+			putDouble("Y", pt.getY()-radius);
 		}
 		List< Interaction>  links = model.findInteractionsByNode(this);
 		for (Interaction e : links)
@@ -93,7 +96,7 @@ public class Anchor extends DataNode {		// extends DataNode
 	public String toGPML()
 	{
 		String shape = get("Shape");
-		if (shape == null) shape = "Oval";
+		if (shape == null) shape = "Circle";
 		return String.format("<Anchor Position=\"%.2f\" Shape=\"%s\" GraphId=\"%s\" />\n", getAnchorPosition(), shape, getGraphId());
 	}
 	

@@ -1,7 +1,9 @@
 package diagrams.pViz.view;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Tool;
@@ -10,6 +12,7 @@ import diagrams.pViz.model.edges.EdgeLine;
 import diagrams.pViz.model.edges.EdgeType;
 import diagrams.pViz.model.edges.Interaction;
 import diagrams.pViz.model.nodes.DataNode;
+import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.util.ArrowType;
 import diagrams.pViz.util.ResizableBox;
@@ -91,7 +94,6 @@ public class Pasteboard extends PanningCanvas
 	{
 		editorProperties.snapToGridProperty().bind(getController().getInspector().snapToGridProperty());
 		editorProperties.gridSpacingProperty().set(25);
-	
 	}
 	//---------------------------------------------------------------------------------------
 
@@ -131,8 +133,31 @@ public class Pasteboard extends PanningCanvas
 		int offset = 0;
 		Point2D dropPt = new Point2D(e.getX()+offset, e.getY()+offset);
 		e.acceptTransferModes(TransferMode.ANY);
-//		Set<DataFormat> formats = db.getContentTypes();
+		Set<DataFormat> formats = db.getContentTypes();
 //		formats.forEach(a -> System.out.println("getContentTypes " + a.toString()));
+		if (db.hasContent(DataFormat.PLAIN_TEXT))
+		{
+			if (verbose) System.out.println("NODE DROP");
+			String ob = "" + db.getContent(DataFormat.PLAIN_TEXT);
+			if (ob.startsWith("VNODE:"))
+			{
+				int id = StringUtil.toInteger(ob.substring(6));
+				if (id > 0)
+				{
+					for (VNode node : dragging)
+					{
+						if (node.getGraphId() == id)
+						{
+							node.setCenter(dropPt);
+							node.getLayer().add(node);
+							node.setVisible(true);
+						}
+					}
+				}
+				return;
+	
+			}
+		}
 		if (db.hasContent(Controller.GENE_MIME_TYPE))
 		{
 			String id = "" + db.getContent(DataFormat.PLAIN_TEXT);
@@ -248,9 +273,9 @@ public class Pasteboard extends PanningCanvas
 		attrMap.put("TextLabel", text);
 		attrMap.putBool("Connectable", true);
 		attrMap.putBool("Resizable", true);
-		DataNode node = new DataNode(attrMap,getModel() );
+		DataNodeGroup node = new DataNodeGroup(attrMap,getModel(), false );
 		getModel().addShape(node);
-		controller.addDataNode(node);
+		controller.addGroup(node);
 	}
 		
 	// **-------------------------------------------------------------------------------
@@ -399,8 +424,8 @@ public class Pasteboard extends PanningCanvas
 			removeDragLine();
 			controller.addInteraction(i);
 			controller.redrawMyEdges((VNode) target);
-			controller.modelChanged();
-			controller.getPasteboard().resetTool();
+//			controller.modelChanged();
+			palette.setTool(Tool.Arrow);
 		}
 	}
 	//---------------------------------------------------------------------------
@@ -771,6 +796,13 @@ public class Pasteboard extends PanningCanvas
 		int groupIdx = groupstack.getParent().getChildrenUnmodifiable().indexOf(groupstack);
 		if (nodeIdx < groupIdx)
 			nod.getStack().toFront();
+	}
+	List<VNode> dragging = new ArrayList<VNode>();
+	public void setDragNode(VNode vNode) {
+		dragging.add(vNode);
+	}
+	public List<VNode> getDragNodeList() {
+		return dragging;
 	}
 
 }

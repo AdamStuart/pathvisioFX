@@ -3,24 +3,23 @@ package diagrams.pViz.view;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import diagrams.pViz.app.App;
 import diagrams.pViz.app.Controller;
 import diagrams.pViz.app.Tool;
-import diagrams.pViz.dialogs.NodeInfoController;
 import diagrams.pViz.gpml.GPML;
 import diagrams.pViz.model.Model;
 import diagrams.pViz.model.nodes.DataNode;
 import diagrams.pViz.model.nodes.DataNodeGroup;
 import diagrams.pViz.model.nodes.DataNodeState;
-import diagrams.pViz.tables.PathwayController;
 import diagrams.pViz.tables.ReferenceController;
 import diagrams.pViz.util.ResizableBox;
 import gui.Backgrounds;
-import gui.Borders;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableMap;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
@@ -36,8 +35,11 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.Image;
+import javafx.scene.input.DataFormat;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
+import javafx.scene.input.TransferMode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -89,6 +91,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 		setOnMouseDragged(gestures.getOnMouseDraggedEventHandler());
 		setOnMousePressed(gestures.getOnMousePressedEventHandler());
 		setOnMouseClicked(gestures.getOnMouseClickedEventHandler());
+		setOnDragDetected(gestures.getOnDragDetectedEventHandler());
 		controlFactory = new ControlFactory(this);		// this creates browsers, imageview, rich text, etc.
 		String id = modelNode.get("GraphId");
 		setId(id);
@@ -349,7 +352,7 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 			controlFactory.addNewNode(tool, dataNode);
 			getStyleClass().add("control");
 		}
-		else if ("Anchor".equals(shapeType))
+		else if (tool == Tool.Anchor)
 		{
 			figure = new Circle(6);
 			getStyleClass().add("anchor");
@@ -753,4 +756,26 @@ public class VNode extends ResizableBox implements Comparable<VNode> {		//StackP
 	}
 	
 	public DataNodeGroup getGroup() {		return modelNode().getGroup();	}
+	public void addGroupGestures() {
+		
+		setOnDragEntered(e -> 	
+		{	
+			System.out.println("setOnDragEntered");
+			setEffect(effect); }	
+		);
+		setOnDragExited(e -> 	{	setEffect(null); }	);
+		setOnDragOver(e -> 		{	e.acceptTransferModes(TransferMode.ANY);	setEffect(effect); e.consume();  	});
+		setOnDragDropped(onDragDropped);
+	
+	
+	}
+  	private EventHandler<DragEvent> onDragDropped = new EventHandler<DragEvent>() {
+        public void handle(DragEvent event) {
+        	setEffect(null);
+        	Dragboard board = event.getDragboard();	
+        	Set<DataFormat> types = board.getContentTypes();
+        
+        }
+ 	};
+
 }

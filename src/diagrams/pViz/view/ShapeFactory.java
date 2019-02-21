@@ -95,7 +95,7 @@ public class ShapeFactory {
 			case Oval:				newShape = new Ellipse();	break;
 			case Arc:				newShape = new Ellipse();	break;	// TODO
 			case Circle:			newShape = new Ellipse();	break;
-			case Anchor:			newShape = new Circle(4);	break;
+			case Anchor:			newShape = new Circle(25);	break;
 			default:	 
 				if (Tool.contains(Tool.customShapes,s))
 					newShape = CellShapeFactory.makeCustomShape(s); 

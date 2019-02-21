@@ -28,6 +28,7 @@ public class DataNodeGroup extends DataNode {
 	public DataNodeGroup(AttributeMap map, Model m, boolean isCompound)
 	{
 		super(map,m);
+		getStack().addGroupGestures();
 		compoundNode = isCompound;
 //		System.out.println(model.traverseSceneGraph(getStack()));
 	}	

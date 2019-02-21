@@ -105,6 +105,7 @@ public class EdgeLine extends Group {
 		addGraphIdDisplay();
 		setMouseTransparent(false);
 		addCenterPoint();
+		getChildren().addAll(startPointShape, endPointShape);
 		addEventHandler(MouseEvent.MOUSE_ENTERED, e -> 
 		{ 	
 			boolean hiliteEdge = canvas.isDraggingLine();
@@ -112,8 +113,9 @@ public class EdgeLine extends Group {
 			hiliteEdge &= tool.connectsToEdges();
 			if (line != null && hiliteEdge)
 			{
-				line.getStyleClass().add("fatLine");
-				line.getStyleClass().remove("thinLine");
+//				line.getStyleClass().add("fatLine");
+				line.setStrokeWidth(10);
+//				line.getStyleClass().remove("thinLine");
 				hitPt = new Point2D(e.getX(), e.getY());
 			}
 		} );
@@ -124,8 +126,8 @@ public class EdgeLine extends Group {
 			hiliteEdge &= tool.connectsToEdges();
 			if (line != null && hiliteEdge)
 			{
-				line.getStyleClass().add("fatLine");
-				line.getStyleClass().remove("thinLine");
+//				line.getStyleClass().add("fatLine");
+//				line.getStyleClass().remove("thinLine");
 				hitPt = new Point2D(e.getX(), e.getY());
 			}
 	} );
@@ -133,8 +135,9 @@ public class EdgeLine extends Group {
 		{ 	
 			if (line != null)
 			{
-				line.getStyleClass().add("thinLine");
-				line.getStyleClass().remove("fatLine");
+//				line.getStyleClass().add("thinLine");
+//				line.getStyleClass().remove("fatLine");
+				line.setStrokeWidth(2);
 				hitPt = null;
 		}
 		});
@@ -343,7 +346,7 @@ private void addCenterPointListeners(Circle c) {
 		if (polyline == null)
 		{
 			polyline  = new Polyline();
-			polyline.setStyle("");		// TODO setStyleClass
+			polyline.getStyleClass().add("edgeLine");
 			getChildren().add(polyline);
 		}
 		return polyline;	
@@ -354,7 +357,7 @@ private void addCenterPointListeners(Circle c) {
 		if (line == null)
 		{
 			line  = new Line();
-			line.setStyle("");		// TODO setStyleClass
+			line.getStyleClass().add("edgeLine");
 			getChildren().add(line);
 			line.setOnMouseClicked(e -> { interaction.getEdgeLine().select(true); });
 		}
@@ -402,18 +405,23 @@ private void addCenterPointListeners(Circle c) {
 
 	public void select(boolean b)		
 	{ 	
-		selected = b;	
-		Color c = lineColor(selected);
-		if (line != null) line.setStroke(c);
-		if (polyline != null) polyline.setStroke(c);
-//		if (curveGroup != null) curveGroup.getChildren().forEach(setStroke(c));
-		if (head != null) {		head.setStroke(c);  head.setFill(c);  }
+		selected = b;
+		if (b)
+			line.getStyleClass().add("selectedLine");
+		else
+			line.getStyleClass().remove("selectedLine");
+
+//		Color c = lineColor(selected);
+//		if (line != null) line.setStroke(c);
+//		if (polyline != null) polyline.setStroke(c);
+////		if (curveGroup != null) curveGroup.getChildren().forEach(setStroke(c));
+//		if (head != null) {		head.setStroke(c);  head.setFill(c);  }
 	}
 	
-	Color lineColor(boolean selected)
-	{
-		return selected ? Color.RED : Color.BLACK; 
-	}
+//	Color lineColor(boolean selected)
+//	{
+//		return selected ? Color.RED : Color.BLACK; 
+//	}
 	
 	//----------------------------------------------------------------------
 	public Point2D getPointAlongLine(double position) {
@@ -743,7 +751,7 @@ private void addCenterPointListeners(Circle c) {
 
 		Color strokeColor = interaction == null ? Color.AQUAMARINE : interaction.getColor();
 		if (arrowhead == null)	return null;
-		if (arrowhead == ArrowType.none) return null;
+		if (arrowhead == ArrowType.none) arrowhead = ArrowType.big;  // return null;
 		Point2D prev = forelastPoint();			// the arrowhead rotation is based only on the last segment
 		if (type == EdgeType.elbow)
 			prev = new Point2D(last.getX(), prev.getY());

@@ -6,6 +6,7 @@ package diagrams.pViz.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import diagrams.pViz.view.DragContext;
 import diagrams.pViz.view.Pasteboard;
 import diagrams.pViz.view.ShapeFactory;
 import diagrams.pViz.view.VNode;
@@ -16,9 +17,10 @@ import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
 import javafx.scene.shape.Shape;
 import model.stat.RelPosition;
 import util.StringUtil;
@@ -170,65 +172,65 @@ abstract public class ResizableBox extends DraggableBox {
         return mouseInPositionForResize;
     }
 
-//    protected void getInfo() {		System.out.println("getInfo");}  //TODO  abstract
+    protected void getInfo() {		System.out.println("getInfo");}  //TODO  abstract
 //	protected void doContextMenu(final MouseEvent event) {		System.out.println("doContextMenu");}  //TODO  abstract
 	
-//    DragContext nodeDragContext = new DragContext();
-//	@Override
-//    protected void handleMousePressed(final MouseEvent event) {
-//
-//        if (event.getClickCount() > 1)	   {	getInfo(); 	event.consume();   return; }
-//        super.handleMousePressed(event);
-//
+    DragContext nodeDragContext = new DragContext();
+	@Override
+    protected void handleMousePressed(final MouseEvent event) {
+
+        if (event.getClickCount() > 1)	   {	getInfo(); 	event.consume();   return; }
+        super.handleMousePressed(event);
+
+        if (!(getParent() instanceof Region)) {
+            return;
+        } else if (!event.getButton().equals(MouseButton.PRIMARY)) {
+            setCursor(null);
+            return;
+        }
+
+        storeClickValuesForDrag(event.getX(), event.getY());
+
+        nodeDragContext.mouseAnchorX = event.getSceneX();
+        nodeDragContext.mouseAnchorY = event.getSceneY();
+
+        Node node = (Node) event.getSource();
+
+        nodeDragContext.translateAnchorX = node.getTranslateX();
+        nodeDragContext.translateAnchorY = node.getTranslateY();
+	   }
+
+    @Override
+    protected void handleMouseDragged(final MouseEvent event) {
+
 //        if (!(getParent() instanceof Region)) {
 //            return;
-//        } else if (!event.getButton().equals(MouseButton.PRIMARY)) {
-//            setCursor(null);
-//            return;
-//        }
-//
-//        storeClickValuesForResize(event.getX(), event.getY());
-//
-//        nodeDragContext.mouseAnchorX = event.getSceneX();
-//        nodeDragContext.mouseAnchorY = event.getSceneY();
-//
-//        Node node = (Node) event.getSource();
-//
-//        nodeDragContext.translateAnchorX = node.getTranslateX();
-//        nodeDragContext.translateAnchorY = node.getTranslateY();
-//	   }
-//
-//    @Override
-//    protected void handleMouseDragged(final MouseEvent event) {
-//
-////        if (!(getParent() instanceof Region)) {
-////            return;
-////        } else 
-//        	if (!event.getButton().equals(MouseButton.PRIMARY)) {
-//            setCursor(null);
-//            return;
-//        }
-//        Point2D evPt = new Point2D(event.getX(), event.getY());
-//        Point2D local =  sceneToLocal(evPt);
-//        	storeClickValuesForResize(event.getX(), event.getY());
-//        if (!dragActive) {
-//            storeClickValuesForDrag(event.getX(), event.getY());
-//            storeClickValuesForResize(event.getX(), event.getY());
-//        }
-//
-//        if (RectangleMouseRegion.INSIDE.equals(lastMouseRegion)) 
-//        {
-//        	if (isMovable())	
-//            	super.handleMouseDragged(event);
-//        	
-//        }
-//       else if (!RectangleMouseRegion.OUTSIDE.equals(lastMouseRegion)) 
-//            if (canResize())	
-//            	handleResize(event.getSceneX(), event.getSceneY());
-//
-//        dragActive = true;
-//        event.consume();
-//    }
+//        } else 
+        	if (!event.getButton().equals(MouseButton.PRIMARY)) {
+            setCursor(null);
+            return;
+        }
+        Point2D evPt = new Point2D(event.getX(), event.getY());
+        Point2D local =  sceneToLocal(evPt);
+        	storeClickValuesForDrag(event.getX(), event.getY());
+        if (!dragActive) {
+            storeClickValuesForDrag(event.getX(), event.getY());
+            storeClickValuesForDrag(event.getX(), event.getY());
+        }
+
+        if (RectangleMouseRegion.INSIDE.equals(lastMouseRegion)) 
+        {
+        	if (isMovable())	
+            	super.handleMouseDragged(event);
+        	
+        }
+       else if (!RectangleMouseRegion.OUTSIDE.equals(lastMouseRegion)) 
+            if (canResize())	
+            	handleResize(event.getSceneX(), event.getSceneY());
+
+        dragActive = true;
+        event.consume();
+    }
 	public void addPortHandlers(Shape port)
 	{		
 		port.addEventHandler(MouseEvent.MOUSE_MOVED, e ->  { 	port.setFill(portFillColor( EState.ACTIVE)); });
@@ -339,16 +341,16 @@ abstract public class ResizableBox extends DraggableBox {
 	
   	private void makePort(Pos pos, int nodeid)
   	{
-		Shape port = null;
-		port = new Circle(7);
-		port.setFill(portFillColor(EState.STANDBY));
-		port.setStroke(Color.MEDIUMAQUAMARINE);
-		addPortHandlers(port);
-		setAlignment(port, pos);
-		getChildren().add(port);
-		port.setVisible(false);
-		port.setId(""+nodeid);
-		ports.add(port);
+//		Shape port = null;
+//		port = new Circle(7);
+//		port.setFill(portFillColor(EState.STANDBY));
+//		port.setStroke(Color.MEDIUMAQUAMARINE);
+//		addPortHandlers(port);
+//		setAlignment(port, pos);
+//		getChildren().add(port);
+//		port.setVisible(false);
+//		port.setId(""+nodeid);
+//		ports.add(port);
   	}
 	
   	public void showPorts(boolean vis)
@@ -361,8 +363,12 @@ abstract public class ResizableBox extends DraggableBox {
 	
   	public boolean ptInCorner(double x, double y) {
 		
-		boolean xOnEdge = near(x, getLayoutX()) || near(x, getLayoutX() + getWidth());
-		boolean yOnEdge = near(y, getLayoutY()) || near(y, getLayoutY() + getHeight());
+		double left = getLayoutX();
+		double top = getLayoutY();
+		double w = getWidth();
+		double h = getHeight();
+		boolean xOnEdge = near(x,left ) || near(x, left + w);
+		boolean yOnEdge = near(y,top) || near(y, top + h);
 		return xOnEdge && yOnEdge;
 	}
 
